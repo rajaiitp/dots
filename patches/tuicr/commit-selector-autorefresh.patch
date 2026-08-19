@@ -1,0 +1,187 @@
+diff --git a/src/app/commits.rs b/src/app/commits.rs
+index 3d4a7d9..f9f0952 100644
+--- a/src/app/commits.rs
++++ b/src/app/commits.rs
+@@ -1,6 +1,86 @@
+ use super::*;
+ 
+ impl App {
++    /// Poll the open local commit selector and refresh it from the repository's
++    /// current HEAD when needed. This makes the selector follow branch changes
++    /// or new commits made by another tool without requiring the user to quit
++    /// and reopen tuicr.
++    pub fn poll_commit_selector_refresh(&mut self) -> bool {
++        if self.input_mode != InputMode::CommitSelect || self.target_tab != TargetTab::Local {
++            return false;
++        }
++
++        let now = Instant::now();
++        if now < self.next_commit_selector_refresh_at {
++            return false;
++        }
++        self.next_commit_selector_refresh_at =
++            now + Duration::from_millis(DEFAULT_COMMIT_SELECTOR_REFRESH_MS);
++
++        let highlighter = self.theme.syntax_highlighter();
++        let change_status = match Self::get_change_status_with_ignore(
++            self.vcs.as_ref(),
++            &self.vcs_info.root_path,
++            highlighter,
++            self.path_filter.as_deref(),
++        ) {
++            Ok(status) => status,
++            Err(_) => return false,
++        };
++
++        let commit_limit = self
++            .commit_list
++            .iter()
++            .filter(|commit| !Self::is_special_commit(commit))
++            .count()
++            .max(VISIBLE_COMMIT_COUNT);
++        let commits = match self.vcs.get_recent_commits(0, commit_limit) {
++            Ok(commits) => commits,
++            Err(_) => return false,
++        };
++
++        let mut refreshed = commits.clone();
++        if change_status.staged {
++            refreshed.insert(0, Self::staged_commit_entry());
++        }
++        if change_status.unstaged {
++            refreshed.insert(0, Self::unstaged_commit_entry());
++        }
++
++        let same_commits = self.commit_list.len() == refreshed.len()
++            && self
++                .commit_list
++                .iter()
++                .zip(refreshed.iter())
++                .all(|(left, right)| left.id == right.id);
++        if same_commits {
++            return false;
++        }
++
++        let previous_id = self
++            .commit_list
++            .get(self.commit_list_cursor)
++            .map(|commit| commit.id.clone());
++
++        self.commit_list = refreshed;
++        self.visible_commit_count = self.commit_list.len();
++        self.has_more_commit = commits.len() >= commit_limit;
++        self.commit_selection_range = None;
++
++        self.commit_list_cursor = previous_id
++            .and_then(|id| self.commit_list.iter().position(|commit| commit.id == id))
++            .unwrap_or_else(|| {
++                self.commit_list_cursor
++                    .min(self.commit_list.len().saturating_sub(1))
++            });
++        self.commit_list_scroll_offset = self
++            .commit_list_scroll_offset
++            .min(self.commit_list.len().saturating_sub(1));
++
++        self.set_message("Commit selector refreshed from current HEAD".to_string());
++        true
++    }
++
+     pub(in crate::app) fn is_strict_commit_selection(
+         range: Option<(usize, usize)>,
+         total: usize,
+diff --git a/src/app/init.rs b/src/app/init.rs
+index e13a67e..091aaec 100644
+--- a/src/app/init.rs
++++ b/src/app/init.rs
+@@ -466,6 +466,8 @@ impl App {
+             visible_commit_count,
+             commit_page_size: COMMIT_PAGE_SIZE,
+             has_more_commit,
++            next_commit_selector_refresh_at: Instant::now()
++                + Duration::from_millis(DEFAULT_COMMIT_SELECTOR_REFRESH_MS),
+             target_tab: TargetTab::Local,
+             forge_repository: None,
+             repo_url_override,
+diff --git a/src/app/mod.rs b/src/app/mod.rs
+index fc320e8..41141d7 100644
+--- a/src/app/mod.rs
++++ b/src/app/mod.rs
+@@ -31,6 +31,7 @@ use crate::vcs::{
+ 
+ const VISIBLE_COMMIT_COUNT: usize = 10;
+ const COMMIT_PAGE_SIZE: usize = 10;
++const DEFAULT_COMMIT_SELECTOR_REFRESH_MS: u64 = 1000;
+ pub const DEFAULT_REVIEW_WATCH_INTERVAL_MS: u64 = 1000;
+ pub const STAGED_SELECTION_ID: &str = "__tuicr_staged__";
+ pub const UNSTAGED_SELECTION_ID: &str = "__tuicr_unstaged__";
+@@ -599,6 +600,7 @@ impl DiffSource {
+         matches!(
+             self,
+             Self::WorkingTree
++                | Self::Staged
+                 | Self::Unstaged
+                 | Self::StagedAndUnstaged
+                 | Self::StagedUnstagedAndCommits(_)
+@@ -1052,6 +1054,10 @@ pub struct App {
+     pub visible_commit_count: usize,
+     pub commit_page_size: usize,
+     pub has_more_commit: bool,
++    /// Next time the local commit selector should refresh from the current
++    /// repository HEAD. Keeps the selector in sync after branch switches or
++    /// commits created outside tuicr while the selector is open.
++    pub next_commit_selector_refresh_at: Instant,
+ 
+     // Review target selector tab state. The selector reuses InputMode::CommitSelect
+     // but is conceptually a "target" picker with Local and Pull Requests tabs.
+diff --git a/src/app/session.rs b/src/app/session.rs
+index 3e40aa8..0b00cc6 100644
+--- a/src/app/session.rs
++++ b/src/app/session.rs
+@@ -151,9 +151,33 @@ impl App {
+             return false;
+         }
+
++        let mut local_diff_changed = false;
++        if self.input_mode == InputMode::Normal && self.diff_source.includes_worktree_changes() {
++            let previous_diff = self
++                .diff_files
++                .iter()
++                .map(|file| (file.display_path().clone(), file.status, file.content_hash))
++                .collect::<Vec<_>>();
++
++            match self.reload_diff_files() {
++                Ok(_) => {
++                    let current_diff = self
++                        .diff_files
++                        .iter()
++                        .map(|file| (file.display_path().clone(), file.status, file.content_hash))
++                        .collect::<Vec<_>>();
++                    local_diff_changed = previous_diff != current_diff;
++                    if local_diff_changed {
++                        self.set_message("Local staged/unstaged diff refreshed".to_string());
++                    }
++                }
++                Err(TuicrError::NoChanges) => {}
++                Err(err) => self.set_warning(format!("Local diff refresh failed: {err}")),
++            }
++        }
++
+         match self.reload_persisted_session_if_changed(false) {
+-            Ok(0) => false,
+-            Ok(_) => true,
++            Ok(changed) => local_diff_changed || changed > 0,
+             Err(err) => {
+                 self.set_warning(format!("Review reload failed: {err}"));
+                 true
+diff --git a/src/main.rs b/src/main.rs
+index 7326bb5..9a5f4ad 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -344,6 +344,7 @@ fn main() -> anyhow::Result<()> {
+         app.poll_pr_range_reload_events();
+         app.poll_pr_threads_events();
+         app.poll_pr_submit_events();
++        needs_redraw |= app.poll_commit_selector_refresh();
+         needs_redraw |= app.poll_persisted_session_changes();
+         needs_redraw |= pr_pending;
+ 

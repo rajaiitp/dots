@@ -1,0 +1,120 @@
+{
+    "layer": "bottom",
+    "position": "top",
+    "height": 22,
+    "reload_style_on_change": true,
+    "modules-center": ["clock",  "battery" ],
+    "modules-right": ["custom/google-home","custom/media","custom/display","custom/hyprsunset","custom/audiosink","custom/surfshark","custom/tailscale","custom/firewall","tray","idle_inhibitor"],
+    "modules-left": ["hyprland/workspaces"],
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "10"
+        },
+        "persistent_workspaces": {
+            "1": [],
+            "2": [],
+            "3": [],
+            "4": [],
+            "5": [],
+            "6": [],
+            "7": [],
+            "8": [],
+            "9": [],
+            "10": []
+        },
+        "move-to-monitor": true,
+        "all-outputs": false
+    },
+    "custom/media": {
+        "exec": "$HOME/.config/scripts/media/waybar_media_control.sh",
+        "return-type": "json",
+        "interval": 2,
+        "signal": 10,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/media/waybar_media_control.sh toggle"
+    },
+    "custom/display": {
+        "exec": "$HOME/.config/scripts/display/display_combined_status.sh",
+        "return-type": "json",
+        "interval": 2,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/display/display_gui.py"
+    },
+    "custom/hyprsunset": {
+        "exec": "$HOME/.config/hypr/scripts/hyprsunset_status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/display/hyprsunset_gui.py"
+    },
+    "custom/audiosink": {
+        "exec": "$HOME/.config/scripts/audio/audio_sink_status.sh",
+        "return-type": "json",
+        "interval": 2,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/audio/audio_sink_gui.py"
+    },
+    "custom/google-home": {
+        "format": "<span size='16pt'>G</span>",
+        "tooltip-format": "Google Home",
+        "on-click": "$HOME/.config/scripts/home/google_home_gui.py"
+    },
+    "custom/surfshark": {
+        "exec": "$HOME/.config/scripts/network/surfshark_status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/network/surfshark_toggle.sh",
+        "on-click-right": "$HOME/.config/scripts/network/surfshark_menu.sh"
+    },
+    "custom/tailscale": {
+        "exec": "$HOME/.config/scripts/network/tailscale_status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "format": "<span size='20pt'>{}</span>",
+        "on-click": "$HOME/.config/scripts/network/tailscale_toggle.sh"
+    },
+    "custom/firewall": {
+        "exec": "$HOME/.config/scripts/firewall/firewall_status.py",
+        "return-type": "json",
+        "interval": 5,
+        "format": "<span size='20pt'>{}</span>",
+        "tooltip": false,
+        "on-click": "$HOME/.config/scripts/firewall/firewall_gui.py"
+    },
+    "idle_inhibitor": {
+        "format": "<span size='20pt'>{icon}</span>",
+        "format-icons": {
+            "activated": "󰅶",
+            "deactivated": "󰾰"
+        },
+        "tooltip": false
+    },
+    "clock": {
+        "format": "<span size='18pt'></span>   <span rise='2000'>{:%a %d %b   %H:%M}</span>",
+        "interval": 1,
+        "tooltip": false
+    },
+    "battery": {
+        "states": { "good": 85, "warning": 30, "critical": 20 },
+        "tooltip": false,
+        "format": "<span size='14pt'>{icon}</span>   <span rise='2000'>{capacity}</span>",
+        "format-charging": "<span size='14pt'></span>   <span rise='2000'>{capacity}</span>",
+        "format-plugged": "<span size='14pt'></span>   <span rise='2000'>{capacity}</span>",
+        "format-icons": ["󰁻", "󰁽", "󰁿", "󰂁", "󰁹"]
+    },
+    "tray": {
+        "spacing": 10,
+        "tooltip": false
+    }
+}

@@ -1,0 +1,8 @@
+# tuicr — TUI code review
+theme = "catppuccin-mocha"
+show_file_list = true
+# Periodically re-read the review source (diff/comments; PR refetch in PR mode).
+review_watch_interval_ms = 1000
+# The custom fork is built from source and has no release channel here.
+no_update_check = true
+single_file_view = true

@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+project=${1:-"$script_dir/apps/hdmi-control-tile"}
+out=${2:-"$project/build"}
+sdk=${ANDROID_HOME:-"$HOME/Android/Sdk"}
+tools="$sdk/build-tools/35.0.0"
+platform="$sdk/platforms/android-36/android.jar"
+java_home=${JAVA_HOME_21:-"$HOME/.sdkman/candidates/java/21.0.7-tem"}
+properties="$HOME/.android/hdmi-control-tile.properties"
+
+rm -rf "$out"
+mkdir -p "$out/compiled" "$out/gen" "$out/classes" "$out/dex"
+
+if [[ ! -f $properties ]]; then
+    mkdir -p "$(dirname "$properties")"
+    password=$(openssl rand -hex 24)
+    keystore="$HOME/.android/hdmi-control-tile.jks"
+    "$java_home/bin/keytool" -genkeypair -noprompt \
+        -keystore "$keystore" -storepass "$password" -keypass "$password" \
+        -alias hdmi-control-tile -keyalg RSA -keysize 4096 -validity 10000 \
+        -dname "CN=HDMI Control Tile, OU=Local Android, O=Raja, C=DE"
+    cat > "$properties" <<EOF
+storeFile=$keystore
+alias=hdmi-control-tile
+storePassword=$password
+keyPassword=$password
+EOF
+    chmod 600 "$properties" "$keystore"
+fi
+
+while IFS='=' read -r key value; do
+    case $key in
+        storeFile) store_file=$value ;;
+        alias) key_alias=$value ;;
+        storePassword) store_password=$value ;;
+        keyPassword) key_password=$value ;;
+    esac
+done < "$properties"
+
+"$tools/aapt2" compile --dir "$project/res" -o "$out/compiled/resources.zip"
+"$tools/aapt2" link \
+    -I "$platform" \
+    --manifest "$project/AndroidManifest.xml" \
+    --java "$out/gen" \
+    --min-sdk-version 24 \
+    --target-sdk-version 36 \
+    --version-code 14 \
+    --version-name 3.2 \
+    -o "$out/unsigned.apk" \
+    "$out/compiled/resources.zip"
+
+mapfile -t sources < <(find "$project/src" "$out/gen" -name '*.java' -type f | sort)
+"$java_home/bin/javac" -source 8 -target 8 -bootclasspath "$platform" \
+    -d "$out/classes" "${sources[@]}"
+"$java_home/bin/jar" cf "$out/classes.jar" -C "$out/classes" .
+JAVA_HOME="$java_home" PATH="$java_home/bin:$PATH" \
+    "$tools/d8" --min-api 24 --output "$out/dex" "$out/classes.jar"
+zip -q -j "$out/unsigned.apk" "$out/dex/classes.dex"
+"$tools/zipalign" -f 4 "$out/unsigned.apk" "$out/hdmi-control-tile-aligned.apk"
+JAVA_HOME="$java_home" PATH="$java_home/bin:$PATH" "$tools/apksigner" sign \
+    --ks "$store_file" --ks-key-alias "$key_alias" \
+    --ks-pass "pass:$store_password" --key-pass "pass:$key_password" \
+    --out "$out/hdmi-control-tile.apk" \
+    "$out/hdmi-control-tile-aligned.apk"
+JAVA_HOME="$java_home" PATH="$java_home/bin:$PATH" \
+    "$tools/apksigner" verify --verbose "$out/hdmi-control-tile.apk"
+printf '%s\n' "$out/hdmi-control-tile.apk"

@@ -1,0 +1,27 @@
+
+[Default Applications]
+x-scheme-handler/msteams=teams.desktop
+text/plain=sublime_text.desktop
+application/vnd.ms-publisher=sublime_text.desktop
+x-scheme-handler/http=librewolf.desktop
+x-scheme-handler/https=librewolf.desktop
+x-scheme-handler/chrome=librewolf.desktop
+text/html=librewolf.desktop
+application/x-extension-htm=librewolf.desktop
+application/x-extension-html=librewolf.desktop
+application/x-extension-shtml=librewolf.desktop
+application/xhtml+xml=librewolf.desktop
+application/x-extension-xhtml=librewolf.desktop
+application/x-extension-xht=librewolf.desktop
+
+[Added Associations]
+text/plain=sublime_text.desktop;
+application/vnd.ms-publisher=sublime_text.desktop;
+application/vnd.apple.keynote=sublime_text.desktop;
+application/pkcs12=sublime_text.desktop;
+x-scheme-handler/http=librewolf.desktop;
+x-scheme-handler/https=librewolf.desktop;
+x-scheme-handler/chrome=librewolf.desktop;
+image/svg+xml=userapp-feh %s-4LJT32.desktop;
+
+[Removed Associations]

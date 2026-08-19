@@ -1,0 +1,39 @@
+{
+  "autoEnable": false,
+  "debug": false,
+  "classifierModel": {
+    "model": "openai-codex/gpt-5.6-luna",
+    "thinking": "xhigh"
+  },
+  "phaseBias": 0.5,
+  "models": {
+    "luna": {
+      "model": "openai-codex/gpt-5.6-luna"
+    },
+    "terra": {
+      "model": "openai-codex/gpt-5.6-terra"
+    },
+    "sol": {
+      "model": "openai-codex/gpt-5.6-sol"
+    }
+  },
+  "profiles": {
+    "auto": {
+      "low": {
+        "model": "luna",
+        "thinking": "xhigh",
+        "fallbacks": ["terra"]
+      },
+      "medium": {
+        "model": "terra",
+        "thinking": "high",
+        "fallbacks": ["sol"]
+      },
+      "high": {
+        "model": "sol",
+        "thinking": "xhigh",
+        "fallbacks": ["terra"]
+      }
+    }
+  }
+}

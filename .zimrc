@@ -1,0 +1,11 @@
+# Zimfw module declarations. Run `zimfw install` after changing this file.
+
+# Zsh framework essentials.
+zmodule zimfw/environment
+zmodule zimfw/input
+zmodule zimfw/completion
+zmodule zimfw/git
+
+# Interactive conveniences.
+zmodule zsh-users/zsh-autosuggestions
+zmodule zsh-users/zsh-syntax-highlighting

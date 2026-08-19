@@ -1,0 +1,7 @@
+{
+  "settings": {
+    "idleTimeout": 15,
+    "directTools": false
+  },
+  "mcpServers": {}
+}

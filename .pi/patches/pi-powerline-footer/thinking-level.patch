@@ -1,0 +1,23 @@
+--- a/index.ts
++++ b/index.ts
+@@ -1524,7 +1524,10 @@
+     bashCompletionEngine = new BashCompletionEngine();
+ 
+     getThinkingLevelFn = () => ctx.thinkingLevel ?? "off";
+-    currentThinkingLevel = getThinkingLevelFn();
++    // Let the session branch provide the authoritative startup value. The
++    // captured context can still report `off` before session restoration has
++    // completed, and a non-null value here would mask session history below.
++    currentThinkingLevel = null;
+ 
+     if (ctx.hasUI) {
+       ctx.ui.setStatus("stash", undefined);
+@@ -1633,7 +1636,8 @@
+ 
+   pi.on("thinking_level_select", async (event, ctx) => {
+     currentCtx = ctx;
+-    currentThinkingLevel = getThinkingLevelFn?.() ?? (typeof event.level === "string" ? event.level : null);
++    // Use the event payload: the captured session-start context may be stale.
++    currentThinkingLevel = typeof event.level === "string" ? event.level : getThinkingLevelFn?.() ?? null;
+     requestImmediateStatusRender({ deferDuringTyping: false });
+   });

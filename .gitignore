@@ -1,0 +1,46 @@
+# --- OS / editor cruft ---
+.DS_Store
+*.swp
+*.tmp
+*~
+
+# --- Neovim plugin/runtime state ---
+.config/nvim/lazy-lock.json
+.config/theme-mode
+
+# --- Never commit these: LSP/tool binaries & test sandboxes ---
+# (these previously bloated git history to 110M)
+.config/.repro/
+**/mason/
+.xmonad/
+scripts/extras/
+
+# herdr runtime state (only config.toml is tracked)
+.config/herdr/*.log
+.config/herdr/*.sock
+.config/herdr/session.json
+.config/herdr/release-notes.json
+
+.pi/agent/extensions/*/logs/
+.pi/agent/sessions/
+.pi/agent/powerline-footer/
+.pi/agent/auth.json
+.pi/agent/auth.json.bak
+.pi/agent/settings.json.bak
+.pi/agent/model-modes.log
+.pi/agent/pi-quota-status/
+.pi/agent/models-store.json
+.pi/agent/extensions/permission-gate.ts
+
+# --- Generic backup/secret guards ---
+*.bak
+auth.json
+__pycache__/
+*.pyc
+**/node_modules/
+
+# --- tuxedo personal task data (not config) ---
+/todo.txt
+/done.txt
+/inbox.txt
+/inbox.txt.tuxedo-lock

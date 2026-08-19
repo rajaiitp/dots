@@ -1,0 +1,268 @@
+/* Catppuccin Mocha (mauve accent) — square corners, no border-radius anywhere */
+
+* {
+    font-size: 14px;
+    font-family: "JetBrainsMono Nerd Font Mono";
+    font-weight: bold;
+    border-radius: 0;
+}
+
+window#waybar {
+    background-color: rgba(25, 23, 36, 0.9);
+    /* base @ 90% */
+    color: #cdd6f4;
+    /* text */
+}
+
+tooltip {
+    background: #313244;
+    /* overlay */
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    /* highlight-med */
+}
+
+#clock {
+    font-size: 14px;
+    padding: 0px 10px;
+    color: #cdd6f4;
+    /* text — calm, always readable */
+    margin: 0px;
+}
+
+#idle_inhibitor {
+    padding: 0px 8px;
+    margin: 0px 12px 0px 0px;
+    /* gap from the right screen edge */
+    color: #6c7086;
+    /* muted — off/idle allowed */
+}
+
+#idle_inhibitor.activated {
+    color: #f9e2af;
+    /* gold — caffeine ON */
+}
+
+#workspaces {
+    padding: 0px 5px;
+    margin-left: 60px;
+    /* generous gap from the left screen edge */
+}
+
+#workspaces button {
+    all: unset;
+    padding: 0px 14px;
+    /* roomier workspace titles */
+    color: #f38ba8;
+    /* text */
+    margin: 0px 3px;
+    /* small gap between chips */
+}
+
+#workspaces button.empty {
+    color: #6c7086;
+    /* muted */
+}
+
+#workspaces button:hover {
+    background: #45475a;
+    /* highlight-med */
+}
+
+#workspaces button.active,
+#workspaces button.active:hover,
+#workspaces button.focused.active {
+    color: #1e1e2e;
+    /* base — dark text for contrast on the highlight */
+    background: #cba6f7;
+    /* mauve — accent highlight for the active workspace */
+}
+
+#workspaces button.urgent {
+    background-color: #f38ba8;
+    /* red — urgent */
+    color: #1e1e2e;
+    /* base for contrast */
+}
+
+/* Battery state ladder:
+ *   full     → muted   (topped off, no attention needed)
+ *   good     → foam    (≥85%, plenty)
+ *   default  → rose    (30–85%, neutral)
+ *   warning  → gold    (<30%, attention)
+ *   critical → love    (<20%, urgent, soft pulse)
+ *   charging → iris    (any level while plugged in, overrides)
+ */
+#battery {
+    padding: 0px 10px;
+    /* centered module — symmetric padding */
+    color: #eba0ac;
+    /* rose — default (30–85%) */
+    font-size: 14px;
+    margin: 0px;
+}
+
+#battery.good:not(.charging) {
+    color: #94e2d5;
+    /* foam — healthy (≥85%) */
+}
+
+#battery.full:not(.charging) {
+    color: #6c7086;
+    /* muted — topped off */
+}
+
+#battery.warning:not(.charging) {
+    color: #f9e2af;
+    /* gold — warning (<30%) */
+}
+
+#battery.critical:not(.charging) {
+    color: #f38ba8;
+    /* love — critical (<20%) */
+    animation-name: pulse;
+    animation-duration: 1.2s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+#battery.charging,
+#battery.plugged {
+    color: #cba6f7;
+    /* iris — plugged in / charging (any level) */
+}
+
+@keyframes pulse {
+    from {
+        color: #f38ba8;
+    }
+
+    /* love */
+    to {
+        color: #eba0ac;
+    }
+
+    /* rose — softer pulse target */
+}
+
+/* Audio: switcher icon (#custom-audiosink) = pick output device.
+   Volume value (#pulseaudio) = click to toggle mute. Separate entries. */
+#pulseaudio {
+    font-size: 14px;
+    padding: 0px 10px;
+    color: #94e2d5;
+    /* foam */
+    margin: 0px 6px;
+}
+
+/* Active local media: click to play/pause. */
+#custom-media {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #a6e3a1;
+}
+#custom-media.paused {
+    color: #cba6f7;
+}
+#custom-media.stopped,
+#custom-media.inactive {
+    color: #6c7086;
+}
+#custom-media:hover {
+    color: #1e1e2e;
+    background: #cba6f7;
+}
+
+/* Combined display control: mode + resolution (two-step submenu) */
+#custom-display {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #cba6f7;
+    /* iris */
+}
+
+/* Hyprsunset smooth-ramp status/control. */
+#custom-hyprsunset {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #f9e2af;
+}
+
+#custom-hyprsunset.off {
+    color: #6c7086;
+}
+
+#custom-hyprsunset.override {
+    color: #cba6f7;
+}
+
+/* Audio-output device picker (Speaker / HDMI / BT / …) */
+#custom-audiosink {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #94e2d5;
+    /* foam */
+}
+
+/* Google Home popup launcher. */
+#custom-google-home {
+    font-size: 14px;
+    font-weight: 900;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #cba6f7;
+}
+#custom-google-home:hover {
+    color: #1e1e2e;
+    background: #cba6f7;
+}
+
+/* Surfshark VPN: click = switch location, right-click = disconnect.
+   off = muted, on (connected) = gold. */
+#custom-surfshark {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #6c7086;
+    /* muted (off) */
+}
+#custom-surfshark.on {
+    color: #f9e2af;
+    /* gold (connected) */
+}
+
+/* Tailscale mesh VPN: click = toggle up/down.
+   off = muted, on (up) = pine/green. */
+#custom-tailscale {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #6c7086;
+    /* muted (off) */
+}
+#custom-tailscale.on {
+    color: #74c7ec;
+    /* pine (up) */
+}
+
+/* Firewall: muted with only protected defaults, red when custom ports are open. */
+#custom-firewall {
+    font-size: 14px;
+    padding: 0px 10px;
+    margin: 0px 6px;
+    color: #6c7086;
+}
+#custom-firewall.on {
+    color: #f38ba8;
+}
+
+#tray {
+    padding: 0px 10px;
+    font-size: 14px;
+    margin: 0px 6px;
+}

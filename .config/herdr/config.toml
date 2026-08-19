@@ -1,0 +1,107 @@
+# wezmux/WezTerm-inspired Herdr workflow.
+# Herdr is the mux; this file only defines its presentation and key policy.
+onboarding = false
+
+[theme]
+name = "catppuccin"
+
+[terminal]
+new_cwd = "follow"
+shell_mode = "auto"
+
+[update]
+channel = "stable"
+version_check = true
+manifest_check = true
+
+[keys]
+# Match the existing WezTerm leader.
+prefix = "ctrl+b"
+
+# Direct pane navigation, matching the existing WezTerm keymap.
+focus_pane_left = "ctrl+h"
+focus_pane_down = "ctrl+j"
+focus_pane_up = "ctrl+k"
+focus_pane_right = "ctrl+l"
+
+# Direct workspace/tab access.
+workspace_picker = "ctrl+shift+p"
+# Direct Ctrl+1..9 tab switching uses Herdr's indexed shortcut parser.
+switch_tab = ""
+switch_workspace = "prefix+shift+1..9"
+
+# Prefix workflow: Ctrl-B followed by the action key.
+help = "prefix+?"
+settings = "prefix+s"
+detach = "prefix+q"
+reload_config = "prefix+shift+r"
+open_notification_target = "prefix+o"
+new_workspace = "prefix+shift+n"
+new_worktree = "prefix+shift+g"
+open_worktree = ""
+remove_worktree = ""
+rename_workspace = "prefix+shift+w"
+close_workspace = "prefix+shift+d"
+previous_workspace = "prefix+shift+left"
+next_workspace = "prefix+shift+right"
+new_tab = "prefix+c"
+# The Sesh picker uses prefix+shift+t; rename tabs with prefix+shift+comma.
+rename_tab = "prefix+shift+,"
+previous_tab = "prefix+p"
+next_tab = "prefix+n"
+# Cycle directly between Pi/agent panes without using the workspace tabs.
+previous_agent = "ctrl+shift+tab"
+next_agent = "ctrl+tab"
+close_tab = "prefix+shift+x"
+
+# Navigation-mode keys remain aligned with the direct Ctrl navigation.
+navigate_pane_left = "h"
+navigate_pane_down = "j"
+navigate_pane_up = "k"
+navigate_pane_right = "l"
+rename_pane = "prefix+shift+p"
+edit_scrollback = "prefix+e"
+split_vertical = "prefix+v"
+split_horizontal = "prefix+minus"
+close_pane = "prefix+x"
+zoom = "prefix+z"
+resize_mode = "prefix+r"
+toggle_sidebar = "prefix+b"
+
+[keys.indexed]
+tabs = "ctrl"
+
+# Herdr Sesh workspace picker and previous-workspace action.
+[[keys.command]]
+key = "prefix+shift+t"
+type = "plugin_action"
+command = "fullerzz.sesh.open-picker"
+description = "Open Sesh workspace picker"
+
+[[keys.command]]
+key = "prefix+shift+b"
+type = "plugin_action"
+command = "fullerzz.sesh.last"
+description = "Switch to previous Sesh workspace"
+
+[ui]
+mouse_capture = true
+pane_borders = true
+pane_gaps = true
+show_agent_labels_on_pane_borders = true
+hide_tab_bar_when_single_tab = false
+confirm_close = true
+prompt_new_tab_name = true
+
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[session]
+resume_agents_on_restore = true
+
+[experimental]
+pane_history = true
+
+[advanced]
+scrollback_limit_bytes = 10000000

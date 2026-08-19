@@ -1,0 +1,62 @@
+# Reference: https://github.com/i3/i3/blob/next/etc/config
+
+start-at-login = true
+
+enable-normalization-flatten-containers = false
+enable-normalization-opposite-orientation-for-nested-containers = false
+
+[workspace-to-monitor-force-assignment]
+"1" = 1
+"2" = 1
+"3" = 1
+"4" = 'built-in'
+
+[gaps]
+inner.horizontal = 5
+inner.vertical =   5
+outer.left =       5
+outer.top =        5
+outer.right =      5
+outer.bottom =     5
+
+# Window rules
+[[on-window-detected]]
+if.app-id = 'com.neovide.neovide'
+run = 'layout tiling'
+
+# The standalone custom WezTerm build has no app bundle ID, so match its app name.
+[[on-window-detected]]
+if.app-name-regex-substring = '^wezterm-gui$'
+run = 'layout tiling'
+
+[[on-window-detected]]
+if.window-title-regex-substring = 'Figure'
+run = 'layout floating'
+
+[mode.main.binding]
+
+cmd-shift-b = 'exec-and-forget "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --single-instance --profile-directory="Default"'
+cmd-d = 'exec-and-forget open -a "Alfred 5.app"'
+# Use the custom WezTerm build; it contains the native workspace/pane bindings.
+# Reuse its existing GUI client so the persistent mux does not reject a duplicate
+# owner for the active workspace.
+cmd-enter = 'exec-and-forget /Users/raja.selvarajan/.local/bin/wezterm start'
+cmd-shift-s = 'exec-and-forget open -a "Screenshot"'
+
+cmd-space = 'fullscreen'
+cmd-shift-space = 'layout floating tiling'
+# ctrl-tab = 'focus dfs-next --boundaries-action wrap-around-the-workspace'
+
+
+cmd-1 = 'workspace 1'
+cmd-2 = 'workspace 2'
+cmd-3 = 'workspace 3'
+cmd-4 = 'workspace 4'
+
+cmd-shift-1 = [ 'move-node-to-workspace 1' ,'workspace 1' ]
+cmd-shift-2 = [ 'move-node-to-workspace 2' ,'workspace 2' ]
+cmd-shift-3 = [ 'move-node-to-workspace 3' ,'workspace 3' ]
+cmd-shift-4 = [ 'move-node-to-workspace 4' ,'workspace 4' ]
+cmd-shift-r = 'reload-config'
+
+

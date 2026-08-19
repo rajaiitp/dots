@@ -1,0 +1,31 @@
+#!/bin/sh
+# Pi's bash tool prepends ~/.pi/agent/bin to PATH. Keep the rewritten
+# `hypa -c ...` commands executable even when the parent Pi process was
+# launched with a minimal PATH.
+set -eu
+
+root="${HOME}/.pi/agent/npm/node_modules/@hypabolic"
+case "$(uname -s):$(uname -m)" in
+    Darwin:arm64)  package="hypa-darwin-arm64" ;;
+    Darwin:x86_64) package="hypa-darwin-x64" ;;
+    Linux:aarch64) package="hypa-linux-arm64" ;;
+    Linux:x86_64)  package="hypa-linux-x64" ;;
+    *)             package="" ;;
+esac
+
+if [ -n "$package" ] && [ -x "$root/$package/bin/hypa" ]; then
+    exec "$root/$package/bin/hypa" "$@"
+fi
+
+# Fall back to the bundled JavaScript launcher when the native optional
+# dependency is unavailable. Prefer an absolute runtime because this script
+# is specifically used when PATH may be incomplete.
+js_bin="$HOME/.pi/agent/npm/node_modules/@hypabolic/hypa/bin.js"
+for runtime in "${HYPA_NODE:-}" /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node; do
+    if [ -n "$runtime" ] && [ -x "$runtime" ] && [ -f "$js_bin" ]; then
+        exec "$runtime" "$js_bin" "$@"
+    fi
+done
+
+printf '%s\n' 'hypa: no native binary or JavaScript runtime is available' >&2
+exit 127

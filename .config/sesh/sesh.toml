@@ -1,0 +1,32 @@
+#:schema https://github.com/fullerzz/herdr-plugin-sesh/raw/main/sesh.schema.json
+
+# Herdr is the session authority; this file only defines picker behavior and
+# startup commands for newly created worktree workspaces.
+cache = false
+strict_mode = true
+sort_order = ["herdr", "config", "zoxide", "dir"]
+dir_length = 1
+separator_aware = true
+
+[tui]
+show_icons = true
+prompt = "Sesh> "
+placeholder = "Search Herdr workspaces"
+default_sort = "recent"
+show_last_workspace = true
+show_last_workspace_path = true
+
+[default_session]
+startup_command = "pi"
+preview_command = "eza --icons=always -la {}"
+
+# New worktree workspaces under ~/Dev start Pi in the root pane and tuicr in a
+# named Herdr tab. Existing workspaces are focused without rerunning commands.
+[[window]]
+name = "tuicr"
+startup_script = "tuicr track"
+
+[[wildcard]]
+pattern = "~/Dev/**"
+startup_command = "pi"
+windows = ["tuicr"]

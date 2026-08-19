@@ -1,0 +1,9 @@
+delay=2
+warpX=0.5
+warpY=0.5
+scale=2.0
+altTaskSwitcher=false
+ignoreSpaceChanged=false
+disableKey=control
+mouseDelta=0.1
+focusDelay=0.0
