@@ -1,5 +1,5 @@
 # tuicr — TUI code review
-theme = "catppuccin-mocha"
+theme = "gruvbox-dark"
 show_file_list = true
 # Periodically re-read the review source (diff/comments; PR refetch in PR mode).
 review_watch_interval_ms = 1000

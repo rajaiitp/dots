@@ -13,7 +13,7 @@ gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, GLib, Gtk  # noqa: E402
 
-SERVICE = "hyprsunset-ramp.service"
+RAMP_MANAGER = Path.home() / ".config/hypr/scripts/hyprsunset-ramp.sh"
 RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
 STATUS_FILE = RUNTIME_DIR / "hyprsunset-ramp.status"
 OVERRIDE_FILE = RUNTIME_DIR / "hyprsunset-ramp.override"
@@ -34,10 +34,8 @@ button:hover { background: #45475a; }
 """
 
 
-def service_active() -> bool:
-    return subprocess.run(
-        ["systemctl", "--user", "is-active", "--quiet", SERVICE], check=False
-    ).returncode == 0
+def ramp_active() -> bool:
+    return subprocess.run([str(RAMP_MANAGER), "status"], check=False).returncode == 0
 
 
 def current_temperature() -> str:
@@ -137,7 +135,7 @@ class HyprsunsetPopup(Gtk.ApplicationWindow):
 
     def _restart(self, _button: Gtk.Button) -> None:
         clear_override()
-        subprocess.Popen(["systemctl", "--user", "restart", SERVICE], start_new_session=True)
+        subprocess.Popen([str(RAMP_MANAGER), "restart"], start_new_session=True)
         GLib.timeout_add(500, self._refresh_once)
 
     def _on_temperature_changed(self, scale: Gtk.Scale) -> None:

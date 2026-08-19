@@ -3,7 +3,7 @@
 onboarding = false
 
 [theme]
-name = "catppuccin"
+name = "gruvbox"
 
 [terminal]
 new_cwd = "follow"
@@ -70,6 +70,13 @@ toggle_sidebar = "prefix+b"
 
 [keys.indexed]
 tabs = "ctrl"
+
+# Ctrl-N toggles a dedicated Tuxedo tab in the focused workspace.
+[[keys.command]]
+key = "ctrl+n"
+type = "shell"
+command = "~/.config/herdr/scripts/toggle-tuxedo-tab.sh"
+description = "Toggle Tuxedo notes tab"
 
 # Herdr Sesh workspace picker and previous-workspace action.
 [[keys.command]]

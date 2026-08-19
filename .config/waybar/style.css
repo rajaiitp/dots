@@ -1,4 +1,4 @@
-/* Catppuccin Mocha (mauve accent) — square corners, no border-radius anywhere */
+/* Gruvbox Dark (orange accent) — square corners, no border-radius anywhere */
 
 * {
     font-size: 14px;
@@ -10,22 +10,22 @@
 window#waybar {
     background-color: rgba(25, 23, 36, 0.9);
     /* base @ 90% */
-    color: #cdd6f4;
+    color: #ebdbb2;
     /* text */
 }
 
 tooltip {
-    background: #313244;
+    background: #3c3836;
     /* overlay */
-    color: #cdd6f4;
-    border: 1px solid #45475a;
+    color: #ebdbb2;
+    border: 1px solid #504945;
     /* highlight-med */
 }
 
 #clock {
     font-size: 14px;
     padding: 0px 10px;
-    color: #cdd6f4;
+    color: #ebdbb2;
     /* text — calm, always readable */
     margin: 0px;
 }
@@ -34,12 +34,12 @@ tooltip {
     padding: 0px 8px;
     margin: 0px 12px 0px 0px;
     /* gap from the right screen edge */
-    color: #6c7086;
+    color: #928374;
     /* muted — off/idle allowed */
 }
 
 #idle_inhibitor.activated {
-    color: #f9e2af;
+    color: #fabd2f;
     /* gold — caffeine ON */
 }
 
@@ -53,35 +53,35 @@ tooltip {
     all: unset;
     padding: 0px 14px;
     /* roomier workspace titles */
-    color: #f38ba8;
+    color: #fb4934;
     /* text */
     margin: 0px 3px;
     /* small gap between chips */
 }
 
 #workspaces button.empty {
-    color: #6c7086;
+    color: #928374;
     /* muted */
 }
 
 #workspaces button:hover {
-    background: #45475a;
+    background: #504945;
     /* highlight-med */
 }
 
 #workspaces button.active,
 #workspaces button.active:hover,
 #workspaces button.focused.active {
-    color: #1e1e2e;
+    color: #282828;
     /* base — dark text for contrast on the highlight */
-    background: #cba6f7;
+    background: #fe8019;
     /* mauve — accent highlight for the active workspace */
 }
 
 #workspaces button.urgent {
-    background-color: #f38ba8;
+    background-color: #fb4934;
     /* red — urgent */
-    color: #1e1e2e;
+    color: #282828;
     /* base for contrast */
 }
 
@@ -96,29 +96,29 @@ tooltip {
 #battery {
     padding: 0px 10px;
     /* centered module — symmetric padding */
-    color: #eba0ac;
+    color: #d3869b;
     /* rose — default (30–85%) */
     font-size: 14px;
     margin: 0px;
 }
 
 #battery.good:not(.charging) {
-    color: #94e2d5;
+    color: #8ec07c;
     /* foam — healthy (≥85%) */
 }
 
 #battery.full:not(.charging) {
-    color: #6c7086;
+    color: #928374;
     /* muted — topped off */
 }
 
 #battery.warning:not(.charging) {
-    color: #f9e2af;
+    color: #fabd2f;
     /* gold — warning (<30%) */
 }
 
 #battery.critical:not(.charging) {
-    color: #f38ba8;
+    color: #fb4934;
     /* love — critical (<20%) */
     animation-name: pulse;
     animation-duration: 1.2s;
@@ -129,18 +129,18 @@ tooltip {
 
 #battery.charging,
 #battery.plugged {
-    color: #cba6f7;
+    color: #fe8019;
     /* iris — plugged in / charging (any level) */
 }
 
 @keyframes pulse {
     from {
-        color: #f38ba8;
+        color: #fb4934;
     }
 
     /* love */
     to {
-        color: #eba0ac;
+        color: #d3869b;
     }
 
     /* rose — softer pulse target */
@@ -151,7 +151,7 @@ tooltip {
 #pulseaudio {
     font-size: 14px;
     padding: 0px 10px;
-    color: #94e2d5;
+    color: #8ec07c;
     /* foam */
     margin: 0px 6px;
 }
@@ -161,18 +161,18 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #a6e3a1;
+    color: #b8bb26;
 }
 #custom-media.paused {
-    color: #cba6f7;
+    color: #fe8019;
 }
 #custom-media.stopped,
 #custom-media.inactive {
-    color: #6c7086;
+    color: #928374;
 }
 #custom-media:hover {
-    color: #1e1e2e;
-    background: #cba6f7;
+    color: #282828;
+    background: #fe8019;
 }
 
 /* Combined display control: mode + resolution (two-step submenu) */
@@ -180,7 +180,7 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #cba6f7;
+    color: #fe8019;
     /* iris */
 }
 
@@ -189,15 +189,15 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #f9e2af;
+    color: #fabd2f;
 }
 
 #custom-hyprsunset.off {
-    color: #6c7086;
+    color: #928374;
 }
 
 #custom-hyprsunset.override {
-    color: #cba6f7;
+    color: #fe8019;
 }
 
 /* Audio-output device picker (Speaker / HDMI / BT / …) */
@@ -205,7 +205,7 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #94e2d5;
+    color: #8ec07c;
     /* foam */
 }
 
@@ -215,11 +215,11 @@ tooltip {
     font-weight: 900;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #cba6f7;
+    color: #fe8019;
 }
 #custom-google-home:hover {
-    color: #1e1e2e;
-    background: #cba6f7;
+    color: #282828;
+    background: #fe8019;
 }
 
 /* Surfshark VPN: click = switch location, right-click = disconnect.
@@ -228,11 +228,11 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #6c7086;
+    color: #928374;
     /* muted (off) */
 }
 #custom-surfshark.on {
-    color: #f9e2af;
+    color: #fabd2f;
     /* gold (connected) */
 }
 
@@ -242,11 +242,11 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #6c7086;
+    color: #928374;
     /* muted (off) */
 }
 #custom-tailscale.on {
-    color: #74c7ec;
+    color: #83a598;
     /* pine (up) */
 }
 
@@ -255,10 +255,10 @@ tooltip {
     font-size: 14px;
     padding: 0px 10px;
     margin: 0px 6px;
-    color: #6c7086;
+    color: #928374;
 }
 #custom-firewall.on {
-    color: #f38ba8;
+    color: #fb4934;
 }
 
 #tray {

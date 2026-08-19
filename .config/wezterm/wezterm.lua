@@ -149,10 +149,19 @@ config.mouse_bindings = {
     },
 }
 
--- Keep only the useful outer-terminal basics. No WezTerm tab/workspace
--- actions are bound here; Herdr receives its own keymap unchanged.
+-- Keep only the useful outer-terminal basics. Tuxedo is an exception:
+-- Ctrl-N must work even when the focused Herdr client does not reload its
+-- custom keymap, so WezTerm invokes the Herdr tab toggle directly.
 local act = wezterm.action
+local tuxedo_toggle = wezterm.home_dir .. "/.config/herdr/scripts/toggle-tuxedo-tab.sh"
 config.keys = {
+    {
+        key = "n",
+        mods = "CTRL",
+        action = wezterm.action_callback(function()
+            wezterm.background_child_process({ tuxedo_toggle })
+        end),
+    },
     { key = "c", mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
     { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
     { key = "f", mods = "CTRL|SHIFT", action = act.Search("CurrentSelectionOrEmptyString") },

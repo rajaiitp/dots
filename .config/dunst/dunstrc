@@ -1,9 +1,9 @@
-# Dunst — Catppuccin Mocha (mauve accent) — square corners
+# Dunst — Gruvbox Dark (orange accent) — square corners
 # Only overrides colors + corners; everything else inherits from /etc/dunst/dunstrc
 
 [global]
     frame_width = 1
-    frame_color = "#45475a"                    # surface1
+    frame_color = "#504945"                    # surface1
     corner_radius = 0
     separator_color = frame
     font = "JetBrainsMono Nerd Font Mono 10"
@@ -19,19 +19,19 @@
     icon_corner_radius = 0
 
 [urgency_low]
-    background = "#181825"                     # surface
-    foreground = "#a6adc8"                     # subtle
-    frame_color = "#45475a"                    # highlight-med
+    background = "#1d2021"                     # surface
+    foreground = "#a89984"                     # subtle
+    frame_color = "#504945"                    # highlight-med
     timeout = 5
 
 [urgency_normal]
-    background = "#313244"                     # overlay
-    foreground = "#cdd6f4"                     # text
-    frame_color = "#cba6f7"                    # mauve (accent)
+    background = "#3c3836"                     # overlay
+    foreground = "#ebdbb2"                     # text
+    frame_color = "#fe8019"                    # mauve (accent)
     timeout = 8
 
 [urgency_critical]
-    background = "#313244"                     # overlay
-    foreground = "#cdd6f4"                     # text
-    frame_color = "#f38ba8"                    # love
+    background = "#3c3836"                     # overlay
+    foreground = "#ebdbb2"                     # text
+    frame_color = "#fb4934"                    # love
     timeout = 60

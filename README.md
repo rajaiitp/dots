@@ -46,7 +46,7 @@ The install script is **idempotent** — safe to re-run any time to reconcile dr
 │
 ├── .config/                ← whole-dir symlinks into ~/.config/
 │   ├── aerospace/
-│   ├── dunst/              ← Rose Pine notifications
+│   ├── dunst/              ← Gruvbox Dark notifications
 │   ├── git/
 │   ├── hunk/               ← git-hunk review tool
 │   ├── hypr/               ← Hyprland + hyprlock + hyprpaper + hypridle
@@ -55,7 +55,7 @@ The install script is **idempotent** — safe to re-run any time to reconcile dr
 │   ├── nvim/               ← lazy.nvim managed
 │   ├── scripts/
 │   ├── tuicr/              ← custom review-TUI configuration
-│   ├── waybar/             ← Rose Pine palette
+│   ├── waybar/             ← Gruvbox Dark palette
 │   ├── wezterm/            ← kitty keyboard protocol on
 │   ├── herdr/config.toml   ← single-file symlink (logs/state stay outside git)
 │   └── sesh/sesh.toml      ← Herdr Sesh workspace/session configuration
@@ -70,21 +70,21 @@ The install script is **idempotent** — safe to re-run any time to reconcile dr
 │       ├── extensions/
 │       └── skills/
 │
-└── patches/                ← patches and source builds for third-party tools
-    └── tuicr/              ← custom rajaiitp/tuicr build and compatibility patches
+└── patches/                ← source-build helpers for third-party tools
+    └── tuicr/              ← custom rajaiitp/tuicr build
         └── rebuild.sh      ← install rajaiitp/tuicr into ~/.local/bin
 ```
 
 ## Themes & aesthetics
 
-Everything is **Rose Pine (main / dark)** with **sharp corners** across the stack:
+Everything is **Gruvbox Dark** with **sharp corners** across the stack:
 
 | Surface | Where |
 |---|---|
-| Hyprland window borders | active `foam #9ccfd8` / inactive `muted #6e6a86`, `rounding=0` |
+| Hyprland window borders | active `orange #fe8019` / inactive `gray #504945`, `rounding=0` |
 | Hyprlock | iris outline, surface fill, rose time label, `rounding=0` |
-| Waybar | full palette rewrite; semantic battery state ladder; no border-radius |
-| Dunst | overlay bg, iris (normal) / love (critical) frames, `corner_radius=0` |
+| Waybar | Gruvbox Dark palette; semantic battery state ladder; no border-radius |
+| Dunst | Gruvbox Dark backgrounds, orange (normal) / red (critical) frames, `corner_radius=0` |
 | Nvim | see `.config/nvim/lua/plugins/theme.lua` |
 | Wezterm | see `.config/wezterm/wezterm.lua` |
 
@@ -143,8 +143,7 @@ the fork under `.pi/agent/skills/tuicr/`.
 - `/term` or `ctrl+backtick` → open the persistent 30%-height terminal overlay
 - `ctrl+q` → close the terminal while preserving its shell state
 
-`.pi/install.sh` installs extension dependencies and reapplies the tracked Pi
-extension patches.
+`.pi/install.sh` installs the declared Pi extension dependencies.
 
 ## What this repo intentionally does NOT track
 
