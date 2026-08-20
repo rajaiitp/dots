@@ -45,7 +45,15 @@
  	}
 --- a/extensions/herdr-pane-actions.ts
 +++ b/extensions/herdr-pane-actions.ts
-@@ -66,7 +66,17 @@
+@@ -12,7 +12,6 @@
+ 	formatReadOutput,
+ 	formatStatusList,
+ 	rejectUnexpectedParams,
+-	sleep,
+ 	sleepWithSignal,
+ 	throwIfAborted,
+ } from "./herdr-format.js";
+@@ -66,9 +65,18 @@
  			if (!command) throw new Error("'command' is required for run");
  
  			const targetPane = await runtime.requirePaneRef(paneRef);
@@ -61,9 +69,11 @@
 +				initialSequence,
 +			});
  
- 			await sleep(800, runtime.signal);
+-			await sleep(800, runtime.signal);
  			const initialOutput = await runtime.client.readPane(
-@@ -92,6 +102,7 @@
+ 				targetPane.pane.pane_id,
+ 				{
+@@ -92,6 +100,7 @@
  					pane: paneLabel,
  					paneId: targetPane.pane.pane_id,
  					command,
@@ -104,16 +114,17 @@
  
  	pi.registerTool({
  		name: "herdr",
-@@ -28,7 +41,7 @@
+@@ -28,7 +41,8 @@
  			"Herdr-native pane orchestration for long-running workflows. " +
  			"Actions: list panes, manage workspaces and tabs, split existing panes, submit lines atomically in existing panes, read output, watch readiness, wait for one or more agent panes to reach target statuses, send raw text or keys, focus contexts, and stop panes.",
  		promptGuidelines: [
 -			"Use `herdr` run for long-running processes in other panes instead of `bash`.",
 +			"Use `herdr` run for commands in other panes instead of `bash`; completion is delivered automatically as a follow-up when the target shell reaches its prompt again.",
++			"After `herdr` run, do not run `sleep`, use polling loops, or wait with `bash`; rely on the completion follow-up, and read the pane only after that callback or when an explicit snapshot is needed.",
  			"When you want to submit a line or prompt to a pane, prefer `run` over `send` + `Enter` so text and Enter happen atomically.",
  			"Use `send` only for low-level literal text or key injection when you do not want command-style submission semantics.",
  			"Preserve the current UI focus by default. Do not change workspace or tab focus unless the user explicitly asks or the workflow truly requires visible interaction there.",
-@@ -49,7 +62,16 @@
+@@ -49,7 +63,16 @@
  			const currentPane = await client.getCurrentPaneInfo(signal);
  			const currentPaneId = currentPane.pane_id;
  			const currentWorkspaceId = currentPane.workspace_id;
