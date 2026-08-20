@@ -2,8 +2,8 @@
 # ==============================================================================
 # Dotfiles setup script
 # ------------------------------------------------------------------------------
-# One-shot bootstrap for a fresh machine (Arch primary target; macOS fallback
-# for the cross-platform bits). Idempotent — safe to re-run.
+# One-shot bootstrap for a fresh machine (Arch and Debian/Ubuntu Linux, with a
+# macOS fallback for the cross-platform bits). Idempotent — safe to re-run.
 #
 #   ./install.sh              # everything, interactive on conflicts
 #   ./install.sh --dry-run    # print what would happen, do nothing destructive
@@ -15,21 +15,27 @@
 #   2. Symlink tracked configs into $HOME / $HOME/.config (done first so a
 #      later package/install failure never leaves configs unlinked)
 #   3. Per-file symlinks (herdr's config.toml — logs/sockets stay outside git)
-#   4. Install packages (pacman + AUR on Arch, brew on macOS); bootstrap yay
+#   4. Install packages (pacman + AUR on Arch, APT on Debian/Ubuntu, or brew
+#      on macOS); bootstrap yay when needed
 #   5. Install language toolchains (rustup, node/bun, uv)
 #   6. Delegate to .pi/install.sh for the pi agent
-#   7. Build and install the custom tuicr fork
-#   8. Install Zimfw and set Zsh as the default shell (with confirmation)
-#   9. Enable user systemd services (Arch only)
-#  10. Print a summary of anything that needs manual follow-up
+#   7. Install the Herdr Sesh plugin and Pi integration
+#   8. Build and install the custom tuicr fork
+#   9. Install Zimfw and set Zsh as the default shell (with confirmation)
+#  10. Enable user systemd services (Arch only)
+#  11. Print a summary of anything that needs manual follow-up
 # ==============================================================================
 
-set -euo pipefail
+# Keep going after an independent command fails so later setup stages (notably
+# Herdr) still run. `run` records failures and main exits non-zero after the
+# summary, rather than aborting halfway through the bootstrap.
+set -uo pipefail
 
 # ---------------------------------------------------------------- args + flags
 DRY_RUN=0
 NO_PKGS=0
 ASSUME_YES=0
+declare -a FAILED_COMMANDS=()
 for arg in "$@"; do
     case "$arg" in
         --dry-run) DRY_RUN=1 ;;
@@ -52,9 +58,15 @@ warn()  { printf "%s\n" "${YELLOW}!${RESET} $*"; }
 err()   { printf "%s\n" "${RED}✗${RESET} $*" >&2; }
 step()  { printf "\n%s\n" "${BOLD}${BLUE}== $* ==${RESET}"; }
 run() {
-    # print + run (or just print on --dry-run)
+    # Print + run (or just print on --dry-run). Failures are collected so one
+    # unavailable package or network hiccup cannot prevent later stages.
     printf "%s\n" "${DIM}\$ $*${RESET}"
-    [[ $DRY_RUN -eq 1 ]] || eval "$@"
+    [[ $DRY_RUN -eq 1 ]] && return 0
+    if ! eval "$@"; then
+        err "command failed (continuing): $*"
+        FAILED_COMMANDS+=("$*")
+        return 1
+    fi
 }
 ask_yn() {
     # ask_yn "Prompt?" [default_y|default_n]
@@ -74,8 +86,10 @@ if [[ -f /etc/arch-release ]]; then
     OS=arch
 elif [[ $(uname) == Darwin ]]; then
     OS=macos
+elif command -v apt-get &>/dev/null; then
+    OS=apt
 else
-    err "unsupported OS. This script targets Arch Linux and macOS."
+    err "unsupported OS. This script targets Arch, Debian/Ubuntu, and macOS."
     exit 1
 fi
 say "detected OS: ${BOLD}$OS${RESET}, dotfiles at ${BOLD}$DOTS${RESET}"
@@ -121,17 +135,33 @@ declare -a NPM_GLOBALS=(
     hunkdiff
     # herdr's ecosystem tools would go here if any
 )
+# Debian/Ubuntu package names. Entries missing from the configured APT sources
+# are skipped individually, allowing the rest of the setup to proceed.
+declare -a PKGS_APT=(
+    zsh neovim git
+    fzf ripgrep fd-find bat jq eza starship
+    openssh-client
+    imagemagick ffmpeg
+    network-manager pipewire wireplumber pavucontrol
+    fonts-jetbrains-mono fonts-noto fonts-noto-color-emoji
+    libgtk-3-0 libgtk-4-1 python3-gi adwaita-icon-theme
+    nodejs npm
+    hyprland hyprlock hyprpaper hypridle
+    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+    waybar dunst fuzzel grim slurp hyprshot swappy
+    wl-clipboard wl-clip-persist hyprsunset policykit-1
+    pcmanfm gvfs
+)
 # macOS gets only the cross-platform pieces
 declare -a PKGS_MAC=(
     zsh neovim ghostty git
     fzf ripgrep fd bat jq eza starship
     openssh
     imagemagick ffmpeg
-    # node/npm needed to build pi extensions (node-pty) in .pi/install.sh;
-    # on Arch this comes from the nodejs pacman package in install_toolchains.
+    # node/npm needed to build pi extensions (node-pty) in .pi/install.sh.
     node
-    # tuxedo: todo.txt TUI (aliased `notes`). Homebrew has a formula; on Arch
-    # it's installed from git via cargo in install_toolchains.
+    # tuxedo: todo.txt TUI (aliased `notes`). Homebrew has a formula; on Linux
+    # it is installed from git via cargo in install_toolchains.
     tuxedo
 )
 # macOS fonts installed as casks (Nerd Font needed for the pi powerline footer
@@ -180,6 +210,33 @@ install_packages_arch() {
     fi
 }
 
+install_packages_apt() {
+    say "refreshing APT package index"
+    run "sudo apt-get update"
+
+    say "installing APT packages"
+    # Query packages individually before a batch install: optional Wayland
+    # components vary by Debian/Ubuntu release and must not block core tools.
+    local missing=() unavailable=()
+    for p in "${PKGS_APT[@]}"; do
+        if dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null | grep -qx installed; then
+            continue
+        elif apt-cache show "$p" &>/dev/null; then
+            missing+=("$p")
+        else
+            unavailable+=("$p")
+        fi
+    done
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        run "sudo apt-get install --yes --no-install-recommends ${missing[*]}"
+    else
+        ok "all available APT packages already installed"
+    fi
+    if [[ ${#unavailable[@]} -gt 0 ]]; then
+        warn "not available from the configured APT sources (skipping): ${unavailable[*]}"
+    fi
+}
+
 install_packages_mac() {
     if ! command -v brew &>/dev/null; then
         say "bootstrapping Homebrew"
@@ -187,7 +244,7 @@ install_packages_mac() {
     fi
     say "installing brew packages"
     # Install one-by-one so a single unavailable/broken formula just warns
-    # instead of aborting the whole run under `set -e`.
+    # instead of preventing the remaining setup.
     local failed=()
     for p in "${PKGS_MAC[@]}"; do
         if ! run "brew install --quiet $p"; then
@@ -229,14 +286,16 @@ install_toolchains() {
     else ok "uv already present"; fi
 
     # Google Cast playback/volume control used by the Waybar Google Home module.
-    if [[ $OS == arch ]] && ! command -v catt &>/dev/null; then
+    if [[ $OS != macos ]] && ! command -v catt &>/dev/null; then
         say "installing catt (Google Cast CLI)"
         run "uv tool install catt"
     fi
 
-    # node is bundled with brew set; on Arch we install nodejs via pacman above.
+    # Node is listed for Homebrew and APT; ensure it is present on Arch too.
     if [[ $OS == arch ]] && ! pacman -Qi nodejs &>/dev/null; then
         run "sudo pacman -S --noconfirm --needed nodejs npm"
+    elif [[ $OS == apt ]] && ! command -v node &>/dev/null; then
+        run "sudo apt-get install --yes nodejs npm"
     fi
 
     # Configure npm to install globals under $HOME (no sudo required)
@@ -255,8 +314,8 @@ install_toolchains() {
     fi
 
     # tuxedo (todo.txt TUI, aliased `notes`). Homebrew handles it on macOS via
-    # PKGS_MAC; on Arch there's no package, so install from git via cargo.
-    if [[ $OS == arch ]] && ! command -v tuxedo &>/dev/null; then
+    # PKGS_MAC; on Linux install it from git via cargo.
+    if [[ $OS != macos ]] && ! command -v tuxedo &>/dev/null; then
         say "installing tuxedo from git (cargo)"
         run "cargo install --git https://github.com/webstonehq/tuxedo"
     fi
@@ -265,6 +324,7 @@ install_toolchains() {
     if ! command -v go &>/dev/null; then
         if ask_yn "install Go toolchain?" default_n; then
             [[ $OS == arch ]]  && run "sudo pacman -S --noconfirm --needed go"
+            [[ $OS == apt ]]   && run "sudo apt-get install --yes golang-go"
             [[ $OS == macos ]] && run "brew install go"
         fi
     fi
@@ -304,7 +364,7 @@ link() {
 setup_symlinks() {
     step "symlinks: root-level files"
     # GTK + mimeapps are Linux-desktop only — skip on macOS.
-    if [[ $OS == arch ]]; then
+    if [[ $OS != macos ]]; then
         link "$DOTS/.gtkrc-2.0"          "$HOME/.gtkrc-2.0"
         link "$DOTS/mimeapps.list"       "$HOME/.config/mimeapps.list"
     fi
@@ -364,6 +424,30 @@ setup_pi_agent() {
 }
 
 # =============================================================================
+# 5b. Herdr extensions
+# =============================================================================
+setup_herdr_extensions() {
+    if ! command -v herdr &>/dev/null; then
+        warn "herdr is not in PATH — skipping the Sesh plugin and Pi integration"
+        return
+    fi
+
+    # GitHub-managed plugin installation is idempotent: reinstalling refreshes
+    # Herdr's managed checkout. The integration writes the bundled Pi extension
+    # to ~/.pi/agent/extensions (or $PI_CODING_AGENT_DIR/extensions).
+    if run "herdr plugin install fullerzz/herdr-plugin-sesh --yes"; then
+        ok "Herdr Sesh plugin installed"
+    else
+        warn "Herdr Sesh plugin failed; see the recorded command above"
+    fi
+    if run "herdr integration install pi"; then
+        ok "Herdr Pi agent integration installed"
+    else
+        warn "Herdr Pi agent integration failed; see the recorded command above"
+    fi
+}
+
+# =============================================================================
 # 5c. Custom tuicr build
 # =============================================================================
 # Install the custom fork so the review TUI includes persistent worktree
@@ -415,7 +499,7 @@ migrate_fish_history() {
 }
 
 install_zimfw() {
-    local zim_home="$HOME/.zim"
+    local zim_home="${ZIM_HOME:-${ZDOTDIR:-$HOME}/.zim}"
     if [[ -r "$zim_home/zimfw.zsh" ]]; then
         ok "Zimfw is already installed"
     else
@@ -424,7 +508,9 @@ install_zimfw() {
     fi
 
     if command -v zsh &>/dev/null && [[ -r "$zim_home/zimfw.zsh" ]]; then
-        run 'zsh -ic "source \"$HOME/.zim/zimfw.zsh\" install"'
+        # Set ZIM_HOME inside zsh explicitly: an environment-only assignment is
+        # not available as a zsh parameter until it is assigned in that shell.
+        run "zsh -c 'ZIM_HOME=\"${zim_home}\"; source \"\$ZIM_HOME/zimfw.zsh\" install'"
     else
         warn "Zimfw modules were not installed (zsh or $zim_home/zimfw.zsh is missing)"
     fi
@@ -464,7 +550,7 @@ enable_user_services() {
 # =============================================================================
 summary() {
     step "manual follow-up"
-    cat <<EOF
+    cat <<'EOF'
 Some things this script cannot do for you:
 
   • Fonts: after install run \`fc-cache -fv\` if new fonts don't show up in nvim/ghostty/waybar
@@ -478,7 +564,8 @@ Some things this script cannot do for you:
     ~/Documents/wallpaper/ — copy your wallpaper collection there or adjust
   • Wezterm: fully close and reopen to pick up any config changes
   • tuicr: the custom fork installs to ~/.local/bin/tuicr and is built from rajaiitp/tuicr
-  • Herdr Sesh: install fullerzz/herdr-plugin-sesh after upgrading Herdr to 0.8+
+  • Herdr: the Sesh plugin and Pi agent integration are reconciled automatically
+    when `herdr` is available on PATH
 
 If you hit issues, re-run with:
   ./install.sh --dry-run    # see what would happen
@@ -504,6 +591,7 @@ main() {
     else
         case $OS in
             arch)  install_packages_arch ;;
+            apt)   install_packages_apt ;;
             macos) install_packages_mac ;;
         esac
     fi
@@ -518,10 +606,13 @@ main() {
     step "4. pi agent"
     setup_pi_agent
 
-    step "5. tuicr (custom fork)"
+    step "5. Herdr extensions"
+    setup_herdr_extensions
+
+    step "6. tuicr (custom fork)"
     setup_tuicr
 
-    step "6. Zsh migration and default shell"
+    step "7. Zsh migration and default shell"
     migrate_fish_history
     if [[ $NO_PKGS -eq 1 ]]; then
         warn "--no-pkgs: skipping Zimfw installation"
@@ -530,10 +621,14 @@ main() {
     fi
     set_default_shell
 
-    step "7. user services"
+    step "8. user services"
     enable_user_services
 
     summary
+    if [[ ${#FAILED_COMMANDS[@]} -gt 0 ]]; then
+        warn "${#FAILED_COMMANDS[@]} command(s) failed; rerun the recorded commands after fixing their cause"
+        return 1
+    fi
     step "done"
     ok "dotfiles setup complete"
 }

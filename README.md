@@ -1,6 +1,7 @@
 # dots
 
-Personal configuration for **Arch Linux + Hyprland** (with macOS fallback for the cross-platform bits).
+Personal configuration for **Arch Linux + Hyprland**. The installer also supports
+Debian/Ubuntu-style APT systems and macOS for cross-platform configuration.
 
 ## Quick start on a fresh machine
 
@@ -21,22 +22,36 @@ The install script is **idempotent** — safe to re-run any time to reconcile dr
 ./install.sh --help
 ```
 
+### SSH / terminal-only host
+
+For a Debian/Ubuntu SSH host, use the focused agent-workflow installer instead
+of the desktop bootstrap:
+
+```bash
+./install-tui.sh --yes
+```
+
+It installs only terminal tools, Pi, Herdr extensions (when Herdr is already
+on `PATH`), tuicr, Tuxedo, and Zsh/Zimfw; it excludes Wayland, desktop, GUI,
+and terminal-emulator packages.
+
 ### What it does
 
-1. Detects OS (Arch / macOS)
-2. Installs packages via `pacman` + AUR (bootstraps `yay` if missing) or `brew`
-3. Symlinks tracked configs into `~/` and `~/.config/`
-4. Runs `.pi/install.sh` for the pi coding agent
-5. Installs toolchains: rustup, bun, uv
+1. Detects OS (Arch, Debian/Ubuntu APT, or macOS) and symlinks tracked configs into `~/` and `~/.config/`
+2. Installs packages via `pacman` + AUR (bootstraps `yay` if needed), APT, or `brew`
+3. Installs toolchains: rustup, bun, uv
+4. Runs `.pi/install.sh` for the Pi coding agent
+5. Installs the Herdr Sesh plugin and Pi agent integration when `herdr` is available
 6. Builds and installs the custom `tuicr` fork with persistent worktree tracking
 7. Imports Fish command history once, installs Zimfw, and optionally sets Zsh as the default shell (asks first)
-8. Prints a summary of anything requiring manual follow-up
+8. Reports failed commands only after all independent setup stages have run
 
 ## Layout
 
 ```
 ~/dotfiles/
-├── install.sh              ← one-shot bootstrap
+├── install.sh              ← desktop-capable bootstrap
+├── install-tui.sh          ← Debian/Ubuntu SSH terminal-only bootstrap
 ├── .gitignore              ← runtime state / secrets excluded
 ├── .gtkrc-2.0              ← linked → ~/.gtkrc-2.0
 ├── mimeapps.list           ← linked → ~/.config/mimeapps.list
@@ -100,12 +115,14 @@ in `~/.config/herdr/` outside git.
 
 The Herdr binary is installed independently and remains the authoritative
 workspace/worktree manager. WezTerm is retained only as a plain outer terminal
-host with its native tab UI and tab keymap disabled. The Sesh-style Herdr plugin
-provides a picker and configured startup tabs without introducing a second
-multiplexer:
+host with its native tab UI and tab keymap disabled. The Sesh-style Herdr
+plugin provides a picker and configured startup tabs without introducing a
+second multiplexer. `./install.sh` reconciles both the plugin and Herdr's Pi
+agent integration automatically:
 
 ```bash
 herdr plugin install fullerzz/herdr-plugin-sesh --yes
+herdr integration install pi
 ```
 
 `~/.config/sesh/sesh.toml` is linked from this repository. New worktree
