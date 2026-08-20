@@ -7,9 +7,9 @@
     corner_radius = 0
     separator_color = frame
     font = "JetBrainsMono Nerd Font Mono 10"
-    # Explicitly include the installed Pop/Adwaita status icons used by OSDs.
-    icon_theme = Pop
-    icon_path = /usr/share/icons/Pop/scalable/status/:/usr/share/icons/Adwaita/symbolic/status/:/usr/share/icons/AdwaitaLegacy/48x48/legacy/
+    # Use the broadly available Adwaita status icons on every Linux host.
+    icon_theme = Adwaita
+    icon_path = /usr/share/icons/Adwaita/symbolic/status/:/usr/share/icons/AdwaitaLegacy/48x48/legacy/
     origin = top-right
     offset = (10, 50)
     width = 320

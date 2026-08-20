@@ -19,7 +19,8 @@ tablet() {
 }
 
 # Publish each Herdr shell command's completion and exit status out-of-band.
-# pi-herdr's run_wait watches this file, so no protocol marker is printed in panes.
+# pi-herdr's run completion callback watches this file, so no protocol marker
+# is printed in panes.
 if [[ ${HERDR_ENV:-} == 1 && -n ${HERDR_PANE_ID:-} ]]; then
   typeset -g _pi_herdr_status_dir="${XDG_RUNTIME_DIR:-/tmp}/pi-herdr-status"
   typeset -g _pi_herdr_status_file="$_pi_herdr_status_dir/${HERDR_PANE_ID//\//_}.status"

@@ -18,40 +18,49 @@ The install script is **idempotent** — safe to re-run any time to reconcile dr
 ```bash
 ./install.sh --dry-run     # print what would happen, do nothing
 ./install.sh --no-pkgs     # skip package install, only symlink configs
-./install.sh --yes         # non-interactive: auto-backup conflicts
+./install.sh --yes         # use the common application/component defaults
+./install.sh --tui         # terminal-only defaults; no GUI or terminal emulator
+./install.sh --uninstall   # select applications/components to remove
 ./install.sh --help
 ```
 
 ### SSH / terminal-only host
 
-For a Debian/Ubuntu SSH host, use the focused agent-workflow installer instead
-of the desktop bootstrap:
+For a Debian/Ubuntu SSH host, use the same installer with its focused terminal
+profile:
 
 ```bash
-./install-tui.sh --yes
+./install.sh --tui
 ```
 
-It installs only terminal tools, Pi, Herdr extensions (when Herdr is already
-on `PATH`), tuicr, Tuxedo, and Zsh/Zimfw; it excludes Wayland, desktop, GUI,
-and terminal-emulator packages.
+It selects terminal tools, Pi, Herdr extensions, tuicr, Tuxedo, and Zsh/Zimfw;
+it excludes Wayland, desktop, GUI, and terminal-emulator packages. `--tui`
+uses its profile defaults without opening the application picker.
 
 ### What it does
 
-1. Detects OS (Arch, Debian/Ubuntu APT, or macOS) and symlinks tracked configs into `~/` and `~/.config/`
-2. Installs packages via `pacman` + AUR (bootstraps `yay` if needed), APT, or `brew`
-3. Installs toolchains: rustup, bun, uv
-4. Runs `.pi/install.sh` for the Pi coding agent
-5. Installs the Herdr Sesh plugin and Pi agent integration when `herdr` is available
-6. Builds and installs the custom `tuicr` fork with persistent worktree tracking
-7. Imports Fish command history once, installs Zimfw, and optionally sets Zsh as the default shell (asks first)
-8. Reports failed commands only after all independent setup stages have run
+1. Shows non-selectable application headers (Shell, CLI tools, Desktop, and so on)
+2. Shows exact package/tool entries under each header; CLI tools include
+   git, fzf, ripgrep, fd, bat, jq, eza, zoxide, lazygit, expect,
+   OpenSSH, curl, CA certificates, libnotify, and Worktrunk (`wt`) for Git
+   worktrees plus its optional shell integration
+3. Installs only the selected packages/tools through `pacman`, APT, or `brew`
+4. Symlinks only the selected applications' configurations
+5. Installs selected toolchains, Pi, Herdr/Sesh, and custom tuicr integration
+6. Imports Fish history and configures Zimfw when those shell components are selected
+7. Backs up existing config conflicts automatically with timestamped `.bak` files
+8. Records failures and continues through all independent setup stages
+
+There are no repeated yes/no prompts. Press Enter in each checklist to accept
+its defaults, toggle entries with numbers, or use `a`/`n` to select all/none.
+Use `--uninstall` with the same checklists to remove selected managed items;
+unmanaged files and directories are preserved.
 
 ## Layout
 
 ```
 ~/dotfiles/
 ├── install.sh              ← desktop-capable bootstrap
-├── install-tui.sh          ← Debian/Ubuntu SSH terminal-only bootstrap
 ├── .gitignore              ← runtime state / secrets excluded
 ├── .gtkrc-2.0              ← linked → ~/.gtkrc-2.0
 ├── mimeapps.list           ← linked → ~/.config/mimeapps.list
@@ -60,13 +69,12 @@ and terminal-emulator packages.
 ├── .zshrc / .zimrc         ← Zsh configuration and Zimfw modules
 │
 ├── .config/                ← whole-dir symlinks into ~/.config/
+│   ├── AutoRaise/          ← macOS focus-follows-mouse helper
 │   ├── aerospace/
 │   ├── dunst/              ← Gruvbox Dark notifications
 │   ├── git/
-│   ├── hunk/               ← git-hunk review tool
 │   ├── hypr/               ← Hyprland + hyprlock + hyprpaper + hypridle
 │   ├── karabiner/          ← macOS keybinding remap
-│   ├── lazygit/
 │   ├── nvim/               ← lazy.nvim managed
 │   ├── scripts/
 │   ├── tuicr/              ← custom review-TUI configuration
@@ -113,17 +121,12 @@ auto-loading the config file).
 Herdr's `config.toml` is symlinked; its logs, session state, and sockets stay
 in `~/.config/herdr/` outside git.
 
-The Herdr binary is installed independently and remains the authoritative
+The setup script installs Herdr and keeps it as the authoritative
 workspace/worktree manager. WezTerm is retained only as a plain outer terminal
 host with its native tab UI and tab keymap disabled. The Sesh-style Herdr
 plugin provides a picker and configured startup tabs without introducing a
-second multiplexer. `./install.sh` reconciles both the plugin and Herdr's Pi
-agent integration automatically:
-
-```bash
-herdr plugin install fullerzz/herdr-plugin-sesh --yes
-herdr integration install pi
-```
+second multiplexer. `./install.sh` installs Herdr and reconciles its Sesh/Pi
+integrations automatically.
 
 `~/.config/sesh/sesh.toml` is linked from this repository. New worktree
 workspaces under `~/Dev` start Pi in the root pane and `tuicr track` in a
@@ -136,7 +139,7 @@ Key mapping cheat sheet (default prefix `ctrl+b`):
 - `ctrl+1..9` → jump to tab N
 - `ctrl+shift+p` → open the workspace picker
 - `prefix+shift+g` → create a new worktree
-- `prefix+shift+t` → open the Sesh workspace picker (after plugin install)
+- `prefix+shift+t` → open the Sesh workspace picker
 
 ## tuicr review workflow
 

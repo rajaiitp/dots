@@ -1,0 +1,266 @@
+--- a/extensions/herdr-action-context.ts
++++ b/extensions/herdr-action-context.ts
+@@ -2,9 +2,20 @@
+ import type { HerdrClient } from "./herdr-client.js";
+ import type { HerdrToolDetails, ManagedPane, PaneInfo } from "./herdr-types.js";
+ import type { PaneAliasStore } from "./herdr-state.js";
++import {
++	CommandCompletionRegistry,
++	readCommandSequence,
++	type CommandCompletion,
++	type CommandCompletionRequest,
++} from "./herdr-command-completion.js";
+ 
+ export type HerdrToolResult = AgentToolResult<HerdrToolDetails>;
+ 
++export type CommandCompletionHandler = (
++	request: CommandCompletionRequest,
++	completion: CommandCompletion,
++) => void;
++
+ export interface ResolvedPaneRef {
+ 	pane: PaneInfo;
+ 	alias?: string;
+@@ -23,8 +34,21 @@
+ 		readonly currentWorkspaceId: string,
+ 		readonly signal: AbortSignal | undefined,
+ 		readonly onUpdate: AgentToolUpdateCallback<HerdrToolDetails> | undefined,
++		readonly completionRegistry: CommandCompletionRegistry,
++		readonly onCommandComplete: CommandCompletionHandler,
+ 	) {}
+ 
++	async readCommandSequence(paneId: string): Promise<number | undefined> {
++		return readCommandSequence(paneId);
++	}
++
++	trackCommandCompletion(request: CommandCompletionRequest): void {
++		this.completionRegistry.observe(
++			request,
++			(completion) => this.onCommandComplete(request, completion),
++		);
++	}
++
+ 	withSnapshot(details: Omit<HerdrToolDetails, "aliases" | "aliasOrder">): HerdrToolDetails {
+ 		return this.aliasStore.withSnapshot(details);
+ 	}
+--- a/extensions/herdr-pane-actions.ts
++++ b/extensions/herdr-pane-actions.ts
+@@ -66,7 +66,17 @@
+ 			if (!command) throw new Error("'command' is required for run");
+ 
+ 			const targetPane = await runtime.requirePaneRef(paneRef);
++			if (runtime.completionRegistry.isObserved(targetPane.pane.pane_id)) {
++				throw new Error(`Pane '${targetPane.alias || paneRef}' already has a running command; wait for its completion callback first.`);
++			}
++			const initialSequence = await runtime.readCommandSequence(targetPane.pane.pane_id);
+ 			await runtime.client.exec(["pane", "run", targetPane.pane.pane_id, command], runtime.signal);
++			runtime.trackCommandCompletion({
++				paneId: targetPane.pane.pane_id,
++				paneLabel: targetPane.alias || paneRef,
++				command,
++				initialSequence,
++			});
+ 
+ 			await sleep(800, runtime.signal);
+ 			const initialOutput = await runtime.client.readPane(
+@@ -92,6 +102,7 @@
+ 					pane: paneLabel,
+ 					paneId: targetPane.pane.pane_id,
+ 					command,
++					completion: "follow_up",
+ 					workspaceId: runtime.currentWorkspaceId,
+ 				}),
+ 			};
+--- a/extensions/herdr.ts
++++ b/extensions/herdr.ts
+@@ -1,6 +1,7 @@
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import { HerdrToolParameters } from "./herdr-types.js";
+-import { HerdrActionRuntime } from "./herdr-action-context.js";
++import { HerdrActionRuntime, type CommandCompletionHandler } from "./herdr-action-context.js";
++import { CommandCompletionRegistry } from "./herdr-command-completion.js";
+ import { HerdrClient } from "./herdr-client.js";
+ import { handlePaneAction } from "./herdr-pane-actions.js";
+ import { renderHerdrCall, renderHerdrResult } from "./herdr-render.js";
+@@ -17,9 +18,21 @@
+ 
+ 	const aliasStore = new PaneAliasStore();
+ 	const client = new HerdrClient(pi, currentPaneTarget);
++	const completionRegistry = new CommandCompletionRegistry();
++
++	const onCommandComplete: CommandCompletionHandler = (request, completion) => {
++		const status = completion.exitCode === 0
++			? "succeeded"
++			: `exited with code ${completion.exitCode}`;
++		pi.sendUserMessage(
++			`[herdr command finished] ${request.paneLabel} ${status}\n$ ${request.command}\nRead the pane output if needed.`,
++			{ deliverAs: "followUp" },
++		);
++	};
+ 
+ 	pi.on("session_start", async (_event, ctx) => aliasStore.reconstruct(ctx));
+ 	pi.on("session_tree", async (_event, ctx) => aliasStore.reconstruct(ctx));
++	pi.on("session_shutdown", () => completionRegistry.stopAll());
+ 
+ 	pi.registerTool({
+ 		name: "herdr",
+@@ -28,7 +41,7 @@
+ 			"Herdr-native pane orchestration for long-running workflows. " +
+ 			"Actions: list panes, manage workspaces and tabs, split existing panes, submit lines atomically in existing panes, read output, watch readiness, wait for one or more agent panes to reach target statuses, send raw text or keys, focus contexts, and stop panes.",
+ 		promptGuidelines: [
+-			"Use `herdr` run for long-running processes in other panes instead of `bash`.",
++			"Use `herdr` run for commands in other panes instead of `bash`; completion is delivered automatically as a follow-up when the target shell reaches its prompt again.",
+ 			"When you want to submit a line or prompt to a pane, prefer `run` over `send` + `Enter` so text and Enter happen atomically.",
+ 			"Use `send` only for low-level literal text or key injection when you do not want command-style submission semantics.",
+ 			"Preserve the current UI focus by default. Do not change workspace or tab focus unless the user explicitly asks or the workflow truly requires visible interaction there.",
+@@ -49,7 +62,16 @@
+ 			const currentPane = await client.getCurrentPaneInfo(signal);
+ 			const currentPaneId = currentPane.pane_id;
+ 			const currentWorkspaceId = currentPane.workspace_id;
+-			const runtime = new HerdrActionRuntime(client, aliasStore, currentPaneId, currentWorkspaceId, signal, onUpdate);
++			const runtime = new HerdrActionRuntime(
++				client,
++				aliasStore,
++				currentPaneId,
++				currentWorkspaceId,
++				signal,
++				onUpdate,
++				completionRegistry,
++				onCommandComplete,
++			);
+ 			const result = await handleWorkspaceAction(params, runtime) ?? await handlePaneAction(params, runtime);
+ 			if (result) return result;
+ 			throw new Error(`Unknown action: ${params.action}`);
+--- /dev/null
++++ b/extensions/herdr-command-completion.ts
+@@ -0,0 +1,130 @@
++import { promises as fs, watch, type FSWatcher } from "node:fs";
++import * as path from "node:path";
++
++export type CommandCompletion = {
++	sequence: number;
++	exitCode: number;
++};
++
++export type CommandCompletionRequest = {
++	paneId: string;
++	paneLabel: string;
++	command: string;
++	initialSequence?: number;
++};
++
++const STATUS_DIR_NAME = "pi-herdr-status";
++
++function statusPath(paneId: string): string {
++	const safePaneId = paneId.replace(/\//g, "_");
++	return path.join(process.env.XDG_RUNTIME_DIR || "/tmp", STATUS_DIR_NAME, `${safePaneId}.status`);
++}
++
++async function readStatus(file: string): Promise<CommandCompletion | undefined> {
++	try {
++		const text = (await fs.readFile(file, "utf8")).trim();
++		const match = /^(\d+):(-?\d+)$/.exec(text);
++		if (!match) return undefined;
++		return { sequence: Number(match[1]), exitCode: Number(match[2]) };
++	} catch {
++		return undefined;
++	}
++}
++
++export type CommandCompletionObserver = {
++	stop: () => void;
++};
++
++/**
++ * Emulate an execution callback using the shell's private precmd status file.
++ * The shell writes one monotonically increasing sequence plus exit status after
++ * each command; fs.watch turns that write into an event without polling Herdr.
++ */
++export function observeCommandCompletion(
++	request: CommandCompletionRequest,
++	onComplete: (completion: CommandCompletion) => void,
++	onError?: (error: Error) => void,
++): CommandCompletionObserver {
++	const file = statusPath(request.paneId);
++	const directory = path.dirname(file);
++	const filename = path.basename(file);
++	let watcher: FSWatcher | undefined;
++	let stopped = false;
++	let completed = false;
++
++	const stop = () => {
++		if (stopped) return;
++		stopped = true;
++		watcher?.close();
++	};
++
++	const finish = (completion: CommandCompletion) => {
++		if (stopped || completed) return;
++		if (request.initialSequence !== undefined && completion.sequence <= request.initialSequence) return;
++		completed = true;
++		stop();
++		onComplete(completion);
++	};
++
++	const check = async () => {
++		const completion = await readStatus(file);
++		if (completion) finish(completion);
++	};
++
++	void (async () => {
++		try {
++			await fs.mkdir(directory, { recursive: true });
++			if (stopped) return;
++			watcher = watch(directory, (_eventType, changedName) => {
++				if (stopped || String(changedName) !== filename) return;
++				void check();
++			});
++			watcher.on("error", (error) => {
++				if (!stopped) onError?.(error instanceof Error ? error : new Error(String(error)));
++			});
++			// Close the race where the command completed before fs.watch started.
++			await check();
++		} catch (error) {
++			if (!stopped) onError?.(error instanceof Error ? error : new Error(String(error)));
++		}
++	})();
++
++	return { stop };
++}
++
++export class CommandCompletionRegistry {
++	private readonly observers = new Map<string, CommandCompletionObserver>();
++
++	isObserved(paneId: string): boolean {
++		return this.observers.has(paneId);
++	}
++
++	observe(
++		request: CommandCompletionRequest,
++		onComplete: (completion: CommandCompletion) => void,
++		onError?: (error: Error) => void,
++	): void {
++		const observer = observeCommandCompletion(request, (completion) => {
++			this.observers.delete(request.paneId);
++			onComplete(completion);
++		}, (error) => {
++			this.observers.delete(request.paneId);
++			onError?.(error);
++		});
++		this.observers.set(request.paneId, observer);
++	}
++
++	stop(paneId: string): void {
++		this.observers.get(paneId)?.stop();
++		this.observers.delete(paneId);
++	}
++
++	stopAll(): void {
++		for (const observer of this.observers.values()) observer.stop();
++		this.observers.clear();
++	}
++}
++
++export async function readCommandSequence(paneId: string): Promise<number | undefined> {
++	return (await readStatus(statusPath(paneId)))?.sequence;
++}

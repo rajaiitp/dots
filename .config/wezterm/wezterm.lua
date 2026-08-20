@@ -1,60 +1,11 @@
--- =============================================================================
--- WEZTERM CONFIGURATION
--- =============================================================================
--- WezTerm is the outer terminal host. Herdr owns workspaces, tabs, pane
--- navigation, persistence, and agent/review workflows inside it.
-
 local wezterm = require("wezterm")
 local config = {}
 
--- GUI sessions can start with a minimal PATH. Keep user-installed tools
--- available to ordinary terminal programs without making WezTerm a workflow
--- manager.
-local inherited_path = os.getenv("PATH") or "/usr/local/bin:/usr/bin:/bin"
-local user_tool_path = table.concat({
-    wezterm.home_dir .. "/.pi/agent/bin",
-    wezterm.home_dir .. "/.cargo/bin",
-    wezterm.home_dir .. "/go/bin",
-    wezterm.home_dir .. "/.bun/bin",
-    wezterm.home_dir .. "/.local/bin",
-    wezterm.home_dir .. "/.npm-global/bin",
-    wezterm.home_dir .. "/bin",
-    inherited_path,
-}, ":")
-config.set_environment_variables = {
-    PATH = user_tool_path,
-}
-
--- Discover SSH domains from ~/.ssh/config for ordinary remote terminal use.
--- Herdr remains responsible for local workspace/tab lifecycle.
-config.ssh_domains = {}
-for host, _ in pairs(wezterm.enumerate_ssh_hosts()) do
-    -- systemd-ssh-proxy adds aliases such as machine/.host; they are not
-    -- regular SSH hostnames and libssh rejects them as remote addresses.
-    if host:match("^[%w][%w_.@%-]*$") then
-        table.insert(config.ssh_domains, {
-            name = "SSHMUX:" .. host,
-            remote_address = host,
-            multiplexing = "WezTerm",
-            assume_shell = "Posix",
-        })
-    end
-end
-
--- =============================================================================
--- APPEARANCE
--- =============================================================================
-
+-- Plain outer terminal: Herdr and other workflows are started explicitly.
 config.color_scheme = "GruvboxDark"
-config.command_palette_bg_color = "#282828"
-config.command_palette_fg_color = "#ebdbb2"
-config.command_palette_font_size = 13
-config.command_palette_rows = 14
-
 config.font = wezterm.font_with_fallback({
-    { family = "JetBrains Mono", weight = "ExtraLight" },
+    { family = "JetBrains Mono", weight = "Light" },
 })
-
 config.font_rules = {
     {
         intensity = "Bold",
@@ -67,80 +18,42 @@ config.font_rules = {
         font = wezterm.font({ family = "JetBrains Mono", weight = "Regular", style = "Italic" }),
     },
 }
-
 config.font_size = 12
--- Reset cell bounds so characters are not artificially squished/interpolated.
 config.cell_width = 0.9
 
--- Keep pane content identical; focus is indicated only by the pane top bar.
-config.inactive_pane_hsb = {
-    saturation = 1.0,
-    brightness = 0.90,
-}
-
--- =============================================================================
--- WINDOW
--- =============================================================================
-
--- The clean upstream build's native Wayland backend does not map a window
--- reliably on this Hyprland setup; use XWayland so WezTerm launches normally.
+-- Use XWayland/OpenGL for reliable startup on this Hyprland setup.
 config.enable_wayland = false
+config.front_end = "OpenGL"
 config.window_close_confirmation = "NeverPrompt"
-config.skip_close_confirmation_for_processes_named = {
-    "bash", "sh", "zsh", "fish", "tmux", "nu", "cmd.exe", "pwsh.exe", "powershell.exe",
-    "node", "python", "python3", "nvim", "vim", "ssh", "opencode",
-}
--- Hide the macOS title bar while retaining the resize frame that Aerospace
--- needs for reliable tiling. Disable the native shadow without using NONE:
--- borderless windows lose normal resize/minimize behavior and tile poorly.
-config.window_decorations = "NONE"
+-- Hide the title bar while retaining the native resize border/hit area.
+config.window_decorations = "RESIZE"
+-- Keep the tiled outer window fixed when Ctrl+Plus/Minus changes the font;
+-- recalculate the terminal grid instead of resizing against Hyprland.
+config.adjust_window_size_when_changing_font_size = false
+config.use_resize_increments = true
 config.window_frame = {
     border_left_width = 0,
     border_right_width = 0,
     border_top_height = 0,
     border_bottom_height = 0,
 }
-config.term = "wezterm"
--- The outer WezTerm pane has no visual divider; Herdr supplies its own
--- internal pane borders and layout chrome.
-config.colors = {
-    -- GruvboxDark's default split color (#458588) was the visible cyan line.
-    -- Match the terminal background instead of relying on alpha transparency.
-    split = "#282828",
-}
--- Herdr owns pane geometry and borders; do not add an outer WezTerm inset.
 config.window_padding = {
     left = 0,
     right = 0,
     top = 0,
     bottom = 0,
 }
--- Herdr owns tabs and workspaces. Hide WezTerm's native tab bar so there is
--- one clear lifecycle and no competing tab UI.
+config.colors = { split = "#282828" }
 config.enable_tab_bar = false
+config.term = "wezterm"
 
--- =============================================================================
--- BEHAVIOR
--- =============================================================================
-
-config.automatically_reload_config = true
--- Herdr uses the Kitty/CSI-u keyboard protocol for modified number keys
--- such as Ctrl+1..9; enable both encodings in the outer terminal.
+-- Keep modified-key input available to applications such as Herdr without
+-- restoring WezTerm's own tab/workspace keymap.
 config.enable_kitty_keyboard = true
 config.enable_csi_u_key_encoding = true
 config.audible_bell = "Disabled"
--- The standalone custom macOS build has no application bundle, so warning
--- notifications would crash when UserNotifications looks up its bundle.
-config.warn_about_missing_glyphs = false
--- Keep WezTerm's outer keymap intentionally minimal; Herdr owns the
--- multiplexer keymap and native tab/workspace lifecycle.
-config.disable_default_key_bindings = true
-config.front_end = "WebGpu"
-config.max_fps = 120
-config.status_update_interval = 1000
-config.exit_behavior = "Close"
-config.exit_behavior_messaging = "Brief"
-config.pane_focus_follows_mouse = true
+config.automatically_reload_config = true
+
 config.mouse_bindings = {
     {
         event = { Up = { streak = 1, button = "Left" } },
@@ -149,24 +62,18 @@ config.mouse_bindings = {
     },
 }
 
--- Keep only the useful outer-terminal basics. Tuxedo is an exception:
--- Ctrl-N must work even when the focused Herdr client does not reload its
--- custom keymap, so WezTerm invokes the Herdr tab toggle directly.
 local act = wezterm.action
-local tuxedo_toggle = wezterm.home_dir .. "/.config/herdr/scripts/toggle-tuxedo-tab.sh"
 config.keys = {
-    {
-        key = "n",
-        mods = "CTRL",
-        action = wezterm.action_callback(function()
-            wezterm.background_child_process({ tuxedo_toggle })
-        end),
-    },
-    { key = "c", mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
-    { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
-    { key = "f", mods = "CTRL|SHIFT", action = act.Search("CurrentSelectionOrEmptyString") },
-    { key = "PageUp", mods = "SHIFT", action = act.ScrollByPage(-1) },
-    { key = "PageDown", mods = "SHIFT", action = act.ScrollByPage(1) },
+    -- WezTerm's defaults reserve Ctrl-Tab for native tab switching. Forward
+    -- these keys so Herdr can cycle agents while keeping other defaults,
+    -- including the built-in font-size shortcuts.
+    { key = "Tab",      mods = "CTRL",        action = act.SendKey({ key = "Tab", mods = "CTRL" }) },
+    { key = "Tab",      mods = "CTRL|SHIFT",  action = act.SendKey({ key = "Tab", mods = "CTRL|SHIFT" }) },
+    { key = "c",        mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
+    { key = "v",        mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
+    { key = "f",        mods = "CTRL|SHIFT", action = act.Search("CurrentSelectionOrEmptyString") },
+    { key = "PageUp",   mods = "SHIFT",      action = act.ScrollByPage(-1) },
+    { key = "PageDown", mods = "SHIFT",      action = act.ScrollByPage(1) },
 }
 
 return config

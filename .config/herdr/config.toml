@@ -5,6 +5,10 @@ onboarding = false
 [theme]
 name = "gruvbox"
 
+[theme.custom]
+# Keep the sidebar edge and Spaces/Agents rule visible against Gruvbox.
+surface_dim = "#3c3836"
+
 [terminal]
 new_cwd = "follow"
 shell_mode = "auto"
@@ -94,7 +98,7 @@ description = "Switch to previous Sesh workspace"
 [ui]
 mouse_capture = true
 pane_borders = true
-pane_gaps = true
+pane_gaps = false
 show_agent_labels_on_pane_borders = true
 hide_tab_bar_when_single_tab = false
 confirm_close = true
