@@ -6,8 +6,8 @@ onboarding = false
 name = "gruvbox"
 
 [theme.custom]
-# Keep the sidebar edge and Spaces/Agents rule visible against Gruvbox.
-surface_dim = "#3c3836"
+# Gruvbox yellow highlights the sidebar edge and Spaces/Agents separator.
+surface_dim = "#fabd2f"
 
 [terminal]
 new_cwd = "follow"
