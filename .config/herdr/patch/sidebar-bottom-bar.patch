@@ -1,0 +1,1857 @@
+diff --git a/src/app/actions.rs b/src/app/actions.rs
+index a45687b4..a47149a1 100644
+--- a/src/app/actions.rs
++++ b/src/app/actions.rs
+@@ -9,17 +9,17 @@ use crate::detect::{Agent, AgentState};
+ use crate::events::AppEvent;
+ use crate::layout::PaneId;
+ #[cfg(test)]
+-use crate::layout::{find_in_direction, NavDirection};
++use crate::layout::{NavDirection, find_in_direction};
+ use crate::selection::Selection;
+ use crate::terminal::{EffectiveStateChange, TerminalStateMutation};
+ use crate::workspace::WorkspaceGitStatus;
+ 
+ use super::api_helpers::pane_agent_status;
+ use super::state::{
+-    navigator_display_index_of_row, navigator_display_lines, navigator_first_row_at_or_after,
+-    text_matches_query, AgentNotificationDelivery, AppState, Mode, NavigatorRow,
+-    NavigatorStateFilter, NavigatorTarget, PaneFocusTarget, PendingAgentNotification, ToastKind,
+-    ToastNotification, ToastTarget, ViewLayout,
++    AgentNotificationDelivery, AppState, Mode, NavigatorRow, NavigatorStateFilter, NavigatorTarget,
++    PaneFocusTarget, PendingAgentNotification, ToastKind, ToastNotification, ToastTarget,
++    ViewLayout, navigator_display_index_of_row, navigator_display_lines,
++    navigator_first_row_at_or_after, text_matches_query,
+ };
+ 
+ fn is_background_completion_transition(prev_state: AgentState, new_state: AgentState) -> bool {
+@@ -363,6 +363,8 @@ impl AppState {
+         self.navigator.search_focused = false;
+         self.navigator.state_filter = None;
+         self.navigator.scroll = 0;
++        self.navigator.workspace_only = false;
++        self.navigator.anchor = None;
+         self.navigator.expanded_workspaces.clear();
+ 
+         for ws in &self.workspaces {
+@@ -376,6 +378,22 @@ impl AppState {
+         self.ensure_navigator_selection_visible_from(terminal_runtimes);
+     }
+ 
++    pub(crate) fn open_workspace_picker_from(
++        &mut self,
++        terminal_runtimes: &crate::terminal::TerminalRuntimeRegistry,
++        anchor: ratatui::layout::Rect,
++    ) {
++        self.open_navigator_from(terminal_runtimes);
++        self.navigator.workspace_only = true;
++        self.navigator.anchor = Some(anchor);
++        self.navigator.expanded_workspaces.clear();
++        self.navigator.selected = self
++            .active
++            .unwrap_or(0)
++            .min(self.workspaces.len().saturating_sub(1));
++        self.navigator.scroll = 0;
++    }
++
+     #[cfg(test)]
+     pub(crate) fn navigator_rows(&self) -> Vec<NavigatorRow> {
+         let terminal_runtimes = crate::terminal::TerminalRuntimeRegistry::new();
+@@ -392,7 +410,8 @@ impl AppState {
+         for (ws_idx, ws) in self.workspaces.iter().enumerate() {
+             let workspace_label = ws.display_name_from(&self.terminals, terminal_runtimes);
+             let activity = workspace_activity_summary(ws, &self.terminals);
+-            let workspace_search_text = format!("{workspace_label} {activity}").to_lowercase();
++            let picker_meta = workspace_picker_meta(ws);
++            let workspace_search_text = format!("{workspace_label} {picker_meta}").to_lowercase();
+             let workspace_matches = match query_kind {
+                 NavigatorQueryKind::Empty => true,
+                 NavigatorQueryKind::State(filter) => {
+@@ -415,18 +434,26 @@ impl AppState {
+             rows.push(NavigatorRow {
+                 target: NavigatorTarget::Workspace { ws_idx },
+                 depth: 0,
+-                label: format!("{workspace_label} ({pane_count})"),
+-                meta: activity,
++                label: if self.navigator.workspace_only {
++                    workspace_label
++                } else {
++                    format!("{workspace_label} ({pane_count})")
++                },
++                meta: if self.navigator.workspace_only {
++                    picker_meta
++                } else {
++                    activity
++                },
+                 status: state,
+                 seen,
+                 is_current: self.active == Some(ws_idx),
+-                is_workspace: true,
++                is_workspace: !self.navigator.workspace_only,
+                 is_tab: false,
+                 expanded,
+                 search_text: workspace_search_text,
+                 matched: workspace_matches,
+             });
+-            if expanded {
++            if expanded && !self.navigator.workspace_only {
+                 rows.extend(child_rows);
+             }
+         }
+@@ -943,6 +970,22 @@ fn tab_activity_summary(
+     activity_summary_for_panes(tab.panes.values(), terminals)
+ }
+ 
++fn workspace_picker_meta(ws: &crate::workspace::Workspace) -> String {
++    let mut parts = Vec::new();
++    if let Some(branch) = ws.branch() {
++        parts.push(branch);
++    }
++    if let Some((ahead, behind)) = ws.git_ahead_behind() {
++        if ahead > 0 {
++            parts.push(format!("↑{ahead}"));
++        }
++        if behind > 0 {
++            parts.push(format!("↓{behind}"));
++        }
++    }
++    parts.join(" ")
++}
++
+ fn workspace_activity_summary(
+     ws: &crate::workspace::Workspace,
+     terminals: &std::collections::HashMap<
+@@ -3710,15 +3753,16 @@ mod tests {
+         state.navigator.query = "baz".into();
+         state.select_first_navigator_match_from(&crate::terminal::TerminalRuntimeRegistry::new());
+         let rows = state.navigator_rows();
+-        assert!(rows
+-            .get(state.navigator.selected)
+-            .is_some_and(|row| matches!(
+-                row.target,
+-                crate::app::state::NavigatorTarget::Tab {
+-                    ws_idx: 1,
+-                    tab_idx: 0
+-                }
+-            )));
++        assert!(
++            rows.get(state.navigator.selected)
++                .is_some_and(|row| matches!(
++                    row.target,
++                    crate::app::state::NavigatorTarget::Tab {
++                        ws_idx: 1,
++                        tab_idx: 0
++                    }
++                ))
++        );
+         assert!(!rows.iter().any(|row| matches!(
+             row.target,
+             crate::app::state::NavigatorTarget::Workspace { ws_idx: 0 }
+@@ -3838,14 +3882,18 @@ mod tests {
+         let selected = state.navigator_rows()[state.navigator.selected].clone();
+ 
+         assert!(selected.is_current);
+-        assert!(state
+-            .navigator
+-            .expanded_workspaces
+-            .contains(&state.workspaces[0].id));
+-        assert!(state
+-            .navigator
+-            .expanded_workspaces
+-            .contains(&state.workspaces[1].id));
++        assert!(
++            state
++                .navigator
++                .expanded_workspaces
++                .contains(&state.workspaces[0].id)
++        );
++        assert!(
++            state
++                .navigator
++                .expanded_workspaces
++                .contains(&state.workspaces[1].id)
++        );
+     }
+ 
+     #[test]
+@@ -3980,9 +4028,10 @@ mod tests {
+         let rows = state.navigator_rows();
+ 
+         assert!(rows.iter().any(|row| row.is_workspace));
+-        assert!(rows
+-            .iter()
+-            .any(|row| !row.is_workspace && row.label.contains("weekly")));
++        assert!(
++            rows.iter()
++                .any(|row| !row.is_workspace && row.label.contains("weekly"))
++        );
+     }
+ 
+     #[test]
+@@ -4532,11 +4581,13 @@ mod tests {
+         state.switch_workspace(7);
+         crate::ui::compute_view(&mut state, ratatui::layout::Rect::new(0, 0, 80, 14));
+ 
+-        assert!(state
+-            .view
+-            .workspace_card_areas
+-            .iter()
+-            .any(|card| card.ws_idx == 7));
++        assert!(
++            state
++                .view
++                .workspace_card_areas
++                .iter()
++                .any(|card| card.ws_idx == 7)
++        );
+     }
+ 
+     #[test]
+diff --git a/src/app/input/mouse.rs b/src/app/input/mouse.rs
+index 3c6c86f4..ea68a83b 100644
+--- a/src/app/input/mouse.rs
++++ b/src/app/input/mouse.rs
+@@ -17,12 +17,12 @@ use crate::{
+ #[cfg(test)]
+ use super::WheelRouting;
+ use super::{
++    ScrollbarClickTarget, TAB_DRAG_THRESHOLD, WORKSPACE_DRAG_THRESHOLD,
+     modal::{
+-        apply_global_menu_action, confirm_close_cancel, global_menu_actions, leave_modal,
+-        modal_action_from_buttons, open_global_menu, open_new_tab_dialog, ModalAction,
++        ModalAction, apply_global_menu_action, confirm_close_cancel, global_menu_actions,
++        leave_modal, modal_action_from_buttons, open_global_menu, open_new_tab_dialog,
+     },
+     settings::SettingsAction,
+-    ScrollbarClickTarget, TAB_DRAG_THRESHOLD, WORKSPACE_DRAG_THRESHOLD,
+ };
+ 
+ pub(super) enum MouseAction {
+@@ -190,6 +190,16 @@ impl AppState {
+             && mouse.column < sidebar.x + sidebar.width
+             && mouse.row >= sidebar.y
+             && mouse.row < sidebar.y + sidebar.height;
++        let workspace_top = self.view.workspace_top_rect;
++        let in_workspace_top = mouse.column >= workspace_top.x
++            && mouse.column < workspace_top.x + workspace_top.width
++            && mouse.row >= workspace_top.y
++            && mouse.row < workspace_top.y + workspace_top.height;
++        let bottom_bar = self.view.bottom_bar_rect;
++        let in_bottom_bar = mouse.column >= bottom_bar.x
++            && mouse.column < bottom_bar.x + bottom_bar.width
++            && mouse.row >= bottom_bar.y
++            && mouse.row < bottom_bar.y + bottom_bar.height;
+ 
+         if self.handle_right_click_passthrough(terminal_runtimes, source_id, mouse, in_sidebar) {
+             return None;
+@@ -227,6 +237,26 @@ impl AppState {
+                 self.selection_autoscroll = None;
+                 self.clear_chrome_press(source_id);
+ 
++                if in_workspace_top {
++                    if self.workspace_top_at(mouse.column, mouse.row).is_some() {
++                        self.open_workspace_picker_from(
++                            terminal_runtimes,
++                            self.view.workspace_top_rect,
++                        );
++                    }
++                    return None;
++                }
++
++                if in_bottom_bar {
++                    if let Some((ws_idx, _tab_idx, pane_id)) =
++                        self.bottom_bar_agent_at(mouse.column, mouse.row)
++                    {
++                        self.mode = Mode::Terminal;
++                        return Some(MouseAction::FocusPane { ws_idx, pane_id });
++                    }
++                    return None;
++                }
++
+                 if self.mode == Mode::ConfirmClose {
+                     let popup = self.confirm_close_rect();
+                     let inner = Rect::new(
+@@ -668,6 +698,10 @@ impl AppState {
+                 }
+             }
+ 
++            MouseEventKind::Drag(MouseButton::Left) if in_bottom_bar => {
++                return None;
++            }
++
+             MouseEventKind::Drag(MouseButton::Left) => {
+                 if self.selection.is_some() {
+                     self.update_selection_drag(terminal_runtimes, mouse.column, mouse.row);
+@@ -829,6 +863,10 @@ impl AppState {
+                 }
+             }
+ 
++            MouseEventKind::Up(MouseButton::Left) if in_bottom_bar => {
++                return None;
++            }
++
+             MouseEventKind::Up(MouseButton::Left) => {
+                 // Mouse-up either finishes a drag selection or releases after a
+                 // double-click word selection; the latter is already finalized.
+@@ -1035,6 +1073,20 @@ impl AppState {
+                 }
+             }
+ 
++            MouseEventKind::Down(MouseButton::Right) if in_workspace_top => {
++                self.clear_chrome_press(source_id);
++                if let Some(ws_idx) = self.workspace_top_at(mouse.column, mouse.row) {
++                    self.selected = ws_idx;
++                    self.context_menu = Some(ContextMenuState {
++                        kind: ContextMenuKind::Workspace { ws_idx },
++                        x: mouse.column,
++                        y: mouse.row,
++                        list: MenuListState::new(0),
++                    });
++                    self.mode = Mode::ContextMenu;
++                }
++            }
++
+             MouseEventKind::Down(MouseButton::Right) if in_sidebar && !self.sidebar_collapsed => {
+                 self.clear_chrome_press(source_id);
+                 if self
+@@ -3228,10 +3280,11 @@ mod tests {
+         );
+ 
+         assert!(app.state.pane_at(info.rect.x, info.rect.y).is_none());
+-        assert!(app
+-            .state
+-            .pane_mouse_target(info.rect.x, info.rect.y)
+-            .is_some());
++        assert!(
++            app.state
++                .pane_mouse_target(info.rect.x, info.rect.y)
++                .is_some()
++        );
+         app.handle_mouse(MouseEvent {
+             modifiers: KeyModifiers::CONTROL,
+             ..mouse(
+@@ -3730,15 +3783,17 @@ mod tests {
+         let border = app.state.view.split_borders[0].clone();
+         let row = border.area.y.saturating_add(1);
+ 
+-        assert!(app
+-            .state
+-            .find_border_at(border.pos.saturating_sub(1), row)
+-            .is_none());
++        assert!(
++            app.state
++                .find_border_at(border.pos.saturating_sub(1), row)
++                .is_none()
++        );
+         assert!(app.state.find_border_at(border.pos, row).is_some());
+-        assert!(app
+-            .state
+-            .find_border_at(border.pos.saturating_add(1), row)
+-            .is_none());
++        assert!(
++            app.state
++                .find_border_at(border.pos.saturating_add(1), row)
++                .is_none()
++        );
+     }
+ 
+     #[test]
+@@ -3753,15 +3808,17 @@ mod tests {
+         let border = app.state.view.split_borders[0].clone();
+         let col = border.area.x.saturating_add(1);
+ 
+-        assert!(app
+-            .state
+-            .find_border_at(col, border.pos.saturating_sub(1))
+-            .is_none());
++        assert!(
++            app.state
++                .find_border_at(col, border.pos.saturating_sub(1))
++                .is_none()
++        );
+         assert!(app.state.find_border_at(col, border.pos).is_some());
+-        assert!(app
+-            .state
+-            .find_border_at(col, border.pos.saturating_add(1))
+-            .is_none());
++        assert!(
++            app.state
++                .find_border_at(col, border.pos.saturating_add(1))
++                .is_none()
++        );
+     }
+ 
+     #[test]
+@@ -3791,15 +3848,17 @@ mod tests {
+         let border = app.state.view.split_borders[0].clone();
+         let row = border.area.y.saturating_add(1);
+ 
+-        assert!(app
+-            .state
+-            .find_border_at(border.pos.saturating_sub(1), row)
+-            .is_some());
++        assert!(
++            app.state
++                .find_border_at(border.pos.saturating_sub(1), row)
++                .is_some()
++        );
+         assert!(app.state.find_border_at(border.pos, row).is_some());
+-        assert!(app
+-            .state
+-            .find_border_at(border.pos.saturating_add(1), row)
+-            .is_none());
++        assert!(
++            app.state
++                .find_border_at(border.pos.saturating_add(1), row)
++                .is_none()
++        );
+     }
+ 
+     #[test]
+@@ -4234,11 +4293,11 @@ mod tests {
+         assert_eq!(app.state.workspaces[0].display_name(), "one");
+         assert!(app.state.context_menu.is_none());
+         assert_eq!(app.state.mode, Mode::Terminal);
+-        assert!(app
+-            .event_hub
+-            .events_after(0)
+-            .iter()
+-            .any(|(_, event)| { matches!(event.event, crate::api::schema::EventKind::TabClosed) }));
++        assert!(
++            app.event_hub.events_after(0).iter().any(|(_, event)| {
++                matches!(event.event, crate::api::schema::EventKind::TabClosed)
++            })
++        );
+     }
+ 
+     #[test]
+diff --git a/src/app/input/overlays.rs b/src/app/input/overlays.rs
+index 58f2ef71..9a4063cb 100644
+--- a/src/app/input/overlays.rs
++++ b/src/app/input/overlays.rs
+@@ -5,13 +5,13 @@ use ratatui::{
+ };
+ 
+ use crate::app::{
+-    state::{AppState, DragState, DragTarget, Mode, NavigatorTarget},
+     App,
++    state::{AppState, DragState, DragTarget, Mode, NavigatorTarget},
+ };
+ 
+ use super::{
+-    modal::{keybind_help_back, leave_modal, modal_action_from_buttons, ModalAction},
+     ScrollbarClickTarget,
++    modal::{ModalAction, keybind_help_back, leave_modal, modal_action_from_buttons},
+ };
+ 
+ fn rect_contains(rect: Rect, col: u16, row: u16) -> bool {
+@@ -261,6 +261,29 @@ impl AppState {
+ 
+     pub(crate) fn navigator_popup_rect(&self) -> Rect {
+         let area = self.onboarding_full_area();
++        if self.navigator.workspace_only {
++            let anchor = self.navigator.anchor.unwrap_or(Rect::default());
++            let width = 40u16.min(area.width.max(4));
++            let rows = self.workspaces.len().max(1) as u16;
++            // The compact workspace picker only needs its two border rows;
++            // every remaining row is available for a workspace entry.
++            let height = rows.saturating_add(2).min(area.height.max(2));
++            let max_x = area.x + area.width.saturating_sub(width);
++            let desired_x = anchor.x.saturating_add(anchor.width).saturating_sub(width);
++            let x = desired_x.clamp(area.x, max_x);
++            let opens_below = anchor.y <= area.y;
++            let y = if opens_below {
++                anchor
++                    .y
++                    .saturating_add(anchor.height)
++                    .min(area.y + area.height.saturating_sub(height))
++            } else {
++                anchor.y.min(area.y + area.height).saturating_sub(height)
++            }
++            .max(area.y);
++            return Rect::new(x, y, width, height);
++        }
++
+         let margin_x = (area.width / 16).max(2);
+         let margin_y = (area.height / 10).max(1);
+         let width = area.width.saturating_sub(margin_x.saturating_mul(2));
+@@ -286,6 +309,9 @@ impl AppState {
+ 
+     pub(crate) fn navigator_body_rect(&self) -> Rect {
+         let inner = self.navigator_inner_rect();
++        if self.navigator.workspace_only {
++            return inner;
++        }
+         if inner.height <= 4 {
+             return Rect::default();
+         }
+diff --git a/src/app/input/sidebar.rs b/src/app/input/sidebar.rs
+index 0923eef6..9d960331 100644
+--- a/src/app/input/sidebar.rs
++++ b/src/app/input/sidebar.rs
+@@ -184,6 +184,9 @@ impl AppState {
+         if self.view.layout == ViewLayout::Mobile {
+             return self.view.mobile_menu_hit_area;
+         }
++        if self.view.bottom_bar_menu_rect.width > 0 {
++            return self.view.bottom_bar_menu_rect;
++        }
+ 
+         let footer = self.sidebar_footer_rect();
+         let width = if self.global_menu_attention_badge_visible() {
+@@ -465,6 +468,38 @@ impl AppState {
+         })
+     }
+ 
++    pub(super) fn workspace_top_at(&self, col: u16, row: u16) -> Option<usize> {
++        let rect = self.view.workspace_top_rect;
++        (rect.width > 0
++            && col >= rect.x
++            && col < rect.x + rect.width
++            && row >= rect.y
++            && row < rect.y + rect.height)
++            .then_some(self.active?)
++    }
++
++    pub(super) fn bottom_bar_agent_at(
++        &self,
++        col: u16,
++        row: u16,
++    ) -> Option<(usize, usize, crate::layout::PaneId)> {
++        let index = self
++            .view
++            .bottom_bar_agent_hit_areas
++            .iter()
++            .position(|rect| {
++                rect.width > 0
++                    && col >= rect.x
++                    && col < rect.x + rect.width
++                    && row >= rect.y
++                    && row < rect.y + rect.height
++            })?;
++        let entry = crate::ui::agent_panel_entries(self)
++            .into_iter()
++            .nth(index)?;
++        Some((entry.ws_idx, entry.tab_idx, entry.pane_id))
++    }
++
+     pub(super) fn on_agent_panel_sort_toggle(&self, col: u16, row: u16) -> bool {
+         if self.sidebar_collapsed || self.agent_view_override.is_some() {
+             return false;
+diff --git a/src/app/mod.rs b/src/app/mod.rs
+index 85ad4fa3..addcf97f 100644
+--- a/src/app/mod.rs
++++ b/src/app/mod.rs
+@@ -53,9 +53,9 @@ use crossterm::{
+     event::{DisableMouseCapture, EnableMouseCapture},
+     execute, terminal,
+ };
+-use ratatui::layout::Rect;
+ use ratatui::DefaultTerminal;
+-use tokio::sync::{mpsc, Notify};
++use ratatui::layout::Rect;
++use tokio::sync::{Notify, mpsc};
+ use tracing::info;
+ 
+ use crate::config::Config;
+@@ -598,6 +598,10 @@ impl App {
+                 tab_scroll_left_hit_area: Rect::default(),
+                 tab_scroll_right_hit_area: Rect::default(),
+                 new_tab_hit_area: Rect::default(),
++                bottom_bar_rect: Rect::default(),
++                workspace_top_rect: Rect::default(),
++                bottom_bar_menu_rect: Rect::default(),
++                bottom_bar_agent_hit_areas: Vec::new(),
+                 terminal_area: Rect::default(),
+                 mobile_header_rect: Rect::default(),
+                 mobile_menu_hit_area: Rect::default(),
+@@ -3026,11 +3030,12 @@ mod tests {
+         assert_eq!(app.state.headless_size, (160, 50));
+         assert_eq!(app.state.prefix_code, KeyCode::Char('a'));
+         assert_eq!(app.state.prefix_mods, KeyModifiers::CONTROL);
+-        assert!(app
+-            .state
+-            .keybinds
+-            .new_workspace
+-            .matches_prefix(&KeyEvent::new(KeyCode::Char('m'), KeyModifiers::empty())));
++        assert!(
++            app.state
++                .keybinds
++                .new_workspace
++                .matches_prefix(&KeyEvent::new(KeyCode::Char('m'), KeyModifiers::empty()))
++        );
+         assert_eq!(
+             app.state.toast_config.delivery,
+             crate::config::ToastDelivery::Herdr
+@@ -3466,11 +3471,12 @@ mod tests {
+         assert_eq!(report.status, crate::config::ConfigReloadStatus::Applied);
+         assert_eq!(app.state.prefix_code, KeyCode::Char(' '));
+         assert_eq!(app.state.prefix_mods, KeyModifiers::CONTROL);
+-        assert!(app
+-            .state
+-            .keybinds
+-            .previous_workspace
+-            .matches_prefix(&KeyEvent::new(KeyCode::Char('l'), KeyModifiers::SHIFT)));
++        assert!(
++            app.state
++                .keybinds
++                .previous_workspace
++                .matches_prefix(&KeyEvent::new(KeyCode::Char('l'), KeyModifiers::SHIFT))
++        );
+         assert!(app.state.keybinds.swap_pane_right.bindings.is_empty());
+         assert!(app.state.config_diagnostic.is_none());
+ 
+@@ -3495,15 +3501,18 @@ mod tests {
+         let report = app.reload_config();
+ 
+         assert_eq!(report.status, crate::config::ConfigReloadStatus::Partial);
+-        assert!(report
+-            .diagnostics
+-            .iter()
+-            .any(|diagnostic| diagnostic.contains("invalid ui config")));
+-        assert!(app
+-            .state
+-            .keybinds
+-            .new_workspace
+-            .matches_prefix(&KeyEvent::new(KeyCode::Char('m'), KeyModifiers::empty())));
++        assert!(
++            report
++                .diagnostics
++                .iter()
++                .any(|diagnostic| diagnostic.contains("invalid ui config"))
++        );
++        assert!(
++            app.state
++                .keybinds
++                .new_workspace
++                .matches_prefix(&KeyEvent::new(KeyCode::Char('m'), KeyModifiers::empty()))
++        );
+         assert_eq!(
+             app.state.toast_config.delivery,
+             crate::config::ToastDelivery::Herdr
+@@ -3531,10 +3540,12 @@ mod tests {
+         let report = app.reload_config();
+ 
+         assert_eq!(report.status, crate::config::ConfigReloadStatus::Partial);
+-        assert!(report
+-            .diagnostics
+-            .iter()
+-            .any(|diagnostic| diagnostic.contains("invalid terminal config")));
++        assert!(
++            report
++                .diagnostics
++                .iter()
++                .any(|diagnostic| diagnostic.contains("invalid terminal config"))
++        );
+         assert_eq!(app.state.default_shell, original_default_shell);
+         assert_eq!(app.state.shell_mode, original_shell_mode);
+         assert_eq!(app.state.new_terminal_cwd, original_new_cwd);
+@@ -3645,13 +3656,14 @@ mod tests {
+         );
+         assert_eq!(app.state.keybinds.new_workspace, original_keybinds);
+         assert_eq!(app.state.toast_config.delivery, original_toast_delivery);
+-        assert!(app
+-            .state
+-            .config_diagnostic
+-            .as_deref()
+-            .is_some_and(|message| {
+-                message == "config.toml invalid; keeping current config; herdr config check"
+-            }));
++        assert!(
++            app.state
++                .config_diagnostic
++                .as_deref()
++                .is_some_and(|message| {
++                    message == "config.toml invalid; keeping current config; herdr config check"
++                })
++        );
+         assert!(app.state.toast.is_none());
+ 
+         std::env::remove_var(crate::config::CONFIG_PATH_ENV_VAR);
+@@ -4269,13 +4281,14 @@ mod tests {
+ 
+         assert_eq!(response["result"]["type"], "pane_info");
+         assert!(response["result"]["pane"].get("label").is_none());
+-        assert!(app
+-            .state
+-            .terminals
+-            .get(&terminal_id)
+-            .unwrap()
+-            .manual_label
+-            .is_none());
++        assert!(
++            app.state
++                .terminals
++                .get(&terminal_id)
++                .unwrap()
++                .manual_label
++                .is_none()
++        );
+     }
+ 
+     #[test]
+@@ -5378,9 +5391,11 @@ last_pane = "prefix+tab"
+             runtime.keyboard_protocol(),
+             crate::input::KeyboardProtocol::Kitty { flags: 3 }
+         );
+-        assert!(runtime
+-            .input_state()
+-            .is_some_and(|state| state.modify_other_keys));
++        assert!(
++            runtime
++                .input_state()
++                .is_some_and(|state| state.modify_other_keys)
++        );
+         workspace.tabs[0].runtimes.insert(focused, runtime);
+         app.state.workspaces = vec![workspace];
+         app.state.active = Some(0);
+@@ -5403,17 +5418,21 @@ last_pane = "prefix+tab"
+             .runtime_for_pane_in_workspace(&app.terminal_runtimes, 0, focused)
+             .unwrap();
+         runtime.test_process_pty_bytes(b"\x1b[>4;0m");
+-        assert!(!runtime
+-            .input_state()
+-            .is_some_and(|state| state.modify_other_keys));
++        assert!(
++            !runtime
++                .input_state()
++                .is_some_and(|state| state.modify_other_keys)
++        );
+         assert!(!app.host_keyboard_report_all_requested());
+ 
+         #[cfg(unix)]
+         {
+             runtime.test_process_pty_bytes(b"\x1b[>4;1m");
+-            assert!(!runtime
+-                .input_state()
+-                .is_some_and(|state| state.modify_other_keys));
++            assert!(
++                !runtime
++                    .input_state()
++                    .is_some_and(|state| state.modify_other_keys)
++            );
+             assert!(!app.host_keyboard_report_all_requested());
+         }
+     }
+@@ -6223,9 +6242,10 @@ last_pane = "prefix+tab"
+ 
+         let (popup_runtime, mut popup_rx) = TerminalRuntime::test_with_channel(40, 12);
+         app.install_test_popup_runtime(popup_runtime);
+-        assert!(app
+-            .state
+-            .should_capture_host_mouse_from(&app.terminal_runtimes));
++        assert!(
++            app.state
++                .should_capture_host_mouse_from(&app.terminal_runtimes)
++        );
+ 
+         app.route_client_events(
+             vec![crate::raw_input::RawInputEvent::Paste("popup-only".into())],
+@@ -6329,9 +6349,11 @@ last_pane = "prefix+tab"
+             4,
+         );
+         popup_runtime.scroll_up(1);
+-        assert!(popup_runtime
+-            .scroll_metrics()
+-            .is_some_and(|metrics| metrics.offset_from_bottom > 0));
++        assert!(
++            popup_runtime
++                .scroll_metrics()
++                .is_some_and(|metrics| metrics.offset_from_bottom > 0)
++        );
+         app.install_test_popup_runtime(popup_runtime);
+         let (_, inner) =
+             crate::ui::popup_pane_rects(&app.state, app.state.view.terminal_area).unwrap();
+@@ -6349,10 +6371,11 @@ last_pane = "prefix+tab"
+         );
+ 
+         assert!(popup_rx.try_recv().is_ok());
+-        assert!(app
+-            .popup_runtime()
+-            .and_then(TerminalRuntime::scroll_metrics)
+-            .is_some_and(|metrics| metrics.offset_from_bottom > 0));
++        assert!(
++            app.popup_runtime()
++                .and_then(TerminalRuntime::scroll_metrics)
++                .is_some_and(|metrics| metrics.offset_from_bottom > 0)
++        );
+     }
+ 
+     #[tokio::test]
+diff --git a/src/app/state.rs b/src/app/state.rs
+index d9dcfc9d..a6266fac 100644
+--- a/src/app/state.rs
++++ b/src/app/state.rs
+@@ -814,6 +814,10 @@ pub struct ViewState {
+     pub tab_scroll_left_hit_area: Rect,
+     pub tab_scroll_right_hit_area: Rect,
+     pub new_tab_hit_area: Rect,
++    pub bottom_bar_rect: Rect,
++    pub workspace_top_rect: Rect,
++    pub bottom_bar_menu_rect: Rect,
++    pub bottom_bar_agent_hit_areas: Vec<Rect>,
+     pub terminal_area: Rect,
+     pub mobile_header_rect: Rect,
+     pub mobile_menu_hit_area: Rect,
+@@ -967,6 +971,8 @@ pub(crate) struct NavigatorState {
+     pub search_focused: bool,
+     pub state_filter: Option<NavigatorStateFilter>,
+     pub expanded_workspaces: std::collections::HashSet<String>,
++    pub workspace_only: bool,
++    pub anchor: Option<Rect>,
+ }
+ 
+ #[derive(Debug, Clone, PartialEq, Eq)]
+@@ -1820,6 +1826,10 @@ impl AppState {
+                 tab_scroll_left_hit_area: Rect::default(),
+                 tab_scroll_right_hit_area: Rect::default(),
+                 new_tab_hit_area: Rect::default(),
++                bottom_bar_rect: Rect::default(),
++                workspace_top_rect: Rect::default(),
++                bottom_bar_menu_rect: Rect::default(),
++                bottom_bar_agent_hit_areas: Vec::new(),
+                 terminal_area: Rect::default(),
+                 mobile_header_rect: Rect::default(),
+                 mobile_menu_hit_area: Rect::default(),
+diff --git a/src/ui.rs b/src/ui.rs
+index 8adc31ef..b3928465 100644
+--- a/src/ui.rs
++++ b/src/ui.rs
+@@ -1,10 +1,11 @@
+ use ratatui::{
++    Frame,
+     layout::{Constraint, Layout, Rect},
+     style::{Modifier, Style},
+     text::Span,
+-    Frame,
+ };
+ 
++mod bottom_bar;
+ mod dialogs;
+ mod keybind_help;
+ mod menus;
+@@ -22,6 +23,10 @@ mod tabs;
+ mod text;
+ mod widgets;
+ 
++use self::bottom_bar::{
++    bottom_bar_height, bottom_bar_layout, render_bottom_bar, render_top_workspace,
++    tab_bar_content_area as top_workspace_tab_bar_content_area, top_workspace_rect,
++};
+ use self::dialogs::{
+     render_confirm_close_overlay, render_new_linked_worktree_overlay,
+     render_open_existing_worktree_overlay, render_remove_worktree_overlay, render_rename_overlay,
+@@ -42,9 +47,8 @@ use self::onboarding::render_onboarding_overlay;
+ pub(crate) use self::panes::popup_pane_rects;
+ use self::panes::{render_empty, render_popup_pane, resize_popup_pane};
+ pub(crate) use self::release_notes::{
+-    product_announcement_display_lines, release_notes_close_button_rect,
+-    release_notes_display_lines, release_notes_wrapped_line_count, PRODUCT_ANNOUNCEMENT_MODAL_SIZE,
+-    RELEASE_NOTES_MODAL_SIZE,
++    PRODUCT_ANNOUNCEMENT_MODAL_SIZE, RELEASE_NOTES_MODAL_SIZE, product_announcement_display_lines,
++    release_notes_close_button_rect, release_notes_display_lines, release_notes_wrapped_line_count,
+ };
+ use self::release_notes::{render_product_announcement_overlay, render_release_notes_overlay};
+ pub(crate) use self::scrollbar::{
+@@ -54,13 +58,12 @@ pub(crate) use self::scrollbar::{
+ use self::settings::render_settings_overlay;
+ #[cfg(test)]
+ pub(crate) use self::sidebar::workspace_drop_indicator_row;
+-use self::sidebar::{render_sidebar, render_sidebar_collapsed};
+ use self::status::{
+     copy_feedback_rect, render_config_diagnostic, render_copy_feedback, render_toast_notification,
+     toast_notification_rect,
+ };
+ pub(crate) use self::tab_surface::{
+-    compute_tab_surface, render_tab_surface, resize_tab_surface, TabSurfaceLayout,
++    TabSurfaceLayout, compute_tab_surface, render_tab_surface, resize_tab_surface,
+ };
+ use self::tabs::render_tab_bar;
+ pub(crate) use self::{
+@@ -72,30 +75,30 @@ pub(crate) use self::{
+         remove_worktree_popup_rect, rename_button_rects,
+     },
+     settings::{
+-        settings_button_rects, settings_popup_height, settings_show_primary_action,
+-        SETTINGS_POPUP_WIDTH,
++        SETTINGS_POPUP_WIDTH, settings_button_rects, settings_popup_height,
++        settings_show_primary_action,
+     },
+     sidebar::{
+-        agent_entry_gap, agent_entry_height_in_body, agent_panel_body_rect, agent_panel_entries,
+-        agent_panel_scroll_for_target, agent_panel_scroll_metrics, agent_panel_scrollbar_rect,
+-        agent_panel_toggle_rect, all_agent_panel_entries, collapsed_sidebar_sections,
+-        collapsed_sidebar_toggle_rect, compute_workspace_card_areas, expanded_sidebar_sections,
+-        expanded_sidebar_toggle_rect, normalized_workspace_scroll, sidebar_section_divider_rect,
+-        workspace_drop_slots, workspace_group_chevron_rect, workspace_list_entries,
+-        workspace_list_entries_expanded, workspace_list_rect, workspace_list_scroll_metrics,
+-        workspace_list_scrollbar_rect, workspace_parent_group_state, AgentPanelEntry,
+-        WorkspaceListEntry,
++        AgentPanelEntry, WorkspaceListEntry, agent_entry_gap, agent_entry_height_in_body,
++        agent_panel_body_rect, agent_panel_entries, agent_panel_scroll_for_target,
++        agent_panel_scroll_metrics, agent_panel_scrollbar_rect, agent_panel_toggle_rect,
++        all_agent_panel_entries, collapsed_sidebar_sections, collapsed_sidebar_toggle_rect,
++        compute_workspace_card_areas, expanded_sidebar_sections, expanded_sidebar_toggle_rect,
++        normalized_workspace_scroll, sidebar_section_divider_rect, workspace_drop_slots,
++        workspace_group_chevron_rect, workspace_list_entries, workspace_list_entries_expanded,
++        workspace_list_rect, workspace_list_scroll_metrics, workspace_list_scrollbar_rect,
++        workspace_parent_group_state,
+     },
+ };
+ 
+ pub(crate) use self::{
+     keybind_help::keybind_help_lines,
+     mobile::{
+-        mobile_switcher_areas, mobile_switcher_max_scroll, mobile_switcher_target_at,
+-        mobile_switcher_workspace_doc_range, MobileSwitcherTarget,
++        MobileSwitcherTarget, mobile_switcher_areas, mobile_switcher_max_scroll,
++        mobile_switcher_target_at, mobile_switcher_workspace_doc_range,
+     },
+     panes::{apply_pane_chrome, pane_inner_rect, pane_is_scrolled_back},
+-    tab_surface::{tab_surface_cursor, tab_surface_hyperlinks, TabSurfaceView},
++    tab_surface::{TabSurfaceView, tab_surface_cursor, tab_surface_hyperlinks},
+     tabs::{compute_tab_bar_view, tab_bar_content_area},
+     widgets::{centered_popup_rect, modal_stack_areas},
+ };
+@@ -103,8 +106,6 @@ use crate::app::state::ViewLayout;
+ use crate::app::{AppState, Mode};
+ use crate::terminal::TerminalRuntimeRegistry;
+ 
+-const COLLAPSED_WIDTH: u16 = 4; // num + space + dot + separator
+-
+ /// Compute view geometry and reconcile pane sizes.
+ /// Called before render to separate mutation from drawing.
+ #[cfg_attr(not(test), allow(dead_code))]
+@@ -178,7 +179,11 @@ fn resize_background_tab_panes_for_desktop(
+     cell_size: crate::kitty_graphics::HostCellSize,
+ ) {
+     for (ws_idx, ws) in app.workspaces.iter().enumerate() {
+-        let (_, terminal_area) = desktop_tab_bar_and_terminal_area(app, ws, main_area);
++        let (_, tab_terminal_area) = desktop_tab_bar_and_terminal_area(app, ws, main_area);
++        let (_, terminal_area) = desktop_bottom_bar_and_terminal_area(
++            tab_terminal_area,
++            bottom_bar_height(app, terminal_runtimes),
++        );
+         for (tab_idx, tab) in ws.tabs.iter().enumerate() {
+             if app.active == Some(ws_idx) && tab_idx == ws.active_tab_index() {
+                 continue;
+@@ -188,6 +193,18 @@ fn resize_background_tab_panes_for_desktop(
+     }
+ }
+ 
++fn desktop_bottom_bar_and_terminal_area(area: Rect, requested_height: u16) -> (Rect, Rect) {
++    let bottom_bar_height = requested_height.min(area.height.saturating_sub(1));
++    if bottom_bar_height > 0 {
++        let [terminal_area, bottom_bar_rect] =
++            Layout::vertical([Constraint::Min(1), Constraint::Length(bottom_bar_height)])
++                .areas(area);
++        (terminal_area, bottom_bar_rect)
++    } else {
++        (area, Rect::default())
++    }
++}
++
+ fn desktop_tab_bar_and_terminal_area(
+     app: &AppState,
+     ws: &crate::workspace::Workspace,
+@@ -224,42 +241,25 @@ fn compute_view_internal(
+         return;
+     }
+ 
+-    let sidebar_w = if app.sidebar_collapsed {
+-        match app.sidebar_collapsed_mode {
+-            crate::config::SidebarCollapsedModeConfig::Compact => COLLAPSED_WIDTH,
+-            crate::config::SidebarCollapsedModeConfig::Hidden => 0,
+-        }
+-    } else {
+-        app.sidebar_width
+-            .clamp(app.sidebar_min_width, app.sidebar_max_width)
+-    };
+-
++    // The desktop sidebar is intentionally removed in this layout. The compact
++    // AI button stays at bottom-left and workspace context moves to top-right.
+     let [sidebar_area, main_area] =
+-        Layout::horizontal([Constraint::Length(sidebar_w), Constraint::Min(1)]).areas(area);
++        Layout::horizontal([Constraint::Length(0), Constraint::Min(1)]).areas(area);
+ 
+-    let (tab_bar_rect, terminal_area) = app
++    let (tab_bar_rect, tab_terminal_area) = app
+         .active
+         .and_then(|i| app.workspaces.get(i))
+         .map(|ws| desktop_tab_bar_and_terminal_area(app, ws, main_area))
+         .unwrap_or((Rect::default(), main_area));
++    let workspace_top_rect = top_workspace_rect(tab_bar_rect);
++    let (terminal_area, bottom_bar_rect) = desktop_bottom_bar_and_terminal_area(
++        tab_terminal_area,
++        bottom_bar_height(app, terminal_runtimes),
++    );
++    let (_, _, bottom_bar_menu_rect, bottom_bar_agent_hit_areas) =
++        bottom_bar_layout(app, terminal_runtimes, bottom_bar_rect);
+ 
+-    if !app.sidebar_collapsed {
+-        app.workspace_scroll = normalized_workspace_scroll(app, sidebar_area, app.workspace_scroll);
+-        let (_, detail_area) = expanded_sidebar_sections(sidebar_area, app.sidebar_section_split);
+-        let max_agent_scroll = agent_panel_scroll_metrics(app, detail_area).max_offset_from_bottom;
+-        app.agent_panel_scroll = app.agent_panel_scroll.min(max_agent_scroll);
+-    } else {
+-        app.workspace_scroll = app
+-            .workspace_scroll
+-            .min(app.workspaces.len().saturating_sub(1));
+-        app.agent_panel_scroll = 0;
+-    }
+-
+-    let workspace_card_areas = if app.sidebar_collapsed {
+-        Vec::new()
+-    } else {
+-        compute_workspace_card_areas(app, sidebar_area)
+-    };
++    let workspace_card_areas = Vec::new();
+ 
+     let tab_bar_view = app
+         .active
+@@ -267,7 +267,10 @@ fn compute_view_internal(
+         .map(|ws| {
+             compute_tab_bar_view(
+                 ws,
+-                tab_bar_content_area(app, tab_bar_rect),
++                top_workspace_tab_bar_content_area(
++                    tab_bar_content_area(app, tab_bar_rect),
++                    workspace_top_rect,
++                ),
+                 app.tab_scroll,
+                 app.tab_scroll_follow_active,
+                 app.mouse_capture,
+@@ -313,6 +316,10 @@ fn compute_view_internal(
+         tab_scroll_left_hit_area: tab_bar_view.scroll_left_hit_area,
+         tab_scroll_right_hit_area: tab_bar_view.scroll_right_hit_area,
+         new_tab_hit_area: tab_bar_view.new_tab_hit_area,
++        bottom_bar_rect,
++        workspace_top_rect,
++        bottom_bar_menu_rect,
++        bottom_bar_agent_hit_areas,
+         terminal_area,
+         mobile_header_rect: Rect::default(),
+         mobile_menu_hit_area: Rect::default(),
+@@ -376,6 +383,10 @@ fn compute_mobile_view(
+         tab_scroll_left_hit_area: Rect::default(),
+         tab_scroll_right_hit_area: Rect::default(),
+         new_tab_hit_area: Rect::default(),
++        bottom_bar_rect: Rect::default(),
++        workspace_top_rect: Rect::default(),
++        bottom_bar_menu_rect: Rect::default(),
++        bottom_bar_agent_hit_areas: Vec::new(),
+         terminal_area,
+         mobile_header_rect: header_rect,
+         mobile_menu_hit_area: header_hits.menu,
+@@ -399,11 +410,13 @@ pub fn render_with_runtime_registry(
+     frame: &mut Frame,
+ ) {
+     let tab_bar_area = app.view.tab_bar_rect;
++    let bottom_bar_area = app.view.bottom_bar_rect;
+     let terminal_area = app.view.terminal_area;
+ 
+     render_navigation_chrome(app, terminal_runtimes, frame);
+     if app.view.layout != ViewLayout::Mobile {
+         render_tab_bar(app, frame, tab_bar_area);
++        render_top_workspace(app, terminal_runtimes, frame, app.view.workspace_top_rect);
+     }
+     if app
+         .active
+@@ -414,12 +427,15 @@ pub fn render_with_runtime_registry(
+     } else {
+         render_empty(app, frame, terminal_area);
+     }
++    render_bottom_bar(app, terminal_runtimes, frame, bottom_bar_area);
+ 
+     // Ambient notifications sit above panes, but below interactive overlays.
+     render_notifications(app, frame, terminal_area);
+     render_popup_pane(app, terminal_runtimes, frame, terminal_area);
+ 
+-    let mode_bar_area = if app.view.layout == ViewLayout::Desktop
++    let mode_bar_area = if app.view.layout == ViewLayout::Desktop && bottom_bar_area.height > 0 {
++        bottom_bar_area
++    } else if app.view.layout == ViewLayout::Desktop
+         && app.tab_bar_position == crate::config::TabBarPositionConfig::Bottom
+         && tab_bar_area.height > 0
+     {
+@@ -468,12 +484,6 @@ fn render_navigation_chrome(
+ ) {
+     if app.view.layout == ViewLayout::Mobile {
+         render_mobile_header(app, terminal_runtimes, frame, app.view.mobile_header_rect);
+-    } else if app.view.sidebar_rect.width > 0 {
+-        if app.sidebar_collapsed {
+-            render_sidebar_collapsed(app, frame, app.view.sidebar_rect);
+-        } else {
+-            render_sidebar(app, terminal_runtimes, frame, app.view.sidebar_rect);
+-        }
+     }
+ }
+ 
+@@ -600,7 +610,7 @@ mod tests {
+     use super::*;
+     use crate::{app::state::ViewLayout, layout::PaneInfo, workspace::Workspace};
+     use ratatui::style::Color;
+-    use ratatui::{backend::TestBackend, Terminal};
++    use ratatui::{Terminal, backend::TestBackend};
+ 
+     #[test]
+     fn copy_feedback_offset_only_increases_when_toast_rect_overlaps() {
+@@ -1444,36 +1454,56 @@ mod tests {
+             .1
+             .clone();
+ 
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "previous workspace"));
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "next workspace"));
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "previous agent"));
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "next agent"));
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "focus agent 1-9"));
+-        assert!(workspace_tab
+-            .iter()
+-            .any(|(key, label)| key == "unset" && label.as_ref() == "switch workspace 1-9"));
+-        assert!(panes
+-            .iter()
+-            .any(|(key, label)| key == "prefix+h" && label.as_ref() == "focus pane left"));
+-        assert!(panes
+-            .iter()
+-            .any(|(key, label)| key == "prefix+j" && label.as_ref() == "focus pane down"));
+-        assert!(panes
+-            .iter()
+-            .any(|(key, label)| key == "prefix+k" && label.as_ref() == "focus pane up"));
+-        assert!(panes
+-            .iter()
+-            .any(|(key, label)| key == "prefix+l" && label.as_ref() == "focus pane right"));
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "previous workspace")
++        );
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "next workspace")
++        );
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "previous agent")
++        );
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "next agent")
++        );
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "focus agent 1-9")
++        );
++        assert!(
++            workspace_tab
++                .iter()
++                .any(|(key, label)| key == "unset" && label.as_ref() == "switch workspace 1-9")
++        );
++        assert!(
++            panes
++                .iter()
++                .any(|(key, label)| key == "prefix+h" && label.as_ref() == "focus pane left")
++        );
++        assert!(
++            panes
++                .iter()
++                .any(|(key, label)| key == "prefix+j" && label.as_ref() == "focus pane down")
++        );
++        assert!(
++            panes
++                .iter()
++                .any(|(key, label)| key == "prefix+k" && label.as_ref() == "focus pane up")
++        );
++        assert!(
++            panes
++                .iter()
++                .any(|(key, label)| key == "prefix+l" && label.as_ref() == "focus pane right")
++        );
+     }
+ 
+     #[test]
+@@ -1507,12 +1537,16 @@ mod tests {
+             .expect("custom group")
+             .1
+             .clone();
+-        assert!(custom
+-            .iter()
+-            .any(|(key, label)| key == "prefix+alt+g" && label.as_ref() == "open lazygit"));
+-        assert!(custom
+-            .iter()
+-            .any(|(key, label)| key == "prefix+alt+h" && label.as_ref() == "custom command"));
++        assert!(
++            custom
++                .iter()
++                .any(|(key, label)| key == "prefix+alt+g" && label.as_ref() == "open lazygit")
++        );
++        assert!(
++            custom
++                .iter()
++                .any(|(key, label)| key == "prefix+alt+h" && label.as_ref() == "custom command")
++        );
+ 
+         let rendered_help = keybind_help_lines(&app)
+             .into_iter()
+diff --git a/src/ui/bottom_bar.rs b/src/ui/bottom_bar.rs
+new file mode 100644
+index 00000000..5e3c2cee
+--- /dev/null
++++ b/src/ui/bottom_bar.rs
+@@ -0,0 +1,204 @@
++use ratatui::{
++    Frame,
++    layout::{Alignment, Rect},
++    style::{Modifier, Style},
++    text::{Line, Span},
++    widgets::Paragraph,
++};
++
++use super::sidebar::{AgentPanelEntry, agent_panel_entries_from, render_bottom_bar_workspace};
++use super::status::state_icon;
++use super::text::{display_width_u16, truncate_end};
++use super::widgets::panel_contrast_fg;
++use crate::app::AppState;
++use crate::terminal::TerminalRuntimeRegistry;
++
++const TOP_WORKSPACE_WIDTH: u16 = 40;
++const MENU_WIDTH: u16 = 6;
++const CENTER_GAP: u16 = 1;
++const AGENT_TAB_GAP: u16 = 1;
++
++/// Keep the bottom status bar to a single compact row.
++pub(super) fn bottom_bar_height(
++    _app: &AppState,
++    _terminal_runtimes: &TerminalRuntimeRegistry,
++) -> u16 {
++    1
++}
++
++pub(super) fn top_workspace_rect(area: Rect) -> Rect {
++    if area.width == 0 || area.height == 0 {
++        return Rect::default();
++    }
++
++    let width = TOP_WORKSPACE_WIDTH
++        .min(area.width.saturating_sub(10).max(1))
++        .max(1);
++    Rect::new(
++        area.x + area.width.saturating_sub(width),
++        area.y,
++        width,
++        1.min(area.height),
++    )
++}
++
++/// Reserve the top-right workspace button from the tab strip.
++pub(super) fn tab_bar_content_area(area: Rect, workspace_area: Rect) -> Rect {
++    if workspace_area.width == 0 || area.width <= workspace_area.width + CENTER_GAP {
++        return Rect::new(area.x, area.y, 0, area.height);
++    }
++    Rect::new(
++        area.x,
++        area.y,
++        area.width
++            .saturating_sub(workspace_area.width)
++            .saturating_sub(CENTER_GAP),
++        area.height,
++    )
++}
++
++fn agent_button_label(entry: &AgentPanelEntry) -> String {
++    match entry
++        .primary_tab_label
++        .as_deref()
++        .or(entry.pane_label.as_deref())
++    {
++        Some(tab) if !tab.is_empty() => format!("{} · {tab}", entry.primary_label),
++        _ => entry.primary_label.clone(),
++    }
++}
++
++fn agent_button_widths(entries: &[AgentPanelEntry], available: u16) -> Vec<u16> {
++    if entries.is_empty() || available == 0 {
++        return Vec::new();
++    }
++
++    let mut widths = entries
++        .iter()
++        .map(|entry| display_width_u16(&agent_button_label(entry)).saturating_add(4))
++        .collect::<Vec<_>>();
++    let gaps = AGENT_TAB_GAP.saturating_mul(widths.len().saturating_sub(1) as u16);
++    let total = widths.iter().copied().sum::<u16>().saturating_add(gaps);
++    if total <= available {
++        return widths;
++    }
++
++    let visible = entries.len().min(available as usize);
++    let tab_available =
++        available.saturating_sub(AGENT_TAB_GAP.saturating_mul(visible.saturating_sub(1) as u16));
++    let base = tab_available / visible as u16;
++    let remainder = tab_available % visible as u16;
++    widths.truncate(visible);
++    widths.iter_mut().enumerate().for_each(|(index, width)| {
++        *width = base + if index < remainder as usize { 1 } else { 0 };
++    });
++    widths
++}
++
++/// Lay out compact full-context agent tabs on the left and the global menu on
++/// the far right. The center and workspace slot remain empty in the bottom bar.
++pub(super) fn bottom_bar_layout(
++    app: &AppState,
++    terminal_runtimes: &TerminalRuntimeRegistry,
++    area: Rect,
++) -> (Rect, Rect, Rect, Vec<Rect>) {
++    if area.width == 0 || area.height == 0 {
++        return (
++            Rect::default(),
++            Rect::default(),
++            Rect::default(),
++            Vec::new(),
++        );
++    }
++
++    let menu_width = MENU_WIDTH.min(area.width);
++    let content = Rect::new(
++        area.x,
++        area.y,
++        area.width.saturating_sub(menu_width),
++        area.height,
++    );
++    let menu_area = Rect::new(
++        area.x + area.width.saturating_sub(menu_width),
++        area.y,
++        menu_width,
++        area.height,
++    );
++    let entries = agent_panel_entries_from(app, terminal_runtimes);
++    let widths = agent_button_widths(&entries, content.width);
++    let mut hit_areas = Vec::with_capacity(widths.len());
++    let mut x = content.x;
++    for (index, width) in widths.into_iter().enumerate() {
++        hit_areas.push(Rect::new(x, content.y, width, content.height));
++        if index + 1 < entries.len() {
++            x = x.saturating_add(width.saturating_add(AGENT_TAB_GAP));
++        }
++    }
++
++    (content, Rect::default(), menu_area, hit_areas)
++}
++
++pub(super) fn render_top_workspace(
++    app: &AppState,
++    terminal_runtimes: &TerminalRuntimeRegistry,
++    frame: &mut Frame,
++    area: Rect,
++) {
++    render_bottom_bar_workspace(app, terminal_runtimes, frame, area);
++}
++
++pub(super) fn render_bottom_bar(
++    app: &AppState,
++    terminal_runtimes: &TerminalRuntimeRegistry,
++    frame: &mut Frame,
++    area: Rect,
++) {
++    if area.width == 0 || area.height == 0 {
++        return;
++    }
++
++    let p = &app.palette;
++    let base = Style::default().bg(p.panel_bg);
++    frame.buffer_mut().set_style(area, base);
++
++    let (_, _, menu_area, hit_areas) = bottom_bar_layout(app, terminal_runtimes, area);
++    let entries = agent_panel_entries_from(app, terminal_runtimes);
++    for (entry, button_area) in entries.iter().zip(hit_areas.iter().copied()) {
++        let active = app.is_active_pane(entry.ws_idx, entry.tab_idx, entry.pane_id);
++        let (status_icon, status_style) =
++            state_icon(entry.state, entry.seen, app.status_indicators, p);
++        let tab_style = if active {
++            let base = Style::default().fg(panel_contrast_fg(p)).bg(p.accent);
++            base.add_modifier(Modifier::BOLD)
++        } else {
++            Style::default().fg(p.overlay1).bg(p.surface0)
++        };
++        let status_style = if active {
++            tab_style
++        } else {
++            status_style.bg(p.surface0)
++        };
++        let max_label_width = button_area.width.saturating_sub(4) as usize;
++        let label = truncate_end(&agent_button_label(entry), max_label_width);
++        let line = Line::from(vec![
++            Span::raw(" "),
++            Span::styled(status_icon, status_style),
++            Span::raw(" "),
++            Span::styled(label, tab_style),
++            Span::raw(" "),
++        ]);
++        frame.render_widget(
++            Paragraph::new(line)
++                .style(tab_style)
++                .alignment(Alignment::Center),
++            button_area,
++        );
++    }
++
++    frame.render_widget(
++        Paragraph::new("menu")
++            .style(Style::default().fg(p.overlay0).bg(p.panel_bg))
++            .alignment(Alignment::Right),
++        menu_area,
++    );
++}
+diff --git a/src/ui/navigator.rs b/src/ui/navigator.rs
+index cb2f235e..6a56b30c 100644
+--- a/src/ui/navigator.rs
++++ b/src/ui/navigator.rs
+@@ -1,9 +1,9 @@
+ use ratatui::{
++    Frame,
+     layout::Rect,
+     style::{Modifier, Style},
+     text::{Line, Span},
+     widgets::{Clear, Paragraph},
+-    Frame,
+ };
+ 
+ use super::{
+@@ -13,8 +13,8 @@ use super::{
+     widgets::{panel_contrast_fg, render_panel_shell},
+ };
+ use crate::app::state::{
+-    navigator_display_lines, AppState, NavigatorDisplayLine, NavigatorRow, NavigatorStateFilter,
+-    NavigatorTarget,
++    AppState, NavigatorDisplayLine, NavigatorRow, NavigatorStateFilter, NavigatorTarget,
++    navigator_display_lines,
+ };
+ use crate::terminal::TerminalRuntimeRegistry;
+ 
+@@ -29,6 +29,14 @@ pub(super) fn render_navigator_overlay(
+         return;
+     };
+ 
++    if app.navigator.workspace_only {
++        let rows = app.navigator_rows_from(terminal_runtimes);
++        let lines = navigator_display_lines(&rows);
++        render_rows(app, &rows, &lines, frame, inner);
++        render_navigator_scrollbar(app, lines.len(), frame, inner);
++        return;
++    }
++
+     let search = app.navigator_search_rect();
+     let body = app.navigator_body_rect();
+     let detail = app.navigator_detail_rect();
+@@ -53,12 +61,18 @@ fn render_search(app: &AppState, frame: &mut Frame, area: Rect) {
+     } else {
+         Style::default().fg(p.overlay0)
+     };
+-    let count = app
+-        .workspaces
+-        .iter()
+-        .flat_map(|workspace| workspace.tabs.iter())
+-        .map(|tab| tab.panes.len())
+-        .sum::<usize>();
++    let (count, noun) = if app.navigator.workspace_only {
++        (app.workspaces.len(), "workspaces")
++    } else {
++        (
++            app.workspaces
++                .iter()
++                .flat_map(|workspace| workspace.tabs.iter())
++                .map(|tab| tab.panes.len())
++                .sum::<usize>(),
++            "panes",
++        )
++    };
+     let mut spans = vec![Span::styled(" / ", focus_style)];
+     let query = app.navigator.query.trim();
+     match app.navigator.state_filter {
+@@ -91,14 +105,18 @@ fn render_search(app: &AppState, frame: &mut Frame, area: Rect) {
+             app,
+         ),
+         None if query.is_empty() => spans.push(Span::styled(
+-            "search panes",
++            if app.navigator.workspace_only {
++                "select workspace"
++            } else {
++                "search panes"
++            },
+             Style::default().fg(p.overlay0),
+         )),
+         None => spans.push(Span::styled(query.to_string(), Style::default().fg(p.text))),
+     }
+     spans.push(Span::styled(
+         format!(
+-            "{count:>width$} panes",
++            "{count:>width$} {noun}",
+             width = area.width.saturating_sub(16) as usize
+         ),
+         Style::default().fg(p.overlay0),
+@@ -165,6 +183,7 @@ fn render_row(
+ ) {
+     let row = &rows[idx];
+     let p = &app.palette;
++    let workspace_row = row.is_workspace || app.navigator.workspace_only;
+     frame.render_widget(Clear, rect);
+     let base_style = if selected {
+         Style::default().bg(p.accent).fg(panel_contrast_fg(p))
+@@ -183,12 +202,12 @@ fn render_row(
+         base_style.add_modifier(Modifier::BOLD)
+     } else if context_only {
+         let dimmed = Style::default().fg(p.overlay0).bg(p.panel_bg);
+-        if row.is_workspace {
++        if workspace_row {
+             dimmed.add_modifier(Modifier::BOLD)
+         } else {
+             dimmed
+         }
+-    } else if row.is_workspace {
++    } else if workspace_row {
+         Style::default()
+             .fg(p.accent)
+             .bg(p.panel_bg)
+@@ -224,20 +243,30 @@ fn render_row(
+     // structure stays behind the labels.
+     let tree_style = if selected {
+         base_style
+-    } else if row.is_workspace {
++    } else if workspace_row {
+         dim_style
+     } else {
+         Style::default().fg(p.surface1).bg(p.panel_bg)
+     };
+-    let meta_width = metadata_width(rect.width);
++    let meta_width = if app.navigator.workspace_only {
++        0
++    } else {
++        metadata_width(rect.width)
++    };
+     let left_budget = rect
+         .width
+         .saturating_sub(meta_width)
+         .saturating_sub(display_width_u16(&format!("{gutter}{prefix} ")))
+         .saturating_sub(3) as usize;
+-    let title = truncate_end(&row.label, left_budget);
++    let inline_meta = if app.navigator.workspace_only && !row.meta.is_empty() {
++        format!("  {}", row.meta)
++    } else {
++        String::new()
++    };
++    let inline_meta_width = display_width_u16(&inline_meta) as usize;
++    let title = truncate_end(&row.label, left_budget.saturating_sub(inline_meta_width));
+ 
+-    let spans = vec![
++    let mut spans = vec![
+         Span::styled(gutter, gutter_style),
+         Span::styled(prefix, tree_style),
+         Span::styled(" ", base_style),
+@@ -245,6 +274,16 @@ fn render_row(
+         Span::raw(" "),
+         Span::styled(title, text_style),
+     ];
++    if !inline_meta.is_empty() {
++        spans.push(Span::styled(
++            inline_meta,
++            if selected {
++                base_style
++            } else {
++                Style::default().fg(p.overlay0).bg(p.panel_bg)
++            },
++        ));
++    }
+     frame.render_widget(Paragraph::new(Line::from(spans)).style(base_style), rect);
+ 
+     if meta_width > 0 {
+@@ -257,7 +296,7 @@ fn render_row(
+         let meta = truncate_end(&row.meta, meta_width.saturating_sub(2) as usize);
+         let meta_style = if selected {
+             base_style
+-        } else if context_only || row.is_workspace || row.is_tab {
++        } else if context_only || workspace_row || row.is_tab {
+             Style::default().fg(p.overlay0).bg(p.panel_bg)
+         } else {
+             Style::default()
+diff --git a/src/ui/sidebar.rs b/src/ui/sidebar.rs
+index a6dfbcd3..4ee5e0b5 100644
+--- a/src/ui/sidebar.rs
++++ b/src/ui/sidebar.rs
+@@ -1,11 +1,11 @@
+ mod tokens;
+ 
+ use ratatui::{
++    Frame,
+     layout::{Alignment, Rect},
+     style::{Color, Modifier, Style},
+     text::{Line, Span},
+     widgets::Paragraph,
+-    Frame,
+ };
+ 
+ use self::tokens::{ResolvedToken, ResolvedTokenKind, SpaceTokenContext};
+@@ -551,6 +551,62 @@ fn resolved_agent_rows(app: &AppState, entry: &AgentPanelEntry) -> Vec<Vec<Resol
+     tokens::agent_rows(&app.sidebar_agents, entry, label)
+ }
+ 
++pub(crate) fn bottom_bar_agent_height(app: &AppState, entry: &AgentPanelEntry) -> u16 {
++    resolved_agent_rows(app, entry).len().max(1) as u16
++}
++
++pub(crate) fn render_bottom_bar_agent(
++    app: &AppState,
++    frame: &mut Frame,
++    entry: &AgentPanelEntry,
++    area: Rect,
++) {
++    if area.width == 0 || area.height == 0 {
++        return;
++    }
++
++    let p = &app.palette;
++    let rows = resolved_agent_rows(app, entry);
++    let label_color = state_label_color(entry.state, entry.seen, p);
++    let is_active = app.is_active_pane(entry.ws_idx, entry.tab_idx, entry.pane_id);
++    let row_style = if is_active {
++        Style::default().bg(p.active_row_bg)
++    } else {
++        Style::default()
++    };
++    let name_style = if is_active {
++        Style::default().fg(p.text).add_modifier(Modifier::BOLD)
++    } else {
++        Style::default().fg(p.subtext0).add_modifier(Modifier::BOLD)
++    };
++    let status_style = if is_active {
++        Style::default().fg(label_color)
++    } else {
++        Style::default().fg(label_color).add_modifier(Modifier::DIM)
++    };
++    let agent_style = Style::default().fg(p.overlay0).add_modifier(Modifier::DIM);
++    let status_icon = state_icon(entry.state, entry.seen, app.status_indicators, p);
++
++    for (row_index, resolved) in rows.iter().take(area.height as usize).enumerate() {
++        let prefix = if row_index == 0 { " " } else { "   " };
++        let mut spans = vec![Span::raw(prefix)];
++        spans.extend(resolved_token_spans(
++            resolved,
++            status_icon,
++            status_style,
++            name_style,
++            agent_style,
++            agent_style,
++            p,
++            area.width.saturating_sub(prefix.len() as u16) as usize,
++        ));
++        frame.render_widget(
++            Paragraph::new(Line::from(spans)).style(row_style),
++            Rect::new(area.x, area.y + row_index as u16, area.width, 1),
++        );
++    }
++}
++
+ pub(crate) fn agent_entry_height_in_body(
+     app: &AppState,
+     entry: &AgentPanelEntry,
+@@ -1206,6 +1262,93 @@ fn apply_token_style(mut style: Style, patch: crate::config::SidebarTokenStyle)
+     style
+ }
+ 
++pub(crate) fn bottom_bar_workspace_height(
++    app: &AppState,
++    terminal_runtimes: &TerminalRuntimeRegistry,
++) -> u16 {
++    let Some(ws_idx) = app.active else {
++        return 1;
++    };
++    let Some(ws) = app.workspaces.get(ws_idx) else {
++        return 1;
++    };
++    let label = ws.display_name_from(&app.terminals, terminal_runtimes);
++    let (state, seen) = ws.aggregate_state(&app.terminals);
++    let token_values = ws.metadata_tokens.values();
++    tokens::space_rows(
++        &app.sidebar_spaces,
++        SpaceTokenContext {
++            workspace: &label,
++            branch: ws.branch().as_deref(),
++            state_text: state_label(state, seen),
++            ahead_behind: ws.git_ahead_behind(),
++            tokens: &token_values,
++            suppress_git_details: false,
++        },
++    )
++    .len()
++    .max(1) as u16
++}
++
++pub(crate) fn render_bottom_bar_workspace(
++    app: &AppState,
++    terminal_runtimes: &TerminalRuntimeRegistry,
++    frame: &mut Frame,
++    area: Rect,
++) {
++    let Some(ws_idx) = app.active else {
++        return;
++    };
++    let Some(ws) = app.workspaces.get(ws_idx) else {
++        return;
++    };
++    if area.width == 0 || area.height == 0 {
++        return;
++    }
++
++    let p = &app.palette;
++    let label = ws.display_name_from(&app.terminals, terminal_runtimes);
++    let (state, seen) = ws.aggregate_state(&app.terminals);
++    let token_values = ws.metadata_tokens.values();
++    let rows = tokens::space_rows(
++        &app.sidebar_spaces,
++        SpaceTokenContext {
++            workspace: &label,
++            branch: ws.branch().as_deref(),
++            state_text: state_label(state, seen),
++            ahead_behind: ws.git_ahead_behind(),
++            tokens: &token_values,
++            suppress_git_details: false,
++        },
++    );
++    let (state_icon, state_icon_style) = state_icon(state, seen, app.status_indicators, p);
++    let state_text_style = Style::default()
++        .fg(state_label_color(state, seen, p))
++        .add_modifier(Modifier::DIM);
++    let name_style = Style::default().fg(p.text).add_modifier(Modifier::BOLD);
++    let branch_style = Style::default().fg(p.mauve);
++    let mut spans = Vec::new();
++    for (row_index, resolved) in rows.iter().enumerate() {
++        if row_index > 0 {
++            spans.push(Span::styled("  ", Style::default().fg(p.surface_dim)));
++        }
++        spans.extend(resolved_token_spans(
++            resolved,
++            (state_icon, state_icon_style),
++            state_text_style,
++            name_style,
++            branch_style,
++            branch_style,
++            p,
++            area.width as usize,
++        ));
++    }
++    frame.render_widget(
++        Paragraph::new(Line::from(spans)).alignment(Alignment::Right),
++        Rect::new(area.x, area.y, area.width, 1),
++    );
++}
++
+ fn render_workspace_list(
+     app: &AppState,
+     terminal_runtimes: &TerminalRuntimeRegistry,
+@@ -1598,7 +1741,7 @@ fn render_sidebar_toggle(
+ mod tests {
+     use super::*;
+     use crate::{detect::Agent, layout::PaneId, workspace::Workspace};
+-    use ratatui::{backend::TestBackend, layout::Direction, Terminal};
++    use ratatui::{Terminal, backend::TestBackend, layout::Direction};
+ 
+     fn row_text(buffer: &ratatui::buffer::Buffer, row: u16, width: u16) -> String {
+         (0..width)
+@@ -1631,23 +1774,27 @@ mod tests {
+         expanded
+             .draw(|frame| render_sidebar(&app, &TerminalRuntimeRegistry::new(), frame, area))
+             .unwrap();
+-        assert!(expanded
+-            .backend()
+-            .buffer()
+-            .content
+-            .iter()
+-            .all(|cell| cell.bg == app.palette.sidebar_bg));
++        assert!(
++            expanded
++                .backend()
++                .buffer()
++                .content
++                .iter()
++                .all(|cell| cell.bg == app.palette.sidebar_bg)
++        );
+ 
+         let mut collapsed = Terminal::new(TestBackend::new(26, 20)).unwrap();
+         collapsed
+             .draw(|frame| render_sidebar_collapsed(&app, frame, area))
+             .unwrap();
+-        assert!(collapsed
+-            .backend()
+-            .buffer()
+-            .content
+-            .iter()
+-            .all(|cell| cell.bg == app.palette.sidebar_bg));
++        assert!(
++            collapsed
++                .backend()
++                .buffer()
++                .content
++                .iter()
++                .all(|cell| cell.bg == app.palette.sidebar_bg)
++        );
+     }
+ 
+     #[test]
+@@ -1758,9 +1905,11 @@ rows = [[{ token = "workspace", bold = false }, { token = "agent", dim = false }
+ 
+         let inactive = buffer[(find_symbol_x(buffer, second_row, 25, "t"), second_row)].style();
+         assert_eq!(inactive.fg, Some(app.palette.subtext0));
+-        assert!(!inactive
+-            .add_modifier
+-            .intersects(Modifier::BOLD | Modifier::DIM));
++        assert!(
++            !inactive
++                .add_modifier
++                .intersects(Modifier::BOLD | Modifier::DIM)
++        );
+         assert_eq!(inactive.bg, Some(ratatui::style::Color::Reset));
+     }
+ 
+@@ -1959,9 +2108,11 @@ rows = [[{ token = "git_status", fg = "#123456" }]]
+                 .collect::<String>(),
+             "↑2 ↓1"
+         );
+-        assert!(spans
+-            .iter()
+-            .all(|span| { span.style.fg == Some(ratatui::style::Color::Rgb(0x12, 0x34, 0x56)) }));
++        assert!(
++            spans.iter().all(|span| {
++                span.style.fg == Some(ratatui::style::Color::Rgb(0x12, 0x34, 0x56))
++            })
++        );
+     }
+ 
+     #[test]
+@@ -2845,9 +2996,11 @@ rows = [[{ token = "git_status", fg = "#123456" }]]
+ 
+         app.sidebar_spaces.row_gap = 0;
+         let (packed, _) = compute_workspace_list_areas(&app, Rect::new(0, 0, 30, 30));
+-        assert!(packed
+-            .windows(2)
+-            .all(|pair| pair[1].rect.y == pair[0].rect.y + pair[0].rect.height));
++        assert!(
++            packed
++                .windows(2)
++                .all(|pair| pair[1].rect.y == pair[0].rect.y + pair[0].rect.height)
++        );
+         let packed_metrics = workspace_list_scroll_metrics(&app, Rect::new(0, 0, 30, 7));
+         assert_eq!(packed_metrics.viewport_rows, 4);
+         assert_eq!(packed_metrics.max_offset_from_bottom, 0);

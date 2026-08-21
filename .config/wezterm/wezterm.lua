@@ -35,8 +35,8 @@ config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
 -- Keep the tiled outer window fixed when Ctrl+Plus/Minus changes the font;
 -- recalculate the terminal grid instead of resizing against Hyprland.
-config.adjust_window_size_when_changing_font_size = false
-config.use_resize_increments = true
+-- config.adjust_window_size_when_changing_font_size = false
+-- config.use_resize_increments = true
 config.window_frame = {
     border_left_width = 0,
     border_right_width = 0,
@@ -44,12 +44,11 @@ config.window_frame = {
     border_bottom_height = 0,
 }
 config.window_padding = {
-    left = 0,
+    left = 5,
     right = 0,
-    top = 0,
+    top = 5,
     bottom = 0,
 }
-config.colors = { split = "#282828" }
 config.enable_tab_bar = false
 
 -- Do not enable Kitty keyboard protocol in this older WezTerm release: its
@@ -73,13 +72,10 @@ config.keys = {
     -- including the built-in font-size shortcuts.
     -- Bypass WezTerm's native tab switching and send Herdr's Ctrl+Tab keys
     -- without globally enabling the Kitty keyboard protocol.
-    { key = "Tab",      mods = "CTRL",       action = act.SendString("\x1b[9;5u") },
-    { key = "Tab",      mods = "CTRL|SHIFT", action = act.SendString("\x1b[9;6u") },
-    { key = "c",        mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
-    { key = "v",        mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
-    { key = "f",        mods = "CTRL|SHIFT", action = act.Search("CurrentSelectionOrEmptyString") },
-    { key = "PageUp",   mods = "SHIFT",      action = act.ScrollByPage(-1) },
-    { key = "PageDown", mods = "SHIFT",      action = act.ScrollByPage(1) },
+    { key = "Tab", mods = "CTRL",       action = act.SendString("\x1b[9;5u") },
+    { key = "Tab", mods = "CTRL|SHIFT", action = act.SendString("\x1b[9;6u") },
+    { key = "c",   mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
+    { key = "v",   mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
 }
 
 -- WezTerm reserves Ctrl+1..9 for its own tabs even when its tab bar is hidden.

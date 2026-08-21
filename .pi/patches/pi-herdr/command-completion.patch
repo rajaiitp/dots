@@ -1,6 +1,8 @@
+diff --git a/extensions/herdr-action-context.ts b/extensions/herdr-action-context.ts
+index 5b14152..bc6b1b9 100644
 --- a/extensions/herdr-action-context.ts
 +++ b/extensions/herdr-action-context.ts
-@@ -2,9 +2,20 @@
+@@ -2,9 +2,20 @@ import type { AgentToolResult, AgentToolUpdateCallback } from "@earendil-works/p
  import type { HerdrClient } from "./herdr-client.js";
  import type { HerdrToolDetails, ManagedPane, PaneInfo } from "./herdr-types.js";
  import type { PaneAliasStore } from "./herdr-state.js";
@@ -21,7 +23,7 @@
  export interface ResolvedPaneRef {
  	pane: PaneInfo;
  	alias?: string;
-@@ -23,8 +34,21 @@
+@@ -23,8 +34,21 @@ export class HerdrActionRuntime {
  		readonly currentWorkspaceId: string,
  		readonly signal: AbortSignal | undefined,
  		readonly onUpdate: AgentToolUpdateCallback<HerdrToolDetails> | undefined,
@@ -43,105 +45,9 @@
  	withSnapshot(details: Omit<HerdrToolDetails, "aliases" | "aliasOrder">): HerdrToolDetails {
  		return this.aliasStore.withSnapshot(details);
  	}
---- a/extensions/herdr-pane-actions.ts
-+++ b/extensions/herdr-pane-actions.ts
-@@ -12,7 +12,6 @@
- 	formatReadOutput,
- 	formatStatusList,
- 	rejectUnexpectedParams,
--	sleep,
- 	sleepWithSignal,
- 	throwIfAborted,
- } from "./herdr-format.js";
-@@ -66,9 +65,18 @@
- 			if (!command) throw new Error("'command' is required for run");
- 
- 			const targetPane = await runtime.requirePaneRef(paneRef);
-+			if (runtime.completionRegistry.isObserved(targetPane.pane.pane_id)) {
-+				throw new Error(`Pane '${targetPane.alias || paneRef}' already has a running command; wait for its completion callback first.`);
-+			}
-+			const initialSequence = await runtime.readCommandSequence(targetPane.pane.pane_id);
- 			await runtime.client.exec(["pane", "run", targetPane.pane.pane_id, command], runtime.signal);
-+			runtime.trackCommandCompletion({
-+				paneId: targetPane.pane.pane_id,
-+				paneLabel: targetPane.alias || paneRef,
-+				command,
-+				initialSequence,
-+			});
- 
--			await sleep(800, runtime.signal);
- 			const initialOutput = await runtime.client.readPane(
- 				targetPane.pane.pane_id,
- 				{
-@@ -92,6 +100,7 @@
- 					pane: paneLabel,
- 					paneId: targetPane.pane.pane_id,
- 					command,
-+					completion: "follow_up",
- 					workspaceId: runtime.currentWorkspaceId,
- 				}),
- 			};
---- a/extensions/herdr.ts
-+++ b/extensions/herdr.ts
-@@ -1,6 +1,7 @@
- import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
- import { HerdrToolParameters } from "./herdr-types.js";
--import { HerdrActionRuntime } from "./herdr-action-context.js";
-+import { HerdrActionRuntime, type CommandCompletionHandler } from "./herdr-action-context.js";
-+import { CommandCompletionRegistry } from "./herdr-command-completion.js";
- import { HerdrClient } from "./herdr-client.js";
- import { handlePaneAction } from "./herdr-pane-actions.js";
- import { renderHerdrCall, renderHerdrResult } from "./herdr-render.js";
-@@ -17,9 +18,21 @@
- 
- 	const aliasStore = new PaneAliasStore();
- 	const client = new HerdrClient(pi, currentPaneTarget);
-+	const completionRegistry = new CommandCompletionRegistry();
-+
-+	const onCommandComplete: CommandCompletionHandler = (request, completion) => {
-+		const status = completion.exitCode === 0
-+			? "succeeded"
-+			: `exited with code ${completion.exitCode}`;
-+		pi.sendUserMessage(
-+			`[herdr command finished] ${request.paneLabel} ${status}\n$ ${request.command}\nRead the pane output if needed.`,
-+			{ deliverAs: "followUp" },
-+		);
-+	};
- 
- 	pi.on("session_start", async (_event, ctx) => aliasStore.reconstruct(ctx));
- 	pi.on("session_tree", async (_event, ctx) => aliasStore.reconstruct(ctx));
-+	pi.on("session_shutdown", () => completionRegistry.stopAll());
- 
- 	pi.registerTool({
- 		name: "herdr",
-@@ -28,7 +41,8 @@
- 			"Herdr-native pane orchestration for long-running workflows. " +
- 			"Actions: list panes, manage workspaces and tabs, split existing panes, submit lines atomically in existing panes, read output, watch readiness, wait for one or more agent panes to reach target statuses, send raw text or keys, focus contexts, and stop panes.",
- 		promptGuidelines: [
--			"Use `herdr` run for long-running processes in other panes instead of `bash`.",
-+			"Use `herdr` run for commands in other panes instead of `bash`; completion is delivered automatically as a follow-up when the target shell reaches its prompt again.",
-+			"After `herdr` run, do not run `sleep`, use polling loops, or wait with `bash`; rely on the completion follow-up, and read the pane only after that callback or when an explicit snapshot is needed.",
- 			"When you want to submit a line or prompt to a pane, prefer `run` over `send` + `Enter` so text and Enter happen atomically.",
- 			"Use `send` only for low-level literal text or key injection when you do not want command-style submission semantics.",
- 			"Preserve the current UI focus by default. Do not change workspace or tab focus unless the user explicitly asks or the workflow truly requires visible interaction there.",
-@@ -49,7 +63,16 @@
- 			const currentPane = await client.getCurrentPaneInfo(signal);
- 			const currentPaneId = currentPane.pane_id;
- 			const currentWorkspaceId = currentPane.workspace_id;
--			const runtime = new HerdrActionRuntime(client, aliasStore, currentPaneId, currentWorkspaceId, signal, onUpdate);
-+			const runtime = new HerdrActionRuntime(
-+				client,
-+				aliasStore,
-+				currentPaneId,
-+				currentWorkspaceId,
-+				signal,
-+				onUpdate,
-+				completionRegistry,
-+				onCommandComplete,
-+			);
- 			const result = await handleWorkspaceAction(params, runtime) ?? await handlePaneAction(params, runtime);
- 			if (result) return result;
- 			throw new Error(`Unknown action: ${params.action}`);
+diff --git a/extensions/herdr-command-completion.ts b/extensions/herdr-command-completion.ts
+new file mode 100644
+index 0000000..86035ed
 --- /dev/null
 +++ b/extensions/herdr-command-completion.ts
 @@ -0,0 +1,130 @@
@@ -275,3 +181,126 @@
 +export async function readCommandSequence(paneId: string): Promise<number | undefined> {
 +	return (await readStatus(statusPath(paneId)))?.sequence;
 +}
+diff --git a/extensions/herdr-pane-actions.ts b/extensions/herdr-pane-actions.ts
+index 8744f2a..2f3e71e 100644
+--- a/extensions/herdr-pane-actions.ts
++++ b/extensions/herdr-pane-actions.ts
+@@ -12,7 +12,6 @@ import {
+ 	formatReadOutput,
+ 	formatStatusList,
+ 	rejectUnexpectedParams,
+-	sleep,
+ 	sleepWithSignal,
+ 	throwIfAborted,
+ } from "./herdr-format.js";
+@@ -66,32 +65,30 @@ export async function handlePaneAction(
+ 			if (!command) throw new Error("'command' is required for run");
+ 
+ 			const targetPane = await runtime.requirePaneRef(paneRef);
++			if (runtime.completionRegistry.isObserved(targetPane.pane.pane_id)) {
++				throw new Error(`Pane '${targetPane.alias || paneRef}' already has a running command; wait for its completion callback first.`);
++			}
++			const initialSequence = await runtime.readCommandSequence(targetPane.pane.pane_id);
+ 			await runtime.client.exec(["pane", "run", targetPane.pane.pane_id, command], runtime.signal);
+-
+-			await sleep(800, runtime.signal);
+-			const initialOutput = await runtime.client.readPane(
+-				targetPane.pane.pane_id,
+-				{
+-					source: params.source ?? READ_SOURCE.RECENT,
+-					lines: params.lines ?? 20,
+-					raw: params.raw,
+-				},
+-				runtime.signal,
+-			);
++			runtime.trackCommandCompletion({
++				paneId: targetPane.pane.pane_id,
++				paneLabel: targetPane.alias || paneRef,
++				command,
++				initialSequence,
++			});
+ 
+ 			const paneLabel = targetPane.alias || paneRef;
+ 			return {
+-				content: [
+-					{
+-						type: "text",
+-						text: `Started '${command}' in pane '${paneLabel}' (${targetPane.pane.pane_id})\n\n${formatReadOutput(initialOutput)}`,
+-					},
+-				],
++				content: [{
++					type: "text",
++					text: `Started '${command}' in pane '${paneLabel}' (${targetPane.pane.pane_id}). Completion will be reported in a follow-up message.`,
++				}],
+ 				details: runtime.withSnapshot({
+ 					action: HERDR_ACTION.RUN,
+ 					pane: paneLabel,
+ 					paneId: targetPane.pane.pane_id,
+ 					command,
++					completion: "follow_up",
+ 					workspaceId: runtime.currentWorkspaceId,
+ 				}),
+ 			};
+diff --git a/extensions/herdr.ts b/extensions/herdr.ts
+index 276e329..70e8ba9 100644
+--- a/extensions/herdr.ts
++++ b/extensions/herdr.ts
+@@ -1,6 +1,7 @@
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import { HerdrToolParameters } from "./herdr-types.js";
+-import { HerdrActionRuntime } from "./herdr-action-context.js";
++import { HerdrActionRuntime, type CommandCompletionHandler } from "./herdr-action-context.js";
++import { CommandCompletionRegistry } from "./herdr-command-completion.js";
+ import { HerdrClient } from "./herdr-client.js";
+ import { handlePaneAction } from "./herdr-pane-actions.js";
+ import { renderHerdrCall, renderHerdrResult } from "./herdr-render.js";
+@@ -17,9 +18,21 @@ export default function (pi: ExtensionAPI) {
+ 
+ 	const aliasStore = new PaneAliasStore();
+ 	const client = new HerdrClient(pi, currentPaneTarget);
++	const completionRegistry = new CommandCompletionRegistry();
++
++	const onCommandComplete: CommandCompletionHandler = (request, completion) => {
++		const status = completion.exitCode === 0
++			? "succeeded"
++			: `exited with code ${completion.exitCode}`;
++		pi.sendUserMessage(
++			`[herdr command finished] ${request.paneLabel} ${status}\n$ ${request.command}\nRead the pane output if needed.`,
++			{ deliverAs: "followUp" },
++		);
++	};
+ 
+ 	pi.on("session_start", async (_event, ctx) => aliasStore.reconstruct(ctx));
+ 	pi.on("session_tree", async (_event, ctx) => aliasStore.reconstruct(ctx));
++	pi.on("session_shutdown", () => completionRegistry.stopAll());
+ 
+ 	pi.registerTool({
+ 		name: "herdr",
+@@ -28,7 +41,8 @@ export default function (pi: ExtensionAPI) {
+ 			"Herdr-native pane orchestration for long-running workflows. " +
+ 			"Actions: list panes, manage workspaces and tabs, split existing panes, submit lines atomically in existing panes, read output, watch readiness, wait for one or more agent panes to reach target statuses, send raw text or keys, focus contexts, and stop panes.",
+ 		promptGuidelines: [
+-			"Use `herdr` run for long-running processes in other panes instead of `bash`.",
++			"Use `herdr` run for commands in other panes instead of `bash`; completion is delivered automatically as a follow-up when the target shell reaches its prompt again.",
++			"After `herdr` run, do not run `sleep`, use polling loops, or wait with `bash`; rely on the completion follow-up, and read the pane only after that callback or when an explicit snapshot is needed.",
+ 			"When you want to submit a line or prompt to a pane, prefer `run` over `send` + `Enter` so text and Enter happen atomically.",
+ 			"Use `send` only for low-level literal text or key injection when you do not want command-style submission semantics.",
+ 			"Preserve the current UI focus by default. Do not change workspace or tab focus unless the user explicitly asks or the workflow truly requires visible interaction there.",
+@@ -49,7 +63,16 @@ export default function (pi: ExtensionAPI) {
+ 			const currentPane = await client.getCurrentPaneInfo(signal);
+ 			const currentPaneId = currentPane.pane_id;
+ 			const currentWorkspaceId = currentPane.workspace_id;
+-			const runtime = new HerdrActionRuntime(client, aliasStore, currentPaneId, currentWorkspaceId, signal, onUpdate);
++			const runtime = new HerdrActionRuntime(
++				client,
++				aliasStore,
++				currentPaneId,
++				currentWorkspaceId,
++				signal,
++				onUpdate,
++				completionRegistry,
++				onCommandComplete,
++			);
+ 			const result = await handleWorkspaceAction(params, runtime) ?? await handlePaneAction(params, runtime);
+ 			if (result) return result;
+ 			throw new Error(`Unknown action: ${params.action}`);
