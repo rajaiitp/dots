@@ -198,7 +198,8 @@ checklist() {
         for index in "${!CHECKLIST_KEYS[@]}"; do
             label=${CHECKLIST_LABELS[index]}
             [[ ${effective_defaults[index]} == 1 ]] && label="[default] $label"
-            picker_lines+=("${CHECKLIST_KEYS[index]}\t$label")
+            # Use an actual tab: fzf and cut both use it as the key/label separator.
+            picker_lines+=("${CHECKLIST_KEYS[index]}"$'\t'"$label")
         done
         default_bind='start:'
         for index in "${!CHECKLIST_KEYS[@]}"; do
@@ -537,9 +538,11 @@ install_packages_arch() {
     say "installing pacman packages"
     # only install what's not already there — pacman is fast but idempotency reads better
     local missing=()
-    for p in "${PKGS_ARCH_SELECTED[@]}"; do
-        pacman -Qi "$p" &>/dev/null || missing+=("$p")
-    done
+    if (( ${#PKGS_ARCH_SELECTED[@]} )); then
+        for p in "${PKGS_ARCH_SELECTED[@]}"; do
+            pacman -Qi "$p" &>/dev/null || missing+=("$p")
+        done
+    fi
     if [[ ${#missing[@]} -gt 0 ]]; then
         run "sudo pacman -S --noconfirm --needed ${missing[*]}"
     else
@@ -577,15 +580,17 @@ install_packages_apt() {
     # Query packages individually before a batch install: optional Wayland
     # components vary by Debian/Ubuntu release and must not block core tools.
     local missing=() unavailable=()
-    for p in "${PKGS_APT_SELECTED[@]}"; do
-        if dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null | grep -qx installed; then
-            continue
-        elif apt-cache show "$p" &>/dev/null; then
-            missing+=("$p")
-        else
-            unavailable+=("$p")
-        fi
-    done
+    if (( ${#PKGS_APT_SELECTED[@]} )); then
+        for p in "${PKGS_APT_SELECTED[@]}"; do
+            if dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null | grep -qx installed; then
+                continue
+            elif apt-cache show "$p" &>/dev/null; then
+                missing+=("$p")
+            else
+                unavailable+=("$p")
+            fi
+        done
+    fi
     if [[ ${#missing[@]} -gt 0 ]]; then
         run "sudo apt-get install --yes --no-install-recommends ${missing[*]}"
     else
@@ -621,14 +626,16 @@ install_packages_mac() {
     fi
     say "installing brew packages"
     local failed=()
-    for p in "${PKGS_MAC_SELECTED[@]}"; do
-        if brew list --formula "$p" &>/dev/null; then
-            ok "already installed: $p"
-        elif ! run "brew install --quiet $p"; then
-            warn "brew formula failed: $p (skipping)"
-            failed+=("$p")
-        fi
-    done
+    if (( ${#PKGS_MAC_SELECTED[@]} )); then
+        for p in "${PKGS_MAC_SELECTED[@]}"; do
+            if brew list --formula "$p" &>/dev/null; then
+                ok "already installed: $p"
+            elif ! run "brew install --quiet $p"; then
+                warn "brew formula failed: $p (skipping)"
+                failed+=("$p")
+            fi
+        done
+    fi
     if [[ ${#CASKS_MAC_SELECTED[@]} -gt 0 ]]; then
         say "installing brew casks (fonts and host applications)"
         for c in "${CASKS_MAC_SELECTED[@]}"; do
@@ -830,10 +837,14 @@ setup_symlinks() {
         [[ -d "$DOTS/.config/dunst" ]] && dirs+=(dunst)
     fi
 
-    for d in "${dirs[@]}"; do
-        [[ -d "$DOTS/.config/$d" ]] || { warn "not in dotfiles yet: .config/$d"; continue; }
-        link "$DOTS/.config/$d" "$HOME/.config/$d"
-    done
+    # Bash 3.2 treats an empty local array as unset under `set -u`.
+    # Check its length before expanding it.
+    if (( ${#dirs[@]} )); then
+        for d in "${dirs[@]}"; do
+            [[ -d "$DOTS/.config/$d" ]] || { warn "not in dotfiles yet: .config/$d"; continue; }
+            link "$DOTS/.config/$d" "$HOME/.config/$d"
+        done
+    fi
 
     if component_is_selected terminal_wezterm && [[ -f "$DOTS/.local/share/applications/wezterm.desktop" ]]; then
         link "$DOTS/.local/share/applications/wezterm.desktop" "$HOME/.local/share/applications/wezterm.desktop"
@@ -1073,9 +1084,13 @@ uninstall_symlinks() {
     if [[ $OS != macos ]] && (( desktop )); then dirs+=(fuzzel hypr waybar dunst); fi
 
     local d
-    for d in "${dirs[@]}"; do
-        unlink_managed "$DOTS/.config/$d" "$HOME/.config/$d"
-    done
+    # Bash 3.2 treats an empty local array as unset under `set -u`.
+    # Check its length before expanding it.
+    if (( ${#dirs[@]} )); then
+        for d in "${dirs[@]}"; do
+            unlink_managed "$DOTS/.config/$d" "$HOME/.config/$d"
+        done
+    fi
 
     if app_is_selected herdr && (component_is_selected herdr_binary || component_is_selected herdr_sesh || component_is_selected herdr_pi_integration); then
         unlink_managed "$DOTS/.config/herdr/config.toml" "$HOME/.config/herdr/config.toml"
@@ -1163,9 +1178,11 @@ uninstall_external_tools() {
 
 uninstall_packages_arch() {
     local -a installed=() p
-    for p in "${PKGS_ARCH_SELECTED[@]}"; do
-        pacman -Q "$p" &>/dev/null && installed+=("$p")
-    done
+    if (( ${#PKGS_ARCH_SELECTED[@]} )); then
+        for p in "${PKGS_ARCH_SELECTED[@]}"; do
+            pacman -Q "$p" &>/dev/null && installed+=("$p")
+        done
+    fi
     if [[ ${#installed[@]} -gt 0 ]]; then
         run "sudo pacman -R --noconfirm ${installed[*]}"
     else
@@ -1175,9 +1192,11 @@ uninstall_packages_arch() {
 
 uninstall_packages_apt() {
     local -a installed=() p
-    for p in "${PKGS_APT_SELECTED[@]}"; do
-        dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null | grep -qx installed && installed+=("$p")
-    done
+    if (( ${#PKGS_APT_SELECTED[@]} )); then
+        for p in "${PKGS_APT_SELECTED[@]}"; do
+            dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null | grep -qx installed && installed+=("$p")
+        done
+    fi
     if [[ ${#installed[@]} -gt 0 ]]; then
         run "sudo apt-get remove --yes ${installed[*]}"
     else
@@ -1192,12 +1211,16 @@ uninstall_packages_mac() {
         return
     fi
     local p c
-    for p in "${PKGS_MAC_SELECTED[@]}"; do
-        brew list --formula "$p" &>/dev/null && run "brew uninstall --quiet $p"
-    done
-    for c in "${CASKS_MAC_SELECTED[@]}"; do
-        brew list --cask "$c" &>/dev/null && run "brew uninstall --quiet --cask $c"
-    done
+    if (( ${#PKGS_MAC_SELECTED[@]} )); then
+        for p in "${PKGS_MAC_SELECTED[@]}"; do
+            brew list --formula "$p" &>/dev/null && run "brew uninstall --quiet $p"
+        done
+    fi
+    if (( ${#CASKS_MAC_SELECTED[@]} )); then
+        for c in "${CASKS_MAC_SELECTED[@]}"; do
+            brew list --cask "$c" &>/dev/null && run "brew uninstall --quiet --cask $c"
+        done
+    fi
 }
 
 uninstall_selected() {

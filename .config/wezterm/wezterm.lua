@@ -21,9 +21,15 @@ config.font_rules = {
 config.font_size = 12
 config.cell_width = 0.9
 
--- Use XWayland/OpenGL for reliable startup on this Hyprland setup.
-config.enable_wayland = false
-config.front_end = "OpenGL"
+-- The Linux/Hyprland setup needs XWayland/OpenGL. On macOS use WebGPU's
+-- Metal renderer instead: the OpenGL backend can leave stale glyphs on screen
+-- even when the shell receives the correct input.
+if wezterm.target_triple:find("darwin") then
+    config.front_end = "WebGpu"
+else
+    config.enable_wayland = false
+    config.front_end = "OpenGL"
+end
 config.window_close_confirmation = "NeverPrompt"
 -- Hide the title bar while retaining the native resize border/hit area.
 config.window_decorations = "RESIZE"
@@ -45,12 +51,10 @@ config.window_padding = {
 }
 config.colors = { split = "#282828" }
 config.enable_tab_bar = false
-config.term = "wezterm"
 
--- Keep modified-key input available to applications such as Herdr without
--- restoring WezTerm's own tab/workspace keymap.
-config.enable_kitty_keyboard = true
-config.enable_csi_u_key_encoding = true
+-- Do not enable Kitty keyboard protocol in this older WezTerm release: its
+-- enhanced encoding can prevent Escape from reaching terminal applications.
+-- Ctrl+Tab below sends the required CSI-u sequences only for Herdr.
 config.audible_bell = "Disabled"
 config.automatically_reload_config = true
 
@@ -67,13 +71,26 @@ config.keys = {
     -- WezTerm's defaults reserve Ctrl-Tab for native tab switching. Forward
     -- these keys so Herdr can cycle agents while keeping other defaults,
     -- including the built-in font-size shortcuts.
-    { key = "Tab",      mods = "CTRL",        action = act.SendKey({ key = "Tab", mods = "CTRL" }) },
-    { key = "Tab",      mods = "CTRL|SHIFT",  action = act.SendKey({ key = "Tab", mods = "CTRL|SHIFT" }) },
+    -- Bypass WezTerm's native tab switching and send Herdr's Ctrl+Tab keys
+    -- without globally enabling the Kitty keyboard protocol.
+    { key = "Tab",      mods = "CTRL",       action = act.SendString("\x1b[9;5u") },
+    { key = "Tab",      mods = "CTRL|SHIFT", action = act.SendString("\x1b[9;6u") },
     { key = "c",        mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
     { key = "v",        mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
     { key = "f",        mods = "CTRL|SHIFT", action = act.Search("CurrentSelectionOrEmptyString") },
     { key = "PageUp",   mods = "SHIFT",      action = act.ScrollByPage(-1) },
     { key = "PageDown", mods = "SHIFT",      action = act.ScrollByPage(1) },
 }
+
+-- WezTerm reserves Ctrl+1..9 for its own tabs even when its tab bar is hidden.
+-- Forward CSI-u sequences so Herdr's indexed tab bindings receive them.
+for index = 1, 9 do
+    local key = tostring(index)
+    table.insert(config.keys, {
+        key = key,
+        mods = "CTRL",
+        action = act.SendString(string.format("\x1b[%d;5u", string.byte(key))),
+    })
+end
 
 return config

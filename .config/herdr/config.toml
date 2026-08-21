@@ -6,8 +6,8 @@ onboarding = false
 name = "gruvbox"
 
 [theme.custom]
-# Gruvbox yellow highlights the sidebar edge and Spaces/Agents separator.
-surface_dim = "#fabd2f"
+# Muted blue separates the sidebar edge and Spaces/Agents divider from pane highlights.
+surface_dim = "#458588"
 
 [terminal]
 new_cwd = "follow"
@@ -98,7 +98,7 @@ description = "Switch to previous Sesh workspace"
 [ui]
 mouse_capture = true
 pane_borders = true
-pane_gaps = false
+pane_gaps = true
 show_agent_labels_on_pane_borders = true
 hide_tab_bar_when_single_tab = false
 confirm_close = true
