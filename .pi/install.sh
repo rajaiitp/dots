@@ -113,23 +113,76 @@ else
     echo "WARNING: npm is unavailable; skipped Pi extension installation" >&2
 fi
 
-apply_pi_herdr_completion_patch() {
+apply_pi_herdr_run_protocol_overlay() {
     local package_dir="$AGENT_DIR/npm/node_modules/@weshipwork/pi-herdr"
-    local patch_file="$DOT_DIR/patches/pi-herdr/command-completion.patch"
+    local overlay_dir="$DOT_DIR/patches/pi-herdr/overlay/extensions"
+    local overlay_version_file="$DOT_DIR/patches/pi-herdr/VERSION"
+    local test_file="$DOT_DIR/patches/pi-herdr/run-protocol.test.cjs"
+    local overlay_version
+    local package_version
+    local state
+    local agent_package_dir
+    local jiti_module
+    local file
 
     [[ -d "$package_dir" ]] || return 0
-    if grep -q 'CommandCompletionRegistry' "$package_dir/extensions/herdr.ts" 2>/dev/null; then
-        echo "Pi-Herdr completion callback already applied"
-        return 0
-    fi
-    if ! git -C "$package_dir" apply --check "$patch_file" 2>/dev/null; then
-        echo "ERROR: could not apply the Pi-Herdr completion callback patch" >&2
+    [[ -d "$overlay_dir" && -f "$overlay_version_file" && -f "$test_file" ]] || {
+        echo "ERROR: Pi-Herdr run-protocol overlay is incomplete" >&2
+        return 1
+    }
+    overlay_version="$(<"$overlay_version_file")"
+    if [[ $overlay_version != 2 ]]; then
+        echo "ERROR: unsupported Pi-Herdr overlay version '$overlay_version'" >&2
         return 1
     fi
-    git -C "$package_dir" apply "$patch_file"
-    echo "Applied Pi-Herdr completion callback patch"
+
+    package_version="$(node -p "require('$package_dir/package.json').version" 2>/dev/null || true)"
+    if [[ $package_version != 0.1.0 ]]; then
+        echo "ERROR: Pi-Herdr overlay supports @weshipwork/pi-herdr@0.1.0, found '${package_version:-unknown}'" >&2
+        return 1
+    fi
+    if ! herdr pane wait-output --help >/dev/null 2>&1; then
+        echo "ERROR: Herdr runtime lacks 'pane wait-output'; update Herdr before installing the Pi-Herdr overlay" >&2
+        return 1
+    fi
+
+    if grep -q 'createCommandProtocol' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
+        state="installed"
+    elif grep -q 'CommandCompletionRegistry\|completion: "follow_up"\|await sleep(800' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
+        state="legacy"
+    elif grep -q 'case HERDR_ACTION.RUN' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
+        state="pristine"
+    else
+        echo "ERROR: unknown Pi-Herdr source state; refusing to overwrite local changes" >&2
+        return 1
+    fi
+
+    for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do
+        if [[ $state == installed ]] && ! cmp -s "$overlay_dir/$file" "$package_dir/extensions/$file"; then
+            echo "ERROR: Pi-Herdr run-protocol source drift in $file; refusing to overwrite local changes" >&2
+            return 1
+        fi
+    done
+
+    if [[ $state != installed ]]; then
+        for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do
+            install -m 0644 "$overlay_dir/$file" "$package_dir/extensions/$file"
+        done
+        rm -f "$package_dir/extensions/herdr-command-completion.ts"
+        echo "Installed Pi-Herdr completion-gated run overlay v$overlay_version (migrated $state source)"
+    else
+        echo "Pi-Herdr completion-gated run overlay v$overlay_version already installed"
+    fi
+
+    agent_package_dir="$(npm root -g 2>/dev/null)/@earendil-works/pi-coding-agent"
+    jiti_module="$agent_package_dir/node_modules/jiti"
+    if [[ ! -d $jiti_module ]]; then
+        echo "ERROR: cannot find Pi's jiti runtime at $jiti_module" >&2
+        return 1
+    fi
+    PI_HERDR_PACKAGE_DIR="$package_dir" PI_JITI_MODULE="$jiti_module" node "$test_file"
 }
 
-apply_pi_herdr_completion_patch
+apply_pi_herdr_run_protocol_overlay
 
 echo "Done."

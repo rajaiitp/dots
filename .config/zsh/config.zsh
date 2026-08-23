@@ -18,22 +18,6 @@ tablet() {
   print -rl -- "$@" | ssh xiaomi "su -c $dispatcher"
 }
 
-# Publish each Herdr shell command's completion and exit status out-of-band.
-# pi-herdr's run completion callback watches this file, so no protocol marker
-# is printed in panes.
-if [[ ${HERDR_ENV:-} == 1 && -n ${HERDR_PANE_ID:-} ]]; then
-  typeset -g _pi_herdr_status_dir="${XDG_RUNTIME_DIR:-/tmp}/pi-herdr-status"
-  typeset -g _pi_herdr_status_file="$_pi_herdr_status_dir/${HERDR_PANE_ID//\//_}.status"
-  typeset -gi _pi_herdr_status_seq=0
-  mkdir -p "$_pi_herdr_status_dir" 2>/dev/null
-  _pi_herdr_status_precmd() {
-    local command_status=$?
-    (( ++_pi_herdr_status_seq ))
-    print -r -- "${_pi_herdr_status_seq}:${command_status}" >| "$_pi_herdr_status_file"
-  }
-  precmd_functions=(_pi_herdr_status_precmd ${precmd_functions:#_pi_herdr_status_precmd})
-fi
-
 # Name Herdr tabs after a running command, without overriding a manual label.
 if [[ ${HERDR_ENV:-} == 1 && -n ${HERDR_TAB_ID:-} && -n ${HERDR_SOCKET_PATH:-} ]]; then
   typeset -g _herdr_state_dir="${XDG_RUNTIME_DIR:-/tmp}/herdr-tabnames"

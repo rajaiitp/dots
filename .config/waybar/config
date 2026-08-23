@@ -96,7 +96,7 @@
         "format": "<span size='20pt'>{icon}</span>",
         "format-icons": {
             "activated": "󰅶",
-            "deactivated": "󰾰"
+            "deactivated": "󰅶"
         },
         "tooltip": false
     },

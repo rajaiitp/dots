@@ -35,8 +35,8 @@ config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
 -- Keep the tiled outer window fixed when Ctrl+Plus/Minus changes the font;
 -- recalculate the terminal grid instead of resizing against Hyprland.
--- config.adjust_window_size_when_changing_font_size = false
--- config.use_resize_increments = true
+config.adjust_window_size_when_changing_font_size = false
+config.use_resize_increments = true
 config.window_frame = {
     border_left_width = 0,
     border_right_width = 0,
@@ -45,7 +45,7 @@ config.window_frame = {
 }
 config.window_padding = {
     left = 5,
-    right = 0,
+    right = 5,
     top = 5,
     bottom = 0,
 }

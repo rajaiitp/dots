@@ -10,10 +10,21 @@ The tracked tablet customizations are consolidated here:
   interfaces. It intentionally holds a Termux wake lock for always-on access.
 - `charge-threshold.sh` — Magisk service that pauses at 80% and resumes at 75%
   only when it owns the pause.
+- `set-hdmi-mirror-default.sh` — ADB helper that sets Android's
+  `mirror_built_in_display=1` default so HDMI mirroring does not prompt.
 - `../display/hdmi-panel-backlight.sh` — Magisk HDMI/backlight coordinator.
 - `apps/hdmi-control-tile` — Move HDMI and Caffeinate Quick Settings tiles.
 - `apps/tv-touch-controller` — low-latency external-display preview and touch
   injection.
+
+Apply the HDMI mirroring default over any authorized USB or Wi-Fi ADB connection:
+
+```sh
+~/.config/scripts/android/set-hdmi-mirror-default.sh
+# Or select a specific device:
+~/.config/scripts/android/set-hdmi-mirror-default.sh \
+  --serial 192.168.178.53:36413
+```
 
 Install scripts and rebuilt APKs over an authorized USB ADB connection:
 

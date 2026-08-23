@@ -90,6 +90,7 @@ unmanaged files and directories are preserved.
 │       ├── mcp.json
 │       ├── models.json
 │       ├── AGENTS.md
+│       ├── agents/          ← isolated subagent definitions
 │       ├── extensions/
 │       └── skills/
 │
@@ -164,6 +165,14 @@ the fork under `.pi/agent/skills/tuicr/`.
 - `ctrl+q` → close the terminal while preserving its shell state
 
 `.pi/install.sh` installs the declared Pi extension dependencies.
+
+### Independent plan review
+
+Use `/plan-review <request>` to have the current Pi agent draft an implementation
+plan, send that full draft to a fresh, read-only **GPT-5.6 Sol** child at
+`xhigh` reasoning, and then return the critique alongside a revised plan. The
+reviewer gets no parent conversation, session, context files, skills, or
+extensions; it may only inspect the current repository with read-only tools.
 
 ## What this repo intentionally does NOT track
 

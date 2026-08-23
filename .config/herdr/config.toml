@@ -75,12 +75,14 @@ toggle_sidebar = "prefix+b"
 [keys.indexed]
 tabs = "ctrl"
 
-# Ctrl-N toggles a dedicated Tuxedo tab in the focused workspace.
+# Ctrl-N opens Tuxedo in a modal popup; pressing Ctrl-N again closes it.
 [[keys.command]]
 key = "ctrl+n"
-type = "shell"
-command = "~/.config/herdr/scripts/toggle-tuxedo-tab.sh"
-description = "Toggle Tuxedo notes tab"
+type = "popup"
+command = "~/.config/herdr/scripts/tuxedo-popup.py"
+width = "80%"
+height = "80%"
+description = "Toggle Tuxedo notes popup"
 
 # Herdr Sesh workspace picker and previous-workspace action.
 [[keys.command]]
