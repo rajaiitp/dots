@@ -174,6 +174,24 @@ plan, send that full draft to a fresh, read-only **GPT-5.6 Sol** child at
 reviewer gets no parent conversation, session, context files, skills, or
 extensions; it may only inspect the current repository with read-only tools.
 
+### Full orchestrator mode
+
+Use `/orch` (or `/orch on`) for the automatic Luna/Terra/Sol workflow. It is
+session-persistent and restores after resume:
+
+- **Luna xhigh** remains the parent agent and sole implementation worker.
+- **Sol xhigh** is isolated and consulted only for architecture, high-risk work,
+  or complex design blockers.
+- **Terra xhigh** writes the test plan before behavior-bearing changes, then
+  reviews Luna's completed diff and observed verification evidence.
+
+Luna must call `orch_finish` to complete behavior-bearing work. Terra can request
+remediation up to three post-implementation review passes; a third non-approval
+ends the run as blocked. `/orch status` shows the current stage and budgets;
+`/orch off` restores the previous model and tools only after a run is terminal.
+During the mode, manual model switching, `!` shell commands, subagents, Herdr,
+and untracked mutation tools are blocked so the review gates cannot be bypassed.
+
 ## What this repo intentionally does NOT track
 
 - Runtime state: `.pi/agent/sessions/`, `~/.config/herdr/{session.json,*.log,*.sock,release-notes.json}`

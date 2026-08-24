@@ -20,6 +20,18 @@ type PendingRestore = {
 
 export default function oneShotModelCommands(pi: ExtensionAPI) {
 	let pendingRestore: PendingRestore | undefined;
+	let orchestratorActive = false;
+
+	pi.events.on("orch:state", (value: unknown) => {
+		orchestratorActive = Boolean(value && typeof value === "object" && (value as { enabled?: unknown }).enabled === true);
+	});
+
+	function isOrchestratorActive(ctx: ExtensionContext): boolean {
+		const entry = [...ctx.sessionManager.getBranch()]
+			.reverse()
+			.find((item: any) => item.type === "custom" && item.customType === "orchestrator-state") as any;
+		return orchestratorActive || entry?.data?.enabled === true;
+	}
 
 	async function runOneShot(
 		commandName: keyof typeof TARGET_MODELS,
@@ -34,6 +46,11 @@ export default function oneShotModelCommands(pi: ExtensionAPI) {
 
 		if (!ctx.isIdle()) {
 			ctx.ui.notify("The agent is busy. Try again when the current turn finishes.", "warning");
+			return;
+		}
+
+		if (isOrchestratorActive(ctx)) {
+			ctx.ui.notify("/sol and /terra are disabled while /orch is active; use the orchestrator role tools or /orch off.", "warning");
 			return;
 		}
 
