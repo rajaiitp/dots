@@ -8,9 +8,9 @@ import type { RoleResult } from "./schemas.ts";
 import { parseRoleResult } from "./schemas.ts";
 import type { UsageTotals } from "./state.ts";
 import { usageZero } from "./state.ts";
-import { SOL_PROMPT, TERRA_REVIEW_PROMPT, TERRA_SHARD_PROMPT, TERRA_SYNTHESIS_PROMPT, TERRA_TEST_PLAN_PROMPT } from "./prompts.ts";
+import { SOL_PROMPT, TERRA_DELTA_REVIEW_PROMPT, TERRA_REVIEW_PROMPT, TERRA_SHARD_PROMPT, TERRA_SYNTHESIS_PROMPT, TERRA_TEST_PLAN_PROMPT } from "./prompts.ts";
 
-export type RoleJob = "sol_design" | "terra_test_plan" | "terra_review" | "terra_review_shard" | "terra_review_synthesis";
+export type RoleJob = "sol_design" | "terra_test_plan" | "terra_review" | "terra_delta_review" | "terra_review_shard" | "terra_review_synthesis";
 
 export interface RoleCallResult {
   result: RoleResult;
@@ -29,6 +29,7 @@ function promptFor(job: RoleJob): string {
     case "sol_design": return SOL_PROMPT;
     case "terra_test_plan": return TERRA_TEST_PLAN_PROMPT;
     case "terra_review": return TERRA_REVIEW_PROMPT;
+    case "terra_delta_review": return TERRA_DELTA_REVIEW_PROMPT;
     case "terra_review_shard": return TERRA_SHARD_PROMPT;
     case "terra_review_synthesis": return TERRA_SYNTHESIS_PROMPT;
   }
@@ -36,6 +37,21 @@ function promptFor(job: RoleJob): string {
 
 function roleFor(job: RoleJob): RoleName {
   return job === "sol_design" ? "sol" : "terra";
+}
+
+function expectedKind(job: RoleJob): string {
+  switch (job) {
+    case "sol_design": return "sol_design";
+    case "terra_test_plan": return "terra_test_plan";
+    case "terra_review": return "terra_review";
+    case "terra_delta_review": return "terra_delta_review";
+    case "terra_review_shard": return "terra_review_shard";
+    case "terra_review_synthesis": return "terra_review_synthesis";
+  }
+}
+
+function retryable(error: Error): boolean {
+  return /timed out|rate limit|temporar(?:y|ily)|transport|network|ECONN|EAI_AGAIN|process interruption/i.test(error.message);
 }
 
 function limit(value: string, maxBytes: number, maxLines: number): string {
@@ -129,12 +145,15 @@ export async function runRole(
       const execution = await pi.exec("pi", args, { cwd, signal, timeout: config.childTimeoutMs });
       try {
         if (execution.killed) throw new Error("Specialist child timed out or was aborted.");
+        const stdoutBytes = Buffer.byteLength(execution.stdout, "utf8");
+        if (stdoutBytes > config.maxChildOutputBytes) throw new Error(`Specialist child stdout (${stdoutBytes} bytes) exceeded the configured ${config.maxChildOutputBytes}-byte safety limit; increase maxChildOutputBytes only for legitimate provider framing.`);
         if (execution.code !== 0) throw new Error(limit(execution.stderr || execution.stdout || `Specialist exited ${execution.code}`, config.maxChildOutputBytes, config.maxChildOutputLines));
         const parsed = parseChildOutput(execution.stdout, expected);
+        if (parsed.result.kind !== expectedKind(job)) throw new Error(`Specialist returned ${parsed.result.kind}, expected ${expectedKind(job)}.`);
         return { ...parsed, attempts: attempt, provider: expected.provider, model: expected.model };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        if (signal?.aborted) throw lastError;
+        if (signal?.aborted || !retryable(lastError)) throw lastError;
       }
     }
     throw lastError ?? new Error("Specialist did not return a result.");

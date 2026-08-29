@@ -1,0 +1,18 @@
+#!/bin/sh
+# Recover the QCNFA765 / ath11k Wi-Fi PCI function after s2idle resume.
+# systemd-sleep invokes this as: pre|post <sleep-operation>.
+
+[ "$1" = post ] && [ "$2" = suspend ] || exit 0
+
+# Let the kernel finish its normal resume attempt before resetting the device.
+sleep 2
+
+reset=/sys/bus/pci/devices/0000:02:00.0/reset
+if [ -w "$reset" ]; then
+  logger -t resume-ath11k-reset 'resetting ath11k PCI function after suspend'
+  if ! echo 1 >"$reset"; then
+    logger -p user.warning -t resume-ath11k-reset 'PCI reset failed'
+  fi
+else
+  logger -p user.warning -t resume-ath11k-reset 'PCI reset interface unavailable'
+fi

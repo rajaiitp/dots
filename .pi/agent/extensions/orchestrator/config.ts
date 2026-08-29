@@ -19,6 +19,7 @@ export interface OrchestratorConfig {
   maxChildOutputBytes: number;
   maxChildOutputLines: number;
   maxRoleAttempts: number;
+  enableDeltaReviews: boolean;
 }
 
 export const DEFAULT_CONFIG: OrchestratorConfig = {
@@ -33,9 +34,12 @@ export const DEFAULT_CONFIG: OrchestratorConfig = {
   childTimeoutMs: 15 * 60 * 1000,
   maxPacketBytes: 120 * 1024,
   maxReviewPacketBytes: 96 * 1024,
-  maxChildOutputBytes: 50 * 1024,
+  // JSON mode emits one framed event per reasoning/text delta; xhigh specialists
+  // legitimately exceed a small cap before returning their bounded role result.
+  maxChildOutputBytes: 2 * 1024 * 1024,
   maxChildOutputLines: 2000,
   maxRoleAttempts: 2,
+  enableDeltaReviews: true,
 };
 
 function positive(value: unknown, fallback: number, minimum = 1): number {
@@ -44,6 +48,10 @@ function positive(value: unknown, fallback: number, minimum = 1): number {
 
 function modelRef(value: unknown, fallback: string): string {
   return typeof value === "string" && /^[^/\s]+\/[^/\s]+$/.test(value.trim()) ? value.trim() : fallback;
+}
+
+function bool(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -82,6 +90,7 @@ export function loadConfig(cwd: string): OrchestratorConfig {
     maxChildOutputBytes: positive(raw.maxChildOutputBytes, DEFAULT_CONFIG.maxChildOutputBytes, 1024),
     maxChildOutputLines: positive(raw.maxChildOutputLines, DEFAULT_CONFIG.maxChildOutputLines, 1),
     maxRoleAttempts: positive(raw.maxRoleAttempts, DEFAULT_CONFIG.maxRoleAttempts),
+    enableDeltaReviews: bool(raw.enableDeltaReviews, DEFAULT_CONFIG.enableDeltaReviews),
   };
 }
 

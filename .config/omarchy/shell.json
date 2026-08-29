@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "idle": {
+    "screensaver": 86400,
+    "lock": 300
+  },
+  "bar": {
+    "position": "top",
+    "transparent": false,
+    "centerAnchor": "",
+    "layout": {
+      "left": [
+        {
+          "id": "omarchy.workspaces"
+        }
+      ],
+      "center": [
+        {
+          "id": "omarchy.clock",
+          "format": "dddd HH:mm",
+          "formatAlt": "d MMMM 'W'ww yyyy",
+          "verticalFormat": "HH\n—\nmm"
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 9
+        },
+        {
+          "id": "raja.weather"
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 9
+        },
+        {
+          "id": "raja.power",
+          "showPercentage": true
+        }
+      ],
+      "right": [
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "omarchy.keyboard-layout"
+        },
+        {
+          "id": "omarchy.system-update"
+        },
+        {
+          "id": "omarchy.tray"
+        },
+        {
+          "id": "raja.indicators",
+          "alwaysShow": true,
+          "items": [
+            "Dictation",
+            "NightLight",
+            "Dnd",
+            "StayAwake"
+          ]
+        },
+        {
+          "id": "omarchy.bluetooth"
+        },
+        {
+          "id": "omarchy.network"
+        },
+        {
+          "id": "omarchy.audio"
+        },
+        {
+          "id": "raja.monitor"
+        }
+      ]
+    },
+    "id": "raja.bar"
+  },
+  "plugins": []
+}

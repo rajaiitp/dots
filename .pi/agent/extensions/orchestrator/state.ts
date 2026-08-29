@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 export const ORCH_STATE_TYPE = "orchestrator-state";
-export const ORCH_STATE_VERSION = 1;
+export const ORCH_STATE_VERSION = 3;
 
 export type RunStage =
   | "intake"
@@ -17,6 +17,30 @@ export type RunStage =
   | "finished";
 
 export type ReviewVerdict = "APPROVE" | "CHANGES_REQUESTED" | "BLOCKED";
+export type ReviewScope = "full" | "delta";
+export type ReviewTransport = "single" | "sharded";
+
+export interface ArtifactManifestEntry {
+  path: string;
+  hash?: string;
+  size?: number;
+  mode?: number;
+  kind: "file" | "missing" | "symlink" | "other";
+}
+
+export interface ArtifactManifest {
+  version: 1;
+  entries: ArtifactManifestEntry[];
+  hash: string;
+}
+
+/** Immutable post-review copy used solely to derive a later remediation delta. */
+export interface ReviewSnapshot {
+  id: string;
+  dir: string;
+  manifest: ArtifactManifest;
+  createdAt: number;
+}
 
 export interface PreviousSessionSettings {
   provider?: string;
@@ -30,17 +54,36 @@ export interface RoleArtifact {
   kind: string;
   summary: string;
   body: string;
+  acceptanceCriteria?: string[];
+  verificationCommands?: string[];
   hash: string;
   usage?: UsageTotals;
   createdAt: number;
 }
 
+export interface FindingEvidence {
+  kind: "acceptance_criterion" | "invariant" | "failed_test" | "regression" | "api" | "security";
+  reference: string;
+}
+
 export interface Finding {
+  /** Model-supplied semantic key; stable across line shifts and wording edits. */
+  key: string;
+  id?: string;
   severity: "critical" | "high" | "medium" | "low" | "info";
   file?: string;
   line?: number;
   message: string;
   requestedAction?: string;
+  evidence?: FindingEvidence[];
+}
+
+export interface FindingResolution {
+  id: string;
+  status: "fixed" | "open" | "invalidated";
+  note: string;
+  evidence: FindingEvidence[];
+  artifactPaths: string[];
 }
 
 export interface ReviewRecord {
@@ -48,8 +91,22 @@ export interface ReviewRecord {
   verdict: ReviewVerdict;
   summary: string;
   findings: Finding[];
+  /** Every unresolved actionable finding carried into the next remediation pass. */
+  activeFindings?: Finding[];
+  advisories?: Finding[];
+  resolutions?: FindingResolution[];
   envelopeHash: string;
   coverage: string[];
+  scope?: ReviewScope;
+  transport?: ReviewTransport;
+  fallbackReason?: string;
+  baseEnvelopeHash?: string;
+  snapshot?: ReviewSnapshot;
+  chainHash?: string;
+  packetBytes?: number;
+  taskRevision?: number;
+  solDesignHash?: string;
+  terraPlanHash?: string;
   usage?: UsageTotals;
   createdAt: number;
 }
@@ -60,6 +117,10 @@ export interface VerificationEvidence {
   exitCode?: number;
   isError: boolean;
   output: string;
+  outputHash?: string;
+  truncated?: boolean;
+  beforeArtifactManifestHash?: string;
+  artifactManifestHash?: string;
   beforeRepoHash: string;
   afterRepoHash: string;
   createdAt: number;
@@ -94,6 +155,7 @@ export interface RunState {
   solDesign?: RoleArtifact;
   terraPlan?: RoleArtifact;
   reviews: ReviewRecord[];
+  advisories: Finding[];
   taskPaths: string[];
   docsOnlyPaths: string[];
   behaviorMutation: boolean;
@@ -102,6 +164,7 @@ export interface RunState {
   lastRepoHash: string;
   lastEnvelopeHash?: string;
   approvalEnvelopeHash?: string;
+  approvalChainHash?: string;
   nudgeCount: number;
   blockedReason?: string;
 }
@@ -144,6 +207,7 @@ export function newRun(task: string, baseline: BaselineRef, repoHash: string, ru
     needsSol: needsSolDesign(task),
     solConsults: 0,
     reviews: [],
+    advisories: [],
     taskPaths: [],
     docsOnlyPaths: [],
     behaviorMutation: false,
@@ -175,6 +239,7 @@ export function reviseTask(run: RunState, task: string): void {
   run.solDesign = undefined;
   run.terraPlan = undefined;
   // Preserve review history so a task revision cannot bypass the per-run cap.
+  run.advisories = [];
   run.verification = [];
   run.approvalEnvelopeHash = undefined;
   run.stage = "intake";
@@ -205,7 +270,7 @@ export function addUsage(target: UsageTotals, extra?: Partial<UsageTotals>): Usa
 
 function looksLikeState(value: unknown): value is OrchestratorState {
   const state = value as Partial<OrchestratorState> | undefined;
-  return !!state && state.version === ORCH_STATE_VERSION && typeof state.enabled === "boolean";
+  return !!state && (state.version === 1 || state.version === 2 || state.version === ORCH_STATE_VERSION) && typeof state.enabled === "boolean";
 }
 
 /** Active-branch restoration prevents state from another /tree branch leaking in. */
@@ -216,7 +281,27 @@ export function restoreState(entries: SessionEntry[]): OrchestratorState {
       | { data?: unknown }
       | undefined;
   if (!latest || !looksLikeState(latest.data)) return emptyState();
-  return latest.data;
+  const restored = latest.data as OrchestratorState;
+  const priorVersion = restored.version;
+  if (priorVersion < ORCH_STATE_VERSION) {
+    restored.version = ORCH_STATE_VERSION;
+    if (restored.run) restored.run.advisories ??= [];
+    for (const review of restored.run?.reviews ?? []) {
+      review.scope ??= "full";
+      review.transport ??= "single";
+      review.advisories ??= [];
+    }
+    // V1 approvals cannot prove the snapshot/chain invariants introduced in V2.
+    // Require one fresh full review instead of leaving the run unfinishable.
+    if (priorVersion === 1 && (restored.run?.approvalEnvelopeHash || restored.run?.stage === "approved")) {
+      restored.run.approvalEnvelopeHash = undefined;
+      restored.run.approvalChainHash = undefined;
+      restored.run.reviews = [];
+      restored.run.stage = "implementing";
+      restored.run.blockedReason = undefined;
+    }
+  }
+  return restored;
 }
 
 export function stateSummary(state: OrchestratorState): Record<string, unknown> {
@@ -227,6 +312,11 @@ export function stateSummary(state: OrchestratorState): Record<string, unknown> 
     stage: run?.stage,
     taskRevision: run?.taskRevision,
     reviewPass: run?.reviews.length ?? 0,
+    reviewScope: run?.reviews.at(-1)?.scope,
+    reviewTransport: run?.reviews.at(-1)?.transport,
+    reviewPacketBytes: run?.reviews.at(-1)?.packetBytes,
+    reviewFallback: run?.reviews.at(-1)?.fallbackReason,
+    advisories: run?.advisories.length ?? 0,
     solConsults: run?.solConsults ?? 0,
     approved: Boolean(run?.approvalEnvelopeHash),
     blocked: run?.blockedReason,

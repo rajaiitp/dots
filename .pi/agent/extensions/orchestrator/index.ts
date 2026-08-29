@@ -2,14 +2,15 @@ import { randomUUID } from "node:crypto";
 import type { Model, Usage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext, ToolCallEvent, ToolResultEvent } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { capturePathAfterShellChange, capturePathBeforeMutation, collectTaskDiff, createBaseline, gitStatusPaths, repositoryFingerprint, validateBaseline } from "./baseline.ts";
+import { capturePathAfterShellChange, capturePathBeforeMutation, collectSnapshotDiff, collectTaskDiff, createBaseline, createReviewSnapshot, gitStatusPaths, repositoryFingerprint, sameArtifactManifest, taskArtifactManifest, validateBaseline, validateReviewSnapshot } from "./baseline.ts";
 import { type OrchestratorConfig, loadConfig, splitModelRef } from "./config.ts";
 import { activeToolsForStage, boundedText, commandFromToolResult, isAllowedTool, isBehaviorBearingPath, isForbiddenShell } from "./gates.ts";
-import { chunkDiff, designPacket, envelopeHash, reviewPacket, reviewSynthesisPacket, testPlanPacket } from "./packets.ts";
+import { deltaReviewPacket, designPacket, envelopeHash, fullReviewPacket, packetBytes, reviewSynthesisPacket, shardFullReview, testPlanPacket } from "./packets.ts";
 import { LUNA_ORCHESTRATION_PROMPT } from "./prompts.ts";
 import { type RoleJob, runRole } from "./runner.ts";
 import type { RoleResult } from "./schemas.ts";
-import { ORCH_STATE_TYPE, type OrchestratorState, type RoleArtifact, type RunState, type UsageTotals, addPath, emptyState, hash, invalidateApproval, isTerminal, newRun, restoreState, reviseTask, stateSummary, usageZero } from "./state.ts";
+import { ORCH_STATE_TYPE, type OrchestratorState, type ReviewRecord, type RoleArtifact, type RunState, type UsageTotals, addPath, emptyState, hash, invalidateApproval, isTerminal, newRun, restoreState, reviseTask, stateSummary, usageZero } from "./state.ts";
+import { assignFindingIds, diffLineReferences, hasFreshVerification, mergeAdvisories, reviewChainHash, selectReviewScope, triageFindings } from "./review.ts";
 import { updateOrchestratorUi } from "./ui.ts";
 
 const INTERNAL_PREFIX = "ORCH_INTERNAL:";
@@ -21,6 +22,7 @@ interface PendingMutation {
 
 interface PendingShell {
   beforeHash: string;
+  beforeArtifactManifestHash?: string;
 }
 
 function now(): number { return Date.now(); }
@@ -37,7 +39,19 @@ function usageForPi(value: UsageTotals): Usage {
 }
 
 function roleArtifact(role: "sol" | "terra", output: RoleResult, usage: UsageTotals): RoleArtifact {
-  return { role, kind: output.kind, summary: output.summary, body: output.body, hash: hash(output), usage, createdAt: now() };
+  return {
+    role,
+    kind: output.kind,
+    summary: output.summary,
+    body: output.body,
+    acceptanceCriteria: role === "terra" && output.kind === "terra_test_plan"
+      ? output.acceptanceCriteria?.map((criterion, index) => /^AC-\d+\s*:/.test(criterion) ? criterion : `AC-${index + 1}: ${criterion}`)
+      : output.acceptanceCriteria,
+    verificationCommands: output.verificationCommands,
+    hash: hash(output),
+    usage,
+    createdAt: now(),
+  };
 }
 
 function currentRun(state: OrchestratorState): RunState {
@@ -73,7 +87,8 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
   function applyToolPolicy(ctx: ExtensionContext): void {
     if (!state.enabled) return;
     const all = pi.getAllTools().map((tool) => tool.name);
-    pi.setActiveTools(activeToolsForStage(Boolean(state.run?.terraPlan && !isTerminal(state.run.stage)), all));
+    const idleOrTerminal = !state.run || isTerminal(state.run.stage);
+    pi.setActiveTools(activeToolsForStage(Boolean(state.run?.terraPlan && !idleOrTerminal), all, idleOrTerminal));
     updateOrchestratorUi(ctx, state);
   }
 
@@ -128,6 +143,9 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
     if (roleInFlight) throw new Error("A specialist call is already in progress.");
     const runId = state.run?.id;
     const generation = state.run?.generation;
+    const run = state.run;
+    const beforeRepoHash = run ? await repositoryFingerprint(ctx.cwd) : undefined;
+    const beforeManifest = run && run.taskPaths.length > 0 ? await taskArtifactManifest(ctx.cwd, run.taskPaths) : undefined;
     roleInFlight = true;
     roleAbort = new AbortController();
     const signal = ctx.signal ? AbortSignal.any([ctx.signal, roleAbort.signal]) : roleAbort.signal;
@@ -135,6 +153,21 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
       const result = await runRole(pi, ctx.cwd, config, job, packet, signal);
       if (state.run?.id !== runId || state.run?.generation !== generation) {
         throw new Error("Discarded stale specialist result after session or task replacement.");
+      }
+      if (beforeRepoHash && state.run && await repositoryFingerprint(ctx.cwd) !== beforeRepoHash) {
+        state.run.stage = "blocked";
+        state.run.blockedReason = "Repository changed while an isolated specialist was running.";
+        persist(ctx);
+        throw new Error(state.run.blockedReason);
+      }
+      if (beforeManifest && state.run) {
+        const afterManifest = await taskArtifactManifest(ctx.cwd, state.run.taskPaths);
+        if (!sameArtifactManifest(beforeManifest, afterManifest)) {
+          state.run.stage = "blocked";
+          state.run.blockedReason = "Task artifacts changed while an isolated specialist was running.";
+          persist(ctx);
+          throw new Error(state.run.blockedReason);
+        }
       }
       return result;
     } finally {
@@ -178,12 +211,23 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
         }
       }
       run.behaviorMutation = run.behaviorMutation || paths.length > 0;
+      const output = boundedText(event.content);
+      let artifactManifestHash: string | undefined;
+      try {
+        artifactManifestHash = (await taskArtifactManifest(ctx.cwd, run.taskPaths)).hash;
+      } catch {
+        // A later review will fail closed when its current manifest cannot be read.
+      }
       run.verification.push({
         toolName: event.toolName,
         command: command.command,
         exitCode: command.exitCode,
         isError: event.isError,
-        output: boundedText(event.content),
+        output,
+        outputHash: hash(output),
+        truncated: output.includes("[output truncated by orchestrator]"),
+        beforeArtifactManifestHash: shell.beforeArtifactManifestHash,
+        artifactManifestHash,
         beforeRepoHash: shell.beforeHash,
         afterRepoHash: afterHash,
         createdAt: now(),
@@ -209,7 +253,7 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
       expectedRoleModel(ctx, config, "terra");
       expectedRoleModel(ctx, config, "sol");
       state = {
-        version: 1,
+        ...emptyState(),
         enabled: true,
         prior: {
           provider: ctx.model?.provider,
@@ -360,40 +404,95 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
         persist(ctx);
         throw new Error(run.blockedReason);
       }
-      const diff = await collectTaskDiff(ctx.cwd, run.baseline, run.taskPaths);
-      const review = reviewPacket(run, diff);
+      const fullDiff = await collectTaskDiff(ctx.cwd, run.baseline, run.taskPaths);
+      const manifest = await taskArtifactManifest(ctx.cwd, run.taskPaths);
+      if (manifest.entries.some((entry) => entry.kind === "symlink" || entry.kind === "other")) {
+        run.stage = "blocked";
+        run.blockedReason = "Terra review requires readable regular artifacts or deletion tombstones; symlink and special-file changes are blocked.";
+        persist(ctx);
+        throw new Error(run.blockedReason);
+      }
+      if (!hasFreshVerification(run, manifest.hash)) {
+        run.stage = "blocked";
+        run.blockedReason = "Terra review requires fresh successful verification for the exact current task artifacts.";
+        persist(ctx);
+        throw new Error(run.blockedReason);
+      }
+
+      const focus = params.focus?.trim() || undefined;
+      if (focus && Buffer.byteLength(focus, "utf8") > 2_000) throw new Error("Terra review focus exceeds the 2,000-byte packet budget.");
+      const selection = selectReviewScope(run, manifest, config.enableDeltaReviews);
+      let scope = selection.scope;
+      let fallbackReason = selection.fallbackReason;
+      let review = fullReviewPacket(run, fullDiff, manifest);
+      if (scope === "delta" && selection.base) {
+        const delta = await collectSnapshotDiff(ctx.cwd, selection.base.snapshot!);
+        const candidate = deltaReviewPacket(run, delta, manifest, selection.base);
+        const findingPaths = new Set(selection.base.findings.map((finding) => finding.file).filter((path): path is string => Boolean(path)));
+        const changedPaths = candidate.artifactIds.map((id) => id.replace(/^diff:/, ""));
+        // A no-op or unrelated change cannot substantiate a claimed remediation.
+        if (!candidate.complete || !candidate.packet || changedPaths.length === 0 || changedPaths.some((path) => !findingPaths.has(path))) {
+          scope = "full";
+          fallbackReason = candidate.reason ?? "remediation delta is empty or outside prior Terra findings";
+        } else {
+          review = candidate;
+        }
+      }
       if (!review.complete || !review.packet) {
         run.stage = "blocked";
         run.blockedReason = review.reason ?? "Terra cannot receive a complete review packet.";
         persist(ctx);
         throw new Error(run.blockedReason);
       }
-      const envelope = envelopeHash(run, diff);
+
+      const envelope = envelopeHash(run, fullDiff, manifest);
       run.lastEnvelopeHash = envelope;
       run.stage = "reviewing";
       persist(ctx);
 
+      const packetLimit = Math.min(config.maxPacketBytes, config.maxReviewPacketBytes);
+      const reviewPayload = (packet: Record<string, unknown>): Record<string, unknown> => ({ ...packet, ...(focus ? { focus } : {}), envelopeHash: envelope });
+      const shardLimit = packetLimit - packetBytes({ ...(focus ? { focus } : {}), envelopeHash: envelope }) - 128;
+      if (shardLimit < 1_024) throw new Error("Terra review metadata leaves no safe space for a diff shard.");
+      const addUsage = (target: UsageTotals, extra: UsageTotals): void => {
+        target.input += extra.input; target.output += extra.output; target.cacheRead += extra.cacheRead; target.cacheWrite += extra.cacheWrite; target.cost += extra.cost;
+      };
       let result: RoleResult;
-      let usage = usageZero();
-      const chunks = chunkDiff(String(review.packet.diff ?? ""), config.maxReviewPacketBytes);
-      if (chunks.length === 1) {
-        const call = await runSpecialist(ctx, "terra_review", { ...review.packet, focus: params.focus?.trim() || undefined, envelopeHash: envelope });
+      let transport: "single" | "sharded" = "single";
+      let packetSize = packetBytes(reviewPayload(review.packet));
+      const usage = usageZero();
+      if (packetSize <= packetLimit) {
+        const call = await runSpecialist(ctx, scope === "delta" ? "terra_delta_review" : "terra_review", reviewPayload(review.packet));
         result = call.result;
-        usage = call.usage;
+        addUsage(usage, call.usage);
       } else {
-        const shardResults: Array<{ summary: string; body: string; findings: unknown }> = [];
-        for (let index = 0; index < chunks.length; index++) {
-          const call = await runSpecialist(ctx, "terra_review_shard", {
-            ...review.packet,
-            diff: chunks[index],
-            shard: { index: index + 1, total: chunks.length },
-            focus: params.focus?.trim() || undefined,
-          });
-          usage.input += call.usage.input; usage.output += call.usage.output; usage.cacheRead += call.usage.cacheRead; usage.cacheWrite += call.usage.cacheWrite; usage.cost += call.usage.cost;
-          shardResults.push({ summary: call.result.summary, body: call.result.body, findings: call.result.findings ?? [] });
+        // Delta packets must stay compact; full review can use lossless shard transport.
+        if (scope === "delta") {
+          scope = "full";
+          fallbackReason = "remediation packet exceeded the compact review limit";
+          review = fullReviewPacket(run, fullDiff, manifest);
+          if (!review.complete || !review.packet) throw new Error(review.reason ?? "Could not build full-review fallback.");
         }
-        const synthesis = await runSpecialist(ctx, "terra_review_synthesis", reviewSynthesisPacket(run, review.artifactIds, shardResults));
-        usage.input += synthesis.usage.input; usage.output += synthesis.usage.output; usage.cacheRead += synthesis.usage.cacheRead; usage.cacheWrite += synthesis.usage.cacheWrite; usage.cost += synthesis.usage.cost;
+        transport = "sharded";
+        const shards = shardFullReview(review.packet, shardLimit);
+        if (shards.length === 0) throw new Error("Full review produced no reviewable shards.");
+        packetSize = 0;
+        const shardResults: Array<{ id: string; artifactIds: string[]; summary: string; findings: unknown; coverage: string[] }> = [];
+        for (const shard of shards) {
+          const shardPayload = reviewPayload(shard.packet);
+          if (packetBytes(shardPayload) > packetLimit) throw new Error(`Terra shard ${shard.id} exceeds the specialist packet limit after metadata.`);
+          packetSize += packetBytes(shardPayload);
+          const call = await runSpecialist(ctx, "terra_review_shard", shardPayload);
+          addUsage(usage, call.usage);
+          const coverage = call.result.coverage ?? [];
+          if (!shard.artifactIds.every((id) => coverage.includes(id))) throw new Error(`Terra shard ${shard.id} did not confirm its complete artifact coverage.`);
+          shardResults.push({ id: shard.id, artifactIds: shard.artifactIds, summary: call.result.summary, findings: call.result.findings ?? [], coverage });
+        }
+        const synthesisPacket = reviewPayload(reviewSynthesisPacket(run, manifest, review.artifactIds, shardResults));
+        if (packetBytes(synthesisPacket) > packetLimit) throw new Error("Terra review synthesis exceeds the specialist packet limit.");
+        packetSize += packetBytes(synthesisPacket);
+        const synthesis = await runSpecialist(ctx, "terra_review_synthesis", synthesisPacket);
+        addUsage(usage, synthesis.usage);
         result = synthesis.result;
       }
       if (!result.verdict) throw new Error("Terra review returned no valid verdict.");
@@ -404,30 +503,108 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
         persist(ctx);
         throw new Error(run.blockedReason);
       }
-      const record = {
-        pass: run.reviews.length + 1,
-        verdict: result.verdict,
+      const afterManifest = await taskArtifactManifest(ctx.cwd, run.taskPaths);
+      if (!sameArtifactManifest(manifest, afterManifest)) {
+        run.stage = "blocked";
+        run.blockedReason = "Task artifacts changed while Terra was reviewing; the verdict is stale.";
+        persist(ctx);
+        throw new Error(run.blockedReason);
+      }
+      const priorFindings = selection.base?.activeFindings ?? selection.base?.findings ?? [];
+      if (scope === "delta" && selection.base) {
+        const previousIds = new Set(priorFindings.map((finding) => finding.id).filter(Boolean));
+        const priorById = new Map(priorFindings.filter((finding): finding is typeof finding & { id: string } => Boolean(finding.id)).map((finding) => [finding.id, finding]));
+        const resolutions = result.resolutions ?? [];
+        const resolvedIds = new Set(resolutions.map((resolution) => resolution.id));
+        const changedPaths = new Set(review.artifactIds.map((id) => id.replace(/^diff:/, "")));
+        const scopedDiffReferences = diffLineReferences(String(review.packet?.diff ?? ""));
+        const concreteResolutionEvidence = (resolution: NonNullable<RoleResult["resolutions"]>[number]): boolean => resolution.evidence.some((evidence) => {
+          if (evidence.kind === "acceptance_criterion") return (run.terraPlan?.acceptanceCriteria ?? []).some((criterion) => criterion.startsWith(`${evidence.reference}:`) || criterion === evidence.reference);
+          if (evidence.kind === "invariant") return Boolean(run.solDesign?.body.includes(evidence.reference));
+          if (evidence.kind === "failed_test") return run.verification.some((entry) => (entry.isError || entry.exitCode !== 0) && entry.beforeArtifactManifestHash === manifest.hash && entry.artifactManifestHash === manifest.hash && entry.output.includes(evidence.reference));
+          return scopedDiffReferences.has(evidence.reference);
+        });
+        if (![...previousIds].every((id) => resolvedIds.has(id)) || [...resolvedIds].some((id) => !previousIds.has(id)) || resolutions.some((resolution) => {
+          const prior = priorById.get(resolution.id);
+          return !prior || !resolution.note.trim() || resolution.evidence.length === 0 || !concreteResolutionEvidence(resolution) || resolution.artifactPaths.some((path) => !changedPaths.has(path)) || (prior.file !== undefined && !resolution.artifactPaths.includes(prior.file));
+        })) {
+          run.stage = "blocked";
+          run.blockedReason = "Delta review did not resolve every prior Terra blocker.";
+          persist(ctx);
+          throw new Error(run.blockedReason);
+        }
+      }
+      const previous = run.reviews.at(-1);
+      const pass = run.reviews.length + 1;
+      const triage = triageFindings(assignFindingIds(pass, result.findings ?? []), {
+        acceptanceCriteria: run.terraPlan?.acceptanceCriteria ?? [],
+        solDesign: run.solDesign?.body,
+        artifactPaths: manifest.entries.map((entry) => entry.path),
+        diffReferences: diffLineReferences(String(review.packet?.diff ?? "")),
+        failedTestOutput: run.verification
+          .filter((evidence) => (evidence.isError || evidence.exitCode !== 0) && evidence.beforeArtifactManifestHash === manifest.hash && evidence.artifactManifestHash === manifest.hash)
+          .map((evidence) => evidence.output),
+      });
+      const openPrior = scope === "delta"
+        ? priorFindings.filter((finding) => result.resolutions?.some((resolution) => resolution.id === finding.id && resolution.status === "open"))
+        : [];
+      const activeById = new Map<string, typeof triage.blockers[number]>();
+      for (const finding of [...openPrior, ...triage.blockers]) if (finding.id) activeById.set(finding.id, finding);
+      // Invalidating a prior blocker is rare and cannot be safely accepted from a
+      // delta alone. Carry a synthetic blocker that forces the next pass full.
+      if (scope === "delta" && result.resolutions?.some((resolution) => resolution.status === "invalidated")) {
+        const revalidation = assignFindingIds(pass, [{
+          key: "revalidate-invalidated-terra-finding",
+          severity: "high",
+          message: "Terra invalidated a prior blocker; a complete review is required before approval.",
+          requestedAction: "Run a complete Terra review of the current task artifacts.",
+          evidence: [{ kind: "invariant", reference: "full-review-required" }],
+        }])[0];
+        activeById.set(revalidation.id, revalidation);
+      }
+      const activeFindings = [...activeById.values()].sort((left, right) => String(left.id).localeCompare(String(right.id)));
+      const verdict = result.verdict === "BLOCKED" ? "BLOCKED" : activeFindings.length > 0 ? "CHANGES_REQUESTED" : "APPROVE";
+      const advisories = mergeAdvisories(run.advisories, triage.advisories, activeFindings);
+      run.advisories = advisories;
+      const snapshot = await createReviewSnapshot(ctx.cwd, run.baseline, manifest, `pass-${pass}`);
+      const record: ReviewRecord = {
+        pass,
+        verdict,
         summary: result.summary,
-        findings: result.findings ?? [],
+        findings: triage.blockers,
+        activeFindings,
+        advisories: triage.advisories,
+        resolutions: result.resolutions,
         envelopeHash: envelope,
         coverage,
+        scope,
+        transport,
+        fallbackReason,
+        baseEnvelopeHash: scope === "delta" ? selection.base?.envelopeHash : undefined,
+        snapshot,
+        taskRevision: run.taskRevision,
+        solDesignHash: run.solDesign?.hash,
+        terraPlanHash: run.terraPlan?.hash,
+        packetBytes: packetSize,
         usage,
         createdAt: now(),
       };
+      record.chainHash = reviewChainHash(previous, record);
       run.reviews.push(record);
-      if (result.verdict === "APPROVE") {
+      if (verdict === "APPROVE") {
         run.stage = "approved";
         run.approvalEnvelopeHash = envelope;
-      } else if (result.verdict === "BLOCKED" || run.reviews.length >= config.maxReviews) {
+        run.approvalChainHash = record.chainHash;
+      } else if (verdict === "BLOCKED" || run.reviews.length >= config.maxReviews) {
         run.stage = "blocked";
-        run.blockedReason = result.verdict === "BLOCKED" ? result.summary : `Terra review cap (${config.maxReviews}) reached without approval.`;
+        run.blockedReason = verdict === "BLOCKED" ? result.summary : `Terra review cap (${config.maxReviews}) reached without approval.`;
       } else {
         run.stage = "remediating";
       }
       if (result.requiresSol) run.needsSol = true;
       run.updatedAt = now();
       persist(ctx);
-      return { content: [{ type: "text", text: `${result.verdict}: ${result.body}` }], details: { pass: record.pass, verdict: result.verdict, coverage }, usage: usageForPi(usage) };
+      return { content: [{ type: "text", text: `${verdict}: ${result.body}` }], details: { pass: record.pass, verdict, coverage, scope, transport, fallbackReason, blockers: activeFindings.length, advisories: triage.advisories.length, packetBytes: packetSize }, usage: usageForPi(usage) };
     },
   });
 
@@ -460,15 +637,23 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
         if (run.unscopedChanges.length) throw new Error("Unscoped changes prevent safe finish.");
         const diff = await collectTaskDiff(ctx.cwd, run.baseline, run.taskPaths);
         if (!diff.complete) throw new Error(diff.reason);
-        const envelope = envelopeHash(run, diff);
-        if (run.stage !== "approved" || run.approvalEnvelopeHash !== envelope) {
+        const manifest = await taskArtifactManifest(ctx.cwd, run.taskPaths);
+        if (!hasFreshVerification(run, manifest.hash)) throw new Error("Verification is stale for the current task artifacts.");
+        const approval = run.reviews.at(-1);
+        if (!approval?.snapshot || !(await validateReviewSnapshot(approval.snapshot)).ok) throw new Error("The final Terra review snapshot is missing or corrupt.");
+        if (!sameArtifactManifest(approval.snapshot.manifest, manifest)) throw new Error("Task artifacts changed after Terra approval.");
+        const envelope = envelopeHash(run, diff, manifest);
+        if (run.stage !== "approved" || run.approvalEnvelopeHash !== envelope || !run.approvalChainHash) {
           throw new Error("Terra has not approved the exact current task, design, plan, diff, and verification envelope.");
         }
       }
       run.stage = "finished";
       run.updatedAt = now();
       persist(ctx);
-      return { content: [{ type: "text", text: params.summary?.trim() || "Orchestrated run finished with the required review evidence." }], details: { runId: run.id, behaviorMutation: run.behaviorMutation }, terminate: true };
+      const advisorySummary = run.advisories.length
+        ? `\n\nAdvisories (non-blocking):\n${run.advisories.slice(0, 20).map((finding) => `- [${finding.severity}] ${finding.message}`).join("\n")}${run.advisories.length > 20 ? "\n- [more advisories omitted]" : ""}`
+        : "";
+      return { content: [{ type: "text", text: `${params.summary?.trim() || "Orchestrated run finished with the required review evidence."}${advisorySummary}` }], details: { runId: run.id, behaviorMutation: run.behaviorMutation, advisories: run.advisories.length }, terminate: true };
     },
   });
 
@@ -530,7 +715,10 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
 
   pi.on("tool_call", async (event: ToolCallEvent, ctx) => {
     if (!state.enabled) return;
-    const run = currentRun(state);
+    const run = state.run;
+    if (!run || isTerminal(run.stage)) {
+      return { block: true, reason: "No active orchestrator run can accept specialist or mutation work. Send a new task first." };
+    }
     const hasPlan = Boolean(run.terraPlan);
     if (!isAllowedTool(event.toolName, hasPlan)) {
       return { block: true, reason: `Orchestrator tool policy blocks ${event.toolName} at stage ${run.stage}.` };
@@ -552,7 +740,15 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
       const command = String((event.input as Record<string, unknown>).command ?? "");
       const forbidden = isForbiddenShell(command);
       if (forbidden) return { block: true, reason: forbidden };
-      pendingShells.set(event.toolCallId, { beforeHash: await repositoryFingerprint(ctx.cwd) });
+      let beforeArtifactManifestHash: string | undefined;
+      if (run.taskPaths.length > 0) {
+        try {
+          beforeArtifactManifestHash = (await taskArtifactManifest(ctx.cwd, run.taskPaths)).hash;
+        } catch (error) {
+          return { block: true, reason: `Could not capture pre-command task manifest: ${error instanceof Error ? error.message : String(error)}` };
+        }
+      }
+      pendingShells.set(event.toolCallId, { beforeHash: await repositoryFingerprint(ctx.cwd), beforeArtifactManifestHash });
     }
   });
 

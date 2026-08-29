@@ -1,0 +1,27 @@
+# Gruvbox palette matching the active Omarchy theme.
+name = Gruvbox (Omarchy)
+bg = #282828
+panel = #1e1e1e
+border = #504945
+fg = #d4be98
+dim = #7c6f64
+accent = #7daea3
+cursor = #3c3836
+selection = #504945
+statusbar = #1e1e1e
+status_fg = #d4be98
+mode_fg = #282828
+mode_bg = #7daea3
+pri_a = #ea6962
+pri_b = #e1875c
+pri_c = #d8a657
+pri_d = #a9b665
+pri_other = #89b482
+project = #7daea3
+context = #d3869b
+due = #e1875c
+overdue = #ea6962
+today = #d8a657
+done = #7c6f64
+selected = #504945
+matched = #504945

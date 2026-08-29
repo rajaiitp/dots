@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, readFile, readlink, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { spawn } from "node:child_process";
-import type { BaselineRef } from "./state.ts";
+import type { ArtifactManifest, ArtifactManifestEntry, BaselineRef, ReviewSnapshot } from "./state.ts";
+import { hash, stableJson } from "./state.ts";
 
 interface SnapshotEntry {
   snapshot?: string;
@@ -77,12 +78,27 @@ export async function gitStatusPaths(cwd: string): Promise<string[]> {
   return [...new Set(paths)].sort();
 }
 
+async function pathFingerprint(cwd: string, repoPath: string): Promise<string> {
+  try {
+    const info = await lstat(fileAt(cwd, repoPath));
+    if (info.isSymbolicLink()) return `${repoPath}\0symlink\0${info.mode}\0${hashText(await readlink(fileAt(cwd, repoPath)))}`;
+    if (!info.isFile()) return `${repoPath}\0other\0${info.mode}`;
+    return `${repoPath}\0file\0${info.mode}\0${hashText(await readFile(fileAt(cwd, repoPath)))}`;
+  } catch {
+    return `${repoPath}\0missing`;
+  }
+}
+
+/** Hash HEAD/index status and bytes of every dirty/untracked working-tree path. */
 export async function repositoryFingerprint(cwd: string): Promise<string> {
-  const [status, head] = await Promise.all([
+  const [status, head, index] = await Promise.all([
     git(cwd, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]),
     git(cwd, ["rev-parse", "HEAD"]),
+    git(cwd, ["diff", "--cached", "--binary", "--no-ext-diff"]),
   ]);
-  return hashText(`${head.code === 0 ? head.stdout.trim() : "NO_HEAD"}\0${status.stdout}`);
+  const paths = await gitStatusPaths(cwd);
+  const content = await Promise.all(paths.map((path) => pathFingerprint(cwd, path)));
+  return hashText(`${head.code === 0 ? head.stdout.trim() : "NO_HEAD"}\0${status.stdout}\0${index.stdout}\0${content.sort().join("\0")}`);
 }
 
 async function writeManifest(ref: BaselineRef, manifest: BaselineManifest): Promise<void> {
@@ -224,6 +240,113 @@ export async function collectTaskDiff(cwd: string, ref: BaselineRef, taskPaths: 
   }
   const text = chunks.filter(Boolean).join("\n");
   return { text, hash: hashText(text), paths: [...new Set(taskPaths)].sort(), complete: true };
+}
+
+/** Exact task-local state used for review freshness and delta eligibility. */
+export async function taskArtifactManifest(cwd: string, taskPaths: string[]): Promise<ArtifactManifest> {
+  const entries: ArtifactManifestEntry[] = [];
+  for (const path of [...new Set(taskPaths)].sort()) {
+    const repoPath = normalizeRepoPath(cwd, path);
+    const absolute = fileAt(cwd, repoPath);
+    try {
+      const info = await lstat(absolute);
+      if (info.isSymbolicLink()) {
+        entries.push({ path: repoPath, kind: "symlink", mode: info.mode });
+      } else if (!info.isFile()) {
+        entries.push({ path: repoPath, kind: "other", mode: info.mode });
+      } else {
+        const content = await readFile(absolute);
+        entries.push({ path: repoPath, kind: "file", hash: hashText(content), size: content.byteLength, mode: info.mode });
+      }
+    } catch (error: unknown) {
+      const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
+      if (code === "ENOENT") entries.push({ path: repoPath, kind: "missing" });
+      else throw new Error(`Could not read task artifact ${repoPath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  const canonical = entries.map((entry) => ({ ...entry }));
+  return { version: 1, entries, hash: hash(stableJson(canonical)) };
+}
+
+export function sameArtifactManifest(left: ArtifactManifest, right: ArtifactManifest): boolean {
+  return left.hash === right.hash && stableJson(left.entries) === stableJson(right.entries);
+}
+
+function snapshotFile(dir: string, repoPath: string): string {
+  return join(dir, "files", repoPath);
+}
+
+/** Persist a complete immutable task snapshot only after a valid Terra review result. */
+export async function createReviewSnapshot(cwd: string, ref: BaselineRef, manifest: ArtifactManifest, label: string): Promise<ReviewSnapshot> {
+  if (!manifest.entries.every((entry) => entry.kind === "file" || entry.kind === "missing")) {
+    throw new Error("Only regular readable artifacts and deletion tombstones may form a review snapshot.");
+  }
+  const id = `${label}-${manifest.hash.slice(0, 16)}`;
+  const dir = join(ref.dir, "reviews", id);
+  const temp = `${dir}.tmp-${process.pid}-${Date.now()}`;
+  await mkdir(join(temp, "files"), { recursive: true, mode: 0o700 });
+  try {
+    for (const entry of manifest.entries) {
+      // A missing path is a deletion tombstone. It is reviewable in full scope
+      // and intentionally disables delta scope via the manifest shape check.
+      if (entry.kind === "missing") continue;
+      const source = fileAt(cwd, entry.path);
+      const target = snapshotFile(temp, entry.path);
+      await mkdir(dirname(target), { recursive: true, mode: 0o700 });
+      await copyFile(source, target);
+      const copied = await readFile(target);
+      const copiedInfo = await stat(target);
+      if (hashText(copied) !== entry.hash || copiedInfo.mode !== entry.mode) {
+        throw new Error(`Task artifact ${entry.path} changed while its review snapshot was being written.`);
+      }
+    }
+    await writeFile(join(temp, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
+    try {
+      await rename(temp, dir);
+    } catch (error: unknown) {
+      if (!existsSync(dir)) throw error;
+      await rm(temp, { recursive: true, force: true });
+    }
+    return { id, dir, manifest, createdAt: Date.now() };
+  } catch (error) {
+    await rm(temp, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+export async function validateReviewSnapshot(snapshot: ReviewSnapshot): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    const stored = JSON.parse(await readFile(join(snapshot.dir, "manifest.json"), "utf8")) as ArtifactManifest;
+    if (!sameArtifactManifest(stored, snapshot.manifest)) return { ok: false, reason: "Review snapshot manifest does not match persisted state." };
+    for (const entry of stored.entries) {
+      if (entry.kind === "missing") continue;
+      if (entry.kind !== "file" || !entry.hash || !existsSync(snapshotFile(snapshot.dir, entry.path))) {
+        return { ok: false, reason: "Review snapshot is incomplete or contains a non-regular artifact." };
+      }
+      const content = await readFile(snapshotFile(snapshot.dir, entry.path));
+      if (hashText(content) !== entry.hash) return { ok: false, reason: `Review snapshot hash mismatch for ${entry.path}.` };
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: `Review snapshot is missing or corrupt: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
+/** Diff current task files against the last immutable Terra-reviewed snapshot. */
+export async function collectSnapshotDiff(cwd: string, snapshot: ReviewSnapshot): Promise<TaskDiff> {
+  const valid = await validateReviewSnapshot(snapshot);
+  if (!valid.ok) return { text: "", hash: hashText(""), paths: snapshot.manifest.entries.map((entry) => entry.path), complete: false, reason: valid.reason };
+  const chunks: string[] = [];
+  for (const entry of snapshot.manifest.entries) {
+    const current = fileAt(cwd, entry.path);
+    if (!existsSync(current)) return { text: "", hash: hashText(""), paths: snapshot.manifest.entries.map((item) => item.path), complete: false, reason: `Delta artifact ${entry.path} was deleted.` };
+    if (await isOpaque(snapshotFile(snapshot.dir, entry.path)) || await isOpaque(current)) {
+      return { text: "", hash: hashText(""), paths: snapshot.manifest.entries.map((item) => item.path), complete: false, reason: `Opaque delta artifact ${entry.path} cannot receive delta review.` };
+    }
+    chunks.push(await noIndexDiff(cwd, snapshotFile(snapshot.dir, entry.path), current, entry.path));
+  }
+  const text = chunks.filter(Boolean).join("\n");
+  return { text, hash: hashText(text), paths: snapshot.manifest.entries.map((entry) => entry.path), complete: true };
 }
 
 export async function cleanupBaseline(ref: BaselineRef): Promise<void> {

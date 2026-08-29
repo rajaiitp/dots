@@ -12,7 +12,11 @@ export const READ_ONLY_TOOLS = new Set([
 // hypa_shell executes the original audited command and is the only shell route.
 export const MUTATION_TOOLS = new Set(["edit", "write", "hypa_shell"]);
 
-export function activeToolsForStage(hasTerraPlan: boolean, allTools: string[]): string[] {
+/** Tools retained while /orch is enabled but no run can safely accept role work. */
+export const IDLE_OR_TERMINAL_TOOLS = new Set([...READ_ONLY_TOOLS].filter((name) => !name.startsWith("orch_")));
+
+export function activeToolsForStage(hasTerraPlan: boolean, allTools: string[], idleOrTerminal = false): string[] {
+  if (idleOrTerminal) return allTools.filter((name) => IDLE_OR_TERMINAL_TOOLS.has(name));
   const knownSafe = allTools.filter((name) => READ_ONLY_TOOLS.has(name));
   // edit/write stay available so inert documentation can bypass Terra. Their
   // per-path gate still denies every behavior-bearing target before execution.

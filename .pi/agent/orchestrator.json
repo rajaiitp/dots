@@ -10,7 +10,8 @@
   "childTimeoutMs": 900000,
   "maxPacketBytes": 122880,
   "maxReviewPacketBytes": 98304,
-  "maxChildOutputBytes": 51200,
+  "maxChildOutputBytes": 2097152,
   "maxChildOutputLines": 2000,
-  "maxRoleAttempts": 2
+  "maxRoleAttempts": 2,
+  "enableDeltaReviews": true
 }

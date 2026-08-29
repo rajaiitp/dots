@@ -7,17 +7,6 @@ export TODO_FILE="$TODO_DIR/todo.txt"
 # Load Rust's environment when available.
 [[ -r "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
-tablet() {
-  local dispatcher=/data/data/com.termux/files/home/bin/tablet-playback
-  if [[ $1 == sync ]]; then
-    shift
-    ~/.config/scripts/android/install-tablet-stack.sh --apps "$@"
-    return
-  fi
-  (( $# )) || set -- help
-  print -rl -- "$@" | ssh xiaomi "su -c $dispatcher"
-}
-
 # Name Herdr tabs after a running command, without overriding a manual label.
 if [[ ${HERDR_ENV:-} == 1 && -n ${HERDR_TAB_ID:-} && -n ${HERDR_SOCKET_PATH:-} ]]; then
   typeset -g _herdr_state_dir="${XDG_RUNTIME_DIR:-/tmp}/herdr-tabnames"
