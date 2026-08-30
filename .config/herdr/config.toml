@@ -53,9 +53,11 @@ new_tab = "prefix+c"
 rename_tab = "prefix+shift+,"
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
-# Ctrl+Tab goes back to the previous agent; Ctrl+Shift+Tab moves forward.
-previous_agent = "ctrl+tab"
+# Ctrl+Tab toggles to the last focused pane (normally the last agent).
+# Ctrl+Shift+Tab retains forward agent cycling.
+previous_agent = ""
 next_agent = "ctrl+shift+tab"
+last_pane = "ctrl+tab"
 # Prefix+1 through Prefix+9 focuses agents in Herdr's visible agent order.
 focus_agent = "prefix+1..9"
 close_tab = "prefix+shift+x"
