@@ -11,8 +11,10 @@ BarWidget {
   id: root
   moduleName: "omarchy.tray"
 
-  // Keep every status-notifier item visible and remove the expand chevron.
+  // The bar entry can either expose every tray item or keep only items that
+  // report Active outside the chevron drawer.
   readonly property bool alwaysExpanded: setting("alwaysExpanded", false) === true
+  readonly property bool passiveDrawerOnly: setting("passiveDrawerOnly", false) === true
   property bool expanded: alwaysExpanded
   property bool managePopupOpen: false
   property bool trayMenuOpen: false
@@ -22,12 +24,15 @@ BarWidget {
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property var pinnedIds: settings.pinned instanceof Array ? settings.pinned : []
   readonly property var hiddenIds: settings.hidden instanceof Array ? settings.hidden : []
-  // In always-expanded mode even pinned, hidden, and Passive items share the
-  // permanent visible row, so applications such as Discord cannot disappear.
-  readonly property var pinnedItems: alwaysExpanded ? [] : bucket("pinned")
-  readonly property var drawerItems: alwaysExpanded ? bucket("all") : bucket("drawer")
+  // When requested, keep active items visible and place only greyed-out
+  // Passive items behind the chevron.
+  readonly property var pinnedItems: alwaysExpanded ? []
+    : (passiveDrawerOnly ? bucket("active") : bucket("pinned"))
+  readonly property var drawerItems: alwaysExpanded ? bucket("all")
+    : (passiveDrawerOnly ? bucket("passive") : bucket("drawer"))
   readonly property var allItems: bucket("all")
   readonly property int drawerCount: drawerItems.length
+  onDrawerCountChanged: if (drawerCount === 0) expanded = false
   readonly property int trayItemExtent: Style.bar.iconSlot
   // Match the 10px horizontal spacing of the surrounding right-side group.
   readonly property int trayItemGap: root.vertical ? 0 : Style.space(10)
@@ -174,13 +179,27 @@ BarWidget {
     var result = []
     for (var i = 0; i < values.length; i++) {
       var item = values[i]
-      if (item.status === Status.Passive && !alwaysExpanded) continue
       if (ownedByOmarchy(item)) continue
+      var classification = classifyItem(item)
+
+      // The manager needs every item, including manually hidden and Passive
+      // entries. Display buckets honor manual hiding.
       if (category === "all") {
         result.push(item)
         continue
       }
-      if (classifyItem(item) === category) result.push(item)
+      if (category === "active") {
+        if (item.status !== Status.Passive && classification !== "hidden") result.push(item)
+        continue
+      }
+      if (category === "passive") {
+        if (item.status === Status.Passive && classification !== "hidden") result.push(item)
+        continue
+      }
+
+      // Standard pin/drawer behavior omits Passive entries entirely.
+      if (item.status === Status.Passive) continue
+      if (classification === category) result.push(item)
     }
     return result
   }
@@ -237,7 +256,7 @@ BarWidget {
       id: horizontalTrayRoot
 
       readonly property int pinnedWidth: pinnedRow.implicitWidth
-      readonly property int drawerBlockWidth: root.allItems.length > 0
+      readonly property int drawerBlockWidth: root.drawerCount > 0
         ? (root.alwaysExpanded ? root.drawerExtent : expandIcon.implicitWidth + root.drawerExtent)
         : 0
 
@@ -262,12 +281,7 @@ BarWidget {
         x: 0
         width: horizontalTrayRoot.drawerBlockWidth
         height: root.barSize
-        visible: root.allItems.length > 0
-
-        HoverHandler {
-          enabled: !root.alwaysExpanded
-          onHoveredChanged: root.expanded = hovered
-        }
+        visible: root.drawerCount > 0
 
         BarIconButton {
           id: expandIcon
@@ -275,16 +289,33 @@ BarWidget {
           bar: root.bar
           width: implicitWidth
           height: implicitHeight
-          x: root.drawerExtent - root.revealExtent
+          // The chevron stays at the drawer's right edge; revealed items
+          // slide into the reserved space on its left.
+          x: root.drawerExtent
           text: "\uf053"
           onPressed: function(button) {
             if (button === Qt.RightButton) root.managePopupOpen = !root.managePopupOpen
           }
         }
 
+        // Do not use drawerArea itself as the hover target: its full reserved
+        // width would open the drawer far from `<`. Start with the chevron
+        // only, then expand the target once the drawer is open.
+        Item {
+          id: trayHoverTarget
+          x: root.expanded || root.alwaysExpanded ? 0 : root.drawerExtent
+          width: root.expanded || root.alwaysExpanded ? parent.width : expandIcon.width
+          height: parent.height
+
+          HoverHandler {
+            enabled: !root.alwaysExpanded
+            onHoveredChanged: root.expanded = hovered
+          }
+        }
+
         Item {
           id: trayClip
-          x: root.alwaysExpanded ? 0 : expandIcon.width
+          x: 0
           anchors.verticalCenter: parent.verticalCenter
           width: root.drawerExtent
           height: root.barSize
@@ -292,7 +323,9 @@ BarWidget {
 
           Row {
             id: trayIcons
-            x: root.drawerExtent - root.revealExtent
+            // At rest the row sits just outside the clip to the left; on
+            // reveal it fills the space immediately left of the chevron.
+            x: root.revealExtent - root.drawerExtent
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.trayItemGap
             layer.enabled: true
@@ -310,7 +343,7 @@ BarWidget {
         x: drawerArea.x + horizontalTrayRoot.drawerBlockWidth
         anchors.verticalCenter: parent.verticalCenter
         spacing: root.trayItemGap
-        leftPadding: root.pinnedItems.length > 0 && root.allItems.length > 0 ? root.trayJoinGap : 0
+        leftPadding: root.pinnedItems.length > 0 && root.drawerCount > 0 ? root.trayJoinGap : 0
         Repeater {
           model: root.pinnedItems
           TrayItem {}
@@ -326,7 +359,7 @@ BarWidget {
       id: verticalTrayRoot
 
       readonly property int pinnedHeight: pinnedCol.implicitHeight
-      readonly property int drawerBlockHeight: root.allItems.length > 0
+      readonly property int drawerBlockHeight: root.drawerCount > 0
         ? (root.alwaysExpanded ? root.drawerExtent : expandIcon.implicitHeight + root.drawerExtent)
         : 0
 
@@ -348,12 +381,7 @@ BarWidget {
         y: 0
         width: root.barSize
         height: verticalTrayRoot.drawerBlockHeight
-        visible: root.allItems.length > 0
-
-        HoverHandler {
-          enabled: !root.alwaysExpanded
-          onHoveredChanged: root.expanded = hovered
-        }
+        visible: root.drawerCount > 0
 
         BarIconButton {
           id: expandIcon
@@ -366,6 +394,18 @@ BarWidget {
           textRotation: 90
           onPressed: function(button) {
             if (button === Qt.RightButton) root.managePopupOpen = !root.managePopupOpen
+          }
+        }
+
+        Item {
+          id: trayHoverTarget
+          y: root.expanded || root.alwaysExpanded ? 0 : root.drawerExtent
+          width: parent.width
+          height: root.expanded || root.alwaysExpanded ? parent.height : expandIcon.height
+
+          HoverHandler {
+            enabled: !root.alwaysExpanded
+            onHoveredChanged: root.expanded = hovered
           }
         }
 
@@ -397,7 +437,7 @@ BarWidget {
         y: drawerArea.y + verticalTrayRoot.drawerBlockHeight
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: root.trayItemGap
-        topPadding: root.pinnedItems.length > 0 && root.allItems.length > 0 ? root.trayJoinGap : 0
+        topPadding: root.pinnedItems.length > 0 && root.drawerCount > 0 ? root.trayJoinGap : 0
         Repeater {
           model: root.pinnedItems
           TrayItem {}
@@ -807,7 +847,8 @@ BarWidget {
 
     required property var modelData
 
-    visible: modelData.status !== Status.Passive
+    // Passive entries are intentionally selected for the Passive-only drawer.
+    visible: root.alwaysExpanded || root.passiveDrawerOnly || modelData.status !== Status.Passive
     implicitWidth: visible ? root.trayItemExtent : 0
     implicitHeight: visible ? root.trayItemExtent : 0
 

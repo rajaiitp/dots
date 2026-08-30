@@ -56,11 +56,12 @@
         },
         {
           "id": "raja.tray",
-          "alwaysExpanded": true
+          "alwaysExpanded": false,
+          "passiveDrawerOnly": true
         },
         {
           "id": "raja.indicators",
-          "alwaysShow": true,
+          "alwaysShow": false,
           "items": [
             "Dictation",
             "NightLight",

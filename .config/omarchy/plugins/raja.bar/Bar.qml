@@ -352,7 +352,19 @@ Item {
   // sections. The drawer's reserved space then sits next to the bar center,
   // not stranded mid-section.
   function pinTrayToInner(entries, section) {
-    return BarModel.pinTrayToInner(entries, section)
+    var pinned = BarModel.pinTrayToInner(entries, section)
+    if (section !== "right") return pinned
+
+    // The inactive-indicator chevron belongs at the inner edge of the whole
+    // right-side group, so its drawer can reveal left toward the bar center.
+    // Keep the tray immediately after it, followed by all other status items.
+    for (var i = 0; i < pinned.length; i++) {
+      if (root.entryId(pinned[i]) === "raja.indicators") {
+        if (i > 0) pinned.unshift(pinned.splice(i, 1)[0])
+        break
+      }
+    }
+    return pinned
   }
 
   function applyBarConfig() {

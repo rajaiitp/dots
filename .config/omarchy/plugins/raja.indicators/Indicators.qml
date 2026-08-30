@@ -14,8 +14,14 @@ BarWidget {
   property var indicatorActiveStates: ({})
   property bool indicatorAreaHovered: false
   property bool indicatorItemHovered: false
+  property bool indicatorDrawerExpanded: false
   readonly property bool alwaysShowIndicators: setting("alwaysShow", false) === true
-  readonly property bool revealInactiveIndicators: alwaysShowIndicators || indicatorAreaHovered || indicatorItemHovered || (bar && bar.centerSectionRevealHeld === true && bar.centerHoverRevealSuppressed !== true)
+  // On horizontal bars, inactive indicators are intentionally revealed only
+  // from the dedicated chevron drawer. Retain the packaged hover behavior for
+  // vertical bars, which do not have the horizontal drawer affordance.
+  readonly property bool revealInactiveIndicators: alwaysShowIndicators || indicatorDrawerExpanded
+    || (root.vertical && (indicatorAreaHovered || indicatorItemHovered
+      || (bar && bar.centerSectionRevealHeld === true && bar.centerHoverRevealSuppressed !== true)))
 
   signal refreshRequested()
 
@@ -141,11 +147,11 @@ BarWidget {
 
     indicatorActiveStates = states
 
-    var ids = orderedActiveIds(states, activeIndicatorIds)
-    // The active block sits closest to the clock, so newcomers go on the far
-    // side of it. Appending would shove everything already showing sideways.
-    if (active && ids.indexOf(id) === -1 && hasIndicatorId(id)) ids.unshift(id)
-    activeIndicatorIds = ids
+    // Use the configured indicator order in both the active row and the
+    // inactive drawer, rather than the order in which status changes arrive.
+    var configuredIds = []
+    for (var i = 0; i < indicatorEntries.length; i++) configuredIds.push(entryId(indicatorEntries[i]))
+    activeIndicatorIds = orderedActiveIds(states, configuredIds)
     syncActiveIndicatorModel()
   }
 
@@ -158,14 +164,14 @@ BarWidget {
 
   onIndicatorEntriesChanged: syncActiveIndicatorOrder()
 
-  // With alwaysShow enabled, render one ordered block. Moving active entries
-  // to a separate block would make icons jump position as their state changes.
+  // With alwaysShow enabled, render one ordered block. On a horizontal bar,
+  // the drawer wrapper owns the inactive area and its chevron as one unit.
   implicitWidth: root.vertical
     ? Math.max(root.alwaysShowIndicators ? 0 : activeVerticalBlock.implicitWidth, inactiveVerticalArea.implicitWidth)
-    : (root.alwaysShowIndicators ? 0 : activeHorizontalBlock.implicitWidth) + inactiveHorizontalArea.implicitWidth
+    : horizontalIndicators.implicitWidth
   implicitHeight: root.vertical
     ? activeVerticalBlock.implicitHeight + inactiveVerticalArea.implicitHeight
-    : Math.max(activeHorizontalBlock.implicitHeight, inactiveHorizontalArea.implicitHeight)
+    : horizontalIndicators.implicitHeight
 
   IpcHandler {
     target: "omarchy.indicators"
@@ -192,31 +198,63 @@ BarWidget {
     visible: !root.vertical
     spacing: Style.space(10)
 
-    HoverHandler {
-      onHoveredChanged: root.setIndicatorAreaHovered(hovered)
-    }
-
+    // Keep the visual order stable: inactive items expand to the left of `<`,
+    // and active items remain to its right.
     Item {
-      id: inactiveHorizontalArea
+      id: inactiveIndicatorDrawer
 
-      implicitWidth: root.revealInactiveIndicators ? inactiveHorizontalBlock.implicitWidth : 0
-      implicitHeight: Math.max(inactiveHorizontalBlock.implicitHeight, root.barSize)
+      // Keep `<` available for this configured indicator group. A state may
+      // temporarily report every item active while its service initializes.
+      visible: root.alwaysShowIndicators || root.indicatorEntries.length > 0
+      implicitWidth: inactiveHorizontalArea.implicitWidth
+        + (indicatorDrawerChevron.visible ? indicatorDrawerChevron.implicitWidth : 0)
+      implicitHeight: Math.max(inactiveHorizontalArea.implicitHeight, indicatorDrawerChevron.implicitHeight)
       width: implicitWidth
       height: implicitHeight
-      clip: true
+      onVisibleChanged: if (!visible) root.indicatorDrawerExpanded = false
 
-      IndicatorBlock {
-        id: inactiveHorizontalBlock
-        anchors.verticalCenter: parent.verticalCenter
-        indicatorsModule: root
-        indicatorEntries: root.indicatorEntries
-        indicatorBlock: root.alwaysShowIndicators ? "single" : "inactive"
-        horizontal: true
-        reportActiveState: !root.vertical
+      Item {
+        id: inactiveHorizontalArea
+
+        implicitWidth: root.revealInactiveIndicators ? inactiveHorizontalBlock.implicitWidth : 0
+        implicitHeight: Math.max(inactiveHorizontalBlock.implicitHeight, root.barSize)
+        width: implicitWidth
+        height: implicitHeight
+        clip: true
+
+        // This block stays instantiated while clipped, so it continues to
+        // observe inactive↔active transitions and feed the active row.
+        IndicatorBlock {
+          id: inactiveHorizontalBlock
+          anchors.verticalCenter: parent.verticalCenter
+          indicatorsModule: root
+          indicatorEntries: root.indicatorEntries
+          indicatorBlock: root.alwaysShowIndicators ? "single" : "inactive"
+          horizontal: true
+          reportActiveState: !root.vertical
+        }
       }
 
-      HoverHandler {
-        onHoveredChanged: root.setIndicatorAreaHovered(hovered)
+      BarIconButton {
+        id: indicatorDrawerChevron
+        visible: !root.alwaysShowIndicators && root.indicatorEntries.length > 0
+        x: inactiveHorizontalArea.width
+        anchors.verticalCenter: parent.verticalCenter
+        bar: root.bar
+        text: "\uf053"
+        tooltipText: "Inactive indicators"
+      }
+
+      // When collapsed this wrapper is exactly the chevron's size, preventing
+      // the broad empty hover area that previously opened the drawer early.
+      Item {
+        id: indicatorDrawerHoverTarget
+        anchors.fill: parent
+
+        HoverHandler {
+          enabled: indicatorDrawerChevron.visible
+          onHoveredChanged: root.indicatorDrawerExpanded = hovered
+        }
       }
     }
 
@@ -227,6 +265,13 @@ BarWidget {
       indicatorModel: activeIndicatorModel
       horizontal: true
       reportActiveState: !root.vertical
+    }
+  }
+
+  Connections {
+    target: inactiveHorizontalBlock
+    function onImplicitWidthChanged() {
+      if (inactiveHorizontalBlock.implicitWidth === 0) root.indicatorDrawerExpanded = false
     }
   }
 
