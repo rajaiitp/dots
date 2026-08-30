@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "raja.system-stats",
   "name": "System Stats",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "raja",
-  "description": "CPU utilization and available memory in the bar",
+  "description": "Available memory and root filesystem space in the bar",
   "kinds": [
     "bar-widget"
   ],
@@ -12,8 +12,8 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "System Stats",
-    "description": "CPU utilization and available memory",
+    "displayName": "Memory and Disk Stats",
+    "description": "Available memory and root filesystem space",
     "category": "System",
     "allowMultiple": false
   }

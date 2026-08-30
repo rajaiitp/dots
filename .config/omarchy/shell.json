@@ -15,18 +15,25 @@
         },
         {
           "id": "omarchy.spacer",
-          "size": 9
+          "size": 10
         },
         {
           "id": "raja.system-stats"
         },
         {
           "id": "omarchy.spacer",
-          "size": 9
+          "size": 10
         },
         {
           "id": "raja.power",
           "showPercentage": true
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 10
+        },
+        {
+          "id": "raja.cpu-stats"
         }
       ],
       "center": [
@@ -49,15 +56,15 @@
           "id": "omarchy.menu"
         },
         {
-          "id": "raja.keyboard-layout"
-        },
-        {
           "id": "omarchy.system-update"
         },
         {
           "id": "raja.tray",
           "alwaysExpanded": false,
-          "passiveDrawerOnly": true
+          "passiveDrawerOnly": true,
+          "hidden": [
+            "Fcitx"
+          ]
         },
         {
           "id": "raja.indicators",

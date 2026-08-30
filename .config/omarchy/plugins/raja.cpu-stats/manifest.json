@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "raja.cpu-stats",
+  "name": "CPU Stats",
+  "version": "1.0.0",
+  "author": "raja",
+  "description": "CPU utilization in the bar",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "CPU Stats",
+    "description": "CPU utilization",
+    "category": "System",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}

@@ -53,9 +53,11 @@ new_tab = "prefix+c"
 rename_tab = "prefix+shift+,"
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
-# Cycle directly between Pi/agent panes without using the workspace tabs.
-previous_agent = "ctrl+shift+tab"
-next_agent = "ctrl+tab"
+# Ctrl+Tab goes back to the previous agent; Ctrl+Shift+Tab moves forward.
+previous_agent = "ctrl+tab"
+next_agent = "ctrl+shift+tab"
+# Prefix+1 through Prefix+9 focuses agents in Herdr's visible agent order.
+focus_agent = "prefix+1..9"
 close_tab = "prefix+shift+x"
 
 # Navigation-mode keys remain aligned with the direct Ctrl navigation.
