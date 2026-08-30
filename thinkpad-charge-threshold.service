@@ -1,0 +1,14 @@
+[Unit]
+Description=Apply ThinkPad battery charge thresholds
+ConditionPathExists=/sys/class/power_supply/BAT0/charge_control_start_threshold
+ConditionPathExists=/sys/class/power_supply/BAT0/charge_control_end_threshold
+After=systemd-modules-load.service
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -ec 'printf "75\n" > /sys/class/power_supply/BAT0/charge_control_start_threshold; printf "80\n" > /sys/class/power_supply/BAT0/charge_control_end_threshold; test "$(cat /sys/class/power_supply/BAT0/charge_control_start_threshold)" = 75; test "$(cat /sys/class/power_supply/BAT0/charge_control_end_threshold)" = 80'
+
+[Install]
+WantedBy=multi-user.target

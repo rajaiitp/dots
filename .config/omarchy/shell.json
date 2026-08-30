@@ -12,6 +12,21 @@
       "left": [
         {
           "id": "omarchy.workspaces"
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 9
+        },
+        {
+          "id": "raja.system-stats"
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 9
+        },
+        {
+          "id": "raja.power",
+          "showPercentage": true
         }
       ],
       "center": [
@@ -27,14 +42,6 @@
         },
         {
           "id": "raja.weather"
-        },
-        {
-          "id": "omarchy.spacer",
-          "size": 9
-        },
-        {
-          "id": "raja.power",
-          "showPercentage": true
         }
       ],
       "right": [
@@ -42,13 +49,14 @@
           "id": "omarchy.menu"
         },
         {
-          "id": "omarchy.keyboard-layout"
+          "id": "raja.keyboard-layout"
         },
         {
           "id": "omarchy.system-update"
         },
         {
-          "id": "omarchy.tray"
+          "id": "raja.tray",
+          "alwaysExpanded": true
         },
         {
           "id": "raja.indicators",

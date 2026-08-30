@@ -60,6 +60,9 @@
 hl.config({
   input = {
     kb_options = "caps:swapescape",
+    -- Reverse physical-mouse scrolling. The touchpad setting below keeps its
+    -- existing natural-scroll behavior explicitly.
+    natural_scroll = true,
     touchpad = {
       natural_scroll = true,
     },

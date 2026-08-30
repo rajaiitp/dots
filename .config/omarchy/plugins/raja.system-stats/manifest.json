@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "raja.system-stats",
+  "name": "System Stats",
+  "version": "1.0.0",
+  "author": "raja",
+  "description": "CPU utilization and available memory in the bar",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "System Stats",
+    "description": "CPU utilization and available memory",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

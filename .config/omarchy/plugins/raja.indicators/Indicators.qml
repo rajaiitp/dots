@@ -190,7 +190,7 @@ BarWidget {
     id: horizontalIndicators
 
     visible: !root.vertical
-    spacing: 0
+    spacing: Style.space(10)
 
     HoverHandler {
       onHoveredChanged: root.setIndicatorAreaHovered(hovered)
@@ -302,7 +302,7 @@ BarWidget {
       id: horizontalActiveIndicatorBlock
 
       Row {
-        spacing: 0
+        spacing: Style.space(10)
 
         Repeater {
           model: activeIndicatorBlockRoot.indicatorModel
@@ -364,7 +364,7 @@ BarWidget {
       id: horizontalIndicatorBlock
 
       Row {
-        spacing: 0
+        spacing: Style.space(10)
 
         Repeater {
           model: indicatorBlockRoot.indicatorEntries

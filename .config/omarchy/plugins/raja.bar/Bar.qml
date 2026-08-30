@@ -1472,7 +1472,9 @@ Item {
       id: horizontalModuleList
 
       Row {
-        spacing: 0
+        // Keep the right-side status group evenly spaced without changing
+        // the compact left and center layouts.
+        spacing: moduleListRoot.region === "right" ? Style.space(10) : 0
 
         Repeater {
           model: moduleListRoot.entries
