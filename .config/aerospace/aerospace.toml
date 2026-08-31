@@ -35,7 +35,7 @@ run = 'layout floating'
 
 [mode.main.binding]
 
-cmd-shift-b = 'exec-and-forget "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --single-instance --profile-directory="Default"'
+cmd-shift-b = 'exec-and-forget "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --single-instance --profile-directory="Profile 1"'
 cmd-d = 'exec-and-forget open -a "Alfred 5.app"'
 # Use the custom WezTerm build; it contains the native workspace/pane bindings.
 # Reuse its existing GUI client so the persistent mux does not reject a duplicate
