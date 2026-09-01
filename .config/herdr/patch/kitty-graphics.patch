@@ -1,0 +1,66 @@
+diff --git a/src/pane.rs b/src/pane.rs
+--- a/src/pane.rs
++++ b/src/pane.rs
+@@ -74,8 +74,12 @@ fn apply_pane_terminal_env(cmd: &mut CommandBuilder) {
+-    // Each pane is rendered by herdr's own terminal layer, not the outer terminal
+-    // that launched the app. Advertising the inherited TERM leaks the host terminal
+-    // identity into shells and across SSH, which breaks redraw and cursor movement
+-    // when the remote side lacks matching terminfo entries.
++    // Each pane is rendered by herdr's own terminal layer, not the outer terminal
++    // that launched the app. Advertising the inherited terminal identity makes
++    // image-capable libraries select a protocol supported by the outer terminal
++    // instead of herdr's pane layer, breaking redraw and image placement.
+     cmd.env("TERM", PANE_TERM);
+     cmd.env("COLORTERM", PANE_COLORTERM);
++    cmd.env_remove("TERM_PROGRAM");
++    cmd.env_remove("TERM_PROGRAM_VERSION");
++    cmd.env_remove("LC_TERMINAL");
++    cmd.env_remove("LC_TERMINAL_VERSION");
+     cmd.env_remove("WT_SESSION");
+ }
+@@ -3105,9 +3105,23 @@ mod tests {
+-    #[test]
+-    fn pane_terminal_identity_removes_outer_windows_terminal_session() {
+-        let mut cmd = CommandBuilder::new("shell");
+-        cmd.env("WT_SESSION", "outer-session");
+-
+-        apply_pane_terminal_env(&mut cmd);
+-
+-        assert!(cmd.get_env("WT_SESSION").is_none());
++    #[cfg(unix)]
++    #[test]
++    fn pane_terminal_environment_removes_outer_terminal_hints() {
++        let output = capture_shell_output(
++            "printf '%s\\n' \"$TERM\" \"$COLORTERM\" \"${TERM_PROGRAM-}\" \"${TERM_PROGRAM_VERSION-}\" \"${LC_TERMINAL-}\" \"${LC_TERMINAL_VERSION-}\" \"${WT_SESSION-}\" \"$HERDR_ENV_REGRESSION\"",
++            &[("HERDR_ENV_REGRESSION", "preserved")],
++        );
++        let lines = output.lines().collect::<Vec<_>>();
++        assert_eq!(
++            lines,
++            vec![
++                "xterm-256color",
++                "truecolor",
++                "",
++                "",
++                "",
++                "",
++                "",
++                "preserved",
++            ],
++            "actual child environment output: {output:?}"
++        );
+     }
+@@ -3235,8 +3249,13 @@
+         cmd.arg("-c");
+         cmd.arg(format!("{command} > '{}'", output_path.display()));
+         cmd.cwd(std::env::current_dir().unwrap());
+         cmd.env("TERM", "xterm-ghostty");
+         cmd.env("COLORTERM", "falsecolor");
++        cmd.env("TERM_PROGRAM", "WezTerm");
++        cmd.env("TERM_PROGRAM_VERSION", "20260716");
++        cmd.env("LC_TERMINAL", "WezTerm");
++        cmd.env("LC_TERMINAL_VERSION", "1");
++        cmd.env("WT_SESSION", "outer-session");
+         apply_pane_terminal_env(&mut cmd);
+         for (key, value) in extra_env {
+             cmd.env(key, value);
