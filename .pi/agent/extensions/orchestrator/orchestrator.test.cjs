@@ -21,6 +21,7 @@ const schemas = jiti(join(extensionDir, "schemas.ts"));
 const packets = jiti(join(extensionDir, "packets.ts"));
 const review = jiti(join(extensionDir, "review.ts"));
 const baseline = jiti(join(extensionDir, "baseline.ts"));
+const orchestratorExtension = jiti(join(extensionDir, "index.ts")).default;
 
 assert.equal(config.splitModelRef("openai-codex/gpt-5.6-luna").model, "gpt-5.6-luna");
 assert.equal(config.loadConfig(process.cwd()).enableDeltaReviews, true);
@@ -111,6 +112,86 @@ async function baselineTest() {
   assert.notEqual(fingerprintAfter, fingerprintBefore, "dirty-file contents participate in repository fingerprints");
   writeFileSync(join(repo, "a.ts"), "export const n = 8;\n");
   const currentManifest = await baseline.taskArtifactManifest(repo, ["a.ts"]);
+
+  // A first clean shell verification has no task paths yet. Exercise the real
+  // event handlers so its pre-command empty manifest is recorded explicitly.
+  const shellRepo = mkdtempSync(join(tmpdir(), "orch-shell-test-"));
+  execFileSync("git", ["init", "-q"], { cwd: shellRepo });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: shellRepo });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: shellRepo });
+  writeFileSync(join(shellRepo, "README.md"), "clean\n");
+  execFileSync("git", ["add", "README.md"], { cwd: shellRepo });
+  execFileSync("git", ["commit", "-qm", "initial"], { cwd: shellRepo });
+  writeFileSync(join(shellRepo, "README.md"), "preexisting user work\n");
+  const shellRef = await baseline.createBaseline(shellRepo, "event-test", "shell-run");
+  const shellRun = state.newRun("verify a clean checkout", shellRef, await baseline.repositoryFingerprint(shellRepo), "shell-run");
+  shellRun.terraPlan = { role: "terra", kind: "terra_test_plan", summary: "plan", body: "test", hash: "plan", verificationCommands: ["npm test"], createdAt: 1 };
+  shellRun.stage = "implementing";
+  const appended = [];
+  const handlers = new Map();
+  const registeredTools = new Map();
+  let activeTools = [];
+  const fakePi = {
+    registerFlag() {},
+    registerCommand() {},
+    registerTool(definition) { registeredTools.set(definition.name, definition); },
+    on(name, handler) { handlers.set(name, handler); },
+    appendEntry(_type, data) { appended.push(data); },
+    events: { emit() {} },
+    getAllTools() { return [{ name: "hypa_shell" }, { name: "write" }]; },
+    setActiveTools(tools) { activeTools = tools; },
+    getActiveTools() { return activeTools; },
+    getFlag() { return false; },
+    getThinkingLevel() { return "xhigh"; },
+    setThinkingLevel() {},
+    async setModel(model) { return model; },
+    sendUserMessage() {},
+  };
+  orchestratorExtension(fakePi);
+  const shellContext = {
+    cwd: shellRepo,
+    signal: new AbortController().signal,
+    sessionManager: { getBranch: () => [{ type: "custom", customType: state.ORCH_STATE_TYPE, data: { version: 3, enabled: true, run: shellRun, updatedAt: 1 } }] },
+    model: { provider: "openai-codex", id: "gpt-5.6-luna" },
+    modelRegistry: { find(provider, id) { return { provider, id, reasoning: true }; } },
+    ui: { theme: { fg: (_color, text) => text, bold: (text) => text }, setStatus() {}, setWidget() {}, notify() {} },
+  };
+  await handlers.get("session_start")({}, shellContext);
+  assert.equal(await handlers.get("tool_call")({ toolName: "hypa_shell", toolCallId: "shell-call", input: { command: "npm test" } }, shellContext), undefined);
+  await handlers.get("tool_result")({ toolName: "hypa_shell", toolCallId: "shell-call", input: { command: "npm test" }, details: { command: "npm test", exitCode: 0 }, isError: false, content: [{ type: "text", text: "ok" }] }, shellContext);
+  const shellEvidence = appended.at(-1).run.verification.at(-1);
+  const emptyManifest = await baseline.taskArtifactManifest(shellRepo, []);
+  assert.equal(shellEvidence.beforeArtifactManifestHash, emptyManifest.hash, "the first shell command records an explicit empty pre-command manifest");
+  assert.equal(shellEvidence.artifactManifestHash, emptyManifest.hash);
+  assert.equal(review.hasFreshVerification(shellRun, emptyManifest.hash), true);
+
+  // Missing verification must be retryable rather than terminal. Attribute a
+  // behavior-bearing write, reject review, then prove the exact shell check is
+  // still reachable and becomes fresh against the new task manifest.
+  await handlers.get("tool_call")({ toolName: "write", toolCallId: "write-call", input: { path: "app.ts" } }, shellContext);
+  writeFileSync(join(shellRepo, "app.ts"), "export const ready = true;\n");
+  await handlers.get("tool_result")({ toolName: "write", toolCallId: "write-call", input: { path: "app.ts" }, isError: false, content: [{ type: "text", text: "written" }] }, shellContext);
+  const terraReview = registeredTools.get("orch_terra_review");
+  assert.ok(terraReview, "the Terra review tool is registered");
+  await assert.rejects(
+    () => terraReview.execute("review-call", {}, shellContext.signal, undefined, shellContext),
+    /fresh successful verification/,
+  );
+  const rejectedState = appended.at(-1).run;
+  assert.equal(rejectedState.stage, "verifying", "a missing check leaves the run retryable");
+  assert.equal(rejectedState.blockedReason, undefined);
+  assert.equal(rejectedState.reviews.length, 0);
+  assert.equal(rejectedState.approvalEnvelopeHash, undefined);
+  assert.equal(activeTools.includes("hypa_shell"), true, "the exact verification command remains available");
+
+  assert.equal(await handlers.get("tool_call")({ toolName: "hypa_shell", toolCallId: "retry-shell-call", input: { command: "npm test" } }, shellContext), undefined);
+  await handlers.get("tool_result")({ toolName: "hypa_shell", toolCallId: "retry-shell-call", input: { command: "npm test" }, details: { command: "npm test", exitCode: 0 }, isError: false, content: [{ type: "text", text: "ok" }] }, shellContext);
+  const appManifest = await baseline.taskArtifactManifest(shellRepo, ["app.ts"]);
+  const retryEvidence = shellRun.verification.at(-1);
+  assert.equal(retryEvidence.beforeArtifactManifestHash, appManifest.hash);
+  assert.equal(retryEvidence.artifactManifestHash, appManifest.hash);
+  assert.equal(review.hasFreshVerification(shellRun, appManifest.hash), true);
+  await baseline.cleanupBaseline(shellRef);
   const snapshot = await baseline.createReviewSnapshot(repo, dirty, currentManifest, "pass-1");
   assert.equal((await baseline.validateReviewSnapshot(snapshot)).ok, true);
   writeFileSync(join(repo, "a.ts"), "export const n = 9;\n");
@@ -130,6 +211,34 @@ async function baselineTest() {
   assert.equal(review.hasFreshVerification(narrowed, manifestAfterFix.hash), false, "narrowed commands cannot satisfy Terra's exact required check");
   const stale = { ...deltaRun, verification: [{ ...deltaRun.verification[0], beforeArtifactManifestHash: "old" }] };
   assert.equal(review.hasFreshVerification(stale, manifestAfterFix.hash), false, "commands that mutate artifacts cannot support approval");
+
+  const multiCommand = {
+    ...deltaRun,
+    terraPlan: { ...deltaRun.terraPlan, verificationCommands: ["npm test", "cargo test"] },
+    verification: [
+      deltaRun.verification[0],
+      { ...deltaRun.verification[0], command: "cargo test", createdAt: 2 },
+    ],
+  };
+  assert.equal(review.hasFreshVerification(multiCommand, manifestAfterFix.hash), true, "every planned command must have exact successful evidence");
+  const failedLatest = {
+    ...deltaRun,
+    verification: [...deltaRun.verification, { ...deltaRun.verification[0], exitCode: 1, output: "failed", createdAt: 2 }],
+  };
+  assert.equal(review.hasFreshVerification(failedLatest, manifestAfterFix.hash), false, "a later failed run invalidates earlier evidence for the same command");
+
+  const mutationRun = state.newRun("verify after an edit", dirty, "repo", "mutation-run");
+  mutationRun.taskPaths = ["a.ts"];
+  mutationRun.terraPlan = { role: "terra", kind: "terra_test_plan", summary: "plan", body: "test", hash: "plan", verificationCommands: ["npm test"], createdAt: 1 };
+  mutationRun.verification.push({ ...deltaRun.verification[0] });
+  assert.equal(review.hasFreshVerification(mutationRun, manifestAfterFix.hash), true);
+  writeFileSync(join(repo, "a.ts"), "export const n = 9.1;\n");
+  const changedManifest = await baseline.taskArtifactManifest(repo, ["a.ts"]);
+  assert.equal(review.hasFreshVerification(mutationRun, changedManifest.hash), false, "successful evidence is stale after a task artifact changes");
+  mutationRun.verification.push({ ...deltaRun.verification[0], beforeArtifactManifestHash: changedManifest.hash, artifactManifestHash: changedManifest.hash, createdAt: 3 });
+  assert.equal(review.hasFreshVerification(mutationRun, changedManifest.hash), true);
+  writeFileSync(join(repo, "a.ts"), "export const n = 9;\n");
+
   assert.equal(review.compactEvidence([...deltaRun.verification, { ...deltaRun.verification[0], output: "new", createdAt: 2 }], manifestAfterFix.hash).length, 1);
   const chainWithFix = review.reviewChainHash(undefined, { envelopeHash: "e", verdict: "CHANGES_REQUESTED", scope: "delta", coverage: ["diff:a.ts"], resolutions: [{ id: "T1-a", status: "fixed", note: "changed a.ts", evidence: [{ kind: "regression", reference: "a.ts:1" }], artifactPaths: ["a.ts"] }], activeFindings: [] });
   const chainWithOpen = review.reviewChainHash(undefined, { envelopeHash: "e", verdict: "CHANGES_REQUESTED", scope: "delta", coverage: ["diff:a.ts"], resolutions: [{ id: "T1-a", status: "open", note: "still failing", evidence: [{ kind: "regression", reference: "a.ts:1" }], artifactPaths: ["a.ts"] }], activeFindings: [{ id: "T1-a", key: "adjust-rendering", severity: "medium", file: "a.ts", message: "adjust rendering", evidence: [{ kind: "regression", reference: "a.ts:1" }] }] });

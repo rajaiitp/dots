@@ -9,7 +9,7 @@ import { deltaReviewPacket, designPacket, envelopeHash, fullReviewPacket, packet
 import { LUNA_ORCHESTRATION_PROMPT } from "./prompts.ts";
 import { type RoleJob, runRole } from "./runner.ts";
 import type { RoleResult } from "./schemas.ts";
-import { ORCH_STATE_TYPE, type OrchestratorState, type ReviewRecord, type RoleArtifact, type RunState, type UsageTotals, addPath, emptyState, hash, invalidateApproval, isTerminal, newRun, restoreState, reviseTask, stateSummary, usageZero } from "./state.ts";
+import { ORCH_STATE_TYPE, type ArtifactManifest, type OrchestratorState, type ReviewRecord, type RoleArtifact, type RunState, type UsageTotals, addPath, emptyState, hash, invalidateApproval, isTerminal, newRun, restoreState, reviseTask, stateSummary, usageZero } from "./state.ts";
 import { assignFindingIds, diffLineReferences, hasFreshVerification, mergeAdvisories, reviewChainHash, selectReviewScope, triageFindings } from "./review.ts";
 import { updateOrchestratorUi } from "./ui.ts";
 
@@ -22,10 +22,21 @@ interface PendingMutation {
 
 interface PendingShell {
   beforeHash: string;
-  beforeArtifactManifestHash?: string;
+  beforeArtifactManifestHash: string;
+  beforeStatusManifest: ArtifactManifest;
 }
 
 function now(): number { return Date.now(); }
+
+function changedManifestPaths(before: ArtifactManifest, after: ArtifactManifest): Set<string> {
+  const entries = new Map<string, string>();
+  for (const entry of before.entries) entries.set(entry.path, hash(entry));
+  for (const entry of after.entries) {
+    if (entries.get(entry.path) === hash(entry)) entries.delete(entry.path);
+    else entries.set(entry.path, hash(entry));
+  }
+  return new Set(entries.keys());
+}
 
 function usageForPi(value: UsageTotals): Usage {
   return {
@@ -202,7 +213,23 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
       pendingShells.delete(event.toolCallId);
       const afterHash = await repositoryFingerprint(ctx.cwd);
       const paths = await gitStatusPaths(ctx.cwd);
-      for (const path of paths) {
+      let afterStatusManifest: ArtifactManifest;
+      try {
+        afterStatusManifest = await taskArtifactManifest(ctx.cwd, paths);
+      } catch {
+        afterStatusManifest = { version: 1, entries: [], hash: "status-manifest-unreadable" };
+        if (!run.unscopedChanges.includes("Could not capture post-command status manifest.")) {
+          run.unscopedChanges.push("Could not capture post-command status manifest.");
+        }
+      }
+      for (const path of changedManifestPaths(shell.beforeStatusManifest, afterStatusManifest)) {
+        const wasAlreadyDirty = shell.beforeStatusManifest.entries.some((entry) => entry.path === path);
+        if (wasAlreadyDirty) {
+          // A shell command changed an already-dirty path. Existing task paths
+          // remain attributable to the task; unrelated paths fail closed.
+          if (!run.taskPaths.includes(path) && !run.unscopedChanges.includes(path)) run.unscopedChanges.push(path);
+          continue;
+        }
         try {
           const captured = await capturePathAfterShellChange(ctx.cwd, run.baseline, path);
           addPath(run.taskPaths, captured);
@@ -210,7 +237,7 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
           if (!run.unscopedChanges.includes(path)) run.unscopedChanges.push(path);
         }
       }
-      run.behaviorMutation = run.behaviorMutation || paths.length > 0;
+      run.behaviorMutation = run.behaviorMutation || changedManifestPaths(shell.beforeStatusManifest, afterStatusManifest).size > 0;
       const output = boundedText(event.content);
       let artifactManifestHash: string | undefined;
       try {
@@ -413,10 +440,13 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
         throw new Error(run.blockedReason);
       }
       if (!hasFreshVerification(run, manifest.hash)) {
-        run.stage = "blocked";
-        run.blockedReason = "Terra review requires fresh successful verification for the exact current task artifacts.";
+        // Missing verification is recoverable: leave the run alive so Luna can
+        // execute the exact planned command and retry review. The review still
+        // fails closed because no Terra call or approval is created here.
+        run.stage = "verifying";
+        run.blockedReason = undefined;
         persist(ctx);
-        throw new Error(run.blockedReason);
+        throw new Error("Terra review requires fresh successful verification for the exact current task artifacts.");
       }
 
       const focus = params.focus?.trim() || undefined;
@@ -740,15 +770,27 @@ export default function orchestratorExtension(pi: ExtensionAPI) {
       const command = String((event.input as Record<string, unknown>).command ?? "");
       const forbidden = isForbiddenShell(command);
       if (forbidden) return { block: true, reason: forbidden };
-      let beforeArtifactManifestHash: string | undefined;
-      if (run.taskPaths.length > 0) {
-        try {
-          beforeArtifactManifestHash = (await taskArtifactManifest(ctx.cwd, run.taskPaths)).hash;
-        } catch (error) {
-          return { block: true, reason: `Could not capture pre-command task manifest: ${error instanceof Error ? error.message : String(error)}` };
-        }
+      let beforeArtifactManifestHash: string;
+      try {
+        // Capture even an empty task manifest. Without an explicit hash, the
+        // first clean verification command can never prove that its pre- and
+        // post-command artifact state was unchanged.
+        beforeArtifactManifestHash = (await taskArtifactManifest(ctx.cwd, run.taskPaths)).hash;
+      } catch (error) {
+        return { block: true, reason: `Could not capture pre-command task manifest: ${error instanceof Error ? error.message : String(error)}` };
       }
-      pendingShells.set(event.toolCallId, { beforeHash: await repositoryFingerprint(ctx.cwd), beforeArtifactManifestHash });
+      const beforeStatusPaths = await gitStatusPaths(ctx.cwd);
+      let beforeStatusManifest: ArtifactManifest;
+      try {
+        beforeStatusManifest = await taskArtifactManifest(ctx.cwd, beforeStatusPaths);
+      } catch (error) {
+        return { block: true, reason: `Could not capture pre-command status manifest: ${error instanceof Error ? error.message : String(error)}` };
+      }
+      pendingShells.set(event.toolCallId, {
+        beforeHash: await repositoryFingerprint(ctx.cwd),
+        beforeArtifactManifestHash,
+        beforeStatusManifest,
+      });
     }
   });
 
