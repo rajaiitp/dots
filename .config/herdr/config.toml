@@ -46,7 +46,7 @@ open_worktree = ""
 remove_worktree = ""
 rename_workspace = "prefix+shift+w"
 close_workspace = "prefix+shift+d"
-previous_workspace = "prefix+shift+left"
+previous_workspace = ""
 next_workspace = "prefix+shift+right"
 new_tab = "prefix+c"
 # The Sesh picker uses prefix+shift+t; rename tabs with prefix+shift+comma.
@@ -87,6 +87,19 @@ command = "~/.config/herdr/scripts/tuxedo-popup.py"
 width = "80%"
 height = "80%"
 description = "Toggle Tuxedo notes popup"
+
+# Jump to the most recently used Herdr workspace.
+[[keys.command]]
+key = "ctrl+t"
+type = "pane"
+command = "node /home/raja/dots/.pi/agent/bin/pi-review-workbench-tuicr.mjs"
+description = "Review private per-prompt changes in tuicr"
+
+[[keys.command]]
+key = "prefix+tab"
+type = "plugin_action"
+command = "m4salah.last.last-workspace"
+description = "Switch to last-used workspace"
 
 # Herdr Sesh workspace picker and previous-workspace action.
 [[keys.command]]
