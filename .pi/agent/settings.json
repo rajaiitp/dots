@@ -8,13 +8,14 @@
     "npm:pi-powerline-footer",
     "npm:pi-quota-status",
     "npm:pi-web-access",
-    "npm:pi-observational-memory"
+    "npm:pi-observational-memory",
+    "/home/raja/Projects/pi-workbench/packages/pi-review-workbench"
   ],
   "theme": "dark",
   "tuiMode": "fullscreen",
   "defaultThinkingLevel": "xhigh",
   "lastChangelogVersion": "0.84.4",
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-terra",
   "observational-memory": {
