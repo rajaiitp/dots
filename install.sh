@@ -28,6 +28,6 @@ for file in .gitconfig .zimrc .zshrc; do
   link "$DOTS/$file" "$HOME/$file"
 done
 
-for directory in aerospace git herdr hypr karabiner nvim omarchy sesh tuxedo wezterm zsh; do
+for directory in aerospace autostart git herdr hypr karabiner nvim omarchy sesh tuxedo wezterm zsh; do
   link "$DOTS/.config/$directory" "$HOME/.config/$directory"
 done

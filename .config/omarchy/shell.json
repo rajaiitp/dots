@@ -39,7 +39,7 @@
       "center": [
         {
           "id": "omarchy.clock",
-          "format": "dddd HH:mm",
+          "format": "ddd d MMM HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
           "verticalFormat": "HH\n—\nmm"
         },
@@ -80,7 +80,7 @@
           "id": "omarchy.bluetooth"
         },
         {
-          "id": "omarchy.network"
+          "id": "raja.network"
         },
         {
           "id": "omarchy.audio"

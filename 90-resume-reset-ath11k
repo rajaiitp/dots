@@ -1,7 +1,7 @@
 #!/bin/sh
-# Recover the QCNFA765 / ath11k Wi-Fi PCI function after s2idle resume or
-# on demand from the Omarchy network panel.
-# systemd-sleep invokes this as: pre|post <sleep-operation>.
+# Recover the QCNFA765 / ath11k Wi-Fi PCI function on demand from the
+# Omarchy network panel. systemd-sleep may invoke this as
+# pre|post <sleep-operation>, but those paths intentionally do no recovery.
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
 
@@ -158,9 +158,7 @@ validate_target() {
 recover_device() {
   validate_target || return 1
 
-  # Serialize panel clicks with automatic resume recovery and with other panel
-  # instances. If the automatic hook finds an active recovery, that recovery is
-  # already doing the required work, so it can safely continue the wake path.
+  # Serialize repair clicks from multiple panel instances.
   exec 9>"$LOCK" || {
     log "unable to open ath11k recovery lock"
     return 1
@@ -168,7 +166,6 @@ recover_device() {
   if ! flock -n 9; then
     log "another ath11k recovery is already running"
     exec 9>&-
-    [ "$MODE" = post ] && return 0
     return 75
   fi
 
@@ -216,8 +213,12 @@ MODE=${1:-}
 case "$MODE" in
   post)
     [ "${2:-}" = suspend ] || exit 0
-    # Normal kernel resume must finish before detaching the failed driver.
-    sleep 2
+    # systemd-sleep runs post hooks while user.slice is still frozen. The
+    # ath11k driver's remove path can take about 18 seconds after resume, so
+    # running recovery here makes the lock screen appear hung. Automatic
+    # recovery is intentionally disabled; the network panel's manual repair
+    # action runs this helper after the desktop has resumed.
+    exit 0
     ;;
   manual)
     ;;
