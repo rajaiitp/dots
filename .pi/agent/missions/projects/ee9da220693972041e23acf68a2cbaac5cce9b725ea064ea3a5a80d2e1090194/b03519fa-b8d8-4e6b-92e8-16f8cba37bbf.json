@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "b03519fa-b8d8-4e6b-92e8-16f8cba37bbf",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:35:41.319Z",
+  "updatedAt": "2026-09-09T13:35:49.968Z",
+  "runs": [
+    {
+      "runId": "6473ce46-3835-4320-98a6-1b7275a36c69",
+      "mode": "single",
+      "agent": "workflow-classifier",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:35:49.968Z",
+      "completedAt": "2026-09-09T13:35:49.968Z",
+      "usage": {
+        "tokens": 980
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-vA6dX6/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-60aeb9c5-9f05-4cc7-aa93-cee3cb6204f9/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-19-18-086Z_01a08652-a446-71be-a630-d2e62a50d980.jsonl",
+  "summary": "{\n  \"complexity\": \"complex\",\n  \"risk\": \"medium\",\n  \"confidence\": \"medium\",\n  \"scope\": \"broad\",\n  \"scopeConfidence\": \"low\",\n  \"scopeHints\": [],\n  \"riskSignals\": [\n    \"persistent_state\"\n  ],\n  \"needsUserDecision\": false,\n  \"userQuestion\": \"\",\n  \"reason\": \"Dynamic performance-based model weighting affects model selection, evaluation, update policy, safeguards, and likely durable weight/history storage. The requester explicitly delegates metric, window, cadence, safeguard, and persistence choices, so no additional decision is required, but the lack of repository context makes exact scope uncertain.\"\n}",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

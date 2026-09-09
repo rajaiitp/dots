@@ -3,19 +3,24 @@
     "npm:@eko24ive/pi-ask",
     "npm:@hypabolic/pi-hypa",
     "npm:@juicesharp/rpiv-todo",
-    "npm:@mystilleef/pi-subagent",
+    {
+      "source": "npm:pi-subagents@0.66.0",
+      "extensions": [],
+      "skills": [],
+      "prompts": [],
+      "themes": []
+    },
     "npm:@weshipwork/pi-herdr",
     "npm:pi-powerline-footer",
     "npm:pi-quota-status",
     "npm:pi-web-access",
-    "npm:pi-observational-memory",
-    "/home/raja/Projects/pi-workbench/packages/pi-review-workbench"
+    "npm:pi-observational-memory"
   ],
   "theme": "dark",
   "tuiMode": "fullscreen",
   "defaultThinkingLevel": "xhigh",
   "lastChangelogVersion": "0.84.4",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-terra",
   "observational-memory": {

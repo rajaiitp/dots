@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "0e2e5833-e89e-4317-9bc6-1048f859be41",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:35:49.996Z",
+  "updatedAt": "2026-09-09T13:38:25.581Z",
+  "runs": [
+    {
+      "runId": "896f9d74-eb72-46e7-9a56-1e6ca81da12f",
+      "mode": "single",
+      "agent": "workflow-scout",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:38:25.580Z",
+      "completedAt": "2026-09-09T13:38:25.580Z",
+      "usage": {
+        "tokens": 60099
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-VXU3LZ/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-60aeb9c5-9f05-4cc7-aa93-cee3cb6204f9/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-19-18-086Z_01a08652-a446-71be-a630-d2e62a50d980.jsonl",
+  "summary": "{\n  \"map\": {\n    \"scope\": \"bounded\",\n    \"confidence\": \"high\",\n    \"entryPoints\": [\n      \"research/framework/causal_meta_volatility_ensemble.py: compile_meta_volatility already performs causal performance-based selection between two complete model targets.\",\n      \"research/framework/causal_robust_sharpe_regime.py: build_regime_blend_target provides reusable time-varying, event-held blend-weight mechanics and validation.\",\n      \"research/framework/causal_risk_balanced_core_satellite.py: compile_risk_balanced_core_satellite is the current fixed 28% V13 / 72% V20 model blend that a dynamic approach would conceptually succeed.\",\n      \"research/framework/causal_robust_sharpe_regime_blend.py: compile_robust_sharpe_regime_blend is the existing dynamic V13/V20 volatility-regime implementation.\",\n      \"dashboard/data.py: models, target, and rebalance_plan define the user-facing model roster and enforce the research-only versus rebalance boundary.\"\n    ],\n    \"files\": [\n      {\n        \"path\": \"research/framework/causal_meta_volatility_ensemble.py\",\n        \"relevance\": \"Closest existing performance-responsive ensemble. It computes lagged shadow returns for a parent and aggressive expert, compares 252-session cumulative relative log return, updates selection at month end, assigns the selected aggressive expert 75%, and applies volatility scaling and a stress hedge.\",\n        \"symbols\": [\n          \"RELATIVE_LOOKBACK\",\n          \"AGGRESSIVE_WEIGHT\",\n          \"MetaVolatilityTrace\",\n          \"_shadow_returns\",\n          \"_month_end_events\",\n          \"compile_meta_volatility\"\n        ],\n        \"evidence\": \"relative_score is a 252-session rolling sum shifted by one session; aggressive_selected is updated only on month-end events and forward-filled; target validation rejects nonfinite, negative, or gross-over-one outputs.\"\n      },\n      {\n        \"path\": \"research/framework/causal_risk_balanced_blend.py\",\n        \"relevance\": \"Neutral validation primitive for convexly ...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

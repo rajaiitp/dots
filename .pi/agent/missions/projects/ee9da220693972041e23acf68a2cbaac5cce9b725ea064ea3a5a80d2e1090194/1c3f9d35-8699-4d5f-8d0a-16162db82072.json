@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "1c3f9d35-8699-4d5f-8d0a-16162db82072",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:34:21.638Z",
+  "updatedAt": "2026-09-09T13:34:34.603Z",
+  "runs": [
+    {
+      "runId": "79db9158-3c19-41cc-ad51-b3d20daa21b1",
+      "mode": "single",
+      "agent": "workflow-classifier",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:34:34.603Z",
+      "completedAt": "2026-09-09T13:34:34.603Z",
+      "usage": {
+        "tokens": 943
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-nIhoLP/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-60aeb9c5-9f05-4cc7-aa93-cee3cb6204f9/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-19-18-086Z_01a08652-a446-71be-a630-d2e62a50d980.jsonl",
+  "summary": "{\n  \"complexity\": \"complex\",\n  \"risk\": \"medium\",\n  \"confidence\": \"medium\",\n  \"scope\": \"unknown\",\n  \"scopeConfidence\": \"low\",\n  \"scopeHints\": [],\n  \"riskSignals\": [\n    \"persistent_state\"\n  ],\n  \"needsUserDecision\": true,\n  \"userQuestion\": \"What performance metric, evaluation window, update cadence, and safeguards should govern dynamic model weighting, and should the weights persist across restarts?\",\n  \"reason\": \"This proposes an architecture-level adaptive ensemble or model-routing mechanism. It can be beneficial, but implementation depends on defining reliable online evaluation, delayed feedback handling, normalization, exploration versus exploitation, drift resistance, minimum/maximum weights, rollback behavior, and persistence. Without those choices or repository paths, the affected scope cannot be localized.\"\n}",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

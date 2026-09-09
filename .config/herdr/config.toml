@@ -88,13 +88,6 @@ width = "80%"
 height = "80%"
 description = "Toggle Tuxedo notes popup"
 
-# Jump to the most recently used Herdr workspace.
-[[keys.command]]
-key = "ctrl+t"
-type = "pane"
-command = "node /home/raja/dots/.pi/agent/bin/pi-review-workbench-tuicr.mjs"
-description = "Review private per-prompt changes in tuicr"
-
 [[keys.command]]
 key = "prefix+tab"
 type = "plugin_action"

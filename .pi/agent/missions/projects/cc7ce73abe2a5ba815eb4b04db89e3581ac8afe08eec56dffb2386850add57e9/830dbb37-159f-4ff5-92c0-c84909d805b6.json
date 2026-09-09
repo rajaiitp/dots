@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "830dbb37-159f-4ff5-92c0-c84909d805b6",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T15:14:20.346Z",
+  "updatedAt": "2026-09-09T15:14:29.537Z",
+  "runs": [
+    {
+      "runId": "7a1c2aad-9d15-4853-b4f9-f06448376049",
+      "mode": "single",
+      "agent": "workflow-classifier",
+      "status": "completed",
+      "startedAt": "2026-09-09T15:14:29.537Z",
+      "completedAt": "2026-09-09T15:14:29.537Z",
+      "usage": {
+        "tokens": 914
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-mQG5UH/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-54d4415e-8c8a-4909-ba48-3ef5b9ceb447/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-09T15-13-15-507Z_01a086ba-f8f3-7dd3-951b-53112239007d.jsonl",
+  "summary": "{\n  \"complexity\": \"standard\",\n  \"risk\": \"low\",\n  \"confidence\": \"medium\",\n  \"scope\": \"bounded\",\n  \"scopeConfidence\": \"low\",\n  \"scopeHints\": [],\n  \"riskSignals\": [],\n  \"needsUserDecision\": false,\n  \"userQuestion\": \"\",\n  \"reason\": \"This appears to be a bounded plugin UI enhancement: display the current temperature and add a two-finger click gesture for adjusting a manual-override slider. The packet does not identify repository paths or indicate architecture, security, deployment, or destructive-state concerns.\"\n}",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

@@ -4,7 +4,7 @@ Do not push to git unless explicitly requested by the user.
 
 ## Git commits
 
-NEVER create or push git commits unless requested by the user.
+NEVER push git commits unless requested by the user
 
 ## Interactive / sudo / password commands
 

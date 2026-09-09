@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "aabc3e40-caa8-4e0f-8b64-30a58fae8180",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T15:14:29.556Z",
+  "updatedAt": "2026-09-09T15:17:46.591Z",
+  "runs": [
+    {
+      "runId": "a2a28840-08f1-4154-a559-e257450e7908",
+      "mode": "single",
+      "agent": "workflow-scout",
+      "status": "completed",
+      "startedAt": "2026-09-09T15:17:46.590Z",
+      "completedAt": "2026-09-09T15:17:46.590Z",
+      "usage": {
+        "tokens": 43770
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-dTPYIc/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-54d4415e-8c8a-4909-ba48-3ef5b9ceb447/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-09T15-13-15-507Z_01a086ba-f8f3-7dd3-951b-53112239007d.jsonl",
+  "summary": "{\n  \"map\": {\n    \"scope\": \"bounded\",\n    \"confidence\": \"medium\",\n    \"entryPoints\": [\n      \".config/omarchy/shell.json: active bar layout includes raja.indicators with NightLight enabled in its items list.\",\n      \".config/omarchy/plugins/raja.indicators/Indicators.qml: active indicator host dynamically loads indicators/<id>.qml.\",\n      \".config/omarchy/plugins/raja.indicators/indicators/NightLight.qml: current Day Light/Night Light indicator implementation and interaction.\"\n    ],\n    \"files\": [\n      {\n        \"path\": \".config/omarchy/plugins/raja.indicators/indicators/NightLight.qml\",\n        \"relevance\": \"Primary active implementation for the daylight/night-light bar indicator. It binds to the first-party omarchy.nightlight service, derives active state from service.enabled, shows Day Light versus Night Light tooltips, and currently maps every press to a binary toggle.\",\n        \"symbols\": [\n          \"nightlightService\",\n          \"active\",\n          \"activeTooltipText\",\n          \"inactiveTooltipText\",\n          \"toggle\",\n          \"onPressed\"\n        ],\n        \"evidence\": \"nightlightService is obtained through bar?.shell?.firstPartyServiceFor(\\\"omarchy.nightlight\\\"); toggle() calls setNightlight(!root.active); onPressed ignores any button argument and always invokes toggle(). No temperature readout or slider exists here.\"\n      },\n      {\n        \"path\": \".config/omarchy/plugins/raja.indicators/Indicators.qml\",\n        \"relevance\": \"Host widget for the active NightLight indicator and the likely integration boundary for any indicator sizing or richer interaction.\",\n        \"symbols\": [\n          \"defaultIndicatorEntries\",\n          \"indicatorEntriesFromSettings\",\n          \"IndicatorSlot\",\n          \"indicatorSource\",\n          \"injectProps\"\n        ],\n        \"evidence\": \"NightLight is in defaultIndicatorEntries; IndicatorSlot loads Qt.resolvedUrl(\\\"indicators/\\\" + indicatorId + \\\".qml\\\") and injects bar, settings, sizing, block, and host properties.\"\n ...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "declared read-only acceptance role"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "declared read-only acceptance role"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

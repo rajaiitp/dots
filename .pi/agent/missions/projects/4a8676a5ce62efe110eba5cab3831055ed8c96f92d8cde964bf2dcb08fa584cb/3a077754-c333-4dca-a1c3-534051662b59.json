@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "3a077754-c333-4dca-a1c3-534051662b59",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:40:21.596Z",
+  "updatedAt": "2026-09-09T13:40:33.022Z",
+  "runs": [
+    {
+      "runId": "5696a918-ad59-4a16-a4e4-747bd3c8ee61",
+      "mode": "single",
+      "agent": "workflow-classifier",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:40:33.022Z",
+      "completedAt": "2026-09-09T13:40:33.022Z",
+      "usage": {
+        "tokens": 998
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-iupKRD/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-cf5e75e3-0dad-41a3-8d22-c6518c723157/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-19-18-086Z_01a08652-a446-71be-a630-d2e62a50d980.jsonl",
+  "summary": "{\n  \"complexity\": \"complex\",\n  \"risk\": \"medium\",\n  \"confidence\": \"medium\",\n  \"scope\": \"broad\",\n  \"scopeConfidence\": \"low\",\n  \"scopeHints\": [],\n  \"riskSignals\": [\n    \"persistent_state\"\n  ],\n  \"needsUserDecision\": false,\n  \"userQuestion\": \"\",\n  \"reason\": \"The request proposes an architecture-level adaptive ensemble or model-routing mechanism that continuously ranks and reweights models from observed performance. It likely spans evaluation metrics, online or periodic weight updates, persistence of historical performance, safeguards against noisy feedback and drift, and integration with current inference behavior. The user explicitly permits implementation choices, so no blocking clarification is required, but the supplied packet contains no repository paths or architecture details.\"\n}",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

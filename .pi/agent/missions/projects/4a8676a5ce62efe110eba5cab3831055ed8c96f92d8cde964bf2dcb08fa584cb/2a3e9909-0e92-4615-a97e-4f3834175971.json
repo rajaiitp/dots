@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "2a3e9909-0e92-4615-a97e-4f3834175971",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:40:33.031Z",
+  "updatedAt": "2026-09-09T13:43:29.292Z",
+  "runs": [
+    {
+      "runId": "ddce5aa3-29dc-453a-a3e5-0c9c88aab9e6",
+      "mode": "single",
+      "agent": "workflow-scout",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:43:29.292Z",
+      "completedAt": "2026-09-09T13:43:29.292Z",
+      "usage": {
+        "tokens": 53047
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-GBLDln/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-cf5e75e3-0dad-41a3-8d22-c6518c723157/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-19-18-086Z_01a08652-a446-71be-a630-d2e62a50d980.jsonl",
+  "summary": "{\n  \"map\": {\n    \"scope\": \"bounded\",\n    \"confidence\": \"high\",\n    \"entryPoints\": [\n      \"research/program/standalone_source_combination_v1.py:combine_anchor_targets\",\n      \"research/program/standalone_source_combination_v1.py:capped_normalized_weights\",\n      \"research/portfolio/model_targets.py:SPECS\",\n      \"model_evaluation/src/model_evaluation/registry.py:MODEL_SPECS\",\n      \"model_evaluation/src/model_evaluation/comparison.py:compare_registered_models\"\n    ],\n    \"files\": [\n      {\n        \"path\": \"research/program/standalone_source_combination_v1.py\",\n        \"relevance\": \"Closest existing implementation of dynamic multi-strategy allocation. It combines at least three aligned anchor target frames, forms source weights monthly, supports equal capital and lagged 252-session inverse-volatility weighting, caps each source at 40%, and returns detailed weight/estimator audit frames.\",\n        \"symbols\": [\n          \"enumerate_anchor_subsets\",\n          \"capped_normalized_weights\",\n          \"combine_anchor_targets\",\n          \"_validated_combination_inputs\"\n        ],\n        \"evidence\": \"`combine_anchor_targets` reconstructs each source path, computes rolling volatility shifted by one session, updates on month-end decisions, forward-fills weights, and nets weighted source targets while enforcing finite, long-only, <=0.99 gross target and normalized/capped source weights.\"\n      },\n      {\n        \"path\": \"research/program/standalone_source_strategy_lab_v1_spec.json\",\n        \"relevance\": \"Frozen specification governing the existing combination mechanism and its evidence boundary.\",\n        \"symbols\": [\n          \"independence_and_combination\",\n          \"inverse_volatility\",\n          \"combination_evaluation\",\n          \"claim_boundary\"\n        ],\n        \"evidence\": \"The spec fixes lagged 252-session estimates, month-end formation using information through t-1, equal-weight fallback, a 0.40 source cap, transaction costs applied once to the final netted targe...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "declared read-only acceptance role"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "declared read-only acceptance role"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

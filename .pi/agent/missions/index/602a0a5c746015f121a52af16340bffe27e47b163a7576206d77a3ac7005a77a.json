@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "aabc3e40-caa8-4e0f-8b64-30a58fae8180",
+  "projectRoot": "/home/raja/.local/share/pi-workflow/runs/workflow-54d4415e-8c8a-4909-ba48-3ef5b9ceb447/worktree",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/cc7ce73abe2a5ba815eb4b04db89e3581ac8afe08eec56dffb2386850add57e9/aabc3e40-caa8-4e0f-8b64-30a58fae8180.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-09-09T15:17:46.591Z",
+  "lastRunId": "a2a28840-08f1-4154-a559-e257450e7908"
+}

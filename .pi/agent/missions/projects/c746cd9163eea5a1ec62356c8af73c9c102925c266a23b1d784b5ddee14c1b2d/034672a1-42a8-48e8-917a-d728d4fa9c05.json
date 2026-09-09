@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "034672a1-42a8-48e8-917a-d728d4fa9c05",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-09T13:07:10.403Z",
+  "updatedAt": "2026-09-09T13:07:18.219Z",
+  "runs": [
+    {
+      "runId": "955a18f9-8c95-4f5a-91f0-9eea2283a7ca",
+      "mode": "single",
+      "agent": "workflow-classifier",
+      "status": "completed",
+      "startedAt": "2026-09-09T13:07:18.218Z",
+      "completedAt": "2026-09-09T13:07:18.218Z",
+      "usage": {
+        "tokens": 836
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagent-structured-ykvN8n/output.json",
+      "description": "Structured output"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/.local/share/pi-workflow/runs/workflow-e657cdc0-8ebd-4992-9c21-f43bd79ebfeb/worktree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-09T13-06-14-441Z_01a08646-af29-74c5-ae62-97222eab3e21.jsonl",
+  "summary": "{\n  \"complexity\": \"complex\",\n  \"risk\": \"medium\",\n  \"confidence\": \"low\",\n  \"scope\": \"unknown\",\n  \"scopeConfidence\": \"low\",\n  \"scopeHints\": [],\n  \"riskSignals\": [\n    \"external_side_effect\"\n  ],\n  \"needsUserDecision\": true,\n  \"userQuestion\": \"What specific Sharpe-ratio target, strategy or component, evaluation period, benchmark, and constraints should this implementation address?\",\n  \"reason\": \"The goal is outcome-oriented but does not identify the current Sharpe ratio, desired threshold, relevant strategy or code area, measurement methodology, or acceptable risk and trading constraints. Implementation scope and safe acceptance criteria cannot be inferred from the packet.\"\n}",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

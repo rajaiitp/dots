@@ -7,7 +7,7 @@ BarWidget {
   id: root
   moduleName: "raja.system-stats"
 
-  property string memoryAvailableText: "—"
+  property string memoryUsedText: "—"
   property string diskFreeText: "—"
 
   implicitWidth: statsRow.implicitWidth
@@ -34,16 +34,16 @@ BarWidget {
   }
 
   function updateMemory(raw) {
-    var availableKiB = Number(String(raw || "").trim())
-    if (!finiteInteger(availableKiB)) return
-    memoryAvailableText = (availableKiB / 1048576).toFixed(1) + "G"
+    var usedKiB = Number(String(raw || "").trim())
+    if (!finiteInteger(usedKiB)) return
+    memoryUsedText = (usedKiB / 1048576).toFixed(1) + "G"
   }
 
   Process {
     id: memoryProcess
     command: [
       "awk",
-      "$1 == \"MemAvailable:\" { print $2; exit }",
+      "$1 == \"MemTotal:\" { total = $2 } $1 == \"MemAvailable:\" { available = $2 } END { if (total >= available) print total - available }",
       "/proc/meminfo"
     ]
     stdout: StdioCollector {
@@ -86,9 +86,9 @@ BarWidget {
     BarIconButton {
       id: memoryButton
       bar: root.bar
-      text: "󰘚 " + root.memoryAvailableText
+      text: "󰘚 " + root.memoryUsedText
       slotSize: glyphPaintedWidth + Style.space(24)
-      tooltipText: "Available memory"
+      tooltipText: "Used memory"
       onPressed: function(button) {
         if (button === Qt.MiddleButton) root.refreshMemory()
       }
