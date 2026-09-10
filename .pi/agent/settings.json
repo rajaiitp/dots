@@ -5,7 +5,6 @@
     "npm:@juicesharp/rpiv-todo",
     {
       "source": "npm:pi-subagents@0.66.0",
-      "extensions": [],
       "skills": [],
       "prompts": [],
       "themes": []

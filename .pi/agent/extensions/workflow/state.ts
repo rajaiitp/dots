@@ -1,135 +1,111 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
-export const WORKFLOW_STATE_TYPE = "workflow-state";
-export const WORKFLOW_STATE_VERSION = 5;
+export const WORKFLOW_STATE_TYPE = "workflow-lite-state";
+export const WORKFLOW_STATE_VERSION = 1;
 
+export type WorkflowMode = "standard" | "design";
 export type RunStage =
-  | "intake"
   | "designing"
-  | "test_planning"
+  | "planning"
   | "implementing"
   | "verifying"
   | "reviewing"
-  | "remediating"
-  | "approved"
-  | "blocked"
-  | "finished";
-
-export type ReviewVerdict = "APPROVE" | "CHANGES_REQUESTED" | "BLOCKED";
-export type ReviewScope = "full" | "delta";
-export type ReviewTransport = "single" | "sharded";
-
-export interface ArtifactManifestEntry {
-  path: string;
-  hash?: string;
-  size?: number;
-  mode?: number;
-  kind: "file" | "missing" | "symlink" | "other";
-}
-
-export interface ArtifactManifest {
-  version: 1;
-  entries: ArtifactManifestEntry[];
-  hash: string;
-}
-
-/** Immutable post-review copy used solely to derive a later remediation delta. */
-export interface ReviewSnapshot {
-  id: string;
-  dir: string;
-  manifest: ArtifactManifest;
-  createdAt: number;
-}
+  | "fixing"
+  | "completed"
+  | "completed_after_fixes"
+  | "cancelled"
+  | "failed";
 
 export interface PreviousSessionSettings {
   provider?: string;
   model?: string;
   thinking?: string;
-  tools: string[];
-}
-
-export interface RoleArtifact {
-  role: "sol" | "terra";
-  kind: string;
-  summary: string;
-  body: string;
-  acceptanceCriteria?: string[];
-  verificationCommands?: string[];
-  hash: string;
-  usage?: UsageTotals;
-  createdAt: number;
-}
-
-export interface FindingEvidence {
-  kind: "acceptance_criterion" | "invariant" | "failed_test" | "regression" | "api" | "security";
-  reference: string;
-}
-
-export interface Finding {
-  /** Model-supplied semantic key; stable across line shifts and wording edits. */
-  key: string;
-  id?: string;
-  severity: "critical" | "high" | "medium" | "low" | "info";
-  file?: string;
-  line?: number;
-  message: string;
-  requestedAction?: string;
-  evidence?: FindingEvidence[];
-}
-
-export interface FindingResolution {
-  id: string;
-  status: "fixed" | "open" | "invalidated";
-  note: string;
-  evidence: FindingEvidence[];
-  artifactPaths: string[];
-}
-
-export interface ReviewRecord {
-  pass: number;
-  verdict: ReviewVerdict;
-  summary: string;
-  findings: Finding[];
-  /** Every unresolved actionable finding carried into the next remediation pass. */
-  activeFindings?: Finding[];
-  advisories?: Finding[];
-  resolutions?: FindingResolution[];
-  envelopeHash: string;
-  coverage: string[];
-  scope?: ReviewScope;
-  transport?: ReviewTransport;
-  fallbackReason?: string;
-  baseEnvelopeHash?: string;
-  snapshot?: ReviewSnapshot;
-  chainHash?: string;
-  packetBytes?: number;
-  taskRevision?: number;
-  solDesignHash?: string;
-  terraPlanHash?: string;
-  usage?: UsageTotals;
-  createdAt: number;
-}
-
-export interface VerificationEvidence {
-  toolName: string;
-  command: string;
-  exitCode?: number;
-  isError: boolean;
-  output: string;
-  outputHash?: string;
-  truncated?: boolean;
-  beforeArtifactManifestHash?: string;
-  artifactManifestHash?: string;
-  beforeRepoHash: string;
-  afterRepoHash: string;
-  createdAt: number;
+  subagentWasActive: boolean;
 }
 
 export interface BaselineRef {
   dir: string;
   manifestPath: string;
-  initialRepoHash: string;
+  cwd: string;
+  initialHead: string;
+  initialFingerprint: string;
+  createdAt: number;
+}
+
+export interface PlanCheck {
+  id: string;
+  label: string;
+  command: string;
+}
+
+export interface WorkflowPlan {
+  revision: number;
+  summary: string;
+  acceptanceCriteria: string[];
+  steps: string[];
+  checks: PlanCheck[];
+  createdAt: number;
+}
+
+export interface DesignRecord {
+  decision: string;
+  rationale: string;
+  constraints: string[];
+  risks: string[];
+  implementationNotes: string[];
+  model?: string;
+  usage?: UsageTotals;
+  createdAt: number;
+}
+
+export type CheckStatus = "passed" | "failed" | "timed_out" | "cancelled" | "mutated" | "not_run";
+
+export interface CheckReceipt {
+  id: string;
+  label: string;
+  command: string;
+  status: CheckStatus;
+  exitCode?: number;
+  outputTail: string;
+  outputTruncated: boolean;
+  logPath?: string;
+  durationMs: number;
+  beforeFingerprint?: string;
+  afterFingerprint?: string;
+  changedPaths: string[];
+}
+
+export interface VerificationRecord {
+  attempt: number;
+  planRevision: number;
+  status: "passed" | "failed" | "cancelled" | "mutated";
+  checks: CheckReceipt[];
+  repositoryFingerprint: string;
+  startedAt: number;
+  completedAt: number;
+}
+
+export type ReviewVerdict = "APPROVE" | "CHANGES_REQUESTED" | "BLOCKED";
+export type FindingSeverity = "P0" | "P1" | "P2";
+
+export interface ReviewFinding {
+  id: string;
+  severity: FindingSeverity;
+  title: string;
+  evidence: string;
+  smallestFix: string;
+  file?: string;
+  line?: number;
+}
+
+export interface ReviewRecord {
+  verdict: ReviewVerdict;
+  summary: string;
+  findings: ReviewFinding[];
+  repositoryFingerprint: string;
+  model?: string;
+  usage?: UsageTotals;
   createdAt: number;
 }
 
@@ -139,210 +115,118 @@ export interface UsageTotals {
   cacheRead: number;
   cacheWrite: number;
   cost: number;
-}
-
-export type ActivityStatus = "running" | "done" | "error" | "blocked";
-
-/** TUI-only recent activity. Persisted as custom entries, never added to model context. */
-export interface WorkflowActivity {
-  id: string;
-  label: string;
-  detail?: string;
-  status: ActivityStatus;
-  startedAt: number;
-  finishedAt?: number;
+  turns?: number;
+  toolCalls?: number;
+  durationMs?: number;
 }
 
 export interface RunState {
   id: string;
-  generation: number;
-  task: string;
-  taskRevision: number;
+  goal: string;
+  mode: WorkflowMode;
   stage: RunStage;
+  baseline: BaselineRef;
+  design?: DesignRecord;
+  plan?: WorkflowPlan;
+  verification?: VerificationRecord;
+  /** Set immediately before the one permitted reviewer delegation is dispatched. */
+  reviewStarted?: boolean;
+  review?: ReviewRecord;
   startedAt: number;
   updatedAt: number;
-  baseline: BaselineRef;
-  needsSol: boolean;
-  solConsults: number;
-  solDesign?: RoleArtifact;
-  terraPlan?: RoleArtifact;
-  reviews: ReviewRecord[];
-  advisories: Finding[];
-  taskPaths: string[];
-  docsOnlyPaths: string[];
-  behaviorMutation: boolean;
-  gatedWorkStarted: boolean;
-  unscopedChanges: string[];
-  verification: VerificationEvidence[];
-  lastRepoHash: string;
-  lastEnvelopeHash?: string;
-  approvalEnvelopeHash?: string;
-  approvalChainHash?: string;
-  nudgeCount: number;
-  activities: WorkflowActivity[];
-  blockedReason?: string;
+  lastError?: string;
 }
 
 export interface WorkflowState {
-  version: number;
-  enabled: boolean;
-  prior?: PreviousSessionSettings;
+  version: 1;
   run?: RunState;
+  prior?: PreviousSessionSettings;
   updatedAt: number;
 }
 
 export function emptyState(): WorkflowState {
-  return { version: WORKFLOW_STATE_VERSION, enabled: false, updatedAt: Date.now() };
+  return { version: WORKFLOW_STATE_VERSION, updatedAt: Date.now() };
 }
 
-export function hash(value: unknown): string {
-  return createHash("sha256").update(typeof value === "string" ? value : stableJson(value)).digest("hex");
+export function newRun(goal: string, mode: WorkflowMode, baseline: BaselineRef, id = randomUUID()): RunState {
+  const timestamp = Date.now();
+  return {
+    id,
+    goal: goal.trim(),
+    mode,
+    stage: mode === "design" ? "designing" : "planning",
+    baseline,
+    startedAt: timestamp,
+    updatedAt: timestamp,
+  };
 }
 
-/** Deterministic JSON is required because Terra approval binds to this envelope. */
+export function isTerminal(stage: RunStage): boolean {
+  return stage === "completed" || stage === "completed_after_fixes" || stage === "cancelled" || stage === "failed";
+}
+
 export function stableJson(value: unknown): string {
+  if (value === undefined) return "null";
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
   const record = value as Record<string, unknown>;
   return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(",")}}`;
 }
 
-export function newRun(task: string, baseline: BaselineRef, repoHash: string, runId = randomUUID()): RunState {
-  const now = Date.now();
-  return {
-    id: runId,
-    generation: 1,
-    task: task.trim(),
-    taskRevision: 1,
-    stage: "intake",
-    startedAt: now,
-    updatedAt: now,
-    baseline,
-    needsSol: needsSolDesign(task),
-    solConsults: 0,
-    reviews: [],
-    advisories: [],
-    taskPaths: [],
-    docsOnlyPaths: [],
-    behaviorMutation: false,
-    gatedWorkStarted: false,
-    unscopedChanges: [],
-    verification: [],
-    lastRepoHash: repoHash,
-    nudgeCount: 0,
-    activities: [],
-  };
-}
-
-export function isTerminal(stage: RunStage): boolean {
-  return stage === "blocked" || stage === "finished";
-}
-
-export function currentApproval(run: RunState): ReviewRecord | undefined {
-  return run.reviews.at(-1)?.verdict === "APPROVE" ? run.reviews.at(-1) : undefined;
-}
-
-export function invalidateApproval(run: RunState): void {
-  run.approvalEnvelopeHash = undefined;
-  if (run.stage === "approved") run.stage = "implementing";
-}
-
-export function reviseTask(run: RunState, task: string): void {
-  run.task = task.trim();
-  run.taskRevision += 1;
-  run.generation += 1;
-  run.needsSol = needsSolDesign(run.task);
-  run.solDesign = undefined;
-  run.terraPlan = undefined;
-  // Preserve review history so a task revision cannot bypass the per-run cap.
-  run.advisories = [];
-  run.verification = [];
-  run.approvalEnvelopeHash = undefined;
-  run.approvalChainHash = undefined;
-  run.nudgeCount = 0;
-  run.blockedReason = undefined;
-  run.stage = "intake";
-  run.updatedAt = Date.now();
-}
-
-export function needsSolDesign(task: string): boolean {
-  return /\b(api|public contract|schema|migration|database|auth(?:entication)?|security|permission|oauth|concurren|race condition|lifecycle|deploy(?:ment)?|architecture|distributed|multi[- ]?service|breaking change)\b/i.test(task);
-}
-
-export function addPath(list: string[], path: string): void {
-  if (!list.includes(path)) list.push(path);
-}
-
-export function usageZero(): UsageTotals {
-  return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
-}
-
-export function addUsage(target: UsageTotals, extra?: Partial<UsageTotals>): UsageTotals {
-  if (!extra) return target;
-  target.input += extra.input ?? 0;
-  target.output += extra.output ?? 0;
-  target.cacheRead += extra.cacheRead ?? 0;
-  target.cacheWrite += extra.cacheWrite ?? 0;
-  target.cost += extra.cost ?? 0;
-  return target;
+export function hash(value: unknown): string {
+  return createHash("sha256").update(typeof value === "string" ? value : stableJson(value)).digest("hex");
 }
 
 function looksLikeState(value: unknown): value is WorkflowState {
-  const state = value as Partial<WorkflowState> | undefined;
-  return !!state && [1, 2, 3, 4, WORKFLOW_STATE_VERSION].includes(Number(state.version)) && typeof state.enabled === "boolean";
+  const candidate = value as Partial<WorkflowState> | undefined;
+  return Boolean(candidate && candidate.version === WORKFLOW_STATE_VERSION && typeof candidate.updatedAt === "number");
 }
 
-/** Active-branch restoration prevents state from another /tree branch leaking in. */
+/** Clean cut: only the new custom entry and exact state version are restored. */
 export function restoreState(entries: SessionEntry[]): WorkflowState {
-  const latest = [...entries]
-    .reverse()
-    .find((entry) => entry.type === "custom" && entry.customType === WORKFLOW_STATE_TYPE) as
-      | { data?: unknown }
-      | undefined;
-  if (!latest || !looksLikeState(latest.data)) return emptyState();
-  const restored = latest.data as WorkflowState;
-  const priorVersion = restored.version;
-  if (priorVersion < WORKFLOW_STATE_VERSION) {
-    restored.version = WORKFLOW_STATE_VERSION;
-    if (restored.run) {
-      restored.run.advisories ??= [];
-      restored.run.activities ??= [];
-      restored.run.gatedWorkStarted ??= Boolean(restored.run.behaviorMutation || restored.run.terraPlan || restored.run.solDesign);
-    }
-    for (const review of restored.run?.reviews ?? []) {
-      review.scope ??= "full";
-      review.transport ??= "single";
-      review.advisories ??= [];
-    }
-    // V1 approvals cannot prove the snapshot/chain invariants introduced in V2.
-    // Require one fresh full review instead of leaving the run unfinishable.
-    if (priorVersion === 1 && (restored.run?.approvalEnvelopeHash || restored.run?.stage === "approved")) {
-      restored.run.approvalEnvelopeHash = undefined;
-      restored.run.approvalChainHash = undefined;
-      restored.run.reviews = [];
-      restored.run.stage = "implementing";
-      restored.run.blockedReason = undefined;
-    }
+  const entry = [...entries].reverse().find((item) => item.type === "custom" && item.customType === WORKFLOW_STATE_TYPE) as { data?: unknown } | undefined;
+  if (!entry || !looksLikeState(entry.data)) return emptyState();
+  const restored = structuredClone(entry.data);
+  if (restored.run?.stage === "verifying") {
+    restored.run.stage = restored.run.review?.verdict === "CHANGES_REQUESTED" ? "fixing" : "implementing";
+    restored.run.lastError = "Verification was interrupted; run the complete verification suite again.";
+  } else if (restored.run?.stage === "reviewing" && restored.run.reviewStarted && !restored.run.review) {
+    restored.run.stage = "failed";
+    restored.run.lastError = "The independent review was interrupted after dispatch and is not retried, preserving the one-review policy.";
   }
   return restored;
+}
+
+export function expectedNext(run: RunState): string {
+  switch (run.stage) {
+    case "designing": return "Call workflow_design.";
+    case "planning": return "Call workflow_plan with acceptance criteria, steps, and final checks.";
+    case "implementing": return "Implement the plan, then call workflow_verify.";
+    case "verifying": return "Wait for workflow_verify to finish.";
+    case "reviewing": return "Call workflow_review.";
+    case "fixing": return "Address the review findings, then call workflow_verify.";
+    case "completed": return "Summarize the approved implementation and verification.";
+    case "completed_after_fixes": return "Summarize the remediation and note that no second independent review ran.";
+    case "cancelled": return "Start a new /workflow task if more work is needed.";
+    case "failed": return "Inspect the failure and start a new bounded workflow when ready.";
+  }
 }
 
 export function stateSummary(state: WorkflowState): Record<string, unknown> {
   const run = state.run;
   return {
-    enabled: state.enabled,
+    active: Boolean(run && !isTerminal(run.stage)),
     runId: run?.id,
+    goal: run?.goal,
+    mode: run?.mode,
     stage: run?.stage,
-    taskRevision: run?.taskRevision,
-    reviewPass: run?.reviews.length ?? 0,
-    reviewScope: run?.reviews.at(-1)?.scope,
-    reviewTransport: run?.reviews.at(-1)?.transport,
-    reviewPacketBytes: run?.reviews.at(-1)?.packetBytes,
-    reviewFallback: run?.reviews.at(-1)?.fallbackReason,
-    advisories: run?.advisories.length ?? 0,
-    solConsults: run?.solConsults ?? 0,
-    approved: Boolean(run?.approvalEnvelopeHash),
-    blocked: run?.blockedReason,
-    recentActivity: run?.activities.slice(-5),
+    planRevision: run?.plan?.revision,
+    checks: run?.verification?.checks.map((check) => ({ id: check.id, status: check.status, exitCode: check.exitCode })) ?? [],
+    verification: run?.verification?.status,
+    review: run?.review?.verdict,
+    reviewStarted: run?.reviewStarted ?? false,
+    findings: run?.review?.findings.length ?? 0,
+    lastError: run?.lastError,
+    next: run ? expectedNext(run) : "Start with /workflow <task>.",
   };
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
-const { existsSync, mkdirSync, mkdtempSync, symlinkSync, unlinkSync, writeFileSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
+const { join, resolve } = require("node:path");
 const Module = require("node:module");
 
 const extensionDir = __dirname;
@@ -13,377 +13,502 @@ Module._initPaths();
 const jitiModule = process.env.PI_JITI_MODULE || "/home/raja/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/jiti";
 if (!existsSync(jitiModule)) throw new Error("Set PI_JITI_MODULE to Pi's jiti package.");
 const jiti = require(jitiModule)(__filename, { interopDefault: true });
-const config = jiti(join(extensionDir, "config.ts"));
-const gates = jiti(join(extensionDir, "gates.ts"));
-const state = jiti(join(extensionDir, "state.ts"));
-const runner = jiti(join(extensionDir, "runner.ts"));
-const schemas = jiti(join(extensionDir, "schemas.ts"));
-const packets = jiti(join(extensionDir, "packets.ts"));
-const review = jiti(join(extensionDir, "review.ts"));
+
+const configModule = jiti(join(extensionDir, "config.ts"));
+const stateModule = jiti(join(extensionDir, "state.ts"));
 const baseline = jiti(join(extensionDir, "baseline.ts"));
+const verify = jiti(join(extensionDir, "verify.ts"));
+const delegation = jiti(join(extensionDir, "delegation.ts"));
 const workflowExtension = jiti(join(extensionDir, "index.ts")).default;
+const delegationApi = jiti(resolve(localNodeModules, "pi-subagents/src/api/delegation.ts"));
 
-assert.equal(config.splitModelRef("openai-codex/gpt-5.6-luna").model, "gpt-5.6-luna");
-assert.equal(config.loadConfig(process.cwd()).enableDeltaReviews, true);
-assert.equal(config.loadConfig(process.cwd()).maxChildOutputBytes, 2 * 1024 * 1024, "xhigh JSON event streams have a practical bounded safety limit");
-assert.equal(state.needsSolDesign("migrate the auth schema"), true);
-assert.equal(state.needsSolDesign("rename a local variable"), false);
-assert.equal(gates.isBehaviorBearingPath("README.md"), false);
-assert.equal(gates.isBehaviorBearingPath(".pi/agent/agents/reviewer.md"), true);
-assert.equal(gates.isForbiddenShell("git commit -m nope").includes("metadata"), true);
-assert.equal(gates.isForbiddenShell("GIT_INDEX_FILE=x git add a").includes("metadata"), true);
-assert.match(gates.isForbiddenShell("cd .. && npm test"), /outside/);
-assert.match(gates.isForbiddenShell("tool --output /var/tmp/result"), /outside/);
-assert.match(gates.isForbiddenShell("python -c 'open(\"x\", \"w\")'"), /bypasses/);
-assert.match(gates.isForbiddenShell("printf x > file"), /mutation/);
-assert.match(gates.isForbiddenShell("npm test &"), /Background/);
-assert.equal(gates.isForbiddenShell("npm test >/dev/null 2>&1"), undefined, "observational redirection remains usable");
-assert.equal(gates.isForbiddenShell("npm test"), undefined);
-assert.equal(gates.isAllowedTool("subagent", true), false);
-assert.equal(gates.isAllowedTool("edit", false), true);
-assert.equal(gates.isAllowedTool("bash", false), false);
-assert.equal(gates.isAllowedTool("bash", true), true);
-assert.equal(gates.isAllowedTool("workflow_file", true), true);
-assert.equal(gates.isAllowedTool("hypa_shell", false), false);
-assert.deepEqual(gates.activeToolsForStage(false, ["read", "edit", "bash", "hypa_shell", "workflow_file", "workflow_terra_test_plan"]), ["read", "workflow_terra_test_plan", "edit"]);
-assert.deepEqual(gates.activeToolsForStage(true, ["read", "edit", "bash", "hypa_shell", "workflow_file", "workflow_terra_test_plan"]), ["read", "workflow_terra_test_plan", "edit", "bash", "hypa_shell", "workflow_file"]);
-assert.deepEqual(gates.activeToolsForStage(true, ["read", "edit", "bash", "hypa_shell", "workflow_file", "workflow_terra_test_plan"], true), ["read"], "idle and terminal runs expose no role or mutation tools");
+function git(cwd, ...args) {
+  return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+}
 
-const parsed = runner.parseChildOutput([
-  JSON.stringify({ type: "message_end", message: { role: "assistant", provider: "openai-codex", model: "gpt-5.6-terra", usage: { input: 1, output: 2, cacheRead: 3, cacheWrite: 4, cost: { total: 0.5 } } } }),
-  JSON.stringify({ type: "tool_execution_end", toolName: "workflow_role_result", result: { details: { result: { kind: "terra_review", summary: "good", body: "reviewed", verdict: "APPROVE", coverage: ["diff:a.ts"] } } } }),
-].join("\n"), { provider: "openai-codex", model: "gpt-5.6-terra" });
-assert.equal(parsed.result.verdict, "APPROVE");
-assert.equal(parsed.usage.input, 1);
-assert.throws(() => runner.parseChildOutput("not json\n", { provider: "x", model: "y" }), /malformed JSONL/);
-assert.throws(() => schemas.parseRoleResult({ kind: "terra_review", summary: "bad", body: "bad", findings: [{ key: "bad", severity: "unknown", message: "bad" }] }), /invalid severity/);
-const triaged = review.triageFindings(review.assignFindingIds(1, [
-  { key: "critical", severity: "critical", message: "critical" },
-  { key: "unqualified", severity: "medium", message: "unqualified" },
-  { key: "qualified", severity: "medium", message: "qualified", evidence: [{ kind: "failed_test", reference: "npm test: failing case" }] },
-  { key: "style", severity: "low", message: "style" },
-]), { acceptanceCriteria: [], artifactPaths: ["a.ts"], diffReferences: new Set(["a.ts:1"]), failedTestOutput: ["npm test: failing case"], solDesign: undefined });
-assert.equal(triaged.blockers.length, 2);
-assert.equal(triaged.advisories.length, 2);
-const weakMedium = review.triageFindings(review.assignFindingIds(1, [{ key: "weak-regression", severity: "medium", message: "weak", evidence: [{ kind: "regression", reference: "a.ts" }] }]), { acceptanceCriteria: [], artifactPaths: ["a.ts"], diffReferences: new Set(), failedTestOutput: [], solDesign: undefined });
-assert.equal(weakMedium.blockers.length, 0, "a bare artifact path is not concrete medium evidence");
-assert.equal(review.diffLineReferences("diff --git a/a.ts b/a.ts\n@@ -1 +1 @@\n-old\n+new").has("a.ts:1"), true, "only actual diff hunk lines qualify as artifact evidence");
-assert.equal(review.assignFindingIds(1, [{ key: "style", severity: "low", message: "style" }])[0].id, review.assignFindingIds(2, [{ key: "style", severity: "low", message: "rewritten wording" }])[0].id, "finding IDs remain stable across wording changes");
-const advisory = review.assignFindingIds(1, [{ key: "style", severity: "low", file: "a.ts", message: "style" }])[0];
-assert.equal(review.mergeAdvisories([advisory], [advisory], []).length, 1, "duplicate advisories are idempotent");
-assert.equal(review.mergeAdvisories([advisory], [], [{ ...advisory, severity: "high" }]).length, 0, "a blocker supersedes an advisory with the same ID");
+function makeRepo() {
+  const repo = mkdtempSync(join(tmpdir(), "workflow-lite-test-"));
+  git(repo, "init", "-q");
+  git(repo, "config", "user.email", "workflow@example.test");
+  git(repo, "config", "user.name", "Workflow Test");
+  writeFileSync(join(repo, "a.txt"), "base\n");
+  writeFileSync(join(repo, "dirty.txt"), "committed\n");
+  git(repo, "add", ".");
+  git(repo, "commit", "-qm", "base");
+  return repo;
+}
 
-async function baselineTest() {
-  const repo = mkdtempSync(join(tmpdir(), "orch-test-"));
-  execFileSync("git", ["init", "-q"], { cwd: repo });
-  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repo });
-  execFileSync("git", ["config", "user.name", "Test"], { cwd: repo });
-  writeFileSync(join(repo, "a.ts"), "export const n = 1;\n");
-  execFileSync("git", ["add", "a.ts"], { cwd: repo });
-  execFileSync("git", ["commit", "-qm", "initial"], { cwd: repo });
-  const ref = await baseline.createBaseline(repo, "test-session", "test-run");
-  await baseline.capturePathBeforeMutation(repo, ref, "a.ts");
-  writeFileSync(join(repo, "a.ts"), "export const n = 2;\n");
-  const diff = await baseline.collectTaskDiff(repo, ref, ["a.ts"]);
-  assert.equal(diff.complete, true);
-  assert.match(diff.text, /-export const n = 1/);
-  assert.match(diff.text, /\+export const n = 2/);
-  await baseline.cleanupBaseline(ref);
+function latestState(entries) {
+  return [...entries].reverse().find((entry) => entry.customType === stateModule.WORKFLOW_STATE_TYPE)?.data;
+}
 
-  // Pre-existing user work is the task baseline, not part of Luna's diff.
-  writeFileSync(join(repo, "a.ts"), "export const n = 7;\n");
-  const dirty = await baseline.createBaseline(repo, "test-session", "dirty-run");
-  const outside = mkdtempSync(join(tmpdir(), "workflow-outside-"));
-  writeFileSync(join(outside, "secret"), "do not snapshot\n");
-  symlinkSync(join(outside, "secret"), join(repo, "secret-link"));
-  await assert.rejects(() => baseline.capturePathBeforeMutation(repo, dirty, "secret-link"), /regular files/);
-  mkdirSync(join(outside, "dir"));
-  symlinkSync(join(outside, "dir"), join(repo, "escape"));
-  await assert.rejects(() => baseline.capturePathBeforeMutation(repo, dirty, "escape/new.ts"), /outside repository/);
-  writeFileSync(join(repo, "a.ts"), "export const n = 8;\n");
-  const dirtyDiff = await baseline.collectTaskDiff(repo, dirty, ["a.ts"]);
-  assert.match(dirtyDiff.text, /-export const n = 7/);
-  assert.doesNotMatch(dirtyDiff.text, /-export const n = 1/);
-  await baseline.cleanupBaseline(dirty);
+class Events {
+  constructor() { this.handlers = new Map(); }
+  on(name, handler) {
+    const list = this.handlers.get(name) || [];
+    list.push(handler);
+    this.handlers.set(name, list);
+    return () => this.handlers.set(name, (this.handlers.get(name) || []).filter((item) => item !== handler));
+  }
+  emit(name, ...args) {
+    for (const handler of [...(this.handlers.get(name) || [])]) handler(...args);
+  }
+}
 
-  const refState = { dir: "x", manifestPath: "y", initialRepoHash: "z", createdAt: 1 };
-  const run = state.newRun("adjust public API", refState, "repo", "run-1");
-  run.reviews.push({ pass: 1, verdict: "CHANGES_REQUESTED", summary: "fix", findings: [], envelopeHash: "a", coverage: [], createdAt: 1 });
-  state.reviseTask(run, "adjust public API and migration");
-  assert.equal(run.reviews.length, 1, "task revisions cannot reset the Terra review cap");
-  assert.equal(run.terraPlan, undefined);
-  const legacyRun = state.newRun("legacy run", refState, "repo", "legacy");
-  legacyRun.stage = "approved";
-  legacyRun.approvalEnvelopeHash = "old";
-  legacyRun.reviews.push({ pass: 1, verdict: "APPROVE", summary: "old", findings: [], envelopeHash: "old", coverage: [], createdAt: 1 });
-  const migrated = state.restoreState([{ type: "custom", customType: state.WORKFLOW_STATE_TYPE, data: { version: 1, enabled: true, run: legacyRun, updatedAt: 1 } }]);
-  assert.equal(migrated.version, 5);
-  assert.equal(migrated.run.stage, "implementing");
-  assert.equal(migrated.run.reviews.length, 0);
-  assert.equal(packets.chunkDiff("a\nb\nc", 2).length > 1, true);
+function usage() {
+  return { input: 1, output: 2, cacheRead: 3, cacheWrite: 4, cost: 0.01, turns: 1, toolCalls: 2, durationMs: 10 };
+}
 
-  const fingerprintBefore = await baseline.repositoryFingerprint(repo);
-  writeFileSync(join(repo, "a.ts"), "export const n = 8.5;\n");
-  const fingerprintAfter = await baseline.repositoryFingerprint(repo);
-  assert.notEqual(fingerprintAfter, fingerprintBefore, "dirty-file contents participate in repository fingerprints");
-  writeFileSync(join(repo, "a.ts"), "export const n = 8;\n");
-  const currentManifest = await baseline.taskArtifactManifest(repo, ["a.ts"]);
-
-  // A first clean shell verification has no task paths yet. Exercise the real
-  // event handlers so its pre-command empty manifest is recorded explicitly.
-  const shellRepo = mkdtempSync(join(tmpdir(), "orch-shell-test-"));
-  execFileSync("git", ["init", "-q"], { cwd: shellRepo });
-  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: shellRepo });
-  execFileSync("git", ["config", "user.name", "Test"], { cwd: shellRepo });
-  writeFileSync(join(shellRepo, "README.md"), "clean\n");
-  writeFileSync(join(shellRepo, "old.ts"), "export const oldName = true;\n");
-  execFileSync("git", ["add", "README.md", "old.ts"], { cwd: shellRepo });
-  execFileSync("git", ["commit", "-qm", "initial"], { cwd: shellRepo });
-  writeFileSync(join(shellRepo, "README.md"), "preexisting user work\n");
-  const shellRef = await baseline.createBaseline(shellRepo, "event-test", "shell-run");
-  const shellRun = state.newRun("verify a clean checkout", shellRef, await baseline.repositoryFingerprint(shellRepo), "shell-run");
-  shellRun.terraPlan = { role: "terra", kind: "terra_test_plan", summary: "plan", body: "test", hash: "plan", verificationCommands: ["npm test"], createdAt: 1 };
-  shellRun.stage = "implementing";
-  const appended = [];
-  const handlers = new Map();
-  const registeredTools = new Map();
-  const registeredCommands = new Map();
-  const sentMessages = [];
-  let activeTools = [];
-  let widgetLines;
-  let failSol = false;
-  const fakePi = {
-    registerFlag() {},
-    registerCommand(name, definition) { registeredCommands.set(name, definition); },
-    registerTool(definition) { registeredTools.set(definition.name, definition); },
-    on(name, handler) { handlers.set(name, handler); },
-    appendEntry(_type, data) { appended.push(data); },
-    events: { emit() {} },
-    getAllTools() { return ["read", "bash", "hypa_shell", "write", "workflow_file", "workflow_terra_test_plan", "workflow_terra_review"].map((name) => ({ name })); },
-    setActiveTools(tools) { activeTools = tools; },
-    getActiveTools() { return activeTools; },
-    getFlag() { return false; },
-    getThinkingLevel() { return "xhigh"; },
-    setThinkingLevel() {},
-    async setModel(model) { return model; },
-    async exec(command, args) {
-      assert.equal(command, "pi");
-      const model = args[args.indexOf("--model") + 1];
-      if (failSol && model.endsWith("-sol")) return { code: 1, killed: true, stderr: "aborted", stdout: "" };
-      const result = model.endsWith("-sol")
-        ? { kind: "sol_design", summary: "designed", body: "architecture ready" }
-        : { kind: "terra_review", summary: "approved", body: "reviewed", verdict: "APPROVE", findings: [], coverage: ["diff:app.ts", "diff:new.ts", "diff:old.ts"] };
-      return {
-        code: 0,
-        killed: false,
-        stderr: "",
-        stdout: [
-          JSON.stringify({ type: "message_end", message: { role: "assistant", provider: "openai-codex", model, usage: { input: 10, output: 5, cacheRead: 0, cacheWrite: 0, cost: { total: 0.01 } } } }),
-          JSON.stringify({ type: "tool_execution_end", toolName: "workflow_role_result", result: { details: { result } } }),
-        ].join("\n"),
-      };
+function makeHarness(options = {}) {
+  const commands = new Map();
+  const tools = new Map();
+  const entries = [];
+  let branchEntries = entries;
+  const notifications = [];
+  const messages = [];
+  const events = new Events();
+  const models = ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"].map((id) => ({ provider: "openai-codex", id, reasoning: true }));
+  const pi = {
+    currentModel: models[1],
+    thinking: "xhigh",
+    activeTools: ["read", "edit", "write", "bash", "todo", "subagent"],
+    registerCommand(name, definition) { commands.set(name, definition); },
+    registerTool(definition) { tools.set(definition.name, definition); if (!this.activeTools.includes(definition.name)) this.activeTools.push(definition.name); },
+    on(name, handler) { return events.on(name, handler); },
+    events,
+    appendEntry(customType, data) { entries.push({ type: "custom", customType, data: structuredClone(data) }); },
+    getAllTools() { return [...new Set([...this.activeTools, ...tools.keys(), "subagent"])].map((name) => ({ name, sourceInfo: { source: "test" } })); },
+    getActiveTools() { return [...this.activeTools]; },
+    setActiveTools(names) { this.activeTools = [...new Set(names)]; },
+    async setModel(model) {
+      if (options.failWriterSelection && model.id === "gpt-5.6-luna") return false;
+      this.currentModel = model;
+      return true;
     },
-    sendUserMessage(message, options) { sentMessages.push({ message, options }); },
+    getThinkingLevel() { return this.thinking; },
+    setThinkingLevel(level) { this.thinking = level; },
+    sendUserMessage(message, sendOptions) { messages.push({ message, options: sendOptions }); },
   };
-  workflowExtension(fakePi);
-  const shellContext = {
-    cwd: shellRepo,
-    signal: new AbortController().signal,
-    sessionManager: {
-      getBranch: () => [{ type: "custom", customType: state.WORKFLOW_STATE_TYPE, data: { version: 4, enabled: true, run: shellRun, updatedAt: 1 } }],
-      getSessionId: () => "event-test",
-    },
+  const ctx = {
+    cwd: "/tmp/fake-workflow-repo",
+    mode: "tui",
+    hasUI: true,
     isProjectTrusted: () => true,
     isIdle: () => true,
     hasPendingMessages: () => false,
-    model: { provider: "openai-codex", id: "gpt-5.6-luna" },
-    modelRegistry: { find(provider, id) { return { provider, id, reasoning: true }; } },
-    ui: { theme: { fg: (_color, text) => text, bold: (text) => text }, setStatus() {}, setWidget(_key, value) { widgetLines = value; }, notify() {} },
+    sessionManager: {
+      getSessionId: () => "session-test",
+      getBranch: () => branchEntries,
+    },
+    modelRegistry: { find: (provider, id) => models.find((model) => model.provider === provider && model.id === id) },
+    ui: {
+      notify: (text, level) => notifications.push({ text, level }),
+      setStatus: () => {},
+      editor: async () => undefined,
+    },
   };
-  await handlers.get("session_start")({}, shellContext);
-  const solDesign = registeredTools.get("workflow_sol_design");
-  await assert.rejects(() => solDesign.execute("optional-sol", { question: "optional" }, shellContext.signal, undefined, shellContext), /not required/);
-  assert.equal(await handlers.get("tool_call")({ toolName: "hypa_shell", toolCallId: "shell-call", input: { command: "npm test" } }, shellContext), undefined);
-  await handlers.get("tool_result")({ toolName: "hypa_shell", toolCallId: "shell-call", input: { command: "npm test" }, details: { command: "npm test", exitCode: 0 }, isError: false, content: [{ type: "text", text: "ok" }] }, shellContext);
-  const shellEvidence = appended.at(-1).run.verification.at(-1);
-  const emptyManifest = await baseline.taskArtifactManifest(shellRepo, []);
-  assert.equal(shellEvidence.beforeArtifactManifestHash, emptyManifest.hash, "the first shell command records an explicit empty pre-command manifest");
-  assert.equal(shellEvidence.artifactManifestHash, emptyManifest.hash);
-  assert.equal(review.hasFreshVerification(shellRun, emptyManifest.hash), true);
-
-  // File removals and moves remain implementation-capable without opaque shell
-  // mutations, and both sides of a move are attributed to the task baseline.
-  const workflowFile = registeredTools.get("workflow_file");
-  assert.ok(workflowFile, "the tracked file operation tool is registered");
-  assert.equal(await handlers.get("tool_call")({ toolName: "workflow_file", toolCallId: "move-call", input: { action: "move", path: "old.ts", destination: "new.ts" } }, shellContext), undefined);
-  const moveResult = await workflowFile.execute("move-call", { action: "move", path: "old.ts", destination: "new.ts" }, shellContext.signal, undefined, shellContext);
-  await handlers.get("tool_result")({ toolName: "workflow_file", toolCallId: "move-call", input: { action: "move", path: "old.ts", destination: "new.ts" }, details: moveResult.details, isError: false, content: moveResult.content }, shellContext);
-  assert.equal(existsSync(join(shellRepo, "old.ts")), false);
-  assert.equal(existsSync(join(shellRepo, "new.ts")), true);
-  assert.deepEqual(shellRun.taskPaths, ["old.ts", "new.ts"]);
-
-  // Missing verification must be retryable rather than terminal. Attribute a
-  // behavior-bearing write, reject review, then prove the exact shell check is
-  // still reachable and becomes fresh against the new task manifest.
-  await handlers.get("tool_call")({ toolName: "write", toolCallId: "write-call", input: { path: "app.ts" } }, shellContext);
-  writeFileSync(join(shellRepo, "app.ts"), "export const ready = true;\n");
-  await handlers.get("tool_result")({ toolName: "write", toolCallId: "write-call", input: { path: "app.ts" }, isError: false, content: [{ type: "text", text: "written" }] }, shellContext);
-  const terraReview = registeredTools.get("workflow_terra_review");
-  assert.ok(terraReview, "the Terra review tool is registered");
-  await assert.rejects(
-    () => terraReview.execute("review-call", {}, shellContext.signal, undefined, shellContext),
-    /fresh successful verification/,
-  );
-  const rejectedState = appended.at(-1).run;
-  assert.equal(rejectedState.stage, "verifying", "a missing check leaves the run retryable");
-  assert.equal(rejectedState.blockedReason, undefined);
-  assert.equal(rejectedState.reviews.length, 0);
-  assert.equal(rejectedState.approvalEnvelopeHash, undefined);
-  assert.equal(activeTools.includes("hypa_shell"), true, "the exact verification command remains available");
-
-  assert.equal(await handlers.get("tool_call")({ toolName: "hypa_shell", toolCallId: "retry-shell-call", input: { command: "npm test" } }, shellContext), undefined);
-  await handlers.get("tool_result")({ toolName: "hypa_shell", toolCallId: "retry-shell-call", input: { command: "npm test" }, details: { command: "npm test", exitCode: 0 }, isError: false, content: [{ type: "text", text: "ok" }] }, shellContext);
-  const appManifest = await baseline.taskArtifactManifest(shellRepo, shellRun.taskPaths);
-  const retryEvidence = shellRun.verification.at(-1);
-  assert.equal(retryEvidence.beforeArtifactManifestHash, appManifest.hash);
-  assert.equal(retryEvidence.artifactManifestHash, appManifest.hash);
-  assert.equal(review.hasFreshVerification(shellRun, appManifest.hash), true);
-
-  // A twice-settled model pauses without destroying the run; explicit continue
-  // resets the nudge and preserves stage, plan, files, and verification.
-  await handlers.get("agent_settled")({}, shellContext);
-  await handlers.get("agent_settled")({}, shellContext);
-  assert.equal(shellRun.stage, "verifying");
-  assert.equal(shellRun.blockedReason, undefined);
-  assert.equal(shellRun.nudgeCount, 2);
-  await registeredCommands.get("workflow").handler("continue", shellContext);
-  assert.equal(shellRun.nudgeCount, 0);
-  assert.match(String(sentMessages.at(-1).message), /Resume the existing task/);
-
-  await handlers.get("tool_execution_start")({ toolCallId: "timeline-read", toolName: "read", args: { path: "app.ts" } }, shellContext);
-  await handlers.get("tool_execution_end")({ toolCallId: "timeline-read", toolName: "read", isError: false }, shellContext);
-  assert.equal(shellRun.activities.at(-1).status, "done");
-  assert.equal(shellRun.activities.at(-1).detail, "app.ts");
-  assert.equal(widgetLines.some((line) => line.includes("Task:")), false, "the persistent widget hides the task");
-  assert.equal(widgetLines.some((line) => line.includes("Recent activity:")), false, "the persistent widget hides recent activity");
-
-  const approval = await terraReview.execute("approved-review", {}, shellContext.signal, undefined, shellContext);
-  assert.match(approval.content[0].text, /^APPROVE:/);
-  assert.equal(approval.details.completed, true);
-  assert.equal(shellRun.stage, "finished", "Terra approval atomically completes the run");
-  assert.equal(registeredTools.has("workflow_finish"), false, "there is no brittle second finish handshake");
-  assert.deepEqual(activeTools, ["read"], "completion returns the session to read-only ready state");
-  await baseline.cleanupBaseline(shellRef);
-
-  // Read-only turns complete naturally when the parent settles.
-  await handlers.get("before_agent_start")({ prompt: "Explain the current setup", systemPrompt: "base" }, shellContext);
-  await handlers.get("agent_settled")({}, shellContext);
-  const readOnlyRun = appended.at(-1).run;
-  assert.equal(readOnlyRun.stage, "finished");
-  await baseline.cleanupBaseline(readOnlyRun.baseline);
-
-  // A mutation cannot absorb an unrelated checkout edit made between observed
-  // tool calls; it fails before the task baseline is expanded.
-  await handlers.get("before_agent_start")({ prompt: "Change the application", systemPrompt: "base" }, shellContext);
-  const guardedRun = appended.at(-1).run;
-  writeFileSync(join(shellRepo, "README.md"), "unobserved external edit\n");
-  const blockedMutation = await handlers.get("tool_call")({ toolName: "write", toolCallId: "unobserved-write", input: { path: "guarded.ts" } }, shellContext);
-  assert.equal(blockedMutation.block, true);
-  assert.match(blockedMutation.reason, /Unscoped repository changes/);
-  assert.equal(appended.at(-1).run.stage, "blocked");
-  await baseline.cleanupBaseline(guardedRun.baseline);
-
-  // High-risk runs may call Sol, and the ordinary tool row receives immediate
-  // elapsed progress rather than appearing frozen until child completion.
-  await handlers.get("before_agent_start")({ prompt: "Design an architecture migration", systemPrompt: "base" }, shellContext);
-  const architectureRun = appended.at(-1).run;
-  const progressUpdates = [];
-  const solResult = await solDesign.execute("required-sol", { question: "Choose the architecture" }, shellContext.signal, (update) => progressUpdates.push(update), shellContext);
-  assert.match(progressUpdates[0].content[0].text, /Sol design running/);
-  assert.match(solResult.content[0].text, /architecture ready/);
-  assert.equal(solResult.details.role, "sol");
-  await registeredCommands.get("workflow").handler("abandon", shellContext);
-  await baseline.cleanupBaseline(architectureRun.baseline);
-
-  // Aborted/timed-out specialist calls remain paused and resumable rather than
-  // being misreported as successfully finished read-only work.
-  await handlers.get("before_agent_start")({ prompt: "Design another architecture migration", systemPrompt: "base" }, shellContext);
-  const interruptedRun = appended.at(-1).run;
-  failSol = true;
-  await assert.rejects(() => solDesign.execute("failed-sol", { question: "Choose the architecture" }, shellContext.signal, undefined, shellContext), /timed out or was aborted/);
-  failSol = false;
-  await handlers.get("agent_settled")({}, shellContext);
-  assert.equal(appended.at(-1).run.stage, "designing");
-  assert.equal(appended.at(-1).run.gatedWorkStarted, true);
-  assert.equal(appended.at(-1).run.nudgeCount, 2);
-  await registeredCommands.get("workflow").handler("abandon", shellContext);
-  await baseline.cleanupBaseline(interruptedRun.baseline);
-  const snapshot = await baseline.createReviewSnapshot(repo, dirty, currentManifest, "pass-1");
-  assert.equal((await baseline.validateReviewSnapshot(snapshot)).ok, true);
-  writeFileSync(join(repo, "a.ts"), "export const n = 9;\n");
-  const remediation = await baseline.collectSnapshotDiff(repo, snapshot);
-  assert.match(remediation.text, /-export const n = 8/);
-  assert.match(remediation.text, /\+export const n = 9/);
-
-  const manifestAfterFix = await baseline.taskArtifactManifest(repo, ["a.ts"]);
-  const deltaRun = state.newRun("fix local rendering", dirty, "repo", "delta-run");
-  deltaRun.terraPlan = { role: "terra", kind: "terra_test_plan", summary: "plan", body: "test", hash: "plan", verificationCommands: ["npm test"], createdAt: 1 };
-  deltaRun.verification.push({ toolName: "hypa_shell", command: "npm test", exitCode: 0, isError: false, output: "ok", outputHash: "ok", beforeArtifactManifestHash: manifestAfterFix.hash, artifactManifestHash: manifestAfterFix.hash, beforeRepoHash: "a", afterRepoHash: "b", createdAt: 1 });
-  deltaRun.reviews.push({ pass: 1, verdict: "CHANGES_REQUESTED", summary: "fix it", findings: [{ id: "T1-a", key: "adjust-rendering", severity: "medium", file: "a.ts", message: "adjust rendering", evidence: [{ kind: "regression", reference: "a.ts:1" }] }], envelopeHash: "base", coverage: ["diff:a.ts"], snapshot, taskRevision: 1, terraPlanHash: "plan", createdAt: 1 });
-  assert.equal(review.selectReviewScope(deltaRun, manifestAfterFix, true).scope, "delta");
-  assert.equal(review.selectReviewScope(deltaRun, manifestAfterFix, false).scope, "full");
-  assert.equal(review.hasFreshVerification(deltaRun, manifestAfterFix.hash), true);
-  const narrowed = { ...deltaRun, verification: [{ ...deltaRun.verification[0], command: "npm test -- narrowed" }] };
-  assert.equal(review.hasFreshVerification(narrowed, manifestAfterFix.hash), false, "narrowed commands cannot satisfy Terra's exact required check");
-  const stale = { ...deltaRun, verification: [{ ...deltaRun.verification[0], beforeArtifactManifestHash: "old" }] };
-  assert.equal(review.hasFreshVerification(stale, manifestAfterFix.hash), false, "commands that mutate artifacts cannot support approval");
-
-  const multiCommand = {
-    ...deltaRun,
-    terraPlan: { ...deltaRun.terraPlan, verificationCommands: ["npm test", "cargo test"] },
-    verification: [
-      deltaRun.verification[0],
-      { ...deltaRun.verification[0], command: "cargo test", createdAt: 2 },
-    ],
+  Object.defineProperty(ctx, "model", { get: () => pi.currentModel });
+  let fingerprint = "fp-1";
+  let runtimeBookkeepingWrites = 0;
+  const fakeBaseline = {
+    dir: "/tmp/fake-workflow-baseline/run",
+    manifestPath: "/tmp/fake-workflow-baseline/run/manifest.json",
+    cwd: ctx.cwd,
+    initialHead: "a".repeat(40),
+    initialFingerprint: "initial",
+    createdAt: 1,
   };
-  assert.equal(review.hasFreshVerification(multiCommand, manifestAfterFix.hash), true, "every planned command must have exact successful evidence");
-  const failedLatest = {
-    ...deltaRun,
-    verification: [...deltaRun.verification, { ...deltaRun.verification[0], exitCode: 1, output: "failed", createdAt: 2 }],
+  const dependencies = {
+    createBaseline: async (_cwd, _session, runId) => ({ ...fakeBaseline, dir: `/tmp/fake-workflow-baseline/${runId}`, manifestPath: `/tmp/fake-workflow-baseline/${runId}/manifest.json` }),
+    collectTaskDiff: async () => ({ text: "diff --git a/a.txt b/a.txt\n-old\n+new\n", hash: "diff", paths: ["a.txt"], complete: true, currentFingerprint: fingerprint, initialHead: fakeBaseline.initialHead, currentHead: fakeBaseline.initialHead }),
+    validateBaseline: async () => ({ ok: true }),
+    repositoryFingerprint: async () => fingerprint,
+    runVerificationSuite: async (input) => ({
+      attempt: input.attempt,
+      planRevision: input.planRevision,
+      status: "passed",
+      checks: input.checks.map((check) => ({ ...check, status: "passed", exitCode: 0, outputTail: "ok", outputTruncated: false, durationMs: 1, changedPaths: [], beforeFingerprint: fingerprint, afterFingerprint: fingerprint })),
+      repositoryFingerprint: fingerprint,
+      startedAt: 1,
+      completedAt: 2,
+    }),
+    runDesign: async () => ({ decision: "keep it small", rationale: "bounded", constraints: [], risks: [], implementationNotes: [], model: "openai-codex/gpt-5.6-sol", usage: usage(), createdAt: Date.now() }),
+    runReview: async (input) => {
+      if (options.reviewError) throw options.reviewError;
+      if (options.reviewWritesBookkeeping) runtimeBookkeepingWrites += 1;
+      const verdict = options.reviewVerdict || "APPROVE";
+      const findings = options.reviewFindings ?? (verdict === "CHANGES_REQUESTED" ? [{ id: "R1", severity: "P1", title: "fix it", evidence: "a.txt:1", smallestFix: "adjust" }] : []);
+      return { verdict, summary: "reviewed", findings, repositoryFingerprint: input.repositoryFingerprint, model: "openai-codex/gpt-5.6-terra", usage: usage(), createdAt: Date.now() };
+    },
+    subagentsAvailable: () => true,
   };
-  assert.equal(review.hasFreshVerification(failedLatest, manifestAfterFix.hash), false, "a later failed run invalidates earlier evidence for the same command");
-
-  const mutationRun = state.newRun("verify after an edit", dirty, "repo", "mutation-run");
-  mutationRun.taskPaths = ["a.ts"];
-  mutationRun.terraPlan = { role: "terra", kind: "terra_test_plan", summary: "plan", body: "test", hash: "plan", verificationCommands: ["npm test"], createdAt: 1 };
-  mutationRun.verification.push({ ...deltaRun.verification[0] });
-  assert.equal(review.hasFreshVerification(mutationRun, manifestAfterFix.hash), true);
-  writeFileSync(join(repo, "a.ts"), "export const n = 9.1;\n");
-  const changedManifest = await baseline.taskArtifactManifest(repo, ["a.ts"]);
-  assert.equal(review.hasFreshVerification(mutationRun, changedManifest.hash), false, "successful evidence is stale after a task artifact changes");
-  mutationRun.verification.push({ ...deltaRun.verification[0], beforeArtifactManifestHash: changedManifest.hash, artifactManifestHash: changedManifest.hash, createdAt: 3 });
-  assert.equal(review.hasFreshVerification(mutationRun, changedManifest.hash), true);
-  writeFileSync(join(repo, "a.ts"), "export const n = 9;\n");
-
-  assert.equal(review.compactEvidence([...deltaRun.verification, { ...deltaRun.verification[0], output: "new", createdAt: 2 }], manifestAfterFix.hash).length, 1);
-  const chainWithFix = review.reviewChainHash(undefined, { envelopeHash: "e", verdict: "CHANGES_REQUESTED", scope: "delta", coverage: ["diff:a.ts"], resolutions: [{ id: "T1-a", status: "fixed", note: "changed a.ts", evidence: [{ kind: "regression", reference: "a.ts:1" }], artifactPaths: ["a.ts"] }], activeFindings: [] });
-  const chainWithOpen = review.reviewChainHash(undefined, { envelopeHash: "e", verdict: "CHANGES_REQUESTED", scope: "delta", coverage: ["diff:a.ts"], resolutions: [{ id: "T1-a", status: "open", note: "still failing", evidence: [{ kind: "regression", reference: "a.ts:1" }], artifactPaths: ["a.ts"] }], activeFindings: [{ id: "T1-a", key: "adjust-rendering", severity: "medium", file: "a.ts", message: "adjust rendering", evidence: [{ kind: "regression", reference: "a.ts:1" }] }] });
-  assert.notEqual(chainWithFix, chainWithOpen, "review chains bind remediation resolutions and open findings");
-  const fullPacket = packets.fullReviewPacket(deltaRun, { text: Array.from({ length: 6 }, (_, i) => `diff --git a/f${i}.ts b/f${i}.ts\n--- a/f${i}.ts\n+++ b/f${i}.ts\n@@\n-${"x".repeat(500)}${i}\n+${"y".repeat(500)}${i + 1}`).join("\n"), hash: "d", paths: Array.from({ length: 6 }, (_, i) => `f${i}.ts`), complete: true }, manifestAfterFix);
-  const shards = packets.shardFullReview(fullPacket.packet, 2_000);
-  assert.equal(shards.length > 1, true);
-  assert.equal(shards.every((shard) => packets.packetBytes(shard.packet) <= 2_000), true);
-  const oversizedFile = packets.fullReviewPacket(deltaRun, { text: `diff --git a/huge.ts b/huge.ts\n${"+x".repeat(3_000)}`, hash: "huge", paths: ["huge.ts"], complete: true }, manifestAfterFix);
-  assert.throws(() => packets.shardFullReview(oversizedFile.packet, 2_000), /cannot be reviewed atomically/);
-  unlinkSync(join(repo, "a.ts"));
-  const deletedManifest = await baseline.taskArtifactManifest(repo, ["a.ts"]);
-  assert.equal(deletedManifest.entries[0].kind, "missing");
-  const deletionSnapshot = await baseline.createReviewSnapshot(repo, dirty, deletedManifest, "deletion");
-  assert.equal((await baseline.validateReviewSnapshot(deletionSnapshot)).ok, true, "full-review deletion tombstones remain auditable");
-  await baseline.cleanupBaseline(dirty);
+  workflowExtension(pi, dependencies);
+  return {
+    pi,
+    ctx,
+    commands,
+    tools,
+    entries,
+    notifications,
+    messages,
+    events,
+    setFingerprint(value) { fingerprint = value; },
+    recordRuntimeBookkeeping() { runtimeBookkeepingWrites += 1; },
+    runtimeBookkeepingWrites() { return runtimeBookkeepingWrites; },
+    setBranch(value) { branchEntries = value; },
+  };
 }
 
-baselineTest().then(
-  () => console.log("workflow tests passed"),
-  (error) => { console.error(error); process.exitCode = 1; },
-);
+(async () => {
+  const loadedConfig = configModule.loadConfig();
+  assert.equal(loadedConfig.version, 1);
+  assert.equal(loadedConfig.models.writer, "openai-codex/gpt-5.6-luna");
+  assert.equal(loadedConfig.maxChecks, 8);
+
+  const dummyBaseline = { dir: "/tmp/x", manifestPath: "/tmp/x/manifest", cwd: "/tmp", initialHead: "a".repeat(40), initialFingerprint: "f", createdAt: 1 };
+  const fresh = stateModule.newRun("task", "standard", dummyBaseline, "run-1");
+  assert.equal(fresh.stage, "planning");
+  assert.equal(stateModule.newRun("task", "design", dummyBaseline, "run-2").stage, "designing");
+  assert.equal(stateModule.expectedNext(fresh), "Call workflow_plan with acceptance criteria, steps, and final checks.");
+  assert.equal(stateModule.restoreState([{ type: "custom", customType: "workflow-state", data: { version: 6, enabled: true } }]).run, undefined, "legacy state is ignored");
+  const interrupted = { version: 1, run: { ...fresh, stage: "verifying" }, updatedAt: 2 };
+  assert.equal(stateModule.restoreState([{ type: "custom", customType: stateModule.WORKFLOW_STATE_TYPE, data: interrupted }]).run.stage, "implementing");
+  const interruptedReview = { version: 1, run: { ...fresh, stage: "reviewing", reviewStarted: true }, updatedAt: 2 };
+  assert.equal(stateModule.restoreState([{ type: "custom", customType: stateModule.WORKFLOW_STATE_TYPE, data: interruptedReview }]).run.stage, "failed");
+
+  const repo = makeRepo();
+  writeFileSync(join(repo, "dirty.txt"), "dirty at start\n");
+  writeFileSync(join(repo, "preexisting.txt"), "keep me\n");
+  const baselineRef = await baseline.createBaseline(repo, "session", "run");
+  let diff = await baseline.collectTaskDiff(repo, baselineRef);
+  assert.equal(diff.complete, true);
+  assert.deepEqual(diff.paths, [], "unchanged intake dirt is excluded");
+  writeFileSync(join(repo, "a.txt"), "changed\n");
+  writeFileSync(join(repo, "dirty.txt"), "dirty after\n");
+  writeFileSync(join(repo, "new.txt"), "new\n");
+  diff = await baseline.collectTaskDiff(repo, baselineRef);
+  assert.deepEqual(diff.paths, ["a.txt", "dirty.txt", "new.txt"]);
+  assert.match(diff.text, /dirty at start/);
+  assert.doesNotMatch(diff.text, /committed/);
+  assert.doesNotMatch(diff.text, /preexisting\.txt/);
+  assert.equal((await baseline.validateBaseline(repo, baselineRef)).ok, true);
+  const committedDiffRepo = makeRepo();
+  const committedDiffRef = await baseline.createBaseline(committedDiffRepo, "session", "committed");
+  writeFileSync(join(committedDiffRepo, "a.txt"), "committed change\n");
+  git(committedDiffRepo, "add", "a.txt");
+  git(committedDiffRepo, "commit", "-qm", "workflow change");
+  const committedDiff = await baseline.collectTaskDiff(committedDiffRepo, committedDiffRef);
+  assert.deepEqual(committedDiff.paths, ["a.txt"], "committed task changes are compared with the run-start HEAD");
+  assert.match(committedDiff.text, /committed change/);
+  const committedRenameRepo = makeRepo();
+  const committedRenameRef = await baseline.createBaseline(committedRenameRepo, "session", "rename");
+  git(committedRenameRepo, "mv", "a.txt", "renamed.txt");
+  git(committedRenameRepo, "commit", "-qm", "workflow rename");
+  const committedRenameDiff = await baseline.collectTaskDiff(committedRenameRepo, committedRenameRef);
+  assert.deepEqual(committedRenameDiff.paths, ["a.txt", "renamed.txt"], "committed renames include both task-local paths");
+  assert.match(committedRenameDiff.text, /a\/a\.txt/);
+  assert.match(committedRenameDiff.text, /b\/renamed\.txt/);
+  const specialPathRepo = makeRepo();
+  const specialPathRef = await baseline.createBaseline(specialPathRepo, "session", "special-path");
+  writeFileSync(join(specialPathRepo, "dollar$&.txt"), "special path\n");
+  const specialPathDiff = await baseline.collectTaskDiff(specialPathRepo, specialPathRef);
+  assert.deepEqual(specialPathDiff.paths, ["dollar$&.txt"]);
+  assert.match(specialPathDiff.text, /b\/dollar\$&\.txt/);
+  const corruptRepo = makeRepo();
+  writeFileSync(join(corruptRepo, "dirty.txt"), "dirty baseline\n");
+  const corruptRef = await baseline.createBaseline(corruptRepo, "session", "corrupt");
+  const corruptManifest = JSON.parse(readFileSync(corruptRef.manifestPath, "utf8"));
+  writeFileSync(join(corruptRef.dir, corruptManifest.entries["dirty.txt"].snapshot), "tampered\n");
+  assert.match((await baseline.validateBaseline(corruptRepo, corruptRef)).reason, /hash/);
+
+  const runtimeRepo = makeRepo();
+  mkdirSync(join(runtimeRepo, ".pi", "agent", "missions", "existing"), { recursive: true });
+  writeFileSync(join(runtimeRepo, ".pi", "agent", "run-history.jsonl"), "before\n");
+  writeFileSync(join(runtimeRepo, ".pi", "agent", "missions", "existing", "state.json"), "before\n");
+  const runtimeRef = await baseline.createBaseline(runtimeRepo, "session", "runtime");
+  const runtimeFingerprint = await baseline.repositoryFingerprint(runtimeRepo);
+  writeFileSync(join(runtimeRepo, ".pi", "agent", "run-history.jsonl"), "after\n");
+  mkdirSync(join(runtimeRepo, ".pi", "agent", "missions", "review"), { recursive: true });
+  writeFileSync(join(runtimeRepo, ".pi", "agent", "missions", "review", "state.json"), "review bookkeeping\n");
+  assert.equal(await baseline.repositoryFingerprint(runtimeRepo), runtimeFingerprint, "pi-subagents runtime bookkeeping is excluded from fingerprints");
+  git(runtimeRepo, "add", ".pi");
+  assert.equal(await baseline.repositoryFingerprint(runtimeRepo), runtimeFingerprint, "staged runtime bookkeeping is excluded from fingerprints");
+  git(runtimeRepo, "reset", "-q");
+  git(runtimeRepo, "add", ".pi");
+  git(runtimeRepo, "commit", "-qm", "subagent runtime bookkeeping");
+  assert.equal(await baseline.repositoryFingerprint(runtimeRepo), runtimeFingerprint, "a bookkeeping-only commit is also excluded from fingerprints");
+  diff = await baseline.collectTaskDiff(runtimeRepo, runtimeRef);
+  assert.deepEqual(diff.paths, [], "runtime bookkeeping is excluded from task-local review evidence");
+  writeFileSync(join(runtimeRepo, "a.txt"), "task source change\n");
+  diff = await baseline.collectTaskDiff(runtimeRepo, runtimeRef);
+  assert.deepEqual(diff.paths, ["a.txt"], "source changes remain covered when runtime bookkeeping changes too");
+  const otherPiRepo = makeRepo();
+  const otherPiRef = await baseline.createBaseline(otherPiRepo, "session", "other-pi");
+  mkdirSync(join(otherPiRepo, ".pi", "agent"), { recursive: true });
+  writeFileSync(join(otherPiRepo, ".pi", "agent", "settings.json"), "source configuration\n");
+  const otherPiDiff = await baseline.collectTaskDiff(otherPiRepo, otherPiRef);
+  assert.deepEqual(otherPiDiff.paths, [".pi/agent/settings.json"], "non-bookkeeping .pi paths remain covered");
+
+  const verifyRepo = makeRepo();
+  const verifyDir = mkdtempSync(join(tmpdir(), "workflow-verify-test-"));
+  let record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 1,
+    checks: [{ id: "V1.1", label: "pass", command: "printf ok" }, { id: "V1.2", label: "also pass", command: "test -f a.txt" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "passed");
+  assert.deepEqual(record.checks.map((check) => check.status), ["passed", "passed"]);
+
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 2,
+    checks: [{ id: "V1.1", label: "subagent runtime bookkeeping", command: "mkdir -p .pi/agent/missions/review; printf review > .pi/agent/run-history.jsonl; printf state > .pi/agent/missions/review/state.json" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "passed", "pi-subagents bookkeeping does not make controller verification look mutated");
+  assert.deepEqual(record.checks[0].changedPaths, []);
+
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 3,
+    checks: [{ id: "V1.1", label: "fail", command: "printf nope >&2; exit 7" }, { id: "V1.2", label: "skip", command: "true" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "failed");
+  assert.equal(record.checks[0].exitCode, 7);
+  assert.equal(record.checks[1].status, "not_run");
+  assert.match(record.checks[0].outputTail, /nope/);
+
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 4,
+    checks: [{ id: "V1.1", label: "mutate", command: "printf changed > a.txt" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "mutated");
+  assert.deepEqual(record.checks[0].changedPaths, ["a.txt"]);
+
+  writeFileSync(join(verifyRepo, "a.txt"), "base\n");
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 5,
+    checks: [{ id: "V1.1", label: "large output", command: "python3 -c 'print(\"x\" * 5000)'" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 128,
+  });
+  assert.equal(record.status, "passed");
+  assert.equal(record.checks[0].outputTruncated, true);
+  assert.ok(Buffer.byteLength(record.checks[0].outputTail) <= 128);
+
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 6,
+    checks: [{ id: "V1.1", label: "timeout", command: "sleep 2" }],
+    commandTimeoutMs: 50,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "failed");
+  assert.equal(record.checks[0].status, "timed_out");
+
+  const cancellation = new AbortController();
+  cancellation.abort(new Error("stop verification"));
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 7,
+    checks: [{ id: "V1.1", label: "cancelled", command: "printf should-not-run > cancelled.txt" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+    signal: cancellation.signal,
+  });
+  assert.equal(record.status, "cancelled");
+  assert.equal(record.checks[0].status, "cancelled");
+  assert.equal(existsSync(join(verifyRepo, "cancelled.txt")), false);
+
+  const runningCancellation = new AbortController();
+  const cancellationStartedAt = Date.now();
+  setTimeout(() => runningCancellation.abort(new Error("stop running verification")), 50).unref();
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 8,
+    checks: [{ id: "V1.1", label: "cancel while descendant ignores TERM", command: "(trap '' TERM; exec sleep 10) & sleep 10" }, { id: "V1.2", label: "not started", command: "true" }],
+    commandTimeoutMs: 5_000,
+    maxOutputBytes: 1024,
+    signal: runningCancellation.signal,
+  });
+  assert.equal(record.status, "cancelled");
+  assert.deepEqual(record.checks.map((check) => check.status), ["cancelled", "not_run"]);
+  assert.ok(Date.now() - cancellationStartedAt < 5_000, "a TERM-ignoring descendant is hard-killed instead of hanging verification");
+
+  const exitedLeaderStartedAt = Date.now();
+  record = await verify.runVerificationSuite({
+    cwd: verifyRepo,
+    runDir: verifyDir,
+    planRevision: 1,
+    attempt: 9,
+    checks: [{ id: "V1.1", label: "timeout after shell leader exits", command: "trap '' TERM; sleep 10 & exit 0" }],
+    commandTimeoutMs: 50,
+    maxOutputBytes: 1024,
+  });
+  assert.equal(record.status, "failed");
+  assert.equal(record.checks[0].status, "timed_out");
+  assert.ok(Date.now() - exitedLeaderStartedAt < 5_000, "timeout also kills descendants after the shell leader exits");
+
+  const bus = new Events();
+  const fakePi = { events: bus, getAllTools: () => [{ name: "subagent" }] };
+  bus.on(delegationApi.SUBAGENT_DELEGATION_REQUEST_EVENT, (request) => {
+    bus.emit(delegationApi.SUBAGENT_DELEGATION_UPDATE_EVENT, null);
+    bus.emit(delegationApi.SUBAGENT_DELEGATION_UPDATE_EVENT, { requestId: request.requestId, ownerRunId: request.ownerRunId, nodeId: request.nodeId, durationMs: 10, currentTool: "read" });
+    bus.emit(delegationApi.SUBAGENT_DELEGATION_RESPONSE_EVENT, null);
+    // A requestId alone must not be able to resolve a structured delegation.
+    bus.emit(delegationApi.SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+      requestId: request.requestId,
+      status: "completed",
+      result: { kind: "structured", value: { decision: "spoofed", rationale: "wrong identity", constraints: [], risks: [], implementationNotes: [] } },
+    });
+    bus.emit(delegationApi.SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+      requestId: request.requestId,
+      ownerRunId: request.ownerRunId,
+      nodeId: request.nodeId,
+      status: "completed",
+      result: { kind: "structured", value: { decision: "small", rationale: "simple", constraints: [], risks: [], implementationNotes: [] } },
+      model: "openai-codex/gpt-5.6-sol",
+      thinking: "xhigh",
+      usage: usage(),
+    });
+  });
+  let progressSeen = false;
+  const design = await delegation.runDesign({ pi: fakePi, ctx: { cwd: repo }, ownerRunId: "r", nodeId: "design", agent: "workflow-architect", task: "design", model: "openai-codex/gpt-5.6-sol", thinking: "xhigh", timeoutMs: 1000, onProgress: () => { progressSeen = true; } });
+  assert.equal(design.decision, "small");
+  assert.equal(progressSeen, true);
+  assert.equal(delegation.usageForPi(design.usage).totalTokens, 10);
+
+  const rejectedWriter = makeHarness({ failWriterSelection: true });
+  await rejectedWriter.commands.get("workflow").handler("cannot start", rejectedWriter.ctx);
+  assert.equal(latestState(rejectedWriter.entries), undefined, "failed writer activation must not leave an active run");
+  assert.equal(rejectedWriter.pi.currentModel.id, "gpt-5.6-terra");
+  assert.equal(rejectedWriter.pi.activeTools.includes("subagent"), true);
+
+  const branchSwitch = makeHarness();
+  await branchSwitch.commands.get("workflow").handler("switch away", branchSwitch.ctx);
+  assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-luna");
+  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), false);
+  branchSwitch.setBranch([]);
+  branchSwitch.events.emit("session_tree", {}, branchSwitch.ctx);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-terra", "leaving an active workflow branch restores its prior model");
+  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), true, "leaving an active workflow branch restores its direct delegation tool");
+
+  const harness = makeHarness({ reviewWritesBookkeeping: true });
+  await harness.commands.get("workflow").handler("implement a small feature", harness.ctx);
+  assert.match(harness.messages[0].message, /^\/skill:workflow-delivery Workflow mode: standard/);
+  assert.equal(harness.pi.currentModel.id, "gpt-5.6-luna");
+  await harness.pi.setModel(harness.ctx.modelRegistry.find("openai-codex", "gpt-5.6-terra"));
+  harness.events.emit("session_tree", {}, harness.ctx);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(harness.pi.currentModel.id, "gpt-5.6-luna", "an active restored run reselects its writer");
+  assert.equal(harness.pi.activeTools.includes("subagent"), false);
+  assert.equal(harness.pi.activeTools.includes("bash"), true, "normal Luna tools remain available");
+  let run = latestState(harness.entries).run;
+  assert.equal(run.stage, "planning");
+  await assert.rejects(() => harness.tools.get("workflow_plan").execute("plan", {
+    expectedRevision: 0,
+    summary: "   ",
+    acceptanceCriteria: ["behavior works"],
+    steps: ["edit the file"],
+    checks: [{ label: "tests", command: "npm test" }],
+  }, new AbortController().signal, undefined, harness.ctx), /Plan summary cannot be blank/);
+  await harness.tools.get("workflow_plan").execute("plan", {
+    expectedRevision: 0,
+    summary: "small plan",
+    acceptanceCriteria: ["behavior works"],
+    steps: ["edit the file"],
+    checks: [{ label: "tests", command: " npm test " }],
+  }, new AbortController().signal, undefined, harness.ctx);
+  run = latestState(harness.entries).run;
+  assert.equal(run.stage, "implementing");
+  assert.equal(run.plan.checks[0].id, "V1.1");
+  assert.equal(run.plan.checks[0].command, " npm test ", "verification commands are stored exactly as declared");
+  await harness.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, harness.ctx);
+  assert.equal(latestState(harness.entries).run.stage, "reviewing");
+  const reviewResult = await harness.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, harness.ctx);
+  assert.equal(reviewResult.details.completed, true);
+  assert.equal(harness.runtimeBookkeepingWrites(), 1, "bookkeeping written by an approving reviewer does not stale its fingerprint");
+  assert.equal(latestState(harness.entries).run.stage, "completed");
+  assert.equal(harness.pi.currentModel.id, "gpt-5.6-terra", "prior model is restored after completion");
+  assert.equal(harness.pi.activeTools.includes("subagent"), true);
+  assert.equal(latestState(harness.entries).prior, undefined, "restoration is recorded so terminal session events do not re-enable tools later");
+
+  const remediation = makeHarness({ reviewVerdict: "CHANGES_REQUESTED", reviewWritesBookkeeping: true });
+  await remediation.commands.get("workflow").handler("fix behavior", remediation.ctx);
+  await remediation.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "fix", acceptanceCriteria: ["fixed"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, remediation.ctx);
+  await remediation.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, remediation.ctx);
+  await remediation.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, remediation.ctx);
+  assert.equal(remediation.runtimeBookkeepingWrites(), 1, "reviewer bookkeeping is modeled separately from task changes");
+  assert.equal(latestState(remediation.entries).run.stage, "fixing");
+  remediation.recordRuntimeBookkeeping();
+  await assert.rejects(() => remediation.tools.get("workflow_verify").execute("verify-bookkeeping", {}, new AbortController().signal, undefined, remediation.ctx), /repository has not changed since review/);
+  assert.equal(latestState(remediation.entries).run.stage, "fixing", "bookkeeping-only changes do not satisfy remediation");
+  remediation.setFingerprint("fp-2");
+  const remediationResult = await remediation.tools.get("workflow_verify").execute("verify-2", {}, new AbortController().signal, undefined, remediation.ctx);
+  assert.equal(remediationResult.details.status, "completed_after_fixes");
+  assert.equal(latestState(remediation.entries).run.stage, "completed_after_fixes");
+
+  const designed = makeHarness();
+  await designed.commands.get("workflow").handler("--design migrate the API", designed.ctx);
+  await assert.rejects(() => designed.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "x", acceptanceCriteria: ["x"], steps: ["x"], checks: [{ label: "x", command: "true" }] }, new AbortController().signal, undefined, designed.ctx), /workflow_design/);
+  await designed.tools.get("workflow_design").execute("design", {}, new AbortController().signal, undefined, designed.ctx);
+  assert.equal(latestState(designed.entries).run.stage, "planning");
+
+  const p2Only = makeHarness({ reviewVerdict: "CHANGES_REQUESTED", reviewFindings: [{ id: "N1", severity: "P2", title: "note", evidence: "a.txt:1", smallestFix: "optional cleanup" }] });
+  await p2Only.commands.get("workflow").handler("note-only review", p2Only.ctx);
+  await p2Only.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "note", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, p2Only.ctx);
+  await p2Only.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, p2Only.ctx);
+  const p2Result = await p2Only.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, p2Only.ctx);
+  assert.equal(p2Result.details.verdict, "APPROVE");
+  assert.equal(latestState(p2Only.entries).run.stage, "completed");
+
+  const preabortedReview = makeHarness();
+  await preabortedReview.commands.get("workflow").handler("preemptive review cancellation", preabortedReview.ctx);
+  await preabortedReview.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "cancel", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, preabortedReview.ctx);
+  await preabortedReview.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, preabortedReview.ctx);
+  const preabortedSignal = new AbortController();
+  preabortedSignal.abort(new Error("cancel before dispatch"));
+  await assert.rejects(() => preabortedReview.tools.get("workflow_review").execute("review", {}, preabortedSignal.signal, undefined, preabortedReview.ctx), /cancel before dispatch/);
+  assert.equal(latestState(preabortedReview.entries).run.stage, "reviewing");
+  assert.equal(latestState(preabortedReview.entries).run.reviewStarted, undefined, "an unstarted review remains available");
+
+  const reviewFailure = makeHarness({ reviewError: new Error("review bridge failed") });
+  await reviewFailure.commands.get("workflow").handler("review failure", reviewFailure.ctx);
+  await reviewFailure.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "failure", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, reviewFailure.ctx);
+  await reviewFailure.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, reviewFailure.ctx);
+  await assert.rejects(() => reviewFailure.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, reviewFailure.ctx), /review bridge failed/);
+  assert.equal(latestState(reviewFailure.entries).run.stage, "failed");
+  assert.equal(reviewFailure.pi.currentModel.id, "gpt-5.6-terra", "failed review also restores the original model");
+  await assert.rejects(() => reviewFailure.tools.get("workflow_review").execute("review-again", {}, new AbortController().signal, undefined, reviewFailure.ctx), /No active workflow run/);
+
+  console.log("workflow tests passed");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

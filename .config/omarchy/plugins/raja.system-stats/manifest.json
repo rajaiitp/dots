@@ -4,7 +4,7 @@
   "name": "System Stats",
   "version": "1.1.0",
   "author": "raja",
-  "description": "Used memory and available root filesystem space in the bar",
+  "description": "Used memory in the bar",
   "kinds": [
     "bar-widget"
   ],
@@ -12,8 +12,8 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Memory and Disk Stats",
-    "description": "Used memory and available root filesystem space",
+    "displayName": "Memory Stats",
+    "description": "Used memory",
     "category": "System",
     "allowMultiple": false
   }

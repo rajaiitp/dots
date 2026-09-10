@@ -1,18 +1,14 @@
 {
-  "version": 2,
+  "version": 1,
   "models": {
-    "luna": "openai-codex/gpt-5.6-luna",
-    "terra": "openai-codex/gpt-5.6-terra",
-    "sol": "openai-codex/gpt-5.6-sol"
+    "writer": "openai-codex/gpt-5.6-luna",
+    "reviewer": "openai-codex/gpt-5.6-terra",
+    "designer": "openai-codex/gpt-5.6-sol"
   },
   "thinking": "xhigh",
-  "maxReviews": 3,
-  "maxSolConsults": 2,
-  "childTimeoutMs": 900000,
-  "maxPacketBytes": 122880,
-  "maxReviewPacketBytes": 98304,
-  "maxChildOutputBytes": 2097152,
-  "maxChildOutputLines": 2000,
-  "maxRoleAttempts": 2,
-  "enableDeltaReviews": true
+  "maxChecks": 8,
+  "commandTimeoutMs": 900000,
+  "specialistTimeoutMs": 900000,
+  "maxReviewBytes": 262144,
+  "maxCommandOutputBytes": 51200
 }

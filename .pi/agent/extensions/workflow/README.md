@@ -1,76 +1,83 @@
-# Active-checkout workflow
+# Deterministic `/workflow`
 
-`/workflow` is an orch-derived implementation workflow. The parent Pi session runs Luna xhigh as the only writer in the active checkout; isolated Terra xhigh and Sol xhigh children plan and review with read/search tools only.
+A thin implementation wrapper for Pi:
 
-## Usage
+```text
+plan → implement → verify → one independent review
+```
 
-- `/workflow <goal>` — enable workflow mode and start the goal in one step.
-- `/workflow` — open an editor for the goal.
-- `/workflow on` — enable workflow mode; the next ordinary prompt starts a run.
-- `/workflow status` — show the current persisted run state and recent activity.
-- `/workflow continue` — resume an interrupted nonterminal run without replacing its task, plan, diff, or verification evidence.
-- `/workflow abandon` — terminate the run while leaving active-checkout changes intact.
-- `/workflow off` — restore the model, thinking level, and active tools that preceded workflow mode.
+The parent session runs Luna xhigh as the sole writer in the active checkout. Verification commands are executed by the extension with real exit-code receipts. One fresh-context Terra xhigh reviewer is launched through the pinned `pi-subagents` structured-delegation event API. Sol runs only when the user explicitly starts design mode.
 
-A compact widget shows only stage and review state. Normal Pi tool rows remain the authoritative detailed activity view; task and recent-activity diagnostics are available only through `/workflow status`. Widget/state entries do not enter model context.
+## Commands
 
-## Execution model
+- `/workflow <task>` — start the standard flow.
+- `/workflow --design <task>` — require one Sol design before planning.
+- `/workflow status` — show the persisted stage, plan revision, checks, review, and exact next action.
+- `/workflow continue` — resume the current stage after an interruption or early model stop.
+- `/workflow cancel` — cancel active work and leave checkout changes intact.
 
-For behavior-bearing changes:
+A second task is rejected while a run is active. Terminal runs are replaced when the next task starts.
 
-1. Sol design is available only for architecture/high-risk task signals or an explicit Terra escalation; low-risk optional consultations are rejected. Its normal tool row reports elapsed time while the isolated child runs.
-2. Terra writes acceptance criteria and exact verification commands before the first behavior-bearing mutation or shell command.
-3. Luna edits and verifies in the active checkout.
-4. Terra reviews the complete task-local diff, with bounded delta review for remediation and lossless sharding for large full reviews.
-5. Exact approval completes the run atomically. No separate finish call is required.
+## Flow
 
-Read-only answers and inert documentation edits complete without specialist calls.
+1. Luna optionally calls `workflow_design` for an explicit `--design` task.
+2. Luna calls `workflow_plan` with acceptance criteria, bounded steps, and exact final checks.
+3. Luna implements normally with the active Pi tools.
+4. `workflow_verify` runs the stored checks sequentially. A nonzero exit, timeout, cancellation, or repository mutation invalidates the pass.
+5. `workflow_review` persists review dispatch, constructs an authoritative packet from the goal, plan, receipts, and run-start diff, then asks the read-only Terra reviewer for structured findings. Dispatch consumes the sole review even if the process is interrupted before a result returns.
+6. Approval completes immediately. Changes requested permit one remediation pass followed by the complete verification suite; no second reviewer is launched. A malformed `CHANGES_REQUESTED` response with no P0/P1 finding is normalized to approval because P2 findings are informational.
 
-## Checkout safeguards
+The workflow does not infer completion from prose and has no separate finish tool.
 
-The workflow captures intake-dirty files in a task-local baseline under `$XDG_STATE_HOME/pi-workflow/`, then captures clean files before mutation. Terra receives only the diff against that baseline, not the user's pre-existing work.
+## Deliberate limits
 
-Allowed after Terra planning:
+The replacement has no:
 
-- `edit` and `write` for normal source changes;
-- `workflow_file` for attributable single-file remove/move operations;
-- foreground `bash` and `hypa_shell` commands, including tests, builds, package tools, and generators.
+- risk classifier or automatic Sol routing;
+- Terra planning agent;
+- command-equivalence parser;
+- shell command restrictions on ordinary Luna work;
+- artifact-path inference;
+- automatic lifecycle nudges or retry loops;
+- delta review, sharding, or multi-pass review;
+- migration of legacy workflow state.
 
-Still blocked:
+The only model-facing delegation tool hidden during a run is `subagent`, preventing extra specialists from bypassing the explicit design/review policy. Normal editing, shell, research, and bookkeeping tools remain available.
 
-- Git/JJ metadata writes;
-- direct shell filesystem mutation (`rm`, `mv`, redirection, inline interpreters, and similar bypasses); use attributed file tools instead;
-- unmanaged background jobs;
-- privileged/process-control commands;
-- repository escapes and remote-code piping;
-- symlink or special-file mutation.
+## Verification
 
-Foreground commands are compared against Git status and content manifests before and after execution. A change outside an observed Luna tool call stops further mutation rather than silently entering the task.
+Plan commands are stored with stable IDs (`V1.1`, `V1.2`, …). `workflow_verify` runs exactly those strings through `/bin/bash -lc` in the project directory and records:
 
-## Differences from final `/orch`
+- exit code and duration;
+- timeout/cancellation state;
+- bounded output tail and full log path;
+- repository fingerprints before and after;
+- paths changed while the command ran.
 
-Kept from `/orch`:
+A command that modifies a task or source path cannot count as final verification. Inspect or accept the generated change, then rerun the complete suite. The only runtime exception is the narrowly documented pi-subagents bookkeeping exclusion below.
 
-- active-checkout Luna implementation;
-- isolated Terra planning/review and risk-gated Sol design;
-- task-local dirty-worktree baseline;
-- exact artifact/verification binding, bounded review retries, delta review, and sharded full review;
-- Git-write, background-process, and path-escape protections.
+## Review boundary
 
-Changed for seamless use:
+At run start the extension records HEAD, Git status, and durable copies of intake-dirty paths under `$XDG_STATE_HOME/pi-workflow-lite/`. At review it compares the current checkout with that exact starting state. Unrelated pre-existing changes are excluded; changes made during the run are included even if they were committed.
 
-- `/workflow <goal>` starts directly instead of requiring a separate enable-and-prompt sequence;
-- both normal `bash` and compressed `hypa_shell` are available after planning;
-- `workflow_file` supports safely attributed remove/move operations;
-- Terra approval finishes atomically, removing the brittle `orch_finish` handshake;
-- a twice-settled agent pauses resumably instead of terminally blocking;
-- read-only/docs-only runs finish automatically;
-- normal Pi tool rows remain visible while task/recent-activity diagnostics stay out of the persistent widget;
-- low-risk runs cannot launch unnecessary Sol consultations, and required Sol calls report elapsed progress;
-- mutation preflight detects unobserved checkout changes and symlink escapes.
+The comparison narrowly ignores only pi-subagents runtime bookkeeping written by the reviewer itself: `.pi/agent/run-history.jsonl` and `.pi/agent/missions/**`. Those paths cannot stale a review, count as verification mutation, or satisfy remediation. Every other path, including all other `.pi` configuration and source files, remains covered.
+
+Binary, symlink, special-file, corrupt-baseline, and oversized-diff cases fail clearly instead of truncating or claiming complete review.
+
+External side effects are outside this Git review envelope.
+
+## Dependency
+
+`pi-subagents@0.66.0` is pinned in `~/.pi/agent/npm/package.json` and enabled as an extension in `~/.pi/agent/settings.json`. Its bundled skills and prompts remain disabled. Because separately installed Pi packages have independent module roots, the workflow uses the package's documented structured-delegation event names directly rather than importing internal runner code.
+
+Run `/subagents-doctor` if delegation is unavailable after `/reload`.
 
 ## Configuration
 
-Global configuration: `~/.pi/agent/workflow.json`
+Global file: `~/.pi/agent/workflow.json`
 
-A trusted repository may override supported fields in `.pi/workflow.json`. Invalid or unknown fields fall back to the global/default values.
+The schema is version 1 and intentionally does not accept the legacy controller's fields. It configures writer/reviewer/designer models, check count, command/specialist timeouts, review-size limit, and bounded command output.
+
+## Recovery
+
+State is persisted as `workflow-lite-state` custom session entries. Legacy `workflow-state` entries are ignored. A reload during verification requires the suite to run again. A reload after reviewer dispatch fails that run rather than launching a second reviewer; a reload while merely waiting to invoke review remains review-ready. No stage advances automatically on `agent_settled`.

@@ -25,14 +25,6 @@
           "size": 10
         },
         {
-          "id": "raja.power",
-          "showPercentage": true
-        },
-        {
-          "id": "omarchy.spacer",
-          "size": 10
-        },
-        {
           "id": "raja.cpu-stats"
         }
       ],
@@ -49,6 +41,10 @@
         },
         {
           "id": "raja.weather"
+        },
+        {
+          "id": "raja.power",
+          "showPercentage": true
         }
       ],
       "right": [
@@ -71,10 +67,12 @@
           "alwaysShow": false,
           "items": [
             "Dictation",
-            "NightLight",
             "Dnd",
             "StayAwake"
           ]
+        },
+        {
+          "id": "raja.nightlight"
         },
         {
           "id": "omarchy.bluetooth"
