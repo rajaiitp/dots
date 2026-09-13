@@ -37,10 +37,14 @@
         },
         {
           "id": "omarchy.spacer",
-          "size": 9
+          "size": 20
         },
         {
           "id": "raja.weather"
+        },
+        {
+          "id": "omarchy.spacer",
+          "size": 20
         },
         {
           "id": "raja.power",

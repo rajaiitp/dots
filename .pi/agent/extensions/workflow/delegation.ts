@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Usage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { RoleThinking } from "./config.ts";
 import type { DesignRecord, ReviewFinding, ReviewRecord, UsageTotals } from "./state.ts";
 
 // pi packages have separate module roots. The installed package's documented
@@ -20,7 +21,7 @@ interface SubagentDelegationRequest {
   context: "fresh" | "fork";
   cwd: string;
   model?: string;
-  thinking?: "xhigh";
+  thinking?: RoleThinking;
   timeoutMs?: number;
   skill?: boolean;
   artifacts?: boolean;
@@ -170,7 +171,7 @@ export async function delegateStructured(options: {
   agent: string;
   task: string;
   model: string;
-  thinking: "xhigh";
+  thinking: RoleThinking;
   timeoutMs: number;
   schema: Record<string, unknown>;
   signal?: AbortSignal;

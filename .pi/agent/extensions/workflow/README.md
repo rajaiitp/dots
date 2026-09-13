@@ -3,15 +3,14 @@
 A thin implementation wrapper for Pi:
 
 ```text
-plan → implement → verify → one independent review
+Sol xhigh design → Sol low plan/implementation → verify → Sol reviews (up to 2 rounds)
 ```
 
-The parent session runs Luna xhigh as the sole writer in the active checkout. Verification commands are executed by the extension with real exit-code receipts. One fresh-context Terra xhigh reviewer is launched through the pinned `pi-subagents` structured-delegation event API. Sol runs only when the user explicitly starts design mode.
+Every run begins with one mandatory fresh-context Sol xhigh architecture consultation. The parent session then runs Sol low as the sole implementer in the active checkout. Verification commands are executed by the extension with real exit-code receipts. Review round 1 uses fresh-context Sol high; review round 2, when required, uses a separate fresh-context Sol medium call through the pinned `pi-subagents` structured-delegation event API.
 
 ## Commands
 
-- `/workflow <task>` — start the standard flow.
-- `/workflow --design <task>` — require one Sol design before planning.
+- `/workflow <task>` — start the fixed flow with automatic Sol design.
 - `/workflow status` — show the persisted stage, plan revision, checks, review, and exact next action.
 - `/workflow continue` — resume the current stage after an interruption or early model stop.
 - `/workflow cancel` — cancel active work and leave checkout changes intact.
@@ -20,12 +19,13 @@ A second task is rejected while a run is active. Terminal runs are replaced when
 
 ## Flow
 
-1. Luna optionally calls `workflow_design` for an explicit `--design` task.
-2. Luna calls `workflow_plan` with acceptance criteria, bounded steps, and exact final checks.
-3. Luna implements normally with the active Pi tools.
+1. The Sol-low implementer immediately calls `workflow_design`; planning is blocked until the mandatory Sol-xhigh result is persisted.
+2. The implementer calls `workflow_plan` with Sol-informed acceptance criteria, bounded steps, and exact final checks.
+3. The implementer works normally with the active Pi tools.
 4. `workflow_verify` runs the stored checks sequentially. A nonzero exit, timeout, cancellation, or repository mutation invalidates the pass.
-5. `workflow_review` persists review dispatch, constructs an authoritative packet from the goal, plan, receipts, and run-start diff, then asks the read-only Terra reviewer for structured findings. Dispatch consumes the sole review even if the process is interrupted before a result returns.
-6. Approval completes immediately. Changes requested permit one remediation pass followed by the complete verification suite; no second reviewer is launched. A malformed `CHANGES_REQUESTED` response with no P0/P1 finding is normalized to approval because P2 findings are informational.
+5. `workflow_review` persists review dispatch, constructs an authoritative packet from the goal, Sol design, plan, prior review results, receipts, and run-start diff, then asks a fresh read-only Sol reviewer for structured findings. Dispatch consumes that round even if interrupted before a result returns.
+6. Round 1 approval completes immediately. Round 1 changes require implementer remediation and a full verification rerun before round 2.
+7. Round 2 approval completes normally. Round 2 changes permit one final remediation and full verification rerun, then complete as `completed_after_fixes` without a third review. A malformed `CHANGES_REQUESTED` response with no P0/P1 finding is normalized to approval because P2 findings are informational.
 
 The workflow does not infer completion from prose and has no separate finish tool.
 
@@ -33,16 +33,16 @@ The workflow does not infer completion from prose and has no separate finish too
 
 The replacement has no:
 
-- risk classifier or automatic Sol routing;
-- Terra planning agent;
+- risk classifier or conditional Sol routing;
+- a skip-design route or separate test-planning agent;
 - command-equivalence parser;
-- shell command restrictions on ordinary Luna work;
+- shell command restrictions on ordinary implementation work;
 - artifact-path inference;
 - automatic lifecycle nudges or retry loops;
-- delta review, sharding, or multi-pass review;
+- delta review, sharding, or unbounded review/fix loops;
 - migration of legacy workflow state.
 
-The only model-facing delegation tool hidden during a run is `subagent`, preventing extra specialists from bypassing the explicit design/review policy. Normal editing, shell, research, and bookkeeping tools remain available.
+The only model-facing delegation tool hidden during a run is `subagent`, preventing extra specialists from bypassing the fixed role and review-round policy. Normal editing, shell, research, and bookkeeping tools remain available.
 
 ## Verification
 
@@ -76,8 +76,8 @@ Run `/subagents-doctor` if delegation is unavailable after `/reload`.
 
 Global file: `~/.pi/agent/workflow.json`
 
-The schema is version 1 and intentionally does not accept the legacy controller's fields. It configures writer/reviewer/designer models, check count, command/specialist timeouts, review-size limit, and bounded command output.
+The schema is version 2 and intentionally does not accept earlier role fields. It configures separate design, implementation, review-1, and review-2 model/thinking assignments plus check count, command/specialist timeouts, review-size limit, and bounded command output.
 
 ## Recovery
 
-State is persisted as `workflow-lite-state` custom session entries. Legacy `workflow-state` entries are ignored. A reload during verification requires the suite to run again. A reload after reviewer dispatch fails that run rather than launching a second reviewer; a reload while merely waiting to invoke review remains review-ready. No stage advances automatically on `agent_settled`.
+State version 4 is persisted as `workflow-lite-state` custom session entries. Earlier workflow state and legacy `workflow-state` entries are ignored. A reload during verification requires the suite to run again. A reload after either reviewer dispatch fails that run rather than duplicating the consumed round; a reload while merely waiting to invoke review remains review-ready. No stage advances automatically on `agent_settled`.

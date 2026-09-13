@@ -2,7 +2,6 @@
 name: workflow-reviewer
 description: Fresh-context read-only reviewer for the deterministic /workflow wrapper
 tools: read, grep, find, ls
-thinking: xhigh
 systemPromptMode: replace
 inheritProjectContext: true
 inheritSkills: false

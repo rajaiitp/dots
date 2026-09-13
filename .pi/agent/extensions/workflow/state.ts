@@ -2,9 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 export const WORKFLOW_STATE_TYPE = "workflow-lite-state";
-export const WORKFLOW_STATE_VERSION = 1;
-
-export type WorkflowMode = "standard" | "design";
+export const WORKFLOW_STATE_VERSION = 4;
 export type RunStage =
   | "designing"
   | "planning"
@@ -123,22 +121,21 @@ export interface UsageTotals {
 export interface RunState {
   id: string;
   goal: string;
-  mode: WorkflowMode;
   stage: RunStage;
   baseline: BaselineRef;
   design?: DesignRecord;
   plan?: WorkflowPlan;
   verification?: VerificationRecord;
-  /** Set immediately before the one permitted reviewer delegation is dispatched. */
-  reviewStarted?: boolean;
-  review?: ReviewRecord;
+  /** Incremented immediately before each of the two permitted review dispatches. */
+  reviewDispatches: number;
+  reviews: ReviewRecord[];
   startedAt: number;
   updatedAt: number;
   lastError?: string;
 }
 
 export interface WorkflowState {
-  version: 1;
+  version: 4;
   run?: RunState;
   prior?: PreviousSessionSettings;
   updatedAt: number;
@@ -148,14 +145,15 @@ export function emptyState(): WorkflowState {
   return { version: WORKFLOW_STATE_VERSION, updatedAt: Date.now() };
 }
 
-export function newRun(goal: string, mode: WorkflowMode, baseline: BaselineRef, id = randomUUID()): RunState {
+export function newRun(goal: string, baseline: BaselineRef, id = randomUUID()): RunState {
   const timestamp = Date.now();
   return {
     id,
     goal: goal.trim(),
-    mode,
-    stage: mode === "design" ? "designing" : "planning",
+    stage: "designing",
     baseline,
+    reviewDispatches: 0,
+    reviews: [],
     startedAt: timestamp,
     updatedAt: timestamp,
   };
@@ -187,12 +185,13 @@ export function restoreState(entries: SessionEntry[]): WorkflowState {
   const entry = [...entries].reverse().find((item) => item.type === "custom" && item.customType === WORKFLOW_STATE_TYPE) as { data?: unknown } | undefined;
   if (!entry || !looksLikeState(entry.data)) return emptyState();
   const restored = structuredClone(entry.data);
+  const latestReview = restored.run?.reviews.at(-1);
   if (restored.run?.stage === "verifying") {
-    restored.run.stage = restored.run.review?.verdict === "CHANGES_REQUESTED" ? "fixing" : "implementing";
+    restored.run.stage = latestReview?.verdict === "CHANGES_REQUESTED" ? "fixing" : "implementing";
     restored.run.lastError = "Verification was interrupted; run the complete verification suite again.";
-  } else if (restored.run?.stage === "reviewing" && restored.run.reviewStarted && !restored.run.review) {
+  } else if (restored.run?.stage === "reviewing" && restored.run.reviewDispatches > restored.run.reviews.length) {
     restored.run.stage = "failed";
-    restored.run.lastError = "The independent review was interrupted after dispatch and is not retried, preserving the one-review policy.";
+    restored.run.lastError = `Review round ${restored.run.reviewDispatches} was interrupted after dispatch and is not retried.`;
   }
   return restored;
 }
@@ -203,10 +202,10 @@ export function expectedNext(run: RunState): string {
     case "planning": return "Call workflow_plan with acceptance criteria, steps, and final checks.";
     case "implementing": return "Implement the plan, then call workflow_verify.";
     case "verifying": return "Wait for workflow_verify to finish.";
-    case "reviewing": return "Call workflow_review.";
-    case "fixing": return "Address the review findings, then call workflow_verify.";
+    case "reviewing": return `Call workflow_review for round ${run.reviews.length + 1} of 2.`;
+    case "fixing": return `Address review round ${run.reviews.length} findings, then call workflow_verify.`;
     case "completed": return "Summarize the approved implementation and verification.";
-    case "completed_after_fixes": return "Summarize the remediation and note that no second independent review ran.";
+    case "completed_after_fixes": return "Summarize the round 2 remediation and note that no third independent review ran.";
     case "cancelled": return "Start a new /workflow task if more work is needed.";
     case "failed": return "Inspect the failure and start a new bounded workflow when ready.";
   }
@@ -218,14 +217,12 @@ export function stateSummary(state: WorkflowState): Record<string, unknown> {
     active: Boolean(run && !isTerminal(run.stage)),
     runId: run?.id,
     goal: run?.goal,
-    mode: run?.mode,
     stage: run?.stage,
     planRevision: run?.plan?.revision,
     checks: run?.verification?.checks.map((check) => ({ id: check.id, status: check.status, exitCode: check.exitCode })) ?? [],
     verification: run?.verification?.status,
-    review: run?.review?.verdict,
-    reviewStarted: run?.reviewStarted ?? false,
-    findings: run?.review?.findings.length ?? 0,
+    reviewDispatches: run?.reviewDispatches ?? 0,
+    reviews: run?.reviews.map((review, index) => ({ round: index + 1, verdict: review.verdict, findings: review.findings.length })) ?? [],
     lastError: run?.lastError,
     next: run ? expectedNext(run) : "Start with /workflow <task>.",
   };

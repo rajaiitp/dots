@@ -67,9 +67,9 @@ function makeHarness(options = {}) {
   const notifications = [];
   const messages = [];
   const events = new Events();
-  const models = ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"].map((id) => ({ provider: "openai-codex", id, reasoning: true }));
+  const models = ["gpt-5.6-terra", "gpt-5.6-sol"].map((id) => ({ provider: "openai-codex", id, reasoning: true }));
   const pi = {
-    currentModel: models[1],
+    currentModel: models[0],
     thinking: "xhigh",
     activeTools: ["read", "edit", "write", "bash", "todo", "subagent"],
     registerCommand(name, definition) { commands.set(name, definition); },
@@ -81,7 +81,7 @@ function makeHarness(options = {}) {
     getActiveTools() { return [...this.activeTools]; },
     setActiveTools(names) { this.activeTools = [...new Set(names)]; },
     async setModel(model) {
-      if (options.failWriterSelection && model.id === "gpt-5.6-luna") return false;
+      if (options.failImplementationSelection && model.id === "gpt-5.6-sol") return false;
       this.currentModel = model;
       return true;
     },
@@ -109,6 +109,10 @@ function makeHarness(options = {}) {
   };
   Object.defineProperty(ctx, "model", { get: () => pi.currentModel });
   let fingerprint = "fp-1";
+  let designCalls = 0;
+  let reviewCalls = 0;
+  const designRequests = [];
+  const reviewRequests = [];
   let runtimeBookkeepingWrites = 0;
   const fakeBaseline = {
     dir: "/tmp/fake-workflow-baseline/run",
@@ -132,13 +136,20 @@ function makeHarness(options = {}) {
       startedAt: 1,
       completedAt: 2,
     }),
-    runDesign: async () => ({ decision: "keep it small", rationale: "bounded", constraints: [], risks: [], implementationNotes: [], model: "openai-codex/gpt-5.6-sol", usage: usage(), createdAt: Date.now() }),
+    runDesign: async (input) => {
+      designCalls += 1;
+      designRequests.push({ model: input.model, thinking: input.thinking, nodeId: input.nodeId, agent: input.agent });
+      return { decision: "keep it small", rationale: "bounded", constraints: [], risks: [], implementationNotes: [], model: input.model, usage: usage(), createdAt: Date.now() };
+    },
     runReview: async (input) => {
-      if (options.reviewError) throw options.reviewError;
+      const index = reviewCalls++;
+      reviewRequests.push({ model: input.model, thinking: input.thinking, nodeId: input.nodeId, agent: input.agent, task: input.task });
+      const reviewError = options.reviewErrors?.[index] ?? options.reviewError;
+      if (reviewError) throw reviewError;
       if (options.reviewWritesBookkeeping) runtimeBookkeepingWrites += 1;
-      const verdict = options.reviewVerdict || "APPROVE";
-      const findings = options.reviewFindings ?? (verdict === "CHANGES_REQUESTED" ? [{ id: "R1", severity: "P1", title: "fix it", evidence: "a.txt:1", smallestFix: "adjust" }] : []);
-      return { verdict, summary: "reviewed", findings, repositoryFingerprint: input.repositoryFingerprint, model: "openai-codex/gpt-5.6-terra", usage: usage(), createdAt: Date.now() };
+      const verdict = options.reviewVerdicts?.[index] ?? options.reviewVerdict ?? "APPROVE";
+      const findings = options.reviewFindingsByRound?.[index] ?? options.reviewFindings ?? (verdict === "CHANGES_REQUESTED" ? [{ id: `R${index + 1}`, severity: "P1", title: "fix it", evidence: "a.txt:1", smallestFix: "adjust" }] : []);
+      return { verdict, summary: `reviewed round ${index + 1}`, findings, repositoryFingerprint: input.repositoryFingerprint, model: input.model, usage: usage(), createdAt: Date.now() };
     },
     subagentsAvailable: () => true,
   };
@@ -153,27 +164,45 @@ function makeHarness(options = {}) {
     messages,
     events,
     setFingerprint(value) { fingerprint = value; },
+    designCalls() { return designCalls; },
+    reviewCalls() { return reviewCalls; },
+    designRequests,
+    reviewRequests,
     recordRuntimeBookkeeping() { runtimeBookkeepingWrites += 1; },
     runtimeBookkeepingWrites() { return runtimeBookkeepingWrites; },
     setBranch(value) { branchEntries = value; },
   };
 }
 
+async function startAndDesign(harness, task) {
+  await harness.commands.get("workflow").handler(task, harness.ctx);
+  assert.equal(latestState(harness.entries).run.stage, "designing");
+  await harness.tools.get("workflow_design").execute("design", {}, new AbortController().signal, undefined, harness.ctx);
+  assert.equal(latestState(harness.entries).run.stage, "planning");
+  assert.equal(harness.designCalls(), 1);
+}
+
 (async () => {
   const loadedConfig = configModule.loadConfig();
-  assert.equal(loadedConfig.version, 1);
-  assert.equal(loadedConfig.models.writer, "openai-codex/gpt-5.6-luna");
+  assert.equal(loadedConfig.version, 2);
+  assert.deepEqual(loadedConfig.models, {
+    design: "openai-codex/gpt-5.6-sol",
+    implementation: "openai-codex/gpt-5.6-sol",
+    review1: "openai-codex/gpt-5.6-sol",
+    review2: "openai-codex/gpt-5.6-sol",
+  });
+  assert.deepEqual(loadedConfig.thinking, { design: "xhigh", implementation: "low", review1: "high", review2: "medium" });
   assert.equal(loadedConfig.maxChecks, 8);
 
   const dummyBaseline = { dir: "/tmp/x", manifestPath: "/tmp/x/manifest", cwd: "/tmp", initialHead: "a".repeat(40), initialFingerprint: "f", createdAt: 1 };
-  const fresh = stateModule.newRun("task", "standard", dummyBaseline, "run-1");
-  assert.equal(fresh.stage, "planning");
-  assert.equal(stateModule.newRun("task", "design", dummyBaseline, "run-2").stage, "designing");
-  assert.equal(stateModule.expectedNext(fresh), "Call workflow_plan with acceptance criteria, steps, and final checks.");
+  const fresh = stateModule.newRun("task", dummyBaseline, "run-1");
+  assert.equal(fresh.stage, "designing");
+  assert.equal(stateModule.expectedNext(fresh), "Call workflow_design.");
   assert.equal(stateModule.restoreState([{ type: "custom", customType: "workflow-state", data: { version: 6, enabled: true } }]).run, undefined, "legacy state is ignored");
-  const interrupted = { version: 1, run: { ...fresh, stage: "verifying" }, updatedAt: 2 };
+  assert.equal(stateModule.restoreState([{ type: "custom", customType: stateModule.WORKFLOW_STATE_TYPE, data: { version: 3, run: fresh, updatedAt: 2 } }]).run, undefined, "pre-role-map state is ignored");
+  const interrupted = { version: stateModule.WORKFLOW_STATE_VERSION, run: { ...fresh, design: { decision: "x", rationale: "x", constraints: [], risks: [], implementationNotes: [], createdAt: 1 }, stage: "verifying" }, updatedAt: 2 };
   assert.equal(stateModule.restoreState([{ type: "custom", customType: stateModule.WORKFLOW_STATE_TYPE, data: interrupted }]).run.stage, "implementing");
-  const interruptedReview = { version: 1, run: { ...fresh, stage: "reviewing", reviewStarted: true }, updatedAt: 2 };
+  const interruptedReview = { version: stateModule.WORKFLOW_STATE_VERSION, run: { ...fresh, stage: "reviewing", reviewDispatches: 1, reviews: [] }, updatedAt: 2 };
   assert.equal(stateModule.restoreState([{ type: "custom", customType: stateModule.WORKFLOW_STATE_TYPE, data: interruptedReview }]).run.stage, "failed");
 
   const repo = makeRepo();
@@ -375,8 +404,11 @@ function makeHarness(options = {}) {
   assert.ok(Date.now() - exitedLeaderStartedAt < 5_000, "timeout also kills descendants after the shell leader exits");
 
   const bus = new Events();
+  const delegationRequests = [];
   const fakePi = { events: bus, getAllTools: () => [{ name: "subagent" }] };
   bus.on(delegationApi.SUBAGENT_DELEGATION_REQUEST_EVENT, (request) => {
+    delegationRequests.push({ context: request.context, nodeId: request.nodeId, agent: request.agent, model: request.model, thinking: request.thinking });
+    assert.equal(request.context, "fresh", "every workflow specialist receives a fresh context");
     bus.emit(delegationApi.SUBAGENT_DELEGATION_UPDATE_EVENT, null);
     bus.emit(delegationApi.SUBAGENT_DELEGATION_UPDATE_EVENT, { requestId: request.requestId, ownerRunId: request.ownerRunId, nodeId: request.nodeId, durationMs: 10, currentTool: "read" });
     bus.emit(delegationApi.SUBAGENT_DELEGATION_RESPONSE_EVENT, null);
@@ -386,14 +418,17 @@ function makeHarness(options = {}) {
       status: "completed",
       result: { kind: "structured", value: { decision: "spoofed", rationale: "wrong identity", constraints: [], risks: [], implementationNotes: [] } },
     });
+    const value = request.agent === "workflow-reviewer"
+      ? { verdict: "APPROVE", summary: `approved ${request.nodeId}`, findings: [], repositoryFingerprint: "fp" }
+      : { decision: "small", rationale: "simple", constraints: [], risks: [], implementationNotes: [] };
     bus.emit(delegationApi.SUBAGENT_DELEGATION_RESPONSE_EVENT, {
       requestId: request.requestId,
       ownerRunId: request.ownerRunId,
       nodeId: request.nodeId,
       status: "completed",
-      result: { kind: "structured", value: { decision: "small", rationale: "simple", constraints: [], risks: [], implementationNotes: [] } },
-      model: "openai-codex/gpt-5.6-sol",
-      thinking: "xhigh",
+      result: { kind: "structured", value },
+      model: request.model,
+      thinking: request.thinking,
       usage: usage(),
     });
   });
@@ -402,16 +437,24 @@ function makeHarness(options = {}) {
   assert.equal(design.decision, "small");
   assert.equal(progressSeen, true);
   assert.equal(delegation.usageForPi(design.usage).totalTokens, 10);
+  await delegation.runReview({ pi: fakePi, ctx: { cwd: repo }, ownerRunId: "r", nodeId: "review-1", agent: "workflow-reviewer", task: "review one", model: "openai-codex/gpt-5.6-sol", thinking: "high", timeoutMs: 1000, repositoryFingerprint: "fp" });
+  await delegation.runReview({ pi: fakePi, ctx: { cwd: repo }, ownerRunId: "r", nodeId: "review-2", agent: "workflow-reviewer", task: "review two", model: "openai-codex/gpt-5.6-sol", thinking: "medium", timeoutMs: 1000, repositoryFingerprint: "fp" });
+  assert.deepEqual(delegationRequests.map(({ context, nodeId, agent, thinking }) => ({ context, nodeId, agent, thinking })), [
+    { context: "fresh", nodeId: "design", agent: "workflow-architect", thinking: "xhigh" },
+    { context: "fresh", nodeId: "review-1", agent: "workflow-reviewer", thinking: "high" },
+    { context: "fresh", nodeId: "review-2", agent: "workflow-reviewer", thinking: "medium" },
+  ]);
 
-  const rejectedWriter = makeHarness({ failWriterSelection: true });
-  await rejectedWriter.commands.get("workflow").handler("cannot start", rejectedWriter.ctx);
-  assert.equal(latestState(rejectedWriter.entries), undefined, "failed writer activation must not leave an active run");
-  assert.equal(rejectedWriter.pi.currentModel.id, "gpt-5.6-terra");
-  assert.equal(rejectedWriter.pi.activeTools.includes("subagent"), true);
+  const rejectedImplementer = makeHarness({ failImplementationSelection: true });
+  await rejectedImplementer.commands.get("workflow").handler("cannot start", rejectedImplementer.ctx);
+  assert.equal(latestState(rejectedImplementer.entries), undefined, "failed implementer activation must not leave an active run");
+  assert.equal(rejectedImplementer.pi.currentModel.id, "gpt-5.6-terra");
+  assert.equal(rejectedImplementer.pi.activeTools.includes("subagent"), true);
 
   const branchSwitch = makeHarness();
   await branchSwitch.commands.get("workflow").handler("switch away", branchSwitch.ctx);
-  assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-luna");
+  assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-sol");
+  assert.equal(branchSwitch.pi.thinking, "low");
   assert.equal(branchSwitch.pi.activeTools.includes("subagent"), false);
   branchSwitch.setBranch([]);
   branchSwitch.events.emit("session_tree", {}, branchSwitch.ctx);
@@ -421,15 +464,29 @@ function makeHarness(options = {}) {
 
   const harness = makeHarness({ reviewWritesBookkeeping: true });
   await harness.commands.get("workflow").handler("implement a small feature", harness.ctx);
-  assert.match(harness.messages[0].message, /^\/skill:workflow-delivery Workflow mode: standard/);
-  assert.equal(harness.pi.currentModel.id, "gpt-5.6-luna");
+  assert.match(harness.messages[0].message, /^\/skill:workflow-delivery Task:/);
+  assert.equal(harness.pi.currentModel.id, "gpt-5.6-sol");
+  assert.equal(harness.pi.thinking, "low");
   await harness.pi.setModel(harness.ctx.modelRegistry.find("openai-codex", "gpt-5.6-terra"));
   harness.events.emit("session_tree", {}, harness.ctx);
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(harness.pi.currentModel.id, "gpt-5.6-luna", "an active restored run reselects its writer");
+  assert.equal(harness.pi.currentModel.id, "gpt-5.6-sol", "an active restored run reselects its implementer");
+  assert.equal(harness.pi.thinking, "low");
   assert.equal(harness.pi.activeTools.includes("subagent"), false);
-  assert.equal(harness.pi.activeTools.includes("bash"), true, "normal Luna tools remain available");
+  assert.equal(harness.pi.activeTools.includes("bash"), true, "normal implementation tools remain available");
   let run = latestState(harness.entries).run;
+  assert.equal(run.stage, "designing");
+  await assert.rejects(() => harness.tools.get("workflow_plan").execute("plan-before-design", {
+    expectedRevision: 0,
+    summary: "premature plan",
+    acceptanceCriteria: ["behavior works"],
+    steps: ["edit the file"],
+    checks: [{ label: "tests", command: "npm test" }],
+  }, new AbortController().signal, undefined, harness.ctx), /Automatic Sol design/);
+  await harness.tools.get("workflow_design").execute("design", {}, new AbortController().signal, undefined, harness.ctx);
+  assert.equal(harness.designCalls(), 1);
+  assert.deepEqual(harness.designRequests[0], { model: "openai-codex/gpt-5.6-sol", thinking: "xhigh", nodeId: "design", agent: "workflow-architect" });
+  run = latestState(harness.entries).run;
   assert.equal(run.stage, "planning");
   await assert.rejects(() => harness.tools.get("workflow_plan").execute("plan", {
     expectedRevision: 0,
@@ -453,35 +510,68 @@ function makeHarness(options = {}) {
   assert.equal(latestState(harness.entries).run.stage, "reviewing");
   const reviewResult = await harness.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, harness.ctx);
   assert.equal(reviewResult.details.completed, true);
+  assert.equal(reviewResult.details.round, 1);
+  assert.equal(harness.reviewCalls(), 1);
   assert.equal(harness.runtimeBookkeepingWrites(), 1, "bookkeeping written by an approving reviewer does not stale its fingerprint");
   assert.equal(latestState(harness.entries).run.stage, "completed");
   assert.equal(harness.pi.currentModel.id, "gpt-5.6-terra", "prior model is restored after completion");
   assert.equal(harness.pi.activeTools.includes("subagent"), true);
   assert.equal(latestState(harness.entries).prior, undefined, "restoration is recorded so terminal session events do not re-enable tools later");
 
-  const remediation = makeHarness({ reviewVerdict: "CHANGES_REQUESTED", reviewWritesBookkeeping: true });
-  await remediation.commands.get("workflow").handler("fix behavior", remediation.ctx);
+  const remediation = makeHarness({ reviewVerdicts: ["CHANGES_REQUESTED", "CHANGES_REQUESTED"], reviewWritesBookkeeping: true });
+  await startAndDesign(remediation, "fix behavior");
   await remediation.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "fix", acceptanceCriteria: ["fixed"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, remediation.ctx);
   await remediation.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, remediation.ctx);
-  await remediation.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, remediation.ctx);
+  await remediation.tools.get("workflow_review").execute("review-1", {}, new AbortController().signal, undefined, remediation.ctx);
   assert.equal(remediation.runtimeBookkeepingWrites(), 1, "reviewer bookkeeping is modeled separately from task changes");
   assert.equal(latestState(remediation.entries).run.stage, "fixing");
   remediation.recordRuntimeBookkeeping();
   await assert.rejects(() => remediation.tools.get("workflow_verify").execute("verify-bookkeeping", {}, new AbortController().signal, undefined, remediation.ctx), /repository has not changed since review/);
   assert.equal(latestState(remediation.entries).run.stage, "fixing", "bookkeeping-only changes do not satisfy remediation");
   remediation.setFingerprint("fp-2");
-  const remediationResult = await remediation.tools.get("workflow_verify").execute("verify-2", {}, new AbortController().signal, undefined, remediation.ctx);
+  const firstFixResult = await remediation.tools.get("workflow_verify").execute("verify-2", {}, new AbortController().signal, undefined, remediation.ctx);
+  assert.equal(firstFixResult.details.nextReviewRound, 2);
+  assert.equal(latestState(remediation.entries).run.stage, "reviewing");
+  await remediation.tools.get("workflow_review").execute("review-2", {}, new AbortController().signal, undefined, remediation.ctx);
+  assert.equal(latestState(remediation.entries).run.stage, "fixing");
+  remediation.setFingerprint("fp-3");
+  const remediationResult = await remediation.tools.get("workflow_verify").execute("verify-3", {}, new AbortController().signal, undefined, remediation.ctx);
   assert.equal(remediationResult.details.status, "completed_after_fixes");
   assert.equal(latestState(remediation.entries).run.stage, "completed_after_fixes");
+  assert.equal(latestState(remediation.entries).run.reviews.length, 2);
+  assert.equal(remediation.reviewCalls(), 2, "no third review runs after round 2 fixes");
+  assert.equal(remediation.reviewRequests[0].model, "openai-codex/gpt-5.6-sol");
+  assert.equal(remediation.reviewRequests[0].thinking, "high");
+  assert.equal(remediation.reviewRequests[0].nodeId, "review-1");
+  assert.equal(remediation.reviewRequests[1].model, "openai-codex/gpt-5.6-sol");
+  assert.equal(remediation.reviewRequests[1].thinking, "medium");
+  assert.equal(remediation.reviewRequests[1].nodeId, "review-2");
+  assert.match(remediation.reviewRequests[1].task, /PRIOR REVIEW RESULTS[\s\S]*CHANGES_REQUESTED/);
 
-  const designed = makeHarness();
-  await designed.commands.get("workflow").handler("--design migrate the API", designed.ctx);
-  await assert.rejects(() => designed.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "x", acceptanceCriteria: ["x"], steps: ["x"], checks: [{ label: "x", command: "true" }] }, new AbortController().signal, undefined, designed.ctx), /workflow_design/);
-  await designed.tools.get("workflow_design").execute("design", {}, new AbortController().signal, undefined, designed.ctx);
-  assert.equal(latestState(designed.entries).run.stage, "planning");
+  const secondRoundApproval = makeHarness({ reviewVerdicts: ["CHANGES_REQUESTED", "APPROVE"] });
+  await startAndDesign(secondRoundApproval, "approve repaired behavior");
+  await secondRoundApproval.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "repair", acceptanceCriteria: ["fixed"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, secondRoundApproval.ctx);
+  await secondRoundApproval.tools.get("workflow_verify").execute("verify-1", {}, new AbortController().signal, undefined, secondRoundApproval.ctx);
+  await secondRoundApproval.tools.get("workflow_review").execute("review-1", {}, new AbortController().signal, undefined, secondRoundApproval.ctx);
+  secondRoundApproval.setFingerprint("fp-2");
+  await secondRoundApproval.tools.get("workflow_verify").execute("verify-2", {}, new AbortController().signal, undefined, secondRoundApproval.ctx);
+  const secondApproval = await secondRoundApproval.tools.get("workflow_review").execute("review-2", {}, new AbortController().signal, undefined, secondRoundApproval.ctx);
+  assert.equal(secondApproval.details.round, 2);
+  assert.equal(latestState(secondRoundApproval.entries).run.stage, "completed");
+  assert.equal(secondRoundApproval.reviewCalls(), 2);
+
+  const automaticDesign = makeHarness();
+  await startAndDesign(automaticDesign, "migrate the API");
+  const reusedDesign = await automaticDesign.tools.get("workflow_design").execute("design-reused", {}, new AbortController().signal, undefined, automaticDesign.ctx);
+  assert.equal(reusedDesign.details.reused, true);
+  assert.equal(automaticDesign.designCalls(), 1, "every run dispatches exactly one Sol design");
+  const obsoleteFlag = makeHarness();
+  await obsoleteFlag.commands.get("workflow").handler("--design migrate the API", obsoleteFlag.ctx);
+  assert.equal(latestState(obsoleteFlag.entries), undefined);
+  assert.match(obsoleteFlag.notifications.at(-1).text, /mandatory and automatic/);
 
   const p2Only = makeHarness({ reviewVerdict: "CHANGES_REQUESTED", reviewFindings: [{ id: "N1", severity: "P2", title: "note", evidence: "a.txt:1", smallestFix: "optional cleanup" }] });
-  await p2Only.commands.get("workflow").handler("note-only review", p2Only.ctx);
+  await startAndDesign(p2Only, "note-only review");
   await p2Only.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "note", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, p2Only.ctx);
   await p2Only.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, p2Only.ctx);
   const p2Result = await p2Only.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, p2Only.ctx);
@@ -489,17 +579,18 @@ function makeHarness(options = {}) {
   assert.equal(latestState(p2Only.entries).run.stage, "completed");
 
   const preabortedReview = makeHarness();
-  await preabortedReview.commands.get("workflow").handler("preemptive review cancellation", preabortedReview.ctx);
+  await startAndDesign(preabortedReview, "preemptive review cancellation");
   await preabortedReview.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "cancel", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, preabortedReview.ctx);
   await preabortedReview.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, preabortedReview.ctx);
   const preabortedSignal = new AbortController();
   preabortedSignal.abort(new Error("cancel before dispatch"));
   await assert.rejects(() => preabortedReview.tools.get("workflow_review").execute("review", {}, preabortedSignal.signal, undefined, preabortedReview.ctx), /cancel before dispatch/);
   assert.equal(latestState(preabortedReview.entries).run.stage, "reviewing");
-  assert.equal(latestState(preabortedReview.entries).run.reviewStarted, undefined, "an unstarted review remains available");
+  assert.equal(latestState(preabortedReview.entries).run.reviewDispatches, 0, "an unstarted review round remains available");
+  assert.deepEqual(latestState(preabortedReview.entries).run.reviews, []);
 
   const reviewFailure = makeHarness({ reviewError: new Error("review bridge failed") });
-  await reviewFailure.commands.get("workflow").handler("review failure", reviewFailure.ctx);
+  await startAndDesign(reviewFailure, "review failure");
   await reviewFailure.tools.get("workflow_plan").execute("plan", { expectedRevision: 0, summary: "failure", acceptanceCriteria: ["works"], steps: ["edit"], checks: [{ label: "test", command: "npm test" }] }, new AbortController().signal, undefined, reviewFailure.ctx);
   await reviewFailure.tools.get("workflow_verify").execute("verify", {}, new AbortController().signal, undefined, reviewFailure.ctx);
   await assert.rejects(() => reviewFailure.tools.get("workflow_review").execute("review", {}, new AbortController().signal, undefined, reviewFailure.ctx), /review bridge failed/);
