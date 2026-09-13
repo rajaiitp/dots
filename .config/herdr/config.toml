@@ -30,6 +30,8 @@ focus_pane_right = "ctrl+l"
 
 # Direct workspace/tab access.
 workspace_picker = "ctrl+shift+p"
+# Ctrl-B then G opens the centered navigator for all workspaces and panes.
+goto = "prefix+g"
 # Direct Ctrl+1..9 tab switching uses Herdr's indexed shortcut parser.
 switch_tab = ""
 switch_workspace = "prefix+shift+1..9"

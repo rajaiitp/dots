@@ -14,6 +14,17 @@ NEVER run `sudo` or other interactive commands through the `bash` tool — pi's 
 
 NEVER take screenshots unless the user explicitly requests one.
 
+## Communication and authored text
+
+These rules apply everywhere: chat, plans, tool arguments, delegated prompts, findings, handoffs, progress updates, documentation, code comments, docstrings, TODOs, configuration comments, and commit or PR text.
+
+- Keep text minimal, precise, and task-specific.
+- State each fact once. Do not restate the request, narrate routine work, repeat evidence, add generic background, or list speculative alternatives.
+- Prefer short bullets or direct sentences. Include only decisions, material findings, actions, verification, and unresolved risks.
+- Edit documentation only when the user requests it or when necessary to keep a changed public contract accurate. Make the smallest sufficient documentation patch.
+- Add code comments, docstrings, or TODOs only when needed to explain a non-obvious invariant, constraint, or reason the code cannot express. Never describe obvious behavior, restate code, narrate an edit, or leave commentary that naming or structure can replace.
+- Before finishing, remove redundant prose, comments, docstrings, TODOs, and documentation.
+
 ## Planning and review
 
 For architecture or complex implementation work:

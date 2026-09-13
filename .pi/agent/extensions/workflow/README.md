@@ -42,7 +42,7 @@ The replacement has no:
 - delta review, sharding, or unbounded review/fix loops;
 - migration of legacy workflow state.
 
-The only model-facing delegation tool hidden during a run is `subagent`, preventing extra specialists from bypassing the fixed role and review-round policy. Normal editing, shell, research, and bookkeeping tools remain available.
+The model-facing `subagent` tool remains active in ordinary sessions and during workflow runs. The implementer may delegate through Nico Bailon's pi-subagents when useful, but those calls do not replace controller-owned design, verification, or review gates. Normal editing, shell, research, and bookkeeping tools also remain available.
 
 ## Verification
 
@@ -68,7 +68,7 @@ External side effects are outside this Git review envelope.
 
 ## Dependency
 
-`pi-subagents@0.66.0` is pinned in `~/.pi/agent/npm/package.json` and enabled as an extension in `~/.pi/agent/settings.json`. Its bundled skills and prompts remain disabled. Because separately installed Pi packages have independent module roots, the workflow uses the package's documented structured-delegation event names directly rather than importing internal runner code.
+Nico Bailon's `pi-subagents@0.66.0` (`nicobailon/pi-subagents`) is pinned in `~/.pi/agent/npm/package.json` and enabled as an extension in `~/.pi/agent/settings.json`. Its bundled skills and prompts remain disabled, while its direct `subagent` tool remains available. Because separately installed Pi packages have independent module roots, the workflow uses the package's documented structured-delegation event names directly for controller-owned design and review rather than importing internal runner code.
 
 Run `/subagents-doctor` if delegation is unavailable after `/reload`.
 

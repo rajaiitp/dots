@@ -445,6 +445,12 @@ async function startAndDesign(harness, task) {
     { context: "fresh", nodeId: "review-2", agent: "workflow-reviewer", thinking: "medium" },
   ]);
 
+  const directSubagents = makeHarness();
+  directSubagents.events.emit("session_start", {}, directSubagents.ctx);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(directSubagents.pi.activeTools.includes("subagent"), true, "Nico Bailon's direct subagent tool remains active outside workflow");
+  assert.equal(directSubagents.pi.getAllTools().some((tool) => tool.name === "subagent"), true);
+
   const rejectedImplementer = makeHarness({ failImplementationSelection: true });
   await rejectedImplementer.commands.get("workflow").handler("cannot start", rejectedImplementer.ctx);
   assert.equal(latestState(rejectedImplementer.entries), undefined, "failed implementer activation must not leave an active run");
@@ -455,12 +461,12 @@ async function startAndDesign(harness, task) {
   await branchSwitch.commands.get("workflow").handler("switch away", branchSwitch.ctx);
   assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-sol");
   assert.equal(branchSwitch.pi.thinking, "low");
-  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), false);
+  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), true, "direct subagent remains available during workflow implementation");
   branchSwitch.setBranch([]);
   branchSwitch.events.emit("session_tree", {}, branchSwitch.ctx);
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(branchSwitch.pi.currentModel.id, "gpt-5.6-terra", "leaving an active workflow branch restores its prior model");
-  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), true, "leaving an active workflow branch restores its direct delegation tool");
+  assert.equal(branchSwitch.pi.activeTools.includes("subagent"), true, "leaving workflow preserves the direct delegation tool");
 
   const harness = makeHarness({ reviewWritesBookkeeping: true });
   await harness.commands.get("workflow").handler("implement a small feature", harness.ctx);
@@ -472,7 +478,7 @@ async function startAndDesign(harness, task) {
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(harness.pi.currentModel.id, "gpt-5.6-sol", "an active restored run reselects its implementer");
   assert.equal(harness.pi.thinking, "low");
-  assert.equal(harness.pi.activeTools.includes("subagent"), false);
+  assert.equal(harness.pi.activeTools.includes("subagent"), true);
   assert.equal(harness.pi.activeTools.includes("bash"), true, "normal implementation tools remain available");
   let run = latestState(harness.entries).run;
   assert.equal(run.stage, "designing");

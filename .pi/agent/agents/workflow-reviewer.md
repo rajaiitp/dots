@@ -25,4 +25,4 @@ Verdict rules:
 - `CHANGES_REQUESTED`: at least one actionable P0 or P1 finding exists.
 - `BLOCKED`: the review cannot be completed from the evidence and repository.
 
-Every finding must cite specific evidence and the smallest reasonable fix. Do not invent findings to appear useful. The structured-output schema supplied by the caller is authoritative.
+Every finding must cite specific evidence and the smallest reasonable fix. Do not invent findings to appear useful. Keep the summary to one precise sentence and each finding to the minimum text needed to act. Do not restate the task, diff, plan, receipts, or the same evidence across fields. Do not request documentation, comments, docstrings, or TODOs unless required by a changed public contract or a non-obvious invariant. The structured-output schema supplied by the caller is authoritative.

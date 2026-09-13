@@ -203,10 +203,6 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
     pi.setActiveTools(active ? [...tools, SUBAGENT_TOOL] : tools.filter((name) => name !== SUBAGENT_TOOL));
   }
 
-  function hideDirectSubagents(): void {
-    setDirectSubagentActive(false);
-  }
-
   async function restoreSettings(prior: NonNullable<WorkflowState["prior"]>, ctx: ExtensionContext): Promise<boolean> {
     let restored = true;
     if (prior.provider && prior.model) {
@@ -291,7 +287,6 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
     try {
       await activateImplementer(ctx);
       state = startedState;
-      hideDirectSubagents();
       persist(ctx);
     } catch (error) {
       state = previousState;
@@ -619,7 +614,6 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
 
   async function reconcileSession(ctx: ExtensionContext, fallbackPrior?: PreviousSessionSettings): Promise<void> {
     if (state.run && !isTerminal(state.run.stage)) {
-      hideDirectSubagents();
       try {
         await activateImplementer(ctx);
       } catch (error) {
@@ -632,7 +626,7 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
     } else if (fallbackPrior) {
       // Session-tree changes replace state before model/tool reconciliation.
       // If the destination has no workflow state, restore the outgoing active
-      // run instead of leaking its implementation model and hidden subagent tool.
+      // run instead of leaking its implementation model or tool state.
       await restoreSettings(fallbackPrior, ctx);
     }
     updateUi(ctx);

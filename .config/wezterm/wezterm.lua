@@ -76,6 +76,8 @@ config.keys = {
     { key = "Tab", mods = "CTRL|SHIFT", action = act.SendString("\x1b[9;6u") },
     { key = "c",   mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
     { key = "v",   mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
+    -- Let Herdr receive Ctrl+Shift+P for its workspace/pane picker.
+    { key = "p",   mods = "CTRL|SHIFT", action = act.DisableDefaultAssignment },
 }
 
 -- WezTerm reserves Ctrl+1..9 for its own tabs even when its tab bar is hidden.

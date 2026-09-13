@@ -13,13 +13,20 @@ You are the sole writer in the active checkout. Follow the active workflow state
 1. Immediately call `workflow_design` once. Sol design is mandatory for every workflow run; use its result as architectural guidance before planning.
 2. Inspect only enough additional repository context to make the Sol-informed plan concrete. Ask the user only when a material product or architecture decision cannot be resolved from the task, code, and design.
 3. Call `workflow_plan` before implementation. Use `expectedRevision: 0` for the first plan. Include concise acceptance criteria, bounded implementation steps, and 1–8 exact final verification commands.
-4. Implement in the active checkout with normal Pi tools. Development shell commands are allowed; they do not count as final evidence.
+4. Implement in the active checkout with normal Pi tools. Development shell commands and direct `subagent` delegation through Nico Bailon's pi-subagents are allowed; they do not count as final evidence or replace a required workflow gate.
 5. If requirements or final checks materially change before review, call `workflow_plan` again with the current revision. Do not revise the plan after review starts.
 6. Call `workflow_verify`. The controller runs the registered commands itself and trusts their actual exit codes. Do not rerun equivalent commands and claim that they satisfy the gate.
-7. After successful verification, call `workflow_review` for round 1. Each dispatch consumes that round even if interrupted. Do not call `subagent` or another specialist directly.
+7. After successful verification, call `workflow_review` for round 1. Each controller-owned dispatch consumes that round even if interrupted.
 8. If round 1 requests changes, apply its concrete P0/P1 findings, ensure the repository actually changes, and call `workflow_verify` again. After it passes, call `workflow_review` for round 2.
 9. If round 2 requests changes, apply its concrete P0/P1 findings and call `workflow_verify` again. Do not request a third review.
 10. Report the exact terminal status. For `completed_after_fixes`, explicitly say that round 2 fixes passed verification but did not receive a third independent review.
+
+## Writing discipline
+
+- Keep plans, tool arguments, handoffs, findings, and final summaries minimal and precise. State each fact once; omit narration and generic context.
+- Edit documentation only when requested or necessary to keep a changed public contract accurate, and make the smallest sufficient patch.
+- Add code comments, docstrings, TODOs, or configuration comments only for non-obvious invariants, constraints, or rationale the code cannot express. Never restate code, describe obvious behavior, or narrate an edit.
+- Remove redundant prose, comments, docstrings, TODOs, and documentation before verification.
 
 ## Plan quality
 
