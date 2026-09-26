@@ -1775,6 +1775,47 @@ Item {
     readonly property bool hovered: moduleHover.hovered
     readonly property bool dragSource: root.barDragSource === slot
     readonly property bool panelOpen: root.activePopout === slot.activeItem
+    readonly property real externalItemScale: 1.3
+    readonly property bool matchWorkspaceText: moduleName === "omarchy.clock"
+      || moduleName === "omarchy.workspaces"
+      || moduleName === "raja.cpu-stats"
+      || moduleName === "raja.weather"
+      || moduleName === "raja.power"
+    property var enlargedItems: []
+
+    function enlargeBarItems(item) {
+      if (!item || root.slotScreenName(slot) !== "DP-2") return
+      if (item !== activeItem && "visible" in item && item.visible === false) return
+
+      var iconButton = "slotSize" in item && "opticalSize" in item && "fontSize" in item
+      var textButton = matchWorkspaceText && "fontSize" in item && "labelVisible" in item
+
+      if ((iconButton || textButton) && enlargedItems.indexOf(item) === -1) {
+        if (iconButton) {
+          var originalSlotSize = Number(item.slotSize)
+          var originalFixedWidth = Number(item.fixedWidth)
+          var originalFixedHeight = Number(item.fixedHeight)
+
+          item.slotSize = Math.round(originalSlotSize * externalItemScale)
+          item.opticalSize = Math.round(Number(item.opticalSize) * externalItemScale)
+
+          if (originalFixedWidth > 0 && Math.abs(originalFixedWidth - originalSlotSize) > 0.5)
+            item.fixedWidth = Math.round(originalFixedWidth * externalItemScale)
+          if (originalFixedHeight > 0 && Math.abs(originalFixedHeight - originalSlotSize) > 0.5)
+            item.fixedHeight = Math.round(originalFixedHeight * externalItemScale)
+        }
+
+        item.fontSize = textButton
+          ? Math.round(Style.font.body * externalItemScale)
+          : Math.round(Number(item.fontSize) * externalItemScale)
+        if (textButton && "verticalPadding" in item) item.verticalPadding = 6
+        enlargedItems = enlargedItems.concat([item])
+      }
+
+      var descendants = item.children || []
+      for (var i = 0; i < descendants.length; i++) enlargeBarItems(descendants[i])
+    }
+
     // Modules bigger than the mark they want (a text label in a padded slot,
     // a multi-line stack on a vertical bar) can say how long the open-panel
     // dot should be along the bar, so it tracks what the module paints
@@ -1798,6 +1839,13 @@ Item {
     }
 
     HoverHandler { id: moduleHover }
+
+    Timer {
+      interval: 250
+      running: slot.activeItem !== null
+      repeat: true
+      onTriggered: slot.enlargeBarItems(slot.activeItem)
+    }
 
     BorderSurface {
       visible: slot.dragSource

@@ -38,6 +38,26 @@ hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Suspend", "systemctl suspend")
 o.bind("SUPER + SHIFT + R", "Reload Hyprland", "hyprctl reload")
 
+-- Always target the laptop panel; minimum brightness powers it off.
+local laptop_brightness = os.getenv("HOME") .. "/.config/hypr/scripts/laptop-brightness"
+for _, key in ipairs({
+  "XF86MonBrightnessUp",
+  "XF86MonBrightnessDown",
+  "SHIFT + XF86MonBrightnessUp",
+  "SHIFT + XF86MonBrightnessDown",
+  "ALT + XF86MonBrightnessUp",
+  "ALT + XF86MonBrightnessDown",
+}) do
+  hl.unbind(key)
+end
+
+o.bind("XF86MonBrightnessUp", "Laptop brightness up", laptop_brightness .. " up", { locked = true, repeating = true })
+o.bind("XF86MonBrightnessDown", "Laptop brightness down", laptop_brightness .. " down", { locked = true, repeating = true })
+o.bind("SHIFT + XF86MonBrightnessUp", "Laptop brightness maximum", laptop_brightness .. " maximum", { locked = true, repeating = true })
+o.bind("SHIFT + XF86MonBrightnessDown", "Laptop display off", laptop_brightness .. " minimum", { locked = true, repeating = true })
+o.bind("ALT + XF86MonBrightnessUp", "Laptop brightness up precise", laptop_brightness .. " precise-up", { locked = true, repeating = true })
+o.bind("ALT + XF86MonBrightnessDown", "Laptop brightness down precise", laptop_brightness .. " precise-down", { locked = true, repeating = true })
+
 -- Workspace navigation and vim-style window navigation.
 hl.unbind("SUPER + TAB")
 o.bind("SUPER + TAB", "Former workspace", hl.dsp.focus({ workspace = "previous" }))

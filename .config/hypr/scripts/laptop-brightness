@@ -1,0 +1,79 @@
+#!/bin/bash
+set -euo pipefail
+
+monitor="eDP-1"
+action="${1:-status}"
+
+exec {lock_fd}>"${XDG_RUNTIME_DIR:-/tmp}/laptop-brightness.lock"
+flock -n "$lock_fd" || exit 0
+
+brightness() {
+  omarchy-brightness-display --monitor "$monitor"
+}
+
+is_lit() {
+  hyprctl -j monitors | jq -e --arg monitor "$monitor" \
+    '.[] | select(.name == $monitor and .disabled == false and .dpmsStatus == true)' >/dev/null
+}
+
+set_dpms() {
+  hyprctl dispatch "hl.dsp.dpms({ action = \"$1\", monitor = \"$monitor\" })" >/dev/null
+}
+
+wake() {
+  is_lit || set_dpms enable
+}
+
+power_off_at_minimum() {
+  omarchy-brightness-display --no-osd --monitor "$monitor" 1%
+  set_dpms disable
+}
+
+lower() {
+  local step="$1" current next
+  current="$(brightness)"
+  [[ $current =~ ^[0-9]+$ ]] || exit 1
+
+  if [[ $step == "5%-" && $current -gt 5 ]]; then
+    next=$((current - 5))
+  else
+    next=$((current - 1))
+  fi
+
+  if (( next <= 1 )); then
+    power_off_at_minimum
+  else
+    omarchy-brightness-display --monitor "$monitor" "$step"
+  fi
+}
+
+case "$action" in
+  up)
+    wake
+    omarchy-brightness-display --monitor "$monitor" +5%
+    ;;
+  down)
+    lower 5%-
+    ;;
+  precise-up)
+    wake
+    omarchy-brightness-display --monitor "$monitor" +1%
+    ;;
+  precise-down)
+    lower 1%-
+    ;;
+  maximum)
+    wake
+    omarchy-brightness-display --monitor "$monitor" 100%
+    ;;
+  minimum)
+    power_off_at_minimum
+    ;;
+  status)
+    printf 'monitor=%s brightness=%s dpms=%s\n' "$monitor" "$(brightness)" "$(is_lit && printf on || printf off)"
+    ;;
+  *)
+    printf 'Usage: %s {up|down|precise-up|precise-down|maximum|minimum|status}\n' "$0" >&2
+    exit 2
+    ;;
+esac
