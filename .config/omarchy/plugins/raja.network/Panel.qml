@@ -111,7 +111,7 @@ Panel {
   // True while any wifi action is mid-flight. Rows
   // disable themselves on this so clicks on the other rows don't silently
   // no-op against runNetworkAction's serialized guard.
-  readonly property bool busy: actionKind !== "" || repairBusy
+  readonly property bool busy: actionKind !== ""
 
   // Index into `wifiNetworks` for keyboard navigation. -1 = no selection.
   property int selectedIndex: -1
@@ -130,18 +130,12 @@ Panel {
   // radio to switch. On a wired box it would otherwise sit there reading
   // "off" beside a perfectly live Ethernet connection.
   readonly property bool canToggleWifi: networkManagerAvailable && wifiStationAvailable
-  // This local control is useful precisely when NetworkManager has lost the
-  // station, so do not hide it behind the backend/device availability state.
-  readonly property bool canRepairWifi: true
-  readonly property bool repairBusy: repairProc.running
   readonly property int qrHeaderIndex: canShareWifi ? 0 : -1
   readonly property int speedHeaderIndex: canRunSpeedTest ? (canShareWifi ? 1 : 0) : -1
-  readonly property int repairHeaderIndex: canRepairWifi ? (canShareWifi ? 1 : 0) + (canRunSpeedTest ? 1 : 0) : -1
-  readonly property int toggleHeaderIndex: canToggleWifi ? (canShareWifi ? 1 : 0) + (canRunSpeedTest ? 1 : 0) + (canRepairWifi ? 1 : 0) : -1
-  readonly property int headerActionCount: (canShareWifi ? 1 : 0) + (canRunSpeedTest ? 1 : 0) + (canRepairWifi ? 1 : 0) + (canToggleWifi ? 1 : 0)
+  readonly property int toggleHeaderIndex: canToggleWifi ? (canShareWifi ? 1 : 0) + (canRunSpeedTest ? 1 : 0) : -1
+  readonly property int headerActionCount: (canShareWifi ? 1 : 0) + (canRunSpeedTest ? 1 : 0) + (canToggleWifi ? 1 : 0)
   readonly property bool qrHeaderHasCursor: cursorActive && focusSection === "header" && headerIndex === qrHeaderIndex
   readonly property bool speedHeaderHasCursor: cursorActive && focusSection === "header" && headerIndex === speedHeaderIndex
-  readonly property bool repairHeaderHasCursor: cursorActive && focusSection === "header" && headerIndex === repairHeaderIndex
   readonly property bool toggleHeaderHasCursor: cursorActive && focusSection === "header" && headerIndex === toggleHeaderIndex
   readonly property string toggleHint: Networking.wifiEnabled ? "Turn Wi-Fi off" : "Turn Wi-Fi on"
   readonly property var dnsProviders: ["DHCP", "Cloudflare", "Google", "Custom"]
@@ -208,29 +202,9 @@ Panel {
   }
 
   function toggleNetwork() {
-    if (!networkManagerAvailable || repairBusy) return
+    if (!networkManagerAvailable) return
     Networking.wifiEnabled = !Networking.wifiEnabled
     Qt.callLater(function() { root.refresh(true) })
-  }
-
-  function notifyRepairResult(exitCode) {
-    var title = exitCode === 0 ? "Wi-Fi repair complete" : "Wi-Fi repair failed"
-    var body = exitCode === 0
-      ? "The ath11k adapter reset was requested. NetworkManager should reconnect shortly."
-      : "Authentication was cancelled or the adapter reset could not be completed."
-    Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-notification-send", "-g", "󰤨", title, body])
-  }
-
-  function repairWifi() {
-    if (!canRepairWifi || repairBusy || actionKind !== "" || actionProc.running) return
-
-    // Do not leave a NetworkManager scan running while the PCI function is
-    // being reset; the reset can temporarily remove the Wi-Fi object.
-    scanRestart.stop()
-    scanDone.stop()
-    setScannerEnabled(false)
-    scanning = false
-    repairProc.running = true
   }
 
   IpcHandler {
@@ -251,7 +225,6 @@ Panel {
   function activateHeader() {
     if (headerIndex === qrHeaderIndex) summonWifiQr()
     else if (headerIndex === speedHeaderIndex) summonSpeedTest()
-    else if (headerIndex === repairHeaderIndex) repairWifi()
     else if (headerIndex === toggleHeaderIndex) toggleNetwork()
   }
 
@@ -665,7 +638,7 @@ Panel {
   // reconnect is the thing you want to watch, and the details rows above
   // report it as it happens.
   function setBand(band) {
-    if (!band || actionProc.running || repairBusy) return
+    if (!band || actionProc.running) return
 
     root.pendingBand = band
     actionProc.command = ["omarchy-network-band", band]
@@ -692,7 +665,7 @@ Panel {
   }
 
   function setDns(provider) {
-    if (!root.bar || !provider || actionProc.running || repairBusy) return
+    if (!root.bar || !provider || actionProc.running) return
 
     if (provider === "Custom") {
       var launcher = "omarchy-launch-floating-terminal-with-presentation"
@@ -735,7 +708,7 @@ Panel {
   }
 
   function runNetworkAction(kind, network, callback) {
-    if (actionKind !== "" || repairBusy || !network) return
+    if (actionKind !== "" || !network) return
     var ssid = network.name || ""
     actionSsid = ssid
     actionKind = kind
@@ -890,26 +863,6 @@ Panel {
       bandProc.command = ["omarchy-network-band"]
       bandProc.running = true
     }
-  }
-
-  // The sleep hook is root-owned because the PCI reset sysfs node is root-only.
-  // pkexec provides the normal graphical polkit authentication prompt rather
-  // than granting the shell process direct write access to /sys.
-  Process {
-    id: repairProc
-    command: ["/usr/bin/pkexec", "/etc/systemd/system-sleep/90-resume-reset-ath11k", "manual"]
-    onExited: function(exitCode) {
-      root.notifyRepairResult(exitCode)
-      root.refresh(true)
-      repairRefresh.start()
-    }
-  }
-
-  Timer {
-    id: repairRefresh
-    interval: 2000
-    repeat: false
-    onTriggered: root.refresh(true)
   }
 
   // Action runner for DNS provider changes. Wi-Fi actions use the
@@ -1120,7 +1073,6 @@ Panel {
       onTextKey: function(t) {
         if (t === "r" || t === "R") root.refresh()
         else if (t === "w" || t === "W") root.toggleNetwork()
-        else if (t === "f" || t === "F") root.repairWifi()
       }
 
     Column {
@@ -1187,28 +1139,10 @@ Panel {
             onClicked: root.summonSpeedTest()
           }
 
-          Button {
-            id: repairAction
-            visible: root.canRepairWifi
-            iconText: "󰑐"
-            iconSpinning: root.repairBusy
-            tooltipText: root.repairBusy ? "Repairing Wi-Fi adapter…" : "Repair Wi-Fi adapter"
-            foreground: root.bar.foreground
-            fontFamily: root.bar.fontFamily
-            iconSize: Style.font.subtitle * 1.5
-            horizontalPadding: Style.space(5)
-            verticalPadding: Style.space(2)
-            hasCursor: root.repairHeaderHasCursor
-            Layout.alignment: Qt.AlignVCenter
-            onHovered: function(on) { if (on) root.setHeaderCursor(root.repairHeaderIndex) }
-            onClicked: root.repairWifi()
-          }
-
           ToggleSwitch {
             id: powerSwitch
             visible: root.canToggleWifi
             checked: Networking.wifiEnabled
-            busy: root.repairBusy
             hasCursor: root.toggleHeaderHasCursor
             foreground: root.bar.foreground
             Layout.alignment: Qt.AlignVCenter
@@ -1384,7 +1318,7 @@ Panel {
               anchors.verticalCenter: bandAutoLabel.verticalCenter
               anchors.verticalCenterOffset: Math.round(bandAutoLabel.topPadding / 2)
               checked: !root.bandPinned
-              busy: root.bandBusy || root.repairBusy
+              busy: root.bandBusy
               hasCursor: root.cursorActive && root.focusSection === "band" && root.bandAutoFocused
               foreground: root.bar.foreground
               onToggled: root.toggleBandAuto()
