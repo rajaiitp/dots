@@ -8,8 +8,6 @@ name = "gruvbox"
 [theme.custom]
 # Muted blue separates sidebar structure from pane highlights.
 surface_dim = "#458588"
-# Darker focused-agent row that preserves the status indicator contrast.
-active_row_bg = "#3c3836"
 
 [terminal]
 new_cwd = "follow"
