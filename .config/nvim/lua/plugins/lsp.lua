@@ -13,9 +13,7 @@ vim.diagnostic.config({
     },
 })
 
--- No highlight overrides — rose-pine drives LspReference* styling.
-
--- Silence progress handlers (noice handles these)
+-- Silence LSP progress notifications.
 vim.lsp.handlers["$/progress"]       = function() end
 vim.lsp.handlers["window/progress"]  = function() end
 
@@ -43,7 +41,6 @@ function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
     return orig_util_open_floating_preview(contents, syntax, opts, ...)
 end
 
-local lspconfig       = require("lspconfig")
 local mason_lspconfig = require("mason-lspconfig")
 -- fzf-lua is required lazily inside LspAttach so it's always loaded by then
 
@@ -75,14 +72,6 @@ require("mason").setup({
     },
 })
 
-require("mason-lspconfig").setup({
-    automatic_installation = true,
-    ensure_installed = {
-        "lua_ls", "emmet_ls", "graphql", "svelte", "html",
-        "cssls", "tailwindcss", "prismals", "pyright", "ruff", "gopls",
-    },
-})
-
 -- lazydev for Neovim Lua development
 require("lazydev").setup({
     library = {
@@ -93,8 +82,8 @@ require("lazydev").setup({
 -- lsp-file-operations
 require("lsp-file-operations").setup()
 
-local on_attach = function(client, bufnr)
-    if not vim.api.nvim_buf_is_valid(bufnr) then return end
+local disable_lsp_formatting = function(client, bufnr)
+    if not client or not vim.api.nvim_buf_is_valid(bufnr) then return end
     local conform_ok, conform = pcall(require, "conform")
     if conform_ok and #conform.list_formatters_to_run(bufnr) > 0 then
         client.server_capabilities.document_formatting       = false
@@ -106,7 +95,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
         settle_diagnostics(ev.buf)
-        on_attach(vim.lsp.get_client_by_id(ev.data.client_id), ev.buf)
+        disable_lsp_formatting(vim.lsp.get_client_by_id(ev.data.client_id), ev.buf)
         local opts = { buffer = ev.buf, silent = true }
         local fzf  = require("fzf-lua")
 
@@ -118,7 +107,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
         vim.keymap.set("n", "ga", fzf.lsp_implementations, opts)
         opts.desc = "LSP: Code actions"
         vim.keymap.set({ "n", "v" }, "<leader>ca", function()
-            fzf.lsp_code_actions({ 
+            fzf.lsp_code_actions({
                 winopts = { fullscreen = false, height = 0.525, width = 0.6 },
                 previewer = false
             })
@@ -202,97 +191,59 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 
 local capabilities = require("blink.cmp").get_lsp_capabilities()
+vim.lsp.config("*", { capabilities = capabilities })
 
-local function setup_lsp_handlers()
-    if not mason_lspconfig.setup_handlers then
-        vim.defer_fn(setup_lsp_handlers, 100)
-        return
-    end
-    mason_lspconfig.setup_handlers({
-        function(server_name)
-            if server_name == "pylsp" or server_name == "ruff_lsp" then return end
-            lspconfig[server_name].setup({ capabilities = capabilities, on_attach = on_attach })
-        end,
-        ["svelte"] = function()
-            lspconfig["svelte"].setup({
-                capabilities = capabilities,
-                on_attach = function(client, bufnr)
-                    on_attach(client, bufnr)
-                    vim.api.nvim_create_autocmd("BufWritePost", {
-                        pattern  = { "*.js", "*.ts" },
-                        callback = function(ctx)
-                            client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.match })
-                        end,
-                    })
-                end,
-            })
-        end,
-        ["graphql"] = function()
-            lspconfig["graphql"].setup({
-                capabilities = capabilities,
-                filetypes    = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
-                on_attach    = on_attach,
-            })
-        end,
-        ["emmet_ls"] = function()
-            lspconfig["emmet_ls"].setup({
-                capabilities = capabilities,
-                filetypes    = { "html","typescriptreact","javascriptreact","css","sass","scss","less","svelte" },
-                on_attach    = on_attach,
-            })
-        end,
-        ["lua_ls"] = function()
-            lspconfig["lua_ls"].setup({
-                capabilities = capabilities,
-                settings     = {
-                    Lua = {
-                        diagnostics = {
-                            globals = { "vim" },
-                        },
-                        workspace = {
-                            checkThirdParty = false,
-                            library = vim.api.nvim_get_runtime_file("", true),
-                        },
-                        telemetry = { enable = false },
-                    },
-                },
-                on_attach    = on_attach,
-            })
-        end,
-        ["pyright"] = function()
-            lspconfig["pyright"].setup({
-                capabilities = capabilities,
-                settings     = {
-                    python = {
-                        analysis = {
-                            typeCheckingMode       = "basic",
-                            useLibraryCodeForTypes = true,
-                            diagnosticMode         = "workspace",
-                        },
-                    },
-                },
-                filetypes    = { "python" },
-                init_options = {
-                    interpreter = {
-                        properties = {
-                            InterpreterPath = vim.fn.exepath("python3"),
-                            Version         = "3.12",
-                        },
-                    },
-                },
-                on_attach = on_attach,
-            })
-        end,
-        ["ruff"] = function()
-            local ruff_cap = require("blink.cmp").get_lsp_capabilities()
-            ruff_cap.workspace.applyEdit = true
-            lspconfig["ruff"].setup({
-                capabilities = ruff_cap,
-                init_options = { settings = { args = {} } },
-                on_attach    = on_attach,
-            })
-        end,
-    })
-end
+vim.lsp.config("graphql", {
+    filetypes = { "graphql", "svelte", "typescriptreact", "javascriptreact" },
+})
 
-setup_lsp_handlers()
+vim.lsp.config("lua_ls", {
+    settings = {
+        Lua = {
+            diagnostics = { globals = { "vim" } },
+            workspace = {
+                checkThirdParty = false,
+                library = vim.api.nvim_get_runtime_file("", true),
+            },
+            telemetry = { enable = false },
+        },
+    },
+})
+
+vim.lsp.config("pyright", {
+    settings = {
+        python = {
+            analysis = {
+                typeCheckingMode = "basic",
+                useLibraryCodeForTypes = true,
+                diagnosticMode = "workspace",
+            },
+        },
+    },
+    init_options = {
+        interpreter = {
+            properties = {
+                InterpreterPath = vim.fn.exepath("python3"),
+                Version = "3.12",
+            },
+        },
+    },
+})
+
+local ruff_capabilities = vim.deepcopy(capabilities)
+ruff_capabilities.workspace = ruff_capabilities.workspace or {}
+ruff_capabilities.workspace.applyEdit = true
+vim.lsp.config("ruff", {
+    capabilities = ruff_capabilities,
+    init_options = { settings = { args = {} } },
+})
+
+local servers = {
+    "lua_ls", "emmet_ls", "graphql", "svelte", "html",
+    "cssls", "tailwindcss", "prismals", "pyright", "ruff", "gopls",
+}
+
+mason_lspconfig.setup({
+    ensure_installed = servers,
+    automatic_enable = servers,
+})

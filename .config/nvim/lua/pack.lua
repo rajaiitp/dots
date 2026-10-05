@@ -7,12 +7,11 @@
 
 local gh = function(x) return "https://github.com/" .. x end
 
--- Build hooks: run after install/update
+-- Build hooks: run after plugin updates
 vim.api.nvim_create_autocmd("PackChanged", {
     callback = function(ev)
         local name = ev.data.spec.name
-        local kind = ev.data.kind
-        if kind ~= "install" and kind ~= "update" then return end
+        if ev.data.kind ~= "update" then return end
 
         if name == "nvim-treesitter" then
             if not ev.data.active then vim.cmd.packadd("nvim-treesitter") end
@@ -63,7 +62,6 @@ require("plugins.neo-tree")
 -- =============================================================================
 vim.pack.add({
     gh("nvim-treesitter/nvim-treesitter"),
-    -- nvim-ts-autotag removed: use built-in vim.lsp.linked_editing_range for tag renaming
 })
 require("plugins.treesitter")
 
@@ -71,17 +69,20 @@ require("plugins.treesitter")
 -- 7. COMPLETION
 -- =============================================================================
 vim.pack.add({
+    gh("saghen/blink.lib"),
     gh("saghen/blink.cmp"),
     gh("rafamadriz/friendly-snippets"),
 })
+local blink = require("blink.cmp")
+if not blink.library_available() then blink.build():pwait() end
 require("plugins.completion")
 
 -- =============================================================================
 -- 8. LSP
 -- =============================================================================
 vim.pack.add({
-    gh("williamboman/mason.nvim"),
-    gh("williamboman/mason-lspconfig.nvim"),
+    gh("mason-org/mason.nvim"),
+    gh("mason-org/mason-lspconfig.nvim"),
     gh("neovim/nvim-lspconfig"),
     gh("antosha417/nvim-lsp-file-operations"),
     gh("folke/lazydev.nvim"),
@@ -118,7 +119,6 @@ vim.pack.add({
     gh("windwp/nvim-autopairs"),
 })
 require("plugins.editor")
--- require("plugins.project-ask")  -- DISABLED: heavy model
 
 -- =============================================================================
 -- 13. UI

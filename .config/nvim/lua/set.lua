@@ -41,7 +41,6 @@ vim.opt.termguicolors = true
 vim.opt.cmdheight = 0
 -- Never pause command output with "Press ENTER or type command to continue".
 vim.opt.more = false
--- Fixed typo in fillchars (removed extra space)
 vim.opt.scrolloff = 15
 vim.opt.sidescrolloff = 15
 vim.opt.display:append("uhex")

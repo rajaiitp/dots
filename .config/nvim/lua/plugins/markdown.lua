@@ -1,5 +1,4 @@
--- No color overrides — let rose-pine drive render-markdown, treesitter, and
--- gemini-prompt highlights via their default links.
+-- Use theme-provided render-markdown, treesitter, and gemini-prompt highlights.
 --
 -- Setext headings (text underlined with === / ---): keep the neutralize link
 -- so a bullet on a new line doesn't flash the paragraph above as a heading.
@@ -60,5 +59,8 @@ require("render-markdown").setup({
         checked   = { icon = "󰄵 ", highlight = "RenderMarkdownChecked" },
     },
     link = { enabled = true, hyperlink = "󰌷 ", highlight = "RenderMarkdownLink" },
-    list = { enable = true, indent = 0, shift_width = 0 },
+    pipe_table = {
+        -- Replace wide rows with wrapped virtual lines to preserve column alignment.
+        wrap = true,
+    },
 })

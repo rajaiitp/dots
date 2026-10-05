@@ -104,15 +104,12 @@ miniclue.setup({
 -- autopairs
 require("nvim-autopairs").setup()
 
--- Undotree and local-highlight are intentionally disabled.
-
 -- document highlight (built-in LSP — highlights all refs to symbol under cursor)
 -- wired in lsp.lua via LspAttach (see vim.lsp.buf.document_highlight)
 
 -- =============================================================================
 -- GIT — gitsigns gutter signs, blame, and hunk staging only.
--- All in-editor diff VIEWERS were removed (codediff.nvim + gitsigns-enhanced).
--- Full diff review now lives outside nvim: tmux prefix+g → fzf branch → fzf
+-- Full diff review lives outside nvim: tmux prefix+g → fzf branch → fzf
 -- commit → `hunk show <commit>` (see ~/.config/tmux/scripts/hunk_review.sh).
 --
 -- Remaining keymaps (wired in gitsigns on_attach above):

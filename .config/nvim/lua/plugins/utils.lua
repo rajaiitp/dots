@@ -13,5 +13,3 @@ vim.keymap.set("n", "<A-BS>", function()
     vim.cmd("wshada!")   -- force-write shada before quitting
     vim.cmd("qall")
 end, { desc = "Session: Save and quit" })
-
--- Trouble and lazygit.nvim are intentionally disabled.
