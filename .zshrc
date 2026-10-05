@@ -118,3 +118,22 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+
+# Purge unavailable zoxide entries when a new interactive shell starts. A
+# shell inside ~/Worktrees registers only that linked worktree's Git root so
+# closed worktrees remain selectable in Sesh; ordinary directories are not
+# added and zoxide's cd hooks remain disabled.
+if command -v zoxide >/dev/null 2>&1; then
+  typeset -a _zoxide_stale_dirs
+  _zoxide_stale_dirs=()
+  while IFS= read -r _zoxide_dir; do
+    [[ -d $_zoxide_dir ]] || _zoxide_stale_dirs+=("$_zoxide_dir")
+  done < <(zoxide query --all --list 2>/dev/null)
+  (( ${#_zoxide_stale_dirs[@]} == 0 )) || zoxide remove "${_zoxide_stale_dirs[@]}" >/dev/null 2>&1
+
+  _zoxide_worktree_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)
+  if [[ $_zoxide_worktree_root == "$HOME/Worktrees/"*/* ]]; then
+    zoxide add "$_zoxide_worktree_root" >/dev/null 2>&1
+  fi
+  unset _zoxide_dir _zoxide_stale_dirs _zoxide_worktree_root
+fi
