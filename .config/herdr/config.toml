@@ -6,8 +6,9 @@ onboarding = false
 name = "gruvbox"
 
 [theme.custom]
-# Muted blue separates the sidebar edge and Spaces/Agents divider from pane highlights.
+# Muted blue separates sidebar structure from pane highlights.
 surface_dim = "#458588"
+active_row_bg = "#32302f"
 
 [terminal]
 new_cwd = "follow"
@@ -17,6 +18,9 @@ shell_mode = "auto"
 channel = "stable"
 version_check = true
 manifest_check = true
+
+[worktrees]
+directory = "~/Worktrees"
 
 [keys]
 # Match the existing WezTerm leader.
