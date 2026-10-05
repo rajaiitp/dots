@@ -4,7 +4,7 @@
 
 -- Apps and capture.
 hl.unbind("SUPER + RETURN")
-o.bind("SUPER + RETURN", "WezTerm", { launch = "wezterm-gui start --always-new-process" })
+o.bind("SUPER + RETURN", "Ghostty", { launch = "ghostty" })
 o.bind("SUPER + D", "Apps menu", "omarchy-menu toggle apps")
 o.bind("SUPER + E", "File manager", { omarchy = "nautilus" })
 
