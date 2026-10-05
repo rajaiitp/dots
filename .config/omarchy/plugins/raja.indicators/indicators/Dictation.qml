@@ -8,7 +8,7 @@ BarIndicator {
   property string state: "idle"
   property string icon: ""
 
-  active: state === "recording"
+  active: state === "recording" || state === "transcribing"
   activeText: icon
   inactiveText: "󰍬"
   activeTooltipText: state
@@ -23,16 +23,22 @@ BarIndicator {
     else icon = ""
   }
 
+  function toggle() {
+    if (!toggleProcess.running) toggleProcess.running = true
+  }
+
   Process {
-    command: ["bash", "-c", "omarchy-voxtype-status"]
+    command: ["omarchy-voxtype-status"]
     running: true
     stdout: SplitParser {
       onRead: function(data) { root.update(data) }
     }
   }
 
-  onPressed: function() {
-    if (!root.bar) return
-    root.bar.run("omarchy-voxtype-config")
+  Process {
+    id: toggleProcess
+    command: ["bash", "-lc", "systemctl --user start voxtype.service && voxtype record toggle"]
   }
+
+  onPressed: function() { root.toggle() }
 }

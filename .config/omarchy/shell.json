@@ -18,13 +18,6 @@
           "size": 10
         },
         {
-          "id": "raja.system-stats"
-        },
-        {
-          "id": "omarchy.spacer",
-          "size": 10
-        },
-        {
           "id": "raja.cpu-stats"
         }
       ],

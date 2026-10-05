@@ -11,7 +11,7 @@ Panel {
   readonly property var nightlightService: bar && bar.shell
     ? bar.shell.firstPartyServiceFor("omarchy.nightlight")
     : null
-  readonly property int minTemperature: 4000
+  readonly property int minTemperature: 3500
   readonly property int maxTemperature: 6500
   readonly property int temperatureStep: 100
   readonly property int identityTemperature: 6000
@@ -87,14 +87,8 @@ Panel {
   }
 
   function toggleNightlight() {
-    if (!nightlightService) return
-
     var enabling = !root.nightlightEnabled
-    nightlightService.setNightlight(enabling)
-    root.temperature = enabling ? minTemperature : maxTemperature
-    root.pendingTemperature = root.temperature
-    root.temperatureLoaded = true
-    root.temperatureBackendAvailable = true
+    root.applyTemperature(enabling ? minTemperature : maxTemperature)
   }
 
   implicitWidth: button.implicitWidth
@@ -167,7 +161,6 @@ Panel {
     text: "󰔎"
     active: root.nightlightEnabled
     useActiveColor: false
-    interactive: !!root.nightlightService
     tooltipText: root.nightlightEnabled ? "Day Light" : "Night Light"
 
     onPressed: function(buttonCode) {
