@@ -2170,10 +2170,10 @@ index f94f6bdcfa25deaf735bba0d44e4967bf1b11bbe..9d804f99ce44d99bdbbcc89a5ebd8c55
      };
 diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746b4e2e6bb
+index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6acd08fac5
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,927 @@
+@@ -0,0 +1,942 @@
 +use super::*;
 +
 +pub(super) struct SidebarTreeRow {
@@ -2197,6 +2197,7 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +        parent_indented: bool,
 +        last_child: bool,
 +        stale: bool,
++        active_workspace: bool,
 +    },
 +}
 +
@@ -2312,6 +2313,8 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                        parent_indented: entry.indented,
 +                        last_child: agent_index + 1 == agent_count,
 +                        stale: endpoint.status != ClientEndpointStatus::Online,
++                        active_workspace: &endpoint.endpoint_id == active_endpoint_id
++                            && workspace.focused,
 +                    },
 +                    gap_after: if agent_index + 1 == agent_count {
 +                        gap_after
@@ -2494,8 +2497,10 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                let selected = state.selected_workspace_id.is_some_and(|target| {
 +                    target.matches(&endpoint.endpoint_id, &workspace.workspace_id)
 +                });
-+                let dragged = &endpoint.endpoint_id == state.active_endpoint_id
-+                    && state.dragged_workspace_id == Some(workspace.workspace_id.as_str());
++                let focused =
++                    &endpoint.endpoint_id == state.active_endpoint_id && workspace.focused;
++                let dragged =
++                    focused && state.dragged_workspace_id == Some(workspace.workspace_id.as_str());
 +                let nested = if include_endpoints {
 +                    Rect::new(
 +                        rect.x.saturating_add(2),
@@ -2514,6 +2519,8 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                    })
 +                } else if dragged {
 +                    Some(palette.surface1)
++                } else if focused {
++                    Some(palette.active_row_bg)
 +                } else {
 +                    None
 +                };
@@ -2527,7 +2534,7 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                    config.status_indicators,
 +                    entry,
 +                    rows.clone(),
-+                    &endpoint.endpoint_id == state.active_endpoint_id && workspace.focused,
++                    focused,
 +                    selected,
 +                    dragged,
 +                    palette,
@@ -2570,6 +2577,7 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                parent_indented,
 +                last_child,
 +                stale,
++                active_workspace,
 +            } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let nested = if include_endpoints {
@@ -2582,6 +2590,9 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                } else {
 +                    rect
 +                };
++                if *active_workspace {
++                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
++                }
 +                super::agent_sidebar::render_agent_tree_row(
 +                    buffer,
 +                    nested,
@@ -2785,14 +2796,14 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                });
 +                let focused =
 +                    &endpoint.endpoint_id == state.active_endpoint_id && workspace.focused;
-+                if selected {
++                if selected || focused {
 +                    buffer.set_style(
 +                        rect,
 +                        Style::default().bg(
-+                            if palette.selection_bg == ratatui::style::Color::Reset {
-+                                palette.active_row_bg
-+                            } else {
++                            if selected && palette.selection_bg != ratatui::style::Color::Reset {
 +                                palette.selection_bg
++                            } else {
++                                palette.active_row_bg
 +                            },
 +                        ),
 +                    );
@@ -2850,9 +2861,13 @@ index 0000000000000000000000000000000000000000..d7496331704069b43541769872ac5746
 +                endpoint_index,
 +                row,
 +                stale,
++                active_workspace,
 +                ..
 +            } => {
 +                let endpoint = &state.endpoints[endpoint_index];
++                if active_workspace {
++                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
++                }
 +                put_text(
 +                    buffer,
 +                    rect.x,
@@ -3159,7 +3174,7 @@ index c170c9b085d1438ab3ed716b602afb70c657a0a6..92100f32d51c3ce3bca719cceb9b40f0
          self.mobile_switcher_scroll = 0;
          self.reveal_focused_workspace = true;
 diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9e32a6d73 100644
+index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c143905a52a5ff 100644
 --- i/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
@@ -3220,7 +3235,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
  
      let mut next = ClientShellInput::default();
      state.record_binding(
-@@ -502,9 +505,11 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -502,9 +505,18 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -3231,10 +3246,17 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
 +    assert!(text.contains("pi one"), "frame: {text}");
      assert!(text.contains("pi two"), "frame: {text}");
 -    assert!(text.contains("waiting for"), "frame: {text}");
++    let expanded_buffer = frame
++        .to_ratatui_buffer()
++        .expect("expanded agent sidebar buffer");
++    for (rect, _) in &state.hits.agents {
++        assert!((rect.x..rect.right())
++            .all(|x| expanded_buffer[(x, rect.y)].bg == state.config.palette.active_row_bg));
++    }
      assert_eq!(
          state
              .hits
-@@ -538,23 +543,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +550,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -3262,7 +3284,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
      );
  
      state.sidebar_collapsed = true;
-@@ -569,6 +565,203 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,6 +572,208 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -3279,8 +3301,10 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
 +    let icon_cell = &compact_buffer[(focused.x + 1, focused.y)];
 +    assert_ne!(icon_cell.fg, state.config.palette.blue);
 +    assert!(!icon_cell.modifier.contains(Modifier::BOLD));
-+    assert!((focused.x..focused.right())
-+        .all(|x| compact_buffer[(x, focused.y)].bg != state.config.palette.active_row_bg));
++    for (rect, _) in &state.hits.agents {
++        assert!((rect.x..rect.right())
++            .all(|x| compact_buffer[(x, rect.y)].bg == state.config.palette.active_row_bg));
++    }
 +}
 +
 +#[test]
@@ -3400,7 +3424,10 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
 +        .collect::<String>();
 +    assert!(active_text.trim_start().starts_with("client-shell"));
 +    assert!((active.x..active.right())
-+        .all(|x| buffer[(x, active.y)].bg != state.config.palette.active_row_bg));
++        .all(|x| buffer[(x, active.y)].bg == state.config.palette.active_row_bg));
++    let inactive = state.hits.workspaces[1].rect;
++    assert!((inactive.x..inactive.right())
++        .all(|x| buffer[(x, inactive.y)].bg != state.config.palette.active_row_bg));
 +    let agent = state.hits.agents[0].0;
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
 +    let (icon_x, icon_y) = cell_symbol_position(&frame, agent, icon);
@@ -3415,7 +3442,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
 +    assert_eq!(name_cell.fg, state.config.palette.blue);
 +    assert!(name_cell.modifier.contains(Modifier::BOLD));
 +    assert!((agent.x..agent.right())
-+        .all(|x| buffer[(x, agent.y)].bg != state.config.palette.active_row_bg));
++        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.active_row_bg));
 +    let text = frame
 +        .cells
 +        .chunks(frame.width as usize)
@@ -3466,7 +3493,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
  }
  
  #[test]
-@@ -599,14 +792,24 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+@@ -599,14 +804,24 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
      let row = state.hits.agents.first().expect("agent row hit").0;
      let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
  
@@ -3498,7 +3525,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..e1371b29b6fd3b9590732d7455ea43a9
  }
  
  #[test]
-@@ -739,61 +942,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+@@ -739,61 +954,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -3710,7 +3737,7 @@ index ed21bc8a7456325a808b56f1654776b5fbd89e40..b496e4de422698aec6d13c6588a1d0c0
  
  #[test]
 diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..c7c587b966d091bcd0d0a7bd8d609847f336b6ed 100644
+index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e6bda9598 100644
 --- i/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
 @@ -112,6 +112,8 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
@@ -3982,12 +4009,9 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..c7c587b966d091bcd0d0a7bd8d609847
      let metrics = state
          .hits
          .workspace_scroll_metrics
-@@ -990,8 +1010,12 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
-     );
-     assert_eq!(
+@@ -992,6 +1012,10 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
          buffer[(workspace.x + 2, workspace.y)].bg,
--        state.config.palette.active_row_bg
-+        ratatui::style::Color::Reset
+         state.config.palette.active_row_bg
      );
 +    assert!((workspace.x..workspace.right()).any(|x| {
 +        let cell = &buffer[(x, workspace.y)];
@@ -4403,7 +4427,7 @@ index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d29810318184
  
  #[test]
 diff --git i/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
-index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f9889144898 100644
+index c117a319446f652c7276cd67550eec4dc29aa0b5..bf151e84121c98ccce5c1e336cbc311c0fbbc90e 100644
 --- i/src/client/shell/tests/workspace_navigation.rs
 +++ w/src/client/shell/tests/workspace_navigation.rs
 @@ -71,6 +71,15 @@ fn workspace_rect(state: &ClientShellState, endpoint: &ClientEndpointId, workspa
@@ -4422,29 +4446,23 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
  #[test]
  fn local_navigation_highlight_stays_visible_with_terminal_theme() {
      use ratatui::style::Color;
-@@ -109,15 +118,8 @@ fn local_navigation_highlight_stays_visible_with_terminal_theme() {
-                 assert_ne!(buffer[(untouched.x, untouched.y)].bg, expected_bg);
-                 if workspace_id != "ws_1" {
+@@ -111,13 +120,9 @@ fn local_navigation_highlight_stays_visible_with_terminal_theme() {
                      let focused = workspace_rect(&state, &ClientEndpointId::Local, "ws_1");
--                    assert_eq!(
--                        buffer[(focused.x, focused.y)].bg,
+                     assert_eq!(
+                         buffer[(focused.x, focused.y)].bg,
 -                        if selection_bg == Color::Reset {
 -                            state.config.palette.sidebar_bg
 -                        } else {
 -                            state.config.palette.active_row_bg
 -                        }
--                    );
-                     assert_ne!(buffer[(focused.x, focused.y)].bg, expected_bg);
++                        state.config.palette.active_row_bg
+                     );
+-                    assert_ne!(buffer[(focused.x, focused.y)].bg, expected_bg);
 +                    assert!(has_accent_bold(&buffer, focused, &state.config.palette));
                  }
                  preview_key(&mut state, b"\x1b[B");
              }
-@@ -133,10 +135,11 @@ fn local_navigation_highlight_stays_visible_with_terminal_theme() {
-             preview_key(&mut state, b"\x1b");
-             let buffer = state.compose(100, 28).unwrap().to_ratatui_buffer().unwrap();
-             let focused = workspace_rect(&state, &ClientEndpointId::Local, "ws_1");
--            assert_eq!(
-+            assert_ne!(
+@@ -137,6 +142,7 @@ fn local_navigation_highlight_stays_visible_with_terminal_theme() {
                  buffer[(focused.x, focused.y)].bg,
                  state.config.palette.active_row_bg
              );
@@ -4452,7 +4470,7 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
              let cancelled = workspace_rect(&state, &ClientEndpointId::Local, "ws_3");
              assert_eq!(
                  buffer[(cancelled.x, cancelled.y)].bg,
-@@ -186,20 +189,19 @@ fn navigation_highlights_only_the_preview_and_activates_on_enter() {
+@@ -186,20 +192,19 @@ fn navigation_highlights_only_the_preview_and_activates_on_enter() {
                  };
                  assert_eq!(buffer[(selected.x + 2, selected.y)].bg, color);
                  assert_ne!(buffer[(other.x + 2, other.y)].bg, color);
@@ -4477,13 +4495,13 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
 -                );
 +                    );
 +                } else {
-+                    assert_ne!(buffer[(focused.x + 2, focused.y)].bg, color);
++                    assert_eq!(buffer[(focused.x + 2, focused.y)].bg, palette.active_row_bg);
 +                    assert!(has_accent_bold(&buffer, focused, palette));
 +                }
              }
              assert_eq!(state.snapshot.as_ref().unwrap().boot_id, "boot-1");
              assert_eq!(
-@@ -359,25 +361,27 @@ fn mouse_clicks_cancel_remote_workspace_navigation() {
+@@ -359,25 +364,27 @@ fn mouse_clicks_cancel_remote_workspace_navigation() {
  }
  
  #[test]
@@ -4518,7 +4536,7 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
          (44, false, false, true),
          (44, true, true, false),
      ] {
-@@ -389,11 +393,7 @@ fn workspace_navigation_respects_each_machines_visible_worktree_groups() {
+@@ -389,11 +396,7 @@ fn workspace_navigation_respects_each_machines_visible_worktree_groups() {
          }
          state.compose(cols, 28).unwrap();
          enter_navigation(&mut state);
@@ -4531,7 +4549,7 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
          let remote_ids: &[&str] = if !show_child {
              &["ws_1", "ws_2"]
          } else if compact {
-@@ -615,12 +615,25 @@ fn assert_local_highlight(state: &mut ClientShellState, selected_id: &str) {
+@@ -615,12 +618,35 @@ fn assert_local_highlight(state: &mut ClientShellState, selected_id: &str) {
      let buffer = state.compose(100, 28).unwrap().to_ratatui_buffer().unwrap();
      for workspace_id in ["ws_1", "ws_2", "ws_3"] {
          let rect = workspace_rect(state, &ClientEndpointId::Local, workspace_id);
@@ -4545,12 +4563,22 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..523d3500ad51ca1eaad9ba27abf47f98
 +                    .map(|pending| &pending.target)
 +            })
 +            .is_some_and(|target| target.matches(&ClientEndpointId::Local, workspace_id));
++        let focused = state
++            .snapshot
++            .as_deref()
++            .and_then(|snapshot| {
++                snapshot
++                    .workspaces
++                    .iter()
++                    .find(|workspace| workspace.workspace_id == workspace_id)
++            })
++            .is_some_and(|workspace| workspace.focused);
          assert_eq!(
              (rect.x..rect.right())
                  .any(|x| buffer[(x, rect.y)].bg == state.config.palette.active_row_bg),
 -            workspace_id == selected_id,
 -            "expected only {selected_id} highlighted, checking {workspace_id}"
-+            transiently_selected,
++            transiently_selected || focused,
 +            "unexpected selection background for {workspace_id}"
          );
 +        if workspace_id == selected_id && !transiently_selected {

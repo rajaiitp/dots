@@ -8,6 +8,7 @@ name = "gruvbox"
 [theme.custom]
 # Muted blue separates sidebar structure from pane highlights.
 surface_dim = "#458588"
+active_row_bg = "#32302f"
 
 [terminal]
 new_cwd = "follow"
