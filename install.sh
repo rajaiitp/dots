@@ -292,10 +292,10 @@ select_subselections() {
             defaults=(1 1)
             ;;
         terminals)
-            title="Terminal emulator"
-            keys=(terminal_wezterm)
-            labels=("WezTerm — plain outer terminal emulator")
-            defaults=(1)
+            title="Terminal emulators"
+            keys=(terminal_wezterm terminal_ghostty)
+            labels=("WezTerm — plain outer terminal emulator" "Ghostty — fast native terminal emulator")
+            defaults=(1 1)
             ;;
         desktop)
             title="Wayland desktop and macOS desktop tools"
@@ -370,7 +370,7 @@ sync_selected_apps() {
     any_component_selected shell_zsh shell_zimfw shell_default && set_app_selected shell 1
     any_component_selected core_git core_fzf core_ripgrep core_fd core_bat core_jq core_eza core_zoxide core_lazygit core_expect core_openssh core_curl core_ca_certs core_libnotify core_worktrunk core_worktrunk_shell && set_app_selected core 1
     any_component_selected nvim_editor nvim_prettier && set_app_selected nvim 1
-    any_component_selected terminal_wezterm && set_app_selected terminals 1
+    any_component_selected terminal_wezterm terminal_ghostty && set_app_selected terminals 1
     any_component_selected desktop_hyprland desktop_hyprlock desktop_hyprpaper desktop_hypridle desktop_hyprpicker desktop_hyprsunset desktop_xdg_portal_hyprland desktop_xdg_portal_gtk desktop_xdg_portal_wlr desktop_waybar desktop_dunst desktop_fuzzel desktop_grim desktop_slurp desktop_hyprshot desktop_swappy desktop_wl_clipboard desktop_wl_clip_persist desktop_polkit desktop_hyprpolkitagent desktop_pcmanfm desktop_gvfs desktop_xwayland desktop_autoraise desktop_aerospace desktop_karabiner && set_app_selected desktop 1
     any_component_selected network_networkmanager network_applet network_pipewire network_wireplumber network_pavucontrol network_brightnessctl network_playerctl network_tailscale network_firewalld && set_app_selected network 1
     any_component_selected fonts_jetbrains fonts_noto fonts_noto_emoji fonts_gtk3 fonts_gtk4 fonts_python_gobject fonts_adwaita_icons && set_app_selected fonts 1
@@ -468,6 +468,7 @@ build_selected_packages() {
     component_is_selected nvim_prettier && NPM_GLOBALS_SELECTED+=(prettier)
 
     component_is_selected terminal_wezterm && { PKGS_ARCH_SELECTED+=(wezterm); PKGS_APT_SELECTED+=(wezterm); CASKS_MAC_SELECTED+=(wezterm); }
+    component_is_selected terminal_ghostty && { PKGS_ARCH_SELECTED+=(ghostty); PKGS_APT_SELECTED+=(ghostty); CASKS_MAC_SELECTED+=(ghostty); }
 
     component_is_selected desktop_hyprland && { PKGS_ARCH_SELECTED+=(hyprland); PKGS_APT_SELECTED+=(hyprland); }
     component_is_selected desktop_hyprlock && { PKGS_ARCH_SELECTED+=(hyprlock); PKGS_APT_SELECTED+=(hyprlock); }
@@ -825,6 +826,7 @@ setup_symlinks() {
     component_is_selected herdr_sesh && dirs+=(sesh)
     component_is_selected tuicr_skill && dirs+=(tuicr)
     component_is_selected terminal_wezterm && dirs+=(wezterm)
+    component_is_selected terminal_ghostty && dirs+=(ghostty)
     component_is_selected shell_zsh && dirs+=(zsh)
     if [[ $OS == macos ]]; then
         # macOS window manager + key remapper
@@ -1073,6 +1075,7 @@ uninstall_symlinks() {
     component_is_selected core_git && dirs+=(git)
     component_is_selected nvim_editor && dirs+=(nvim)
     component_is_selected terminal_wezterm && dirs+=(wezterm)
+    component_is_selected terminal_ghostty && dirs+=(ghostty)
     component_is_selected shell_zsh && dirs+=(zsh)
     component_is_selected tuicr_skill && dirs+=(tuicr)
     component_is_selected herdr_sesh && dirs+=(sesh)
@@ -1259,7 +1262,7 @@ Some things this script cannot do for you:
     enabled in about:config
   • Wallpapers: \`~/.config/hypr/hyprpaper.conf\` references paths under
     ~/Documents/wallpaper/ — copy your wallpaper collection there or adjust
-  • Wezterm: fully close and reopen to pick up any config changes
+  • Terminals: fully close and reopen WezTerm or Ghostty to pick up config changes
   • tuicr: the custom fork installs to ~/.local/bin/tuicr and is built from rajaiitp/tuicr
   • Herdr Sesh: the installer adds fullerzz/herdr-plugin-sesh when Herdr is available
 
