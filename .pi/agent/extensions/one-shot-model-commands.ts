@@ -9,6 +9,7 @@ const PROVIDER = "openai-codex";
 const THINKING_LEVEL: ModelThinkingLevel = "xhigh";
 
 const TARGET_MODELS = {
+	luna: "gpt-5.6-luna",
 	sol: "gpt-5.6-sol",
 	terra: "gpt-5.6-terra",
 } as const;
@@ -20,18 +21,6 @@ type PendingRestore = {
 
 export default function oneShotModelCommands(pi: ExtensionAPI) {
 	let pendingRestore: PendingRestore | undefined;
-	let orchestratorActive = false;
-
-	pi.events.on("orch:state", (value: unknown) => {
-		orchestratorActive = Boolean(value && typeof value === "object" && (value as { enabled?: unknown }).enabled === true);
-	});
-
-	function isOrchestratorActive(ctx: ExtensionContext): boolean {
-		const entry = [...ctx.sessionManager.getBranch()]
-			.reverse()
-			.find((item: any) => item.type === "custom" && item.customType === "orchestrator-state") as any;
-		return orchestratorActive || entry?.data?.enabled === true;
-	}
 
 	async function runOneShot(
 		commandName: keyof typeof TARGET_MODELS,
@@ -46,11 +35,6 @@ export default function oneShotModelCommands(pi: ExtensionAPI) {
 
 		if (!ctx.isIdle()) {
 			ctx.ui.notify("The agent is busy. Try again when the current turn finishes.", "warning");
-			return;
-		}
-
-		if (isOrchestratorActive(ctx)) {
-			ctx.ui.notify("/sol and /terra are disabled while /orch is active; use the orchestrator role tools or /orch off.", "warning");
 			return;
 		}
 
@@ -96,6 +80,11 @@ export default function oneShotModelCommands(pi: ExtensionAPI) {
 		pi.setThinkingLevel(previous.thinkingLevel);
 		ctx.ui.notify("Restored the previous model and thinking level.", "info");
 	}
+
+	pi.registerCommand("luna", {
+		description: "Run one prompt with GPT-5.6 Luna at xhigh, then restore the current model",
+		handler: async (args, ctx) => runOneShot("luna", args, ctx),
+	});
 
 	pi.registerCommand("sol", {
 		description: "Run one prompt with GPT-5.6 Sol at xhigh, then restore the current model",

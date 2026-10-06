@@ -133,7 +133,6 @@ end, { desc = "Restart nvim (tmux)" })
 -- =============================================================================
 
 map("n", "gt", "<cmd>Neotree filesystem toggle left<CR>", { desc = "Toggle Neo-tree" })
-map("n", "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit" })
 map("n", "<leader>gb", function()
     require("fzf-lua").git_branches({
         winopts = {

@@ -6,3 +6,5 @@ review_watch_interval_ms = 1000
 # The custom fork is built from source and has no release channel here.
 no_update_check = true
 single_file_view = true
+# Suppress formatting-only rows (for example, gofmt map alignment) in diffs.
+ignore_whitespace = true

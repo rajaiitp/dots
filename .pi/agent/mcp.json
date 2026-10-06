@@ -3,5 +3,28 @@
     "idleTimeout": 15,
     "directTools": false
   },
-  "mcpServers": {}
+  "mcpServers": {
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "headers": {
+        "Authorization": "!~/.pi/agent/bin/atlassian-mcp-auth header"
+      },
+      "includeTools": [
+        "atlassianUserInfo",
+        "getAccessibleAtlassianResources",
+        "discover",
+        "executeRead",
+        "get*",
+        "list*",
+        "lookup*",
+        "download*",
+        "export*",
+        "resolve*",
+        "diff*",
+        "search*",
+        "scan*"
+      ],
+      "lifecycle": "lazy"
+    }
+  }
 }

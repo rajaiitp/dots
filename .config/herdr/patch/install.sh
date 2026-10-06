@@ -3,7 +3,7 @@ set -euo pipefail
 
 SOURCE_REPO=${HERDR_SOURCE_REPO:-https://github.com/herdrdev/herdr.git}
 SOURCE_COMMIT=7b116c05bfda646af39d2524c54e70c751f57ee8
-PATCH_SHA256=e79d60d535518c0ffeee933a6336377574da1af445bb56bd742fcea4f69d821d
+PATCH_SHA256=03dadc2f89122dedb6e36b73c3ad10e2580d9cbb661ebeedc30c3eb594b191ad
 RUST_TOOLCHAIN=1.96.1
 ZIG_VERSION=0.16.0
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

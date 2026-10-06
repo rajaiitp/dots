@@ -23,6 +23,11 @@ vim.api.nvim_create_autocmd("PackChanged", {
             if not ev.data.active then vim.cmd.packadd("mason.nvim") end
             vim.cmd("MasonUpdate")
         end
+
+        if name == "blink.cmp" then
+            if not ev.data.active then vim.cmd.packadd("blink.cmp") end
+            require("blink.cmp").build():pwait()
+        end
     end,
 })
 
@@ -71,6 +76,7 @@ require("plugins.treesitter")
 -- 7. COMPLETION
 -- =============================================================================
 vim.pack.add({
+    gh("saghen/blink.lib"),
     gh("saghen/blink.cmp"),
     gh("rafamadriz/friendly-snippets"),
 })

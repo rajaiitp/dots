@@ -1,21 +1,53 @@
-local ok, configs = pcall(require, "nvim-treesitter.configs")
-if ok then
-    -- Set compiler to use system cc
-    require("nvim-treesitter.install").compilers = { "cc", "gcc", "clang" }
-    
-    configs.setup({
-        highlight            = { enable = true },
-        indent               = { enable = true },
-        incremental_selection = { enable = true },
-        auto_install = true, -- Auto-install missing parsers
-        -- autotag removed: built-in vim.lsp.linked_editing_range handles tag renaming
-        ensure_installed = {
-            "json", "javascript", "typescript", "tsx", "yaml", "html",
-            "css", "prisma", "markdown", "markdown_inline", "svelte",
-            "graphql", "bash", "lua", "vim", "dockerfile", "gitignore",
-            "query", "vimdoc", "c", "python", "rust", "go",
-        },
-    })
-else
-    vim.treesitter.language.register("bash", "sh")
-end
+local treesitter = require("nvim-treesitter")
+
+local PARSERS = {
+    "bash",
+    "c",
+    "css",
+    "dockerfile",
+    "gitignore",
+    "go",
+    "graphql",
+    "html",
+    "javascript",
+    "json",
+    "lua",
+    "markdown",
+    "markdown_inline",
+    "prisma",
+    "python",
+    "query",
+    "rust",
+    "svelte",
+    "tsx",
+    "typescript",
+    "vim",
+    "vimdoc",
+    "yaml",
+}
+
+local TREESITTER_GROUP = vim.api.nvim_create_augroup("TreesitterFeatures", { clear = true })
+
+-- nvim-treesitter's current main branch provides parser management and queries.
+-- Highlighting and indentation are native Neovim features and must be enabled
+-- explicitly for each buffer.
+treesitter.setup({})
+treesitter.install(PARSERS)
+vim.treesitter.language.register("bash", "sh")
+
+vim.api.nvim_create_autocmd("FileType", {
+    group = TREESITTER_GROUP,
+    pattern = "*",
+    callback = function(args)
+        local filetype = vim.bo[args.buf].filetype
+        local language = vim.treesitter.language.get_lang(filetype) or filetype
+        local started = pcall(vim.treesitter.start, args.buf, language)
+        if not started then return end
+
+        local has_query, query = pcall(vim.treesitter.query.get, language, "indents")
+        if has_query and query then
+            vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+    end,
+    desc = "Enable available Treesitter features",
+})

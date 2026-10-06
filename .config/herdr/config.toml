@@ -8,7 +8,10 @@ name = "gruvbox"
 [theme.custom]
 # Muted blue separates sidebar structure from pane highlights.
 surface_dim = "#458588"
-active_row_bg = "#32302f"
+# Dark Gruvbox green highlights the active workspace.
+active_row_bg = "#3f4f32"
+# Bright Gruvbox green distinguishes the actually focused agent row.
+selection_bg = "#98971a"
 
 [terminal]
 new_cwd = "follow"
@@ -57,6 +60,8 @@ next_tab = "prefix+n"
 # Cycle directly between Pi/agent panes without using the workspace tabs.
 previous_agent = "ctrl+shift+tab"
 next_agent = "ctrl+tab"
+# Reserve Prefix+Tab for the Sesh last-workspace command below.
+cycle_pane_next = ""
 close_tab = "prefix+shift+x"
 
 # Navigation-mode keys remain aligned with the direct Ctrl navigation.
@@ -93,10 +98,10 @@ command = "fullerzz.sesh.open-picker"
 description = "Open Sesh workspace picker"
 
 [[keys.command]]
-key = "prefix+shift+b"
+key = "prefix+tab"
 type = "plugin_action"
 command = "fullerzz.sesh.last"
-description = "Switch to previous Sesh workspace"
+description = "Switch to last Sesh workspace"
 
 [ui]
 mouse_capture = true
@@ -106,6 +111,10 @@ show_agent_labels_on_pane_borders = true
 hide_tab_bar_when_single_tab = false
 confirm_close = true
 prompt_new_tab_name = true
+
+[ui.sidebar.spaces]
+# Keep the branch name on its own row without ahead/behind change counts.
+rows = [["state_icon", "workspace"], ["branch"]]
 
 [ui.toast]
 delivery = "herdr"

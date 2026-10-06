@@ -1,5 +1,5 @@
 diff --git i/src/client/shell.rs w/src/client/shell.rs
-index 2d180443b43390cbdcd75a696159453282fa4938..9cec3a49f70812d121d707c9e345e4a54c991fd4 100644
+index 2d180443..9cec3a49 100644
 --- i/src/client/shell.rs
 +++ w/src/client/shell.rs
 @@ -14,7 +14,6 @@ mod endpoint_agent_state;
@@ -27,7 +27,7 @@ index 2d180443b43390cbdcd75a696159453282fa4938..9cec3a49f70812d121d707c9e345e4a5
  #[cfg(test)]
  pub(super) use surface_patch::apply_composed_surface_patch;
 diff --git i/src/client/shell/actions.rs w/src/client/shell/actions.rs
-index 9d0a3bd5dc9c49911f248a3e5a6071baa6679be5..968960be0dc0ef2b70a2b46bb02ac3090d690a15 100644
+index 9d0a3bd5..968960be 100644
 --- i/src/client/shell/actions.rs
 +++ w/src/client/shell/actions.rs
 @@ -880,24 +880,33 @@ impl ClientShellState {
@@ -97,7 +97,7 @@ index 9d0a3bd5dc9c49911f248a3e5a6071baa6679be5..968960be0dc0ef2b70a2b46bb02ac309
              }
              KeybindAction::SwitchWorkspace(index) => {
 diff --git i/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
-index e43ab8ccbd0c922154b745a595b0ad7b641907bc..67d3ce02886c1f858b77c78dfc9317815eac5600 100644
+index e43ab8cc..67d3ce02 100644
 --- i/src/client/shell/agent_sidebar.rs
 +++ w/src/client/shell/agent_sidebar.rs
 @@ -49,202 +49,6 @@ pub(super) fn ordered_agent_pane_ids(
@@ -363,12 +363,12 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..67d3ce02886c1f858b77c78dfc931781
 -    let row_style = if row.focused {
 -        Style::default().bg(palette.active_row_bg)
 -    } else {
+-        Style::default()
+-    };
+-    let name_style = if row.focused {
 +    let row_style = Style::default();
 +    let agent_style = if row.focused {
          Style::default()
--    };
--    let name_style = if row.focused {
--        Style::default()
 -            .fg(palette.text)
 +            .fg(palette.blue)
              .add_modifier(Modifier::BOLD)
@@ -435,7 +435,7 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..67d3ce02886c1f858b77c78dfc931781
      unicode_width::UnicodeWidthStr::width(text)
  }
 diff --git i/src/client/shell/composition.rs w/src/client/shell/composition.rs
-index b7ab4a96792a077f78c0059fae974abc5a4d76d0..14a80ac222a8ab8d6ce7be9bccd0e880ca1f8953 100644
+index b7ab4a96..14a80ac2 100644
 --- i/src/client/shell/composition.rs
 +++ w/src/client/shell/composition.rs
 @@ -62,12 +62,11 @@ impl ClientShellState {
@@ -502,7 +502,7 @@ index b7ab4a96792a077f78c0059fae974abc5a4d76d0..14a80ac222a8ab8d6ce7be9bccd0e880
                  selected_workspace_id: self
                      .navigate_workspace_id
 diff --git i/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
-index b56b41fa1446c40f47dc01573d27cbd22ecf6999..8d69724ddb8b13413cd886dd73dbb10024446548 100644
+index b56b41fa..8d69724d 100644
 --- i/src/client/shell/endpoint_agents.rs
 +++ w/src/client/shell/endpoint_agents.rs
 @@ -1,177 +1,38 @@
@@ -608,15 +608,15 @@ index b56b41fa1446c40f47dc01573d27cbd22ecf6999..8d69724ddb8b13413cd886dd73dbb100
 -        }
 -        let rows = agent_rows(&self.endpoints, &self.active_endpoint_id, &self.config);
 -        let Some(target) = rows
-+        let worktree_key = self
-+            .endpoints
-             .iter()
+-            .iter()
 -            .position(|row| &row.endpoint_id == endpoint_id && row.agent.pane_id == pane_id)
 -        else {
 -            return;
 -        };
 -        let heights = rows
--            .iter()
++        let worktree_key = self
++            .endpoints
+             .iter()
 -            .map(|row| row.agent.rows.len().max(1).min(u16::MAX as usize) as u16)
 -            .collect::<Vec<_>>();
 -        let mut gaps = vec![self.config.agents.row_gap; rows.len()];
@@ -710,7 +710,7 @@ index b56b41fa1446c40f47dc01573d27cbd22ecf6999..8d69724ddb8b13413cd886dd73dbb100
 +    }
  }
 diff --git i/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
-index a1f7ac2cc2a9f6950acc64be306ef776d6f55f73..7d6a29f7fd7b4894992bd9384499685f9b624243 100644
+index a1f7ac2c..7d6a29f7 100644
 --- i/src/client/shell/endpoint_navigation.rs
 +++ w/src/client/shell/endpoint_navigation.rs
 @@ -167,10 +167,10 @@ impl ClientShellState {
@@ -750,7 +750,7 @@ index a1f7ac2cc2a9f6950acc64be306ef776d6f55f73..7d6a29f7fd7b4894992bd9384499685f
              return true;
 diff --git i/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
 deleted file mode 100644
-index 96982487c8d6b0a69d2a9509d3bad3e85927102c..0000000000000000000000000000000000000000
+index 96982487..00000000
 --- i/src/client/shell/endpoint_sidebar.rs
 +++ /dev/null
 @@ -1,649 +0,0 @@
@@ -1404,7 +1404,7 @@ index 96982487c8d6b0a69d2a9509d3bad3e85927102c..00000000000000000000000000000000
 -    )
 -}
 diff --git i/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
-index fff28b71d913a0003aa6b5913c5ad61a7f2efe68..ca5e0d002d694876d9bb4a1b2910f57ec3d5e497 100644
+index fff28b71..ca5e0d00 100644
 --- i/src/client/shell/endpoints.rs
 +++ w/src/client/shell/endpoints.rs
 @@ -209,10 +209,6 @@ impl ClientShellState {
@@ -1442,7 +1442,7 @@ index fff28b71d913a0003aa6b5913c5ad61a7f2efe68..ca5e0d002d694876d9bb4a1b2910f57e
          true
      }
 diff --git i/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
-index f2df294103dcb6d61abcee024325c9c4d1333a62..98ea3f6f67b8363226100a79f2d9ec58dd6fe3a8 100644
+index f2df2941..98ea3f6f 100644
 --- i/src/client/shell/mouse.rs
 +++ w/src/client/shell/mouse.rs
 @@ -551,7 +551,39 @@ impl ClientShellState {
@@ -1582,7 +1582,7 @@ index f2df294103dcb6d61abcee024325c9c4d1333a62..98ea3f6f67b8363226100a79f2d9ec58
                      outcome.repaint = true;
                      return;
 diff --git i/src/client/shell/render.rs w/src/client/shell/render.rs
-index 248216c1e5c6fe115ff29cd27513dda46fa8c272..57a05ee337614d0ed04bb8bc2d4ed80976f4795c 100644
+index 248216c1..57a05ee3 100644
 --- i/src/client/shell/render.rs
 +++ w/src/client/shell/render.rs
 @@ -7,10 +7,9 @@ pub(in crate::client::shell) mod sidebar;
@@ -1642,30 +1642,24 @@ index 248216c1e5c6fe115ff29cd27513dda46fa8c272..57a05ee337614d0ed04bb8bc2d4ed809
                  buffer,
                  layout.sidebar,
 -                snapshot,
--                config,
+                 config,
 -                state
 -                    .selected_workspace_id
 -                    .map(|target| target.workspace_id.as_str()),
--                &mut hits,
--            );
--        } else {
++                &mut state,
+                 &mut hits,
++                include_endpoints,
+             );
+         } else {
 -            render_sidebar(
--                buffer,
--                layout.sidebar,
++            super::sidebar_tree::render_expanded(
+                 buffer,
+                 layout.sidebar,
 -                snapshot,
++                Some(snapshot),
                  config,
                  &mut state,
                  &mut hits,
-+                include_endpoints,
-+            );
-+        } else {
-+            super::sidebar_tree::render_expanded(
-+                buffer,
-+                layout.sidebar,
-+                Some(snapshot),
-+                config,
-+                &mut state,
-+                &mut hits,
 +                include_endpoints,
              );
          }
@@ -1679,7 +1673,7 @@ index 248216c1e5c6fe115ff29cd27513dda46fa8c272..57a05ee337614d0ed04bb8bc2d4ed809
          hits.new_workspace = Rect::default();
          hits.machines.clear();
 diff --git i/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
-index f94f6bdcfa25deaf735bba0d44e4967bf1b11bbe..9d804f99ce44d99bdbbcc89a5ebd8c55e0ca2a9c 100644
+index f94f6bdc..9d804f99 100644
 --- i/src/client/shell/sidebar.rs
 +++ w/src/client/shell/sidebar.rs
 @@ -12,449 +12,6 @@ fn workspace_selection_background(palette: &Palette) -> ratatui::style::Color {
@@ -2170,11 +2164,13 @@ index f94f6bdcfa25deaf735bba0d44e4967bf1b11bbe..9d804f99ce44d99bdbbcc89a5ebd8c55
      };
 diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6acd08fac5
+index 00000000..c672869c
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,942 @@
+@@ -0,0 +1,996 @@
 +use super::*;
++
++const MIN_WORKSPACE_TREE_GAP: u16 = 2;
 +
 +pub(super) struct SidebarTreeRow {
 +    pub(super) kind: SidebarTreeRowKind,
@@ -2182,6 +2178,9 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +}
 +
 +pub(super) enum SidebarTreeRowKind {
++    Padding {
++        active_workspace: bool,
++    },
 +    Endpoint {
 +        endpoint_index: usize,
 +    },
@@ -2204,7 +2203,7 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +impl SidebarTreeRow {
 +    pub(super) fn height(&self) -> u16 {
 +        match &self.kind {
-+            SidebarTreeRowKind::Endpoint { .. } => 1,
++            SidebarTreeRowKind::Padding { .. } | SidebarTreeRowKind::Endpoint { .. } => 1,
 +            SidebarTreeRowKind::Workspace { rows, .. } => {
 +                rows.len().max(1).min(u16::MAX as usize) as u16
 +            }
@@ -2271,21 +2270,30 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                workspace,
 +                endpoint_collapsed_groups,
 +            );
-+            let workspace_rows = vec![super::render::sidebar::workspace_rows(
++            let workspace_rows = super::render::sidebar::workspace_rows(
 +                workspace,
 +                status,
 +                entry.indented,
 +                &config.spaces,
 +            )
 +            .into_iter()
-+            .flatten()
-+            .filter(|token| !matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon))
-+            .collect()];
-+            let gap_after = config.spaces.row_gap.max(1);
++            .filter_map(|row| {
++                let row = row
++                    .into_iter()
++                    .filter(|token| !matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon))
++                    .collect::<Vec<_>>();
++                (!row.is_empty()).then_some(row)
++            })
++            .collect();
++            let workspace_tree_gap = config.spaces.row_gap.max(MIN_WORKSPACE_TREE_GAP);
++            let active_workspace = &endpoint.endpoint_id == active_endpoint_id && workspace.focused;
++            result.push(SidebarTreeRow {
++                kind: SidebarTreeRowKind::Padding { active_workspace },
++                gap_after: 0,
++            });
 +            let pane_ids = agents_by_workspace
 +                .remove(&(endpoint_index, workspace.workspace_id.clone()))
 +                .unwrap_or_default();
-+            let has_agents = !pane_ids.is_empty();
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Workspace {
 +                    endpoint_index,
@@ -2293,7 +2301,7 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                    status,
 +                    rows: workspace_rows,
 +                },
-+                gap_after: if has_agents { 0 } else { gap_after },
++                gap_after: 0,
 +            });
 +            let agent_count = pane_ids.len();
 +            for (agent_index, pane_id) in pane_ids.into_iter().enumerate() {
@@ -2313,16 +2321,19 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                        parent_indented: entry.indented,
 +                        last_child: agent_index + 1 == agent_count,
 +                        stale: endpoint.status != ClientEndpointStatus::Online,
-+                        active_workspace: &endpoint.endpoint_id == active_endpoint_id
-+                            && workspace.focused,
++                        active_workspace,
 +                    },
 +                    gap_after: if agent_index + 1 == agent_count {
-+                        gap_after
++                        0
 +                    } else {
 +                        config.agents.row_gap
 +                    },
 +                });
 +            }
++            result.push(SidebarTreeRow {
++                kind: SidebarTreeRowKind::Padding { active_workspace },
++                gap_after: workspace_tree_gap.saturating_sub(MIN_WORKSPACE_TREE_GAP),
++            });
 +        }
 +    }
 +    if let Some(last) = result.last_mut() {
@@ -2456,6 +2467,11 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +        }
 +        let rect = Rect::new(body.x, y, content_width, height);
 +        match &tree_row.kind {
++            SidebarTreeRowKind::Padding { active_workspace } => {
++                if *active_workspace {
++                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
++                }
++            }
 +            SidebarTreeRowKind::Endpoint { endpoint_index } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let collapsed = state.collapsed_endpoints.contains(&endpoint.endpoint_id);
@@ -2590,9 +2606,6 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                } else {
 +                    rect
 +                };
-+                if *active_workspace {
-+                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
-+                }
 +                super::agent_sidebar::render_agent_tree_row(
 +                    buffer,
 +                    nested,
@@ -2608,6 +2621,16 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                            .fg(palette.overlay0)
 +                            .add_modifier(Modifier::DIM),
 +                    );
++                }
++                let row_style = if row.focused {
++                    Some(focused_agent_style(palette, *stale))
++                } else if *active_workspace {
++                    Some(Style::default().bg(palette.active_row_bg))
++                } else {
++                    None
++                };
++                if let Some(row_style) = row_style {
++                    buffer.set_style(rect, row_style);
 +                }
 +                if include_endpoints {
 +                    hits.endpoint_agents.push((
@@ -2679,7 +2702,10 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +        state.remote_collapsed_groups,
 +        config,
 +        include_endpoints,
-+    );
++    )
++    .into_iter()
++    .filter(|row| !matches!(&row.kind, SidebarTreeRowKind::Padding { .. }))
++    .collect::<Vec<_>>();
 +    let heights = vec![1; tree_rows.len()];
 +    let gaps = vec![0; tree_rows.len()];
 +    let reveal_navigation = !body.is_empty() && std::mem::take(state.reveal_navigation_workspace);
@@ -2731,6 +2757,7 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +        }
 +        let rect = Rect::new(body.x, y, body.width, 1);
 +        match tree_row.kind {
++            SidebarTreeRowKind::Padding { .. } => continue,
 +            SidebarTreeRowKind::Endpoint { endpoint_index } => {
 +                let endpoint = &state.endpoints[endpoint_index];
 +                let collapsed = state.collapsed_endpoints.contains(&endpoint.endpoint_id);
@@ -2865,9 +2892,6 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                ..
 +            } => {
 +                let endpoint = &state.endpoints[endpoint_index];
-+                if active_workspace {
-+                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
-+                }
 +                put_text(
 +                    buffer,
 +                    rect.x,
@@ -2886,6 +2910,16 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +                            Modifier::empty()
 +                        }),
 +                );
++                let row_style = if row.focused {
++                    Some(focused_agent_style(palette, stale))
++                } else if active_workspace {
++                    Some(Style::default().bg(palette.active_row_bg))
++                } else {
++                    None
++                };
++                if let Some(row_style) = row_style {
++                    buffer.set_style(rect, row_style);
++                }
 +                if include_endpoints {
 +                    hits.endpoint_agents
 +                        .push((rect, endpoint.endpoint_id.clone(), row.pane_id));
@@ -2926,6 +2960,20 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +            Style::default().fg(palette.overlay0)
 +        },
 +    );
++}
++
++fn focused_agent_style(palette: &Palette, stale: bool) -> Style {
++    let background = if palette.selection_bg == ratatui::style::Color::Reset {
++        palette.active_row_bg
++    } else {
++        palette.selection_bg
++    };
++    let style = Style::default().bg(background);
++    if stale {
++        style.fg(palette.overlay0).add_modifier(Modifier::DIM)
++    } else {
++        style.fg(palette.panel_bg).add_modifier(Modifier::BOLD)
++    }
 +}
 +
 +fn render_footer(
@@ -3117,7 +3165,7 @@ index 0000000000000000000000000000000000000000..cf2849a1fd160f5677f71cb805a56a6a
 +    .collect()
 +}
 diff --git i/src/client/shell/state.rs w/src/client/shell/state.rs
-index c170c9b085d1438ab3ed716b602afb70c657a0a6..92100f32d51c3ce3bca719cceb9b40f005d39996 100644
+index c170c9b0..92100f32 100644
 --- i/src/client/shell/state.rs
 +++ w/src/client/shell/state.rs
 @@ -2,7 +2,6 @@ use super::*;
@@ -3174,7 +3222,7 @@ index c170c9b085d1438ab3ed716b602afb70c657a0a6..92100f32d51c3ce3bca719cceb9b40f0
          self.mobile_switcher_scroll = 0;
          self.reveal_focused_workspace = true;
 diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c143905a52a5ff 100644
+index 5b8b1224..7d205805 100644
 --- i/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
@@ -3235,7 +3283,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
  
      let mut next = ClientShellInput::default();
      state.record_binding(
-@@ -502,9 +505,18 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -502,9 +505,22 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -3249,14 +3297,18 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +    let expanded_buffer = frame
 +        .to_ratatui_buffer()
 +        .expect("expanded agent sidebar buffer");
-+    for (rect, _) in &state.hits.agents {
-+        assert!((rect.x..rect.right())
-+            .all(|x| expanded_buffer[(x, rect.y)].bg == state.config.palette.active_row_bg));
++    for (rect, pane_id) in &state.hits.agents {
++        let expected = if pane_id == "pane_1" {
++            state.config.palette.selection_bg
++        } else {
++            state.config.palette.active_row_bg
++        };
++        assert!((rect.x..rect.right()).all(|x| expanded_buffer[(x, rect.y)].bg == expected));
 +    }
      assert_eq!(
          state
              .hits
-@@ -538,23 +550,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +554,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -3284,7 +3336,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
      );
  
      state.sidebar_collapsed = true;
-@@ -569,6 +572,208 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,6 +576,219 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -3299,11 +3351,15 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +        .to_ratatui_buffer()
 +        .expect("compact agent sidebar buffer");
 +    let icon_cell = &compact_buffer[(focused.x + 1, focused.y)];
-+    assert_ne!(icon_cell.fg, state.config.palette.blue);
-+    assert!(!icon_cell.modifier.contains(Modifier::BOLD));
-+    for (rect, _) in &state.hits.agents {
-+        assert!((rect.x..rect.right())
-+            .all(|x| compact_buffer[(x, rect.y)].bg == state.config.palette.active_row_bg));
++    assert_eq!(icon_cell.fg, state.config.palette.panel_bg);
++    assert!(icon_cell.modifier.contains(Modifier::BOLD));
++    for (rect, pane_id) in &state.hits.agents {
++        let expected = if pane_id == "pane_1" {
++            state.config.palette.selection_bg
++        } else {
++            state.config.palette.active_row_bg
++        };
++        assert!((rect.x..rect.right()).all(|x| compact_buffer[(x, rect.y)].bg == expected));
 +    }
 +}
 +
@@ -3400,14 +3456,17 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +        ["pane_1"]
 +    );
 +    assert!(state.hits.sidebar_section_divider.is_empty());
-+    assert!(state.hits.workspaces[0].rect.bottom() <= state.hits.agents[0].0.y);
 +    assert_eq!(
-+        state.hits.agents[0].0.bottom() + 1,
++        state.hits.workspaces[0].rect.bottom(),
++        state.hits.agents[0].0.y
++    );
++    assert_eq!(
++        state.hits.agents[0].0.bottom() + 2,
 +        state.hits.workspaces[1].rect.y
 +    );
 +    let buffer = frame.to_ratatui_buffer().expect("unified sidebar buffer");
 +    let active = state.hits.workspaces[0].rect;
-+    assert_eq!(active.height, 1);
++    assert_eq!(active.height, 2);
 +    let accent_bold = (active.x..active.right())
 +        .filter(|x| {
 +            let cell = &buffer[(*x, active.y)];
@@ -3423,8 +3482,15 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +        .map(|x| buffer[(x, active.y)].symbol())
 +        .collect::<String>();
 +    assert!(active_text.trim_start().starts_with("client-shell"));
-+    assert!((active.x..active.right())
-+        .all(|x| buffer[(x, active.y)].bg == state.config.palette.active_row_bg));
++    assert!((active.y..active.bottom()).all(|y| {
++        (active.x..active.right()).all(|x| buffer[(x, y)].bg == state.config.palette.active_row_bg)
++    }));
++    for padding_y in [active.y - 1, state.hits.agents[0].0.bottom()] {
++        assert!((active.x..active.right())
++            .all(|x| buffer[(x, padding_y)].bg == state.config.palette.active_row_bg));
++    }
++    let (_, branch_y) = cell_symbol_position(&frame, active, "main");
++    assert_eq!(branch_y, workspace_y + 1);
 +    let inactive = state.hits.workspaces[1].rect;
 +    assert!((inactive.x..inactive.right())
 +        .all(|x| buffer[(x, inactive.y)].bg != state.config.palette.active_row_bg));
@@ -3432,17 +3498,14 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
 +    let (icon_x, icon_y) = cell_symbol_position(&frame, agent, icon);
 +    let icon_cell = &buffer[(icon_x, icon_y)];
-+    assert_eq!(
-+        icon_cell.fg,
-+        status_color(AgentStatus::Working, &state.config.palette)
-+    );
-+    assert!(!icon_cell.modifier.contains(Modifier::BOLD));
++    assert_eq!(icon_cell.fg, state.config.palette.panel_bg);
++    assert!(icon_cell.modifier.contains(Modifier::BOLD));
 +    let (name_x, name_y) = cell_symbol_position(&frame, agent, "tree agent");
 +    let name_cell = &buffer[(name_x, name_y)];
-+    assert_eq!(name_cell.fg, state.config.palette.blue);
++    assert_eq!(name_cell.fg, state.config.palette.panel_bg);
 +    assert!(name_cell.modifier.contains(Modifier::BOLD));
 +    assert!((agent.x..agent.right())
-+        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.active_row_bg));
++        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.selection_bg));
 +    let text = frame
 +        .cells
 +        .chunks(frame.width as usize)
@@ -3453,10 +3516,10 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +        })
 +        .collect::<Vec<_>>()
 +        .join("\n");
-+    assert!(text.contains("client-shell · main"), "frame: {text}");
++    assert!(!text.contains("client-shell · main"), "frame: {text}");
 +    assert!(text.contains("tree agent"), "frame: {text}");
 +    assert!(!text.contains("working"), "frame: {text}");
-+    assert!(text.contains("empty-space · main"), "frame: {text}");
++    assert!(!text.contains("empty-space · main"), "frame: {text}");
 +    assert!(!text.contains("spaces · agents"), "frame: {text}");
 +}
 +
@@ -3472,13 +3535,13 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
 +    state.set_snapshot(Box::new(projected));
 +    state.set_pane_surface(surface());
-+    state.compose(106, 4).expect("exact-fit sidebar");
++    state.compose(106, 9).expect("exact-fit sidebar");
 +
-+    assert_eq!(state.hits.workspace_body.height, 3);
++    assert_eq!(state.hits.workspace_body.height, 8);
 +    assert_eq!(state.hits.workspace_max_scroll, 0);
 +    assert!(state.hits.workspace_scrollbar.is_empty());
 +    assert_eq!(
-+        state.hits.workspaces[0].rect.bottom() + 1,
++        state.hits.workspaces[0].rect.bottom() + 2,
 +        state.hits.workspaces[1].rect.y
 +    );
 +    let scroll =
@@ -3493,7 +3556,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
  }
  
  #[test]
-@@ -599,14 +804,24 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+@@ -599,14 +819,56 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
      let row = state.hits.agents.first().expect("agent row hit").0;
      let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
  
@@ -3522,10 +3585,42 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +        !cell.modifier.contains(Modifier::DIM),
 +        "tab cell at ({x},{y}) should not stack terminal faint: {cell:?}"
 +    );
++}
++
++#[test]
++fn workspace_branch_renders_below_name_before_child_agent() {
++    let mut projected = snapshot();
++    projected.agents = vec![ClientShellAgent {
++        pane_id: "pane_1".into(),
++        workspace_id: "ws_1".into(),
++        tab_id: "tab_1".into(),
++        name: Some("reviewer".into()),
++        display_agent: None,
++        agent: Some("pi".into()),
++        title: None,
++        terminal_title: None,
++        terminal_title_stripped: None,
++        agent_status: AgentStatus::Working,
++        state_change_seq: 1,
++        state_labels: Vec::new(),
++        tokens: Vec::new(),
++        focused: true,
++    }];
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 30).expect("workspace tree frame");
++    let workspace = state.hits.workspaces.first().expect("workspace hit").rect;
++    let agent = state.hits.agents.first().expect("agent hit").0;
++    let (_, workspace_y) = cell_symbol_position(&frame, workspace, "client-shell");
++    let (_, branch_y) = cell_symbol_position(&frame, workspace, "main");
++
++    assert_eq!(branch_y, workspace_y + 1);
++    assert_eq!(agent.y, branch_y + 1);
  }
  
  #[test]
-@@ -739,61 +954,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+@@ -739,61 +1001,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -3605,6 +3700,14 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
      assert_eq!(
 -        state.config.agent_panel_sort,
 -        crate::config::AgentPanelSortConfig::Priority
+-    );
+-    assert!(click.actions.is_empty());
+-    let reloaded_config =
+-        ClientShellConfig::from_config(&Config::default()).with_preferences_path(path.clone());
+-    let reloaded = ClientShellState::new(reloaded_config);
+-    assert_eq!(
+-        reloaded.config.agent_panel_sort,
+-        crate::config::AgentPanelSortConfig::Priority
 +        state
 +            .hits
 +            .agents
@@ -3613,14 +3716,6 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
 +            .collect::<Vec<_>>(),
 +        ["pane_3", "pane_1", "pane_2"]
      );
--    assert!(click.actions.is_empty());
--    let reloaded_config =
--        ClientShellConfig::from_config(&Config::default()).with_preferences_path(path.clone());
--    let reloaded = ClientShellState::new(reloaded_config);
--    assert_eq!(
--        reloaded.config.agent_panel_sort,
--        crate::config::AgentPanelSortConfig::Priority
--    );
 -    assert!(reloaded.agent_panel_sort_manual);
 -    std::fs::remove_file(path).expect("remove agent sort preferences");
 +}
@@ -3649,7 +3744,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..8644871d5d123516c205d75d09c14390
  
  #[test]
 diff --git i/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
-index ed21bc8a7456325a808b56f1654776b5fbd89e40..b496e4de422698aec6d13c6588a1d0c0dda2e685 100644
+index ed21bc8a..b496e4de 100644
 --- i/src/client/shell/tests/chrome_context.rs
 +++ w/src/client/shell/tests/chrome_context.rs
 @@ -148,7 +148,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
@@ -3737,19 +3832,20 @@ index ed21bc8a7456325a808b56f1654776b5fbd89e40..b496e4de422698aec6d13c6588a1d0c0
  
  #[test]
 diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e6bda9598 100644
+index f327f8c1..bafb8229 100644
 --- i/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
-@@ -112,6 +112,8 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
+@@ -112,6 +112,9 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
      ));
  }
  
 +const SCROLLABLE_AGENT_FRAME_HEIGHT: u16 = 16;
++const MACHINE_SWITCH_FRAME_HEIGHT: u16 = 20;
 +
  fn state_with_scrollable_agents() -> (ClientShellState, ClientEndpointId) {
      let (mut state, remote) = state_with_remote();
      for endpoint_id in [ClientEndpointId::Local, remote.clone()] {
-@@ -141,10 +143,10 @@ fn state_with_scrollable_agents() -> (ClientShellState, ClientEndpointId) {
+@@ -141,10 +144,10 @@ fn state_with_scrollable_agents() -> (ClientShellState, ClientEndpointId) {
              .collect();
          state.set_endpoint_snapshot(&endpoint_id, projection);
      }
@@ -3764,7 +3860,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      (state, remote)
  }
  
-@@ -163,12 +165,12 @@ fn agent_navigation_reveals_offscreen_targets() {
+@@ -163,12 +166,12 @@ fn agent_navigation_reveals_offscreen_targets() {
              KeybindAction::PreviousAgent => (remote, "pane_8"),
              _ => (ClientEndpointId::Local, "pane_1"),
          };
@@ -3780,7 +3876,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          assert!(!state
              .hits
              .endpoint_agents
-@@ -181,7 +183,7 @@ fn agent_navigation_reveals_offscreen_targets() {
+@@ -181,7 +184,7 @@ fn agent_navigation_reveals_offscreen_targets() {
          if endpoint_id != state.active_endpoint_id {
              assert!(state.activate_endpoint_projection(&endpoint_id));
          }
@@ -3789,7 +3885,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          assert!(
              state
                  .hits
-@@ -226,7 +228,7 @@ fn agent_navigation_reveals_target_using_destination_sort() {
+@@ -226,7 +229,7 @@ fn agent_navigation_reveals_target_using_destination_sort() {
          order: AgentViewSortOrder::Desc,
      }];
      state.set_test_endpoint_agent_view(&remote, Some(view));
@@ -3798,7 +3894,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  
      let mut outcome = ClientShellInput::default();
      assert!(state
-@@ -240,9 +242,9 @@ fn agent_navigation_reveals_target_using_destination_sort() {
+@@ -240,9 +243,9 @@ fn agent_navigation_reveals_target_using_destination_sort() {
      ));
      // A superseded handoff restores its source before activating the new target.
      assert!(state.activate_endpoint_projection(&ClientEndpointId::Local));
@@ -3810,7 +3906,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      assert!(state
          .hits
          .endpoint_agents
-@@ -254,11 +256,11 @@ fn agent_navigation_reveals_target_using_destination_sort() {
+@@ -254,11 +257,11 @@ fn agent_navigation_reveals_target_using_destination_sort() {
  fn agent_navigation_reveal_is_cancelled_by_another_selection() {
      for select_pane in [false, true] {
          let (mut state, remote) = state_with_scrollable_agents();
@@ -3824,7 +3920,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          if select_pane {
              assert!(state.focus_or_activate(
                  remote.clone(),
-@@ -269,8 +271,8 @@ fn agent_navigation_reveal_is_cancelled_by_another_selection() {
+@@ -269,8 +272,8 @@ fn agent_navigation_reveal_is_cancelled_by_another_selection() {
              assert!(state.activate_endpoint(remote.clone(), &mut outcome));
          }
          assert!(state.activate_endpoint_projection(&remote));
@@ -3835,7 +3931,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      }
  }
  
-@@ -278,26 +280,26 @@ fn agent_navigation_reveal_is_cancelled_by_another_selection() {
+@@ -278,27 +281,28 @@ fn agent_navigation_reveal_is_cancelled_by_another_selection() {
  fn agent_navigation_keeps_scroll_when_target_is_visible() {
      let (mut state, _) = state_with_scrollable_agents();
      let (_, endpoint_id, pane_id) = state.hits.endpoint_agents[1].clone();
@@ -3866,9 +3962,11 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
 -fn switching_machines_preserves_aggregate_agent_scroll_and_visible_rows() {
 +fn switching_machines_preserves_unified_sidebar_scroll_and_visible_rows() {
      let (mut state, remote) = state_with_scrollable_agents();
++    state.compose(100, MACHINE_SWITCH_FRAME_HEIGHT).unwrap();
      for endpoint_id in [remote.clone(), ClientEndpointId::Local, remote] {
          let visible = state.hits.endpoint_agents.clone();
-@@ -322,17 +324,20 @@ fn switching_machines_preserves_aggregate_agent_scroll_and_visible_rows() {
+         let (rect, _, pane_id) = visible
+@@ -322,17 +326,20 @@ fn switching_machines_preserves_aggregate_agent_scroll_and_visible_rows() {
          state.workspace_scroll = 3;
          state.tab_scroll = 2;
          assert!(state.activate_endpoint_projection(&endpoint_id));
@@ -3884,7 +3982,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
 -        state.compose(100, 28).unwrap();
 -        assert_eq!(state.agent_scroll, 6);
 -        assert_eq!(state.hits.endpoint_agents, visible);
-+        state.compose(100, SCROLLABLE_AGENT_FRAME_HEIGHT).unwrap();
++        state.compose(100, MACHINE_SWITCH_FRAME_HEIGHT).unwrap();
 +        assert!(state.workspace_scroll <= state.hits.workspace_max_scroll);
 +        assert!(state
 +            .hits
@@ -3894,7 +3992,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      }
  }
  
-@@ -344,7 +349,7 @@ fn local_agent_click_can_cancel_a_pending_remote_switch() {
+@@ -344,7 +351,7 @@ fn local_agent_click_can_cancel_a_pending_remote_switch() {
          if reconnecting {
              state.mark_endpoint_disconnected(&ClientEndpointId::Local);
          }
@@ -3903,7 +4001,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          let (rect, _, pane_id) = state
              .hits
              .endpoint_agents
-@@ -368,7 +373,7 @@ fn local_agent_click_can_cancel_a_pending_remote_switch() {
+@@ -368,7 +375,7 @@ fn local_agent_click_can_cancel_a_pending_remote_switch() {
  }
  
  #[test]
@@ -3912,7 +4010,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      let (mut state, remote) = state_with_scrollable_agents();
      for endpoint_id in [ClientEndpointId::Local, remote.clone()] {
          let mut projection = state
-@@ -384,20 +389,20 @@ fn aggregate_agent_scroll_still_clamps_when_rows_shrink_on_activation() {
+@@ -384,20 +391,20 @@ fn aggregate_agent_scroll_still_clamps_when_rows_shrink_on_activation() {
          state.set_endpoint_snapshot(&endpoint_id, projection);
      }
      assert!(state.activate_endpoint_projection(&remote));
@@ -3938,7 +4036,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  }
  
  #[test]
-@@ -559,7 +564,11 @@ fn sidebar_renders_local_and_saved_ssh_endpoints_with_status() {
+@@ -559,7 +566,11 @@ fn sidebar_renders_local_and_saved_ssh_endpoints_with_status() {
          .join("\n");
      assert!(text.contains("Local"));
      assert!(text.contains("Build"));
@@ -3951,7 +4049,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      let local = state
          .hits
          .machines
-@@ -674,8 +683,19 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
+@@ -674,8 +685,19 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
      assert_eq!(key, "repo");
      let buffer = frame.to_ratatui_buffer().expect("frame should reconstruct");
      assert_eq!(buffer[(local_toggle.x, local_toggle.y)].symbol(), "▸");
@@ -3973,7 +4071,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  
      assert!(state.activate_endpoint_projection(&remote_id));
      let mut remote_surface = surface();
-@@ -826,7 +846,7 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
+@@ -826,7 +848,7 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
      let mut updated_surface = surface();
      updated_surface.projection_revision = 2;
      state.set_pane_surface(updated_surface);
@@ -3982,34 +4080,62 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      assert!(state.reveal_focused_workspace);
      state.compose(106, 20).expect("new workspace revealed");
      assert!(state
-@@ -915,7 +935,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+@@ -899,7 +921,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+     assert_eq!(local_workspaces.len(), 2);
+     assert_eq!(
+         local_workspaces[1].rect.y,
+-        local_workspaces[0].rect.bottom() + 1
++        local_workspaces[0].rect.bottom() + 2
+     );
+ 
+     let local_machine = state
+@@ -914,8 +936,8 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+         .iter()
          .find(|hit| hit.endpoint_id == remote_id)
          .expect("remote machine");
-     assert_eq!(local_workspaces[0].rect.y, local_machine.rect.bottom());
+-    assert_eq!(local_workspaces[0].rect.y, local_machine.rect.bottom());
 -    assert_eq!(remote_machine.rect.y, local_workspaces[1].rect.bottom());
++    assert_eq!(local_workspaces[0].rect.y, local_machine.rect.bottom() + 1);
 +    assert_eq!(remote_machine.rect.y, local_workspaces[1].rect.bottom() + 1);
  
      let remote_workspaces = state
          .hits
-@@ -927,7 +947,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
-     assert_eq!(remote_workspaces[0].rect.y, remote_machine.rect.bottom());
+@@ -924,18 +946,21 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+         .filter(|hit| hit.endpoint_id == remote_id)
+         .collect::<Vec<_>>();
+     assert_eq!(remote_workspaces.len(), 3);
+-    assert_eq!(remote_workspaces[0].rect.y, remote_machine.rect.bottom());
++    assert_eq!(
++        remote_workspaces[0].rect.y,
++        remote_machine.rect.bottom() + 1
++    );
      assert_eq!(
          remote_workspaces[1].rect.y,
 -        remote_workspaces[0].rect.bottom()
-+        remote_workspaces[0].rect.bottom() + 1
++        remote_workspaces[0].rect.bottom() + 2
      );
      assert_eq!(
          remote_workspaces[2].rect.y,
-@@ -935,7 +955,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+-        remote_workspaces[1].rect.bottom() + 1
++        remote_workspaces[1].rect.bottom() + 2
      );
  
      state.workspace_scroll = usize::MAX;
 -    state.compose(100, 18).expect("scrolled endpoint frame");
-+    state.compose(100, 10).expect("scrolled endpoint frame");
++    state.compose(100, 12).expect("scrolled endpoint frame");
      let metrics = state
          .hits
          .workspace_scroll_metrics
-@@ -992,6 +1012,10 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
+@@ -951,7 +976,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+         .collect::<Vec<_>>();
+     assert_eq!(visible_remote.len(), 3);
+     let gap_y = visible_remote[1].rect.bottom();
+-    assert_eq!(visible_remote[2].rect.y, gap_y + 1);
++    assert_eq!(visible_remote[2].rect.y, gap_y + 2);
+     assert!(visible_remote[2].rect.bottom() <= state.hits.workspace_body.bottom());
+     assert!(state
+         .hits
+@@ -992,6 +1017,10 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
          buffer[(workspace.x + 2, workspace.y)].bg,
          state.config.palette.active_row_bg
      );
@@ -4020,7 +4146,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  
      state.collapsed_endpoints.insert(endpoint_id.clone());
      let frame = state.compose(100, 28).expect("collapsed endpoint frame");
-@@ -1047,22 +1071,14 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
+@@ -1047,22 +1076,14 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -4051,7 +4177,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  
      let buffer = frame
          .to_ratatui_buffer()
-@@ -1104,37 +1120,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
+@@ -1104,37 +1125,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view.clone()));
      state.set_test_endpoint_agent_view(&endpoint_id, Some(view));
  
@@ -4109,7 +4235,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  }
  
  #[test]
-@@ -1191,20 +1201,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
+@@ -1191,20 +1206,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
      });
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4140,7 +4266,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  }
  
  #[test]
-@@ -1247,20 +1253,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
+@@ -1247,20 +1258,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
          }),
      );
  
@@ -4172,7 +4298,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  }
  
  #[test]
-@@ -1333,19 +1336,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
+@@ -1333,19 +1341,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
      remote.agents = vec![agent("remote agent", AgentStatus::Idle, 1)];
      state.set_endpoint_snapshot(&endpoint_id, Box::new(remote));
  
@@ -4202,7 +4328,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  }
  
  #[test]
-@@ -1385,21 +1385,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1385,21 +1390,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
      }];
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4236,7 +4362,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      );
  
      let mut outcome = ClientShellInput::default();
-@@ -1411,7 +1408,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1411,7 +1413,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: selected,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4245,7 +4371,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      ));
  }
  
-@@ -1509,39 +1506,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1509,39 +1511,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
      let mut local = snapshot();
      local.agents = vec![agent("local agent", AgentStatus::Idle, 2)];
      state.set_snapshot(Box::new(local));
@@ -4301,7 +4427,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      );
      let mut outcome = ClientShellInput::default();
      assert!(
-@@ -1552,7 +1542,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1552,7 +1547,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: activated,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4310,7 +4436,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
      ));
  }
  
-@@ -1895,7 +1885,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1895,7 +1890,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          previous_surface.projection_revision += 1;
          state.set_pane_surface(previous_surface);
          assert!(state.pending_pane_surface.is_some());
@@ -4319,7 +4445,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
  
          state.mark_endpoint_disconnected(&endpoint_id);
          let mut reconnected = snapshot();
-@@ -1922,7 +1912,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1922,7 +1917,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          assert_eq!(state.pane_surface.as_ref().unwrap().projection_revision, 1);
          assert_eq!(state.pane_surface.as_ref().unwrap().surface_revision, 1);
          assert!(state.pending_pane_surface.is_none());
@@ -4328,7 +4454,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          assert!(state.compose(106, 20).is_some());
      }
  }
-@@ -1991,7 +1981,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
+@@ -1991,7 +1986,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
          Some(ClientEndpointStatus::Reconnecting)
      );
      assert!(text.contains("◐ reconnecting"), "frame: {text}");
@@ -4339,7 +4465,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e1412147fdbfb55874fb4f838c81cd1e
          text.contains("LIVE"),
          "frozen surface should remain: {text}"
 diff --git i/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
-index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d298103181849db40478 100644
+index c9f02278..0ec9d82f 100644
 --- i/src/client/shell/tests/popup_focus_projection.rs
 +++ w/src/client/shell/tests/popup_focus_projection.rs
 @@ -165,7 +165,7 @@ fn desktop_composition_keeps_shell_outside_origin_relative_surface() {
@@ -4373,22 +4499,7 @@ index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d29810318184
 -        assert!(track.width > 0);
 -        let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
 -        assert!(thumb.len > 1);
-+    let track = state.hits.workspace_scrollbar;
-+    let metrics = state
-+        .hits
-+        .workspace_scroll_metrics
-+        .expect("unified sidebar metrics");
-+    assert!(track.width > 0);
-+    let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
-+    assert!(thumb.len > 1);
-+    state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
-+        kind: MouseEventKind::Down(MouseButton::Left),
-+        column: track.x,
-+        row: thumb.top,
-+        modifiers: KeyModifiers::empty(),
-+    })]);
-+    let dragged =
-         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+-        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
 -            kind: MouseEventKind::Down(MouseButton::Left),
 -            column: track.x,
 -            row: thumb.top,
@@ -4407,7 +4518,22 @@ index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d29810318184
 -        } else {
 -            assert_eq!(state.workspace_scroll, metrics.max_offset_from_bottom);
 -        }
--        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
++    let track = state.hits.workspace_scrollbar;
++    let metrics = state
++        .hits
++        .workspace_scroll_metrics
++        .expect("unified sidebar metrics");
++    assert!(track.width > 0);
++    let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
++    assert!(thumb.len > 1);
++    state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
++        kind: MouseEventKind::Down(MouseButton::Left),
++        column: track.x,
++        row: thumb.top,
++        modifiers: KeyModifiers::empty(),
++    })]);
++    let dragged =
+         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
 -            kind: MouseEventKind::Up(MouseButton::Left),
 +            kind: MouseEventKind::Drag(MouseButton::Left),
              column: track.x,
@@ -4427,7 +4553,7 @@ index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d29810318184
  
  #[test]
 diff --git i/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
-index c117a319446f652c7276cd67550eec4dc29aa0b5..bf151e84121c98ccce5c1e336cbc311c0fbbc90e 100644
+index c117a319..bf151e84 100644
 --- i/src/client/shell/tests/workspace_navigation.rs
 +++ w/src/client/shell/tests/workspace_navigation.rs
 @@ -71,6 +71,15 @@ fn workspace_rect(state: &ClientShellState, endpoint: &ClientEndpointId, workspa
@@ -4588,7 +4714,7 @@ index c117a319446f652c7276cd67550eec4dc29aa0b5..bf151e84121c98ccce5c1e336cbc311c
  }
  
 diff --git i/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
-index 19fa1a39b49713b3f425c3643ac7bf28c3511105..b5c8de2467eaa781b894a92a63f7128b7510fe4e 100644
+index 19fa1a39..b5c8de24 100644
 --- i/src/client/shell/workspace_navigation.rs
 +++ w/src/client/shell/workspace_navigation.rs
 @@ -108,26 +108,13 @@ impl ClientShellState {
@@ -4624,7 +4750,7 @@ index 19fa1a39b49713b3f425c3643ac7bf28c3511105..b5c8de2467eaa781b894a92a63f7128b
                  targets.push(WorkspaceNavigationTarget {
                      endpoint_id: endpoint.endpoint_id.clone(),
 diff --git i/src/ui.rs w/src/ui.rs
-index 141e09d3323674a2bdc5ab164bea5c8d4f94e960..a4f3809677b258c344ca6a58b62c99a6f2bfabb6 100644
+index 141e09d3..a4f38096 100644
 --- i/src/ui.rs
 +++ w/src/ui.rs
 @@ -32,9 +32,8 @@ pub(crate) use self::scrollbar::{
@@ -4640,7 +4766,7 @@ index 141e09d3323674a2bdc5ab164bea5c8d4f94e960..a4f3809677b258c344ca6a58b62c99a6
  use self::status::copy_feedback_rect;
  pub(crate) use self::status::{render_config_diagnostic_buffer, render_copy_feedback_buffer};
 diff --git i/src/ui/sidebar.rs w/src/ui/sidebar.rs
-index cbf6f1a97b49aebd4a0acc61028031517d7f417b..86ca750f1a6c734c6d285904887c878f8e9906e9 100644
+index cbf6f1a9..86ca750f 100644
 --- i/src/ui/sidebar.rs
 +++ w/src/ui/sidebar.rs
 @@ -1,7 +1,6 @@
