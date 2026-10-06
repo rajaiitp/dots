@@ -18,7 +18,7 @@
   ],
   "theme": "dark",
   "tuiMode": "fullscreen",
-  "defaultThinkingLevel": "xhigh",
+  "defaultThinkingLevel": "high",
   "lastChangelogVersion": "0.84.4",
   "hideThinkingBlock": false,
   "defaultProvider": "openai-codex",
