@@ -1,7 +1,8 @@
 ---
 name: workflow-architect
-description: Mandatory read-only Sol architecture consultation before every /workflow plan
+description: Mandatory read-only Astra architecture consultation before every /workflow plan
 tools: read, grep, find, ls
+model: openai-codex/gpt-6-astra
 thinking: xhigh
 systemPromptMode: replace
 inheritProjectContext: true

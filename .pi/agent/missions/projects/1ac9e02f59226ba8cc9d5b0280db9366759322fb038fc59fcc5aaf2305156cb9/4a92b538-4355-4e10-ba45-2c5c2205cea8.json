@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "4a92b538-4355-4e10-ba45-2c5c2205cea8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-13T15:56:18.104Z",
+  "updatedAt": "2026-09-13T16:08:53.191Z",
+  "runs": [
+    {
+      "runId": "269352c6-7f21-4e4f-8864-69cd4dff1690",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/269352c6-7f21-4e4f-8864-69cd4dff1690",
+      "status": "complete",
+      "startedAt": "2026-09-13T15:56:18.107Z",
+      "completedAt": "2026-09-13T16:08:53.191Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "269352c6-7f21-4e4f-8864-69cd4dff1690",
+      "key": "math",
+      "status": "completed",
+      "startedAt": "2026-09-13T15:56:18.172Z",
+      "updatedAt": "2026-09-13T16:05:20.181Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/5304770b-e061-41f6-97d5-699f24cfc910",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/269352c6-7f21-4e4f-8864-69cd4dff1690/pure_primitive_math_review.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/71e2d3bf-3858-4fa9-b18d-52f63e6b624e/run-0/session.jsonl"
+      ],
+      "runId": "5304770b-e061-41f6-97d5-699f24cfc910",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-13T16:05:20.181Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/71e2d3bf-3858-4fa9-b18d-52f63e6b624e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-13T16:05:20.181Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "269352c6-7f21-4e4f-8864-69cd4dff1690",
+      "key": "empirical",
+      "status": "completed",
+      "startedAt": "2026-09-13T15:56:18.201Z",
+      "updatedAt": "2026-09-13T16:08:53.015Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/e514ac98-5021-4744-ac9b-4aeca8c2f989",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/269352c6-7f21-4e4f-8864-69cd4dff1690/pure_primitive_empirical_review.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6c7a8616-e65d-450f-b5d5-7562fb0e6061/run-0/session.jsonl"
+      ],
+      "runId": "e514ac98-5021-4744-ac9b-4aeca8c2f989",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-09-13T16:08:53.015Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6c7a8616-e65d-450f-b5d5-7562fb0e6061/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-13T16:08:53.015Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/269352c6-7f21-4e4f-8864-69cd4dff1690/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/269352c6-7f21-4e4f-8864-69cd4dff1690/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5304770b-e061-41f6-97d5-699f24cfc910"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e514ac98-5021-4744-ac9b-4aeca8c2f989"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: [\n  {\n    \"key\": \"math\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/269352c6-7f21-4e4f-8864-69cd4dff1690/pure_primitive_math_review.md\"\n  },\n  {\n    \"key\": \"empirical\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/269352c6-7f21-4e4f-8864-69cd4dff1690/pure_primitive_empirical_review.md\"\n  }\n] Trace: 4 event(s)."
+}

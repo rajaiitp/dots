@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "9ef59921-62c2-464a-855f-21de30483953",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-06T17:20:35.410Z",
+  "updatedAt": "2026-10-06T17:26:07.815Z",
+  "runs": [
+    {
+      "runId": "3b523d06-905e-4ac9-b6bc-983590ed0684",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-06T17:26:07.815Z",
+      "completedAt": "2026-10-06T17:26:07.815Z",
+      "usage": {
+        "tokens": 234557
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/3b523d06-905e-4ac9-b6bc-983590ed0684_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/3b523d06-905e-4ac9-b6bc-983590ed0684_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — the plan’s Herdr agent-row change does not fully guarantee “status plus tab name only.”\n\n## Critical gaps\n- Removing the inserted `ResolvedTokenKind::Agent` is insufficient: the current code omits tab labels for single, non-custom tabs and can retain pane, terminal-title, or custom tokens. Normalize every agent row to exactly `StateIcon` plus the actual tab label, independent of sidebar token configuration.\n- v0.14.0 compatibility with the retained legacy Sesh schema must be proven before replacing 0.10.0; validate the current file using the v0.14.0 candidate binary first.\n\n## Important improvements\n- Stage all changes and complete all tests before activating Herdr or replacing the managed Sesh plugin, avoiding a partial rollout.\n- Record Sesh’s current resolved commit/registry state and the Herdr backup path so both runtime changes can be rolled back without stopping the server.\n- Pin and verify v0.14.0’s resolved commit and `min_herdr_version`, not only its reported version.\n- Run the full relevant Rust tests; `install.sh` currently executes only `client::shell::tests::`, while branch-token formatting may affect UI token tests.\n\n## Validation gaps\n- Test exact workspace rendering: `(main)` at the same x-coordinate as the workspace and exactly one row below it.\n- Test agent rows for a single non-custom tab and adversarial custom token configuration; assert status icon and tab label are present and agent name, state text, pane, terminal title, and custom tokens are absent.\n- Assert Sesh fake-client call order: run `pi` in the pre-existing initial pane, then create a tab labeled `tuicr`, then run `tuicr track` in that tab’s pane.\n- After installation, validate the legacy config with the installed binary and verify plugin version, requested ref, resolved commit, and enabled state.\n- Headless Neovim validation should inspect effective `auto-session.config` values, not merely confirm startup succeeds.\n- Attach ...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

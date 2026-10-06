@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "id": "1357b47e-0f6c-4a8a-9936-cca4d7a2f9d0",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T13:36:14.216Z",
+  "updatedAt": "2026-09-19T13:40:45.266Z",
+  "runs": [
+    {
+      "runId": "647ad065-81f4-4193-9883-67ca1d737b65",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:40:45.266Z",
+      "completedAt": "2026-09-19T13:40:45.266Z",
+      "usage": {
+        "tokens": 58517
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/647ad065-81f4-4193-9883-67ca1d737b65_worker_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/647ad065-81f4-4193-9883-67ca1d737b65/asterion-fix-recovery.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/647ad065-81f4-4193-9883-67ca1d737b65_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nImplemented and verified the Asterion C3 same-protocol recovery.\n\n## Findings\n\n- **P1 fixed — non-inert null:** `model_evaluation/src/model_evaluation/asterion_c3/controller.py` uses deterministic synchronized Rademacher signs per consecutive 21-session block, shared across all 81 frozen paths. `model_evaluation/tests/test_asterion_c3.py` includes a nontrivial-p-value canary. `research/NEXT_GOLD_ASTERION_C3.md` was corrected to describe sign randomization rather than the mathematically inert block permutation.\n- **P1 fixed — feasible validation gates:** `model_evaluation/asterion_c3_synthetic_contract.json` and `controller.py` apply worst-252 only to full 10/30/50-bp paths and worst-63 to each of five blocks. The focused test proves 315 sessions are feasible and 314 fail closed.\n- **P1 fixed — five-class eligibility:** `features.py` requires active published identity and class metadata and limits eligibility to `stock`, `equity_etf`, `rates_etf`, `commodity_etf`, and `defensive_alt`; excluded/unpublished and every allowed class are tested.\n- **P1 fixed — executor fail-closed inputs:** `execution.py` validates raw holdings/targets before transformation, rejects negative and NaN targets, requires explicit valid cost-bearing fractions for executed legs, and permits impact only at 30 bp. Focused tests cover each condition.\n- **P1 fixed — separate target/checkpoint codecs:** `checkpoint.py` has a dedicated canonical target codec, exact semantic checkpoint field validation, complete identity binding, and a separately verified one-resume hash-chain envelope. The recovery added an explicit target round-trip and target-as-checkpoint rejection test in `test_asterion_c3.py`.\n- **P2 fixed — empty initial windows:** `risk.py` initializes NAV-return, NAV-history, and turnover windows as empty, matching the contract.\n- **P2 fixed — exact runtime admission:** `contract.py` rejects import/admission unless Python 3.12.14, NumPy 2.5.2, and SciPy...",
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": true,
+      "inferredReason": [
+        "read-only task wording"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return concrete findings with file paths and severity when applicable",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files",
+            "validation-output",
+            "diff-summary"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files",
+        "validation-output",
+        "diff-summary"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only task wording"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return concrete findings with file paths and severity when applicable",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files",
+          "validation-output",
+          "diff-summary"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "passed",
+        "message": "tests-added evidence present."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "evidence:validation-output",
+        "status": "passed",
+        "message": "validation-output evidence present."
+      },
+      {
+        "id": "evidence:diff-summary",
+        "status": "passed",
+        "message": "diff-summary evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Severity-tagged findings with concrete file paths are recorded in the requested report."
+        }
+      ],
+      "changedFiles": [
+        "model_evaluation/asterion_c3_synthetic_contract.json",
+        "model_evaluation/src/model_evaluation/asterion_c3/",
+        "model_evaluation/tests/test_asterion_c3.py",
+        "research/NEXT_GOLD_ASTERION_C3.md"
+      ],
+      "testsAddedOrUpdated": [
+        "model_evaluation/tests/test_asterion_c3.py"
+      ],
+      "commandsRun": [
+        {
+          "command": "PYTHONPATH=model_evaluation/src model_evaluation/.venv/bin/python -m pytest model_evaluation/tests/test_asterion_c3.py -q",
+          "result": "passed",
+          "summary": "8 tests passed"
+        },
+        {
+          "command": "model_evaluation/.venv/bin/python -m py_compile model_evaluation/src/model_evaluation/asterion_c3/*.py model_evaluation/tests/test_asterion_c3.py",
+          "result": "passed",
+          "summary": "Compilation passed"
+        },
+        {
+          "command": "Asterion contract assertion script",
+          "result": "passed",
+          "summary": "Runtime, grid, gates, classes, and false readiness/Gold assertions passed"
+        },
+        {
+          "command": "Diff whitespace and staged-file checks",
+          "result": "passed",
+          "summary": "No whitespace errors or staged files"
+        }
+      ],
+      "validationOutput": [
+        "pytest: 8 passed",
+        "py_compile: passed",
+        "historical_ready=false; gold_claim=false; gold_qualification=false",
+        "Exact runtime: Python 3.12.14, NumPy 2.5.2, SciPy 1.18.1"
+      ],
+      "residualRisks": [
+        "Full 64-case null admission deferred",
+        "Full 81-coordinate and lifecycle admissions deferred",
+        "Historical execution blocked on sealed source manifest and DSR lineage"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Recovered the complete untracked Asterion C3 lane, added explicit target-codec separation coverage, and aligned documentation with synchronized block-sign randomization.",
+      "reviewFindings": [
+        "no blockers in the permitted Asterion scope"
+      ],
+      "manualNotes": "No full admission or historical execution was run."
+    }
+  }
+}

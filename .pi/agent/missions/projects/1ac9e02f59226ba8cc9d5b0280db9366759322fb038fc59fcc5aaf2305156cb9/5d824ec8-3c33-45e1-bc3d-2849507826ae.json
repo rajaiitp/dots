@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "5d824ec8-3c33-45e1-bc3d-2849507826ae",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-20T11:31:19.896Z",
+  "updatedAt": "2026-09-20T11:31:19.959Z",
+  "runs": [
+    {
+      "runId": "499f2cad-2978-4269-bd33-a6eeee1c4f6d",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/499f2cad-2978-4269-bd33-a6eeee1c4f6d",
+      "status": "failed",
+      "startedAt": "2026-09-20T11:31:19.899Z",
+      "completedAt": "2026-09-20T11:31:19.959Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "499f2cad-2978-4269-bd33-a6eeee1c4f6d",
+      "key": "csfa-plan",
+      "status": "failed",
+      "startedAt": "2026-09-20T11:31:19.947Z",
+      "updatedAt": "2026-09-20T11:31:19.953Z",
+      "artifactPaths": [],
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-20T11:31:19.953Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/08024ebd-75be-435e-85a9-28d689d7ab4f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T11:31:19.953Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/499f2cad-2978-4269-bd33-a6eeee1c4f6d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/499f2cad-2978-4269-bd33-a6eeee1c4f6d/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Error: Run 'csfa-plan' failed: Run fan-out: 1/6 used, 5 remaining\nAgent 'workflow-architect' was given an implementation task, but its tool allowlist has no mutation-capable tools. Add bash, edit, write, or another mutation-capable tool to the agent, or use a read-only task/agent.\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: declared lane 'csfa-plan-review' was not launched. Preflight advisory: declared lane 'csfa-implement' was not launched. Preflight advisory: declared lane 'csfa-review' was not launched. Preflight advisory: declared lane 'csfa-fix' was not launched. Preflight advisory: declared lane 'csfa-final-review' was not launched."
+}

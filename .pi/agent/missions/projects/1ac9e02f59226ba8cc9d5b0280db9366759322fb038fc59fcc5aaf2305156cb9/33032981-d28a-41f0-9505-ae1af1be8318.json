@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "33032981-d28a-41f0-9505-ae1af1be8318",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T16:13:14.030Z",
+  "updatedAt": "2026-09-19T16:16:17.067Z",
+  "runs": [
+    {
+      "runId": "132be63f-6b7a-4b3b-947a-f75d3c80cc2d",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/132be63f-6b7a-4b3b-947a-f75d3c80cc2d",
+      "status": "complete",
+      "startedAt": "2026-09-19T16:13:14.033Z",
+      "completedAt": "2026-09-19T16:16:17.067Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "132be63f-6b7a-4b3b-947a-f75d3c80cc2d",
+      "key": "completion-consultation",
+      "status": "completed",
+      "startedAt": "2026-09-19T16:13:14.068Z",
+      "updatedAt": "2026-09-19T16:16:16.894Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/9dd5b641-7414-41ec-868c-6f41606f8d88",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/132be63f-6b7a-4b3b-947a-f75d3c80cc2d/pmps-s1-completion-consultation.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8dbcba6f-b319-47d5-87ea-e41368cdf8a2/run-0/session.jsonl"
+      ],
+      "runId": "9dd5b641-7414-41ec-868c-6f41606f8d88",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-19T16:16:16.894Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8dbcba6f-b319-47d5-87ea-e41368cdf8a2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T16:16:16.894Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/132be63f-6b7a-4b3b-947a-f75d3c80cc2d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/132be63f-6b7a-4b3b-947a-f75d3c80cc2d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9dd5b641-7414-41ec-868c-6f41606f8d88"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"status\": \"COMPLETION_CONSULTATION_BLOCKED\",\n  \"consultation\": {\n    \"key\": \"completion-consultation\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"9dd5b641-7414-41ec-868c-6f41606f8d88\",\n    \"output\": \"\\n\\nOutput saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/132be63f-6b7a-4b3b-947a-f75d3c80cc2d/pmps-s1-completion-consultation.json (0 B, 0 lines). Read this file if needed.\",\n    \"structuredOutput\": {\n      \"verdict\": \"revise\",\n      \"scope\": \"Read-only architecture review of the PMPS-S1 correction workflow against the approved specification, both supplied review records, and the current partial source and build evidence.\",\n      \"findings\": [\n        {\n          \"severity\": \"P1\",\n          \"location\": \"Correction plan (“replace the shallow PMPS source/tests”); model_evaluation/pmps_s1_synthetic_contract.json; specification §9.1\",\n          \"problem\": \"The current contract is only a summary and does not freeze th Trace: 2 event(s). Preflight advisory: declared lane 'complete-pmps-s1' was not launched. Preflight advisory: declared lane 'completion-review-1' was not launched. Preflight advisory: declared lane 'completion-fix' was not launched. Preflight advisory: declared lane 'completion-review-2' was not launched."
+}

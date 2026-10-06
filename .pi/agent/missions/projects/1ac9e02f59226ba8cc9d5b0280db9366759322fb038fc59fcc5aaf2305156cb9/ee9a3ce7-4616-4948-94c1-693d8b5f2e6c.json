@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "ee9a3ce7-4616-4948-94c1-693d8b5f2e6c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T13:41:34.726Z",
+  "updatedAt": "2026-09-19T13:45:39.232Z",
+  "runs": [
+    {
+      "runId": "9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "status": "complete",
+      "startedAt": "2026-09-19T13:41:34.732Z",
+      "completedAt": "2026-09-19T13:45:39.232Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "key": "r2-common",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:41:34.814Z",
+      "updatedAt": "2026-09-19T13:42:45.539Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-common.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/075501da-35de-466c-8e30-f84af874bb77/run-0/session.jsonl"
+      ],
+      "runId": "8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T13:42:45.539Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/075501da-35de-466c-8e30-f84af874bb77/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:42:45.539Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "key": "r2-crown",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:41:34.872Z",
+      "updatedAt": "2026-09-19T13:45:39.052Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/668a4b15-a9d4-49c0-9632-9d00258f6a23",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-crown.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b97973dc-abef-4df6-96a7-12f7339ee0d4/run-0/session.jsonl"
+      ],
+      "runId": "668a4b15-a9d4-49c0-9632-9d00258f6a23",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T13:45:39.052Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b97973dc-abef-4df6-96a7-12f7339ee0d4/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:45:39.052Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "key": "r2-cemsk",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:41:34.899Z",
+      "updatedAt": "2026-09-19T13:44:54.448Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/be318d07-9962-43e8-a920-925018a2b93b",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-cemsk.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/7b745232-67c1-49a3-8071-99a814f38ee8/run-0/session.jsonl"
+      ],
+      "runId": "be318d07-9962-43e8-a920-925018a2b93b",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T13:44:54.448Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/7b745232-67c1-49a3-8071-99a814f38ee8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:44:54.448Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "9b00d1b8-faa8-463d-aa6c-34066be62c86",
+      "key": "r2-asterion",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:41:34.928Z",
+      "updatedAt": "2026-09-19T13:44:53.526Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/3d801db6-8f07-47aa-933d-a2b23d14ce34",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-asterion.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8b723b8a-0b86-4830-b6fe-6d6c3ce63333/run-0/session.jsonl"
+      ],
+      "runId": "3d801db6-8f07-47aa-933d-a2b23d14ce34",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T13:44:53.526Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8b723b8a-0b86-4830-b6fe-6d6c3ce63333/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:44:53.526Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9b00d1b8-faa8-463d-aa6c-34066be62c86/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9b00d1b8-faa8-463d-aa6c-34066be62c86/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/668a4b15-a9d4-49c0-9632-9d00258f6a23"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/be318d07-9962-43e8-a920-925018a2b93b"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3d801db6-8f07-47aa-933d-a2b23d14ce34"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: {\n  \"common\": {\n    \"key\": \"r2-common\",\n    \"ok\": true,\n    \"agent\": \"reviewer\",\n    \"runId\": \"8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-common.md (1.5 KB, 9 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/9b00d1b8-faa8-463d-aa6c-34066be62c86/three-independent-gold-synthetic-acceptance-r2.r2-common.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/8e2f0e48-fbe9-48d3-9bd8-b6e2640634f7\",\n      \"/home/raja/.pi/agent/sessions/--home-raja-Pro Trace: 8 event(s)."
+}

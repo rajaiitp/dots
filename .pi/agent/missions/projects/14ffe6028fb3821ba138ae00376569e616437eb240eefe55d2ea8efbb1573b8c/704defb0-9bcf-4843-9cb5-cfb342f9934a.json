@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "id": "704defb0-9bcf-4843-9cb5-cfb342f9934a",
+  "title": "Find the next challenger to V4",
+  "objective": "Three bounded causal research lanes; frozen-benchmark evaluation with honest stability trade-offs.",
+  "status": "completed",
+  "createdAt": "2026-09-20T15:25:39.117Z",
+  "updatedAt": "2026-09-20T17:31:47.656Z",
+  "runs": [
+    {
+      "runId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "status": "complete",
+      "startedAt": "2026-09-20T15:25:39.122Z",
+      "completedAt": "2026-09-20T15:48:46.834Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "key": "architecture",
+      "status": "completed",
+      "startedAt": "2026-09-20T15:25:39.182Z",
+      "updatedAt": "2026-09-20T15:29:04.470Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c252abd9-8975-46a8-a5a8-d250cf3e389a",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/subagent-artifacts/outputs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/architecture.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/3b1f218e-fef5-4581-b2cf-ea18b127c07f/run-0/session.jsonl"
+      ],
+      "runId": "c252abd9-8975-46a8-a5a8-d250cf3e389a",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-20T15:29:04.470Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/3b1f218e-fef5-4581-b2cf-ea18b127c07f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T15:29:04.470Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "key": "plan-review",
+      "status": "completed",
+      "startedAt": "2026-09-20T15:29:04.473Z",
+      "updatedAt": "2026-09-20T15:34:30.985Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ed713e89-6f42-41c1-98a3-87368f44d073",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/subagent-artifacts/outputs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/plan-review.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/a1637955-dbc5-4ba4-b96b-01844b1ca21b/run-0/session.jsonl"
+      ],
+      "runId": "ed713e89-6f42-41c1-98a3-87368f44d073",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-09-20T15:34:30.985Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/a1637955-dbc5-4ba4-b96b-01844b1ca21b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T15:34:30.985Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "key": "execution",
+      "status": "completed",
+      "startedAt": "2026-09-20T15:34:30.990Z",
+      "updatedAt": "2026-09-20T15:47:00.492Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/dda16d9b-1c39-422c-b267-417944fbd6c7",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/subagent-artifacts/outputs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/execution-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/2264008f-0414-45fc-aafe-4b4648dfafef/run-0/session.jsonl"
+      ],
+      "runId": "dda16d9b-1c39-422c-b267-417944fbd6c7",
+      "agent": "worker",
+      "completedAt": "2026-09-20T15:47:00.492Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/2264008f-0414-45fc-aafe-4b4648dfafef/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T15:47:00.492Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "key": "covariance",
+      "status": "completed",
+      "startedAt": "2026-09-20T15:34:31.014Z",
+      "updatedAt": "2026-09-20T15:48:46.655Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6edc0b41-cf3b-432b-b232-f35d8c7d9f61",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/subagent-artifacts/outputs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/covariance-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/48bc30fb-f4b2-45ba-91f8-614973c3f9ff/run-0/session.jsonl"
+      ],
+      "runId": "6edc0b41-cf3b-432b-b232-f35d8c7d9f61",
+      "agent": "worker",
+      "completedAt": "2026-09-20T15:48:46.655Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/48bc30fb-f4b2-45ba-91f8-614973c3f9ff/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T15:48:46.655Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "97ec24f8-a49e-4bda-9ab4-9140d91e4564",
+      "key": "cash",
+      "status": "completed",
+      "startedAt": "2026-09-20T15:34:31.035Z",
+      "updatedAt": "2026-09-20T15:43:49.272Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ee3c8b87-c23c-465a-b672-a84a1b843dc4",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/subagent-artifacts/outputs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/cash-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/c26c14af-d869-471f-8caa-0a66aacf32ac/run-0/session.jsonl"
+      ],
+      "runId": "ee3c8b87-c23c-465a-b672-a84a1b843dc4",
+      "agent": "worker",
+      "completedAt": "2026-09-20T15:43:49.272Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6/c26c14af-d869-471f-8caa-0a66aacf32ac/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T15:43:49.272Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/97ec24f8-a49e-4bda-9ab4-9140d91e4564/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c252abd9-8975-46a8-a5a8-d250cf3e389a"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ed713e89-6f42-41c1-98a3-87368f44d073"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dda16d9b-1c39-422c-b267-417944fbd6c7"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6edc0b41-cf3b-432b-b232-f35d8c7d9f61"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ee3c8b87-c23c-465a-b672-a84a1b843dc4"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-wip-current-tree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me-wip-current-tree--/2026-09-20T15-16-48-849Z_01a0bf64-2e51-7a06-83ac-3ef18f0df7c6.jsonl",
+  "summary": "Research completed with no qualifying improvement: four execution and three holdings-risk coordinates fail the locked development CAGR floor; cash lane blocked by observation provenance and excluded with owner approval. Retain V4. Final verification completed locally: 235 tests, immutable root/archive, clean-scratch restoration and target/development replay, and hash-bound null-decision closure pass. No deployment, threshold change, commit or push."
+}

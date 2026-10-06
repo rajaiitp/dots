@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "738b3cae-6979-4041-b6d5-ee37cac403a6",
+  "title": "Prepare native V13 persistence G12",
+  "objective": "Freeze a nine-coordinate standalone native-V13 family with dual-benchmark evaluation, without scoring in the preparation run.",
+  "status": "completed",
+  "createdAt": "2026-10-01T17:43:01.672Z",
+  "updatedAt": "2026-10-01T18:19:32.854Z",
+  "runs": [
+    {
+      "runId": "4422ddd9-eb1e-407d-aed4-d551693e1ece",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4422ddd9-eb1e-407d-aed4-d551693e1ece",
+      "status": "complete",
+      "startedAt": "2026-10-01T17:43:01.676Z",
+      "completedAt": "2026-10-01T18:19:32.854Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "4422ddd9-eb1e-407d-aed4-d551693e1ece",
+      "key": "g12-preparation",
+      "status": "completed",
+      "startedAt": "2026-10-01T17:43:01.716Z",
+      "updatedAt": "2026-10-01T18:19:32.682Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/85b8d0e4-34ee-4caa-9fd6-c9e4d7549002",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/4422ddd9-eb1e-407d-aed4-d551693e1ece/native-v13-g12-prefreeze-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/4ce5b66d-70ad-4aab-b03d-9849a680b7dd/run-0/session.jsonl"
+      ],
+      "runId": "85b8d0e4-34ee-4caa-9fd6-c9e4d7549002",
+      "agent": "worker",
+      "completedAt": "2026-10-01T18:19:32.682Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/4ce5b66d-70ad-4aab-b03d-9849a680b7dd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-01T18:19:32.682Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4422ddd9-eb1e-407d-aed4-d551693e1ece/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4422ddd9-eb1e-407d-aed4-d551693e1ece/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/85b8d0e4-34ee-4caa-9fd6-c9e4d7549002"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"runId\": \"85b8d0e4-34ee-4caa-9fd6-c9e4d7549002\",\n  \"output\": \"# Native-V13 persistence G12 — prefreeze/prebuild handoff\\n\\n## Boundary reached\\n\\nPrepared the standalone family `causal-native-v13-persistence-g12` and stopped before the first source-neutral build, contract freeze, target build, or historical score.\\n\\nAlready completed:\\n\\n- Appended the one-way G12 predeclaration to `research/GENERALIZATION_TRAJECTORY_V1.md`.\\n- Added the standalone implementation and synthetic/non-performance tests.\\n- Bound the exact nine-coordinate grid, source-neutral seam, recovered source/runtime/dependencies, immutable common benchmark, activation/admission gates, one-shot comparison, dual gates, result reconstruction, ledger chain, and final closure checks.\\n- Added explicit parent-HERDR execution records (action, argv, cwd, environment, requested timeout, elapsed time) and enforcement for every potentially long action.\\n- Verified all 1,722 preserved pre-G12 snapshot pins except the author Trace: 2 event(s)."
+}

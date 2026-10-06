@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "4bb60250-e422-4fbf-955a-5aa5b912155d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T10:54:36.254Z",
+  "updatedAt": "2026-09-19T11:07:45.517Z",
+  "runs": [
+    {
+      "runId": "28a48a47-af27-45fe-a46d-7a4b6a66ed67",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/28a48a47-af27-45fe-a46d-7a4b6a66ed67",
+      "status": "complete",
+      "startedAt": "2026-09-19T10:54:36.258Z",
+      "completedAt": "2026-09-19T11:07:45.517Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "28a48a47-af27-45fe-a46d-7a4b6a66ed67",
+      "key": "candidate-a-retry",
+      "status": "completed",
+      "startedAt": "2026-09-19T10:54:36.310Z",
+      "updatedAt": "2026-09-19T11:07:45.341Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ff093cca-bbf1-49a0-9606-60a831003f7c",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/three-independent-gold-architectures-retry.candidate-a-retry.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/ecf88b28-67ac-455b-af49-0f22f0b4338c/run-0/session.jsonl"
+      ],
+      "runId": "ff093cca-bbf1-49a0-9606-60a831003f7c",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-19T11:07:45.340Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/ecf88b28-67ac-455b-af49-0f22f0b4338c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:07:45.341Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "28a48a47-af27-45fe-a46d-7a4b6a66ed67",
+      "key": "candidate-b-retry",
+      "status": "completed",
+      "startedAt": "2026-09-19T10:54:36.344Z",
+      "updatedAt": "2026-09-19T11:04:35.660Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/562a478f-be70-4568-ab05-62c9fb3ee3e6",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/three-independent-gold-architectures-retry.candidate-b-retry.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/f1341bda-dc2e-461b-ab43-95d726b0cd17/run-0/session.jsonl"
+      ],
+      "runId": "562a478f-be70-4568-ab05-62c9fb3ee3e6",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-19T11:04:35.660Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/f1341bda-dc2e-461b-ab43-95d726b0cd17/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:04:35.660Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "28a48a47-af27-45fe-a46d-7a4b6a66ed67",
+      "key": "candidate-c-retry",
+      "status": "completed",
+      "startedAt": "2026-09-19T10:54:36.364Z",
+      "updatedAt": "2026-09-19T11:06:11.274Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/271d58f8-e2c3-4874-ac85-91e0603c3cf5",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/three-independent-gold-architectures-retry.candidate-c-retry.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6e5548c6-a192-4fe8-8632-dc937fe04341/run-0/session.jsonl"
+      ],
+      "runId": "271d58f8-e2c3-4874-ac85-91e0603c3cf5",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-19T11:06:11.274Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6e5548c6-a192-4fe8-8632-dc937fe04341/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:06:11.274Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ff093cca-bbf1-49a0-9606-60a831003f7c"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/562a478f-be70-4568-ab05-62c9fb3ee3e6"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/271d58f8-e2c3-4874-ac85-91e0603c3cf5"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"candidateA\": {\n    \"key\": \"candidate-a-retry\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"ff093cca-bbf1-49a0-9606-60a831003f7c\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/three-independent-gold-architectures-retry.candidate-a-retry.md (25.6 KB, 539 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/28a48a47-af27-45fe-a46d-7a4b6a66ed67/three-independent-gold-architectures-retry.candidate-a-retry.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"ff093cca-bbf1-49a0-9606-60a831003f7c\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/ff093cca-bbf1-49a0-9606-60a831003f7c\",\n      \"/home/raja/. Trace: 6 event(s)."
+}

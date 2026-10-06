@@ -67,7 +67,7 @@ function makeHarness(options = {}) {
   const notifications = [];
   const messages = [];
   const events = new Events();
-  const models = ["gpt-5.6-terra", "gpt-5.6-sol"].map((id) => ({ provider: "openai-codex", id, reasoning: true }));
+  const models = ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-6-astra"].map((id) => ({ provider: "openai-codex", id, reasoning: true }));
   const pi = {
     currentModel: models[0],
     thinking: "xhigh",
@@ -186,7 +186,7 @@ async function startAndDesign(harness, task) {
   const loadedConfig = configModule.loadConfig();
   assert.equal(loadedConfig.version, 2);
   assert.deepEqual(loadedConfig.models, {
-    design: "openai-codex/gpt-5.6-sol",
+    design: "openai-codex/gpt-6-astra",
     implementation: "openai-codex/gpt-5.6-sol",
     review1: "openai-codex/gpt-5.6-sol",
     review2: "openai-codex/gpt-5.6-sol",
@@ -488,10 +488,10 @@ async function startAndDesign(harness, task) {
     acceptanceCriteria: ["behavior works"],
     steps: ["edit the file"],
     checks: [{ label: "tests", command: "npm test" }],
-  }, new AbortController().signal, undefined, harness.ctx), /Automatic Sol design/);
+  }, new AbortController().signal, undefined, harness.ctx), /Automatic architecture design/);
   await harness.tools.get("workflow_design").execute("design", {}, new AbortController().signal, undefined, harness.ctx);
   assert.equal(harness.designCalls(), 1);
-  assert.deepEqual(harness.designRequests[0], { model: "openai-codex/gpt-5.6-sol", thinking: "xhigh", nodeId: "design", agent: "workflow-architect" });
+  assert.deepEqual(harness.designRequests[0], { model: "openai-codex/gpt-6-astra", thinking: "xhigh", nodeId: "design", agent: "workflow-architect" });
   run = latestState(harness.entries).run;
   assert.equal(run.stage, "planning");
   await assert.rejects(() => harness.tools.get("workflow_plan").execute("plan", {

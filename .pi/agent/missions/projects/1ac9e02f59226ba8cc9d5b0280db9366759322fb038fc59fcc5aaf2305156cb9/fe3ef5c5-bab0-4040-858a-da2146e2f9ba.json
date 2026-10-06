@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "fe3ef5c5-bab0-4040-858a-da2146e2f9ba",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-14T19:52:29.518Z",
+  "updatedAt": "2026-09-14T19:54:50.050Z",
+  "runs": [
+    {
+      "runId": "c6cea548-c4dc-44d0-baa0-912a7f2f9c06",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c6cea548-c4dc-44d0-baa0-912a7f2f9c06",
+      "status": "complete",
+      "startedAt": "2026-09-14T19:52:29.520Z",
+      "completedAt": "2026-09-14T19:54:50.050Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "c6cea548-c4dc-44d0-baa0-912a7f2f9c06",
+      "key": "v8-math-review-retry",
+      "status": "completed",
+      "startedAt": "2026-09-14T19:52:29.575Z",
+      "updatedAt": "2026-09-14T19:54:49.882Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/7ea195ed-9603-4f7b-8357-2eee93dcc398",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/d27b0002-b318-4401-a4a8-fce9d8e260e5/run-0/session.jsonl"
+      ],
+      "runId": "7ea195ed-9603-4f7b-8357-2eee93dcc398",
+      "agent": "reviewer",
+      "completedAt": "2026-09-14T19:54:49.882Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/d27b0002-b318-4401-a4a8-fce9d8e260e5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-14T19:54:49.882Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "c6cea548-c4dc-44d0-baa0-912a7f2f9c06",
+      "key": "v8-code-review-retry",
+      "status": "completed",
+      "startedAt": "2026-09-14T19:52:29.602Z",
+      "updatedAt": "2026-09-14T19:54:12.313Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/d371e8ca-eef4-4aa6-b5ba-6a581a400158",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c50c919d-94bf-4eda-9f95-d0240cfced0e/run-0/session.jsonl"
+      ],
+      "runId": "d371e8ca-eef4-4aa6-b5ba-6a581a400158",
+      "agent": "reviewer",
+      "completedAt": "2026-09-14T19:54:12.313Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c50c919d-94bf-4eda-9f95-d0240cfced0e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-14T19:54:12.313Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c6cea548-c4dc-44d0-baa0-912a7f2f9c06/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c6cea548-c4dc-44d0-baa0-912a7f2f9c06/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7ea195ed-9603-4f7b-8357-2eee93dcc398"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d371e8ca-eef4-4aa6-b5ba-6a581a400158"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"reviews\": [\n    {\n      \"key\": \"v8-math-review-retry\",\n      \"ok\": true,\n      \"agent\": \"reviewer\",\n      \"runId\": \"7ea195ed-9603-4f7b-8357-2eee93dcc398\",\n      \"output\": \"\",\n      \"structuredOutput\": {\n        \"verdict\": \"blocked\",\n        \"findings\": [\n          \"P1 — Legal events do not dominate gap actions, and event ordering/terminal uniqueness are not enforced. `accounting.py:151-193` applies five-gap/target-change haircuts before `_apply_events`; a fifth-session missing predecessor with a valid settlement is therefore haircutted and zeroed before legal consideration is applied. `_apply_events` (`accounting.py:91-137`) alphabetically sorts event kinds rather than applying distributions, splits, then settlements, and accepts a second settlement/termination after the first has terminalized the asset. This contradicts the required precedence and duplicate-terminal fail-closed rules.\",\n          \"P1 — Required partial accounting is not wired into session execution. `execute_part Trace: 4 event(s)."
+}

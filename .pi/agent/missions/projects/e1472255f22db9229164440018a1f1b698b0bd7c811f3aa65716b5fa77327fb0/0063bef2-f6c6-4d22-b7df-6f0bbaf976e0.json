@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "0063bef2-f6c6-4d22-b7df-6f0bbaf976e0",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-30T08:23:32.388Z",
+  "updatedAt": "2026-09-30T08:32:49.613Z",
+  "runs": [
+    {
+      "runId": "3ceea705-43c2-4198-acc7-2fabf5b2f106",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3ceea705-43c2-4198-acc7-2fabf5b2f106",
+      "status": "complete",
+      "startedAt": "2026-09-30T08:23:32.392Z",
+      "completedAt": "2026-09-30T08:32:49.613Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "3ceea705-43c2-4198-acc7-2fabf5b2f106",
+      "key": "continue-g5-g6",
+      "status": "completed",
+      "startedAt": "2026-09-30T08:23:32.453Z",
+      "updatedAt": "2026-09-30T08:32:49.432Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b3b78be9-a695-4778-947b-7f0cba9aa1e8",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/3ceea705-43c2-4198-acc7-2fabf5b2f106/g5-g6-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/abca35b5-a030-4a8e-9b8f-f17b3669a0da/run-0/session.jsonl"
+      ],
+      "runId": "b3b78be9-a695-4778-947b-7f0cba9aa1e8",
+      "agent": "worker",
+      "completedAt": "2026-09-30T08:32:49.432Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/abca35b5-a030-4a8e-9b8f-f17b3669a0da/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-30T08:32:49.432Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3ceea705-43c2-4198-acc7-2fabf5b2f106/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3ceea705-43c2-4198-acc7-2fabf5b2f106/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b3b78be9-a695-4778-947b-7f0cba9aa1e8"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/3ceea705-43c2-4198-acc7-2fabf5b2f106/g5-g6-handoff.md\",\n  \"artifactPaths\": [\n    \"/tmp/pi-subagents-uid-1000/async-subagent-runs/b3b78be9-a695-4778-947b-7f0cba9aa1e8\",\n    \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/3ceea705-43c2-4198-acc7-2fabf5b2f106/g5-g6-handoff.md\",\n    \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/abca35b5-a030-4a8e-9b8f-f17b3669a0da/run-0/session.jsonl\"\n  ],\n  \"result\": {\n    \"key\": \"continue-g5-g6\",\n    \"ok\": true,\n    \"agent\": \"worker\",\n    \"runId\": \"b3b78be9-a695-4778-947b-7f0cba9aa1e8\",\n    \"output\": \"# G5–G6 handoff — STOPPED ON TEST-SETUP FAILURE\\n\\nImplemented a **partial, unvalidated G5** only. This is not a completed or accepted family implementation.\\n\\n## Stop and exact failure\\n\\nCwd `/home/raja/Projects/mind_me`; branc Trace: 2 event(s)."
+}

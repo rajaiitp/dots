@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "c49e5d19-4a7e-41c6-b3d7-f010f6f9a507",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-04T21:00:27.206Z",
+  "updatedAt": "2026-10-04T21:03:00.222Z",
+  "runs": [
+    {
+      "runId": "db6e125e-82d6-42ad-b60f-c602b03412ff",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-04T21:03:00.222Z",
+      "completedAt": "2026-10-04T21:03:00.222Z",
+      "usage": {
+        "tokens": 86212
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/db6e125e-82d6-42ad-b60f-c602b03412ff_reviewer_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/outputs/db6e125e-82d6-42ad-b60f-c602b03412ff/review.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/db6e125e-82d6-42ad-b60f-c602b03412ff_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Review\n\n**Verdict: approved**\n\n### Findings\n\nNo issues found.\n\n### Correct\n\n- Unified desktop tree is implemented in `src/client/shell/sidebar_tree.rs:39-145`, grouping snapshot agents beneath their workspace while retaining empty workspace rows.\n- Agent rows originate through `aggregate_agent_rows`, which iterates `snapshot.agents`; ordinary panes are not inserted (`src/client/shell/aggregate_navigation.rs:82-101`, `src/client/shell/sidebar_tree.rs:49-62`).\n- Endpoint-qualified identities are retained for multi-endpoint hits and navigation (`src/client/shell/sidebar_tree.rs:443-452`, `src/client/shell/sidebar_tree.rs:909-937`).\n- Agent reveal expands endpoint/worktree ancestors and stores a pending endpoint-qualified target (`src/client/shell/endpoint_agents.rs:4-36`). The pending target is consumed only when the sidebar has nonzero geometry and the corresponding row exists (`src/client/shell/sidebar_tree.rs:212-270`).\n- Expanded desktop rendering uses one body, scroll state, metrics set, and scrollbar (`src/client/shell/sidebar_tree.rs:176-180`, `src/client/shell/sidebar_tree.rs:273-283`, `src/client/shell/sidebar_tree.rs:459-463`).\n- Mobile rendering, protocol schemas, public configuration, and ordinary navigator row construction were not modified. The workspace-navigation adjustment preserves the existing mobile-specific collapsed-group branch (`src/client/shell/workspace_navigation.rs:108-116`).\n- The patch directory contains only the unified patch and installer; legacy patch artifacts are absent.\n- Installer pins source commit `7b116c05…`, Rust 1.96.1, and Zig 0.16.0 (`.config/herdr/patch/install.sh:5-8`); verifies the patch hash and applicability (`:61-83`); runs formatting, clippy, focused tests, release build, and binary/config validation (`:85-94`); validates before activation, creates a rollback backup, and atomically replaces the target (`:97-119`). It contains no server restart operation.\n\n### Residual risks\n\n-...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

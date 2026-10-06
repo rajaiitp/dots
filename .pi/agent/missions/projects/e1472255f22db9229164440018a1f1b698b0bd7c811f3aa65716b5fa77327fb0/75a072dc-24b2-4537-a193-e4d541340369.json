@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "75a072dc-24b2-4537-a193-e4d541340369",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-30T20:07:24.928Z",
+  "updatedAt": "2026-09-30T20:24:00.346Z",
+  "runs": [
+    {
+      "runId": "9707f1e7-d447-4692-940c-f75215772118",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9707f1e7-d447-4692-940c-f75215772118",
+      "status": "complete",
+      "startedAt": "2026-09-30T20:07:24.975Z",
+      "completedAt": "2026-09-30T20:24:00.346Z",
+      "usage": {
+        "tokens": 267353
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9707f1e7-d447-4692-940c-f75215772118/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9707f1e7-d447-4692-940c-f75215772118/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/9707f1e7-d447-4692-940c-f75215772118_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "worker:\n# Native V13 vintage recovery — stopped on pinned PIT provenance mismatch\n\nImplemented the bounded read-only recovery seal and attempted the V13-first replay once. The replay stopped before compilation at a real data/provenance gate; no fallback, data repair, input mixing, mode change, or second replay was attempted.\n\n## Outcome\n\nCurrent repository was verified before action as `main` / `6b881fa6eca6b3b14396cb73215ef2810f4418f1`, with all **578** preserved hashes exact, byte-exact ledger/trajectory/status/raw tracked diff, and empty staging. External worktree was sealed as `sharpe` / `dba102154adab55dc3ebdf3e8e0d909377e7b753`; its exact status and all dirty-file hashes remain unchanged.\n\nThe partial harness SHA-256 `b60e974fe4c42c19dd2d9d534b331903ff16e278470d25587df0a49703ef1603` was corrected only for provenance/runtime defects: durable execution/error evidence, sealing of benchmark temporal-firewall/runtime-lock inputs, sticky forbidden-access failures, post-run closure verification, and explicit semantic-digest applicability. Final harness SHA-256: `bef1ab12987b6735ef0280471f75e1cf12e7c26ae8d077b5c19f2bf548e35de5`.\n\nSeal completed for **46** byte-exact recovered/current-layer records, **57** research source-module origins, and **68** current evaluator modules. Manifest SHA-256: `2c705a744702156926d82e0237ba8eca35a0074a87845f6cfe14ecda75f269a6`.\n\nReplay used the required native interpreter, current cwd, `PYTHONPATH=model_evaluation/src:research`, bytecode disabled, numerical threads set to one, explicit subprocess argv/env, and a 1,750-second timeout. Exit was **1** when unchanged `pit_successor_v2` validation rejected both recovered legacy PIT files:\n\n- `legacy_prices.parquet`: expected `e5e0627b64b1e208793a7231e84d70c81cfcc2a2ffc3d761c5e6088e5a406693`; recovered `5e8f584a9fab8f81700b7ab8f675d001a798002298985bdef0973a580ec06cb2`.\n- `legacy_membership_mask.parquet`: expected `7987963544597ac688fee71cfe167fe06972e9cb7b43821c87442c33bc6edd0b`; recovered `f6"
+}

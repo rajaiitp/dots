@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "537996f9-4e58-42ac-8f79-b4534562035d",
+  "title": "Prepare active strong-persistence G13",
+  "objective": "Run no performance; prepare a structurally pre-admitted five-coordinate V13 strong-persistence family.",
+  "status": "completed",
+  "createdAt": "2026-10-01T18:34:51.962Z",
+  "updatedAt": "2026-10-01T18:59:51.623Z",
+  "runs": [
+    {
+      "runId": "607a4c50-207c-4c0e-a866-b5ba8c7bf014",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/607a4c50-207c-4c0e-a866-b5ba8c7bf014",
+      "status": "complete",
+      "startedAt": "2026-10-01T18:34:51.965Z",
+      "completedAt": "2026-10-01T18:59:51.623Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "607a4c50-207c-4c0e-a866-b5ba8c7bf014",
+      "key": "g13-preparation",
+      "status": "completed",
+      "startedAt": "2026-10-01T18:34:52.005Z",
+      "updatedAt": "2026-10-01T18:59:51.454Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/79875237-f094-4991-97d9-4ea43cb0c74b",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/607a4c50-207c-4c0e-a866-b5ba8c7bf014/native-v13-g13-prefreeze-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/16c6f98b-971c-4e8f-b62c-200b24a3f9f6/run-0/session.jsonl"
+      ],
+      "runId": "79875237-f094-4991-97d9-4ea43cb0c74b",
+      "agent": "worker",
+      "completedAt": "2026-10-01T18:59:51.453Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/16c6f98b-971c-4e8f-b62c-200b24a3f9f6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-01T18:59:51.454Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/607a4c50-207c-4c0e-a866-b5ba8c7bf014/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/607a4c50-207c-4c0e-a866-b5ba8c7bf014/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/79875237-f094-4991-97d9-4ea43cb0c74b"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"runId\": \"79875237-f094-4991-97d9-4ea43cb0c74b\",\n  \"output\": \"# Native-V13 G13 pre-census handoff\\n\\nImplemented the standalone `causal-native-v13-strong-persistence-g13` preparation through the strongest safe pre-census boundary.\\n\\n## Changed files\\n\\n- `model_evaluation/src/model_evaluation/native_v13_strong_persistence_g13.py`\\n  - SHA-256: `7a785bacc77944c904360ba45dc8b897e77ed8a82c076be19a152b9a29e2b11c`\\n- `model_evaluation/tests/test_native_v13_strong_persistence_g13.py`\\n  - SHA-256: `5ee0b811e9f7788b75608dc6eeeed2993f702ce5dae18afbf0a82ae88e54ba77`\\n\\nNo other repository file was created or modified.\\n\\n## Implemented safeguards and protocol\\n\\n- Exact ordered provisional grid: neutral strong `1.0`, then `0.875`, `0.75`, `0.625`, and `0.5`.\\n- Refresh is fixed at `0.0`, weak at `0.5`, and initial/missing-initial at `0.75`.\\n- Only the frozen seven `STRONG_RULES` vary; rule order, predicates, thresholds, recovered V6 source, native activation, growth/buffer/substitution, s Trace: 2 event(s)."
+}

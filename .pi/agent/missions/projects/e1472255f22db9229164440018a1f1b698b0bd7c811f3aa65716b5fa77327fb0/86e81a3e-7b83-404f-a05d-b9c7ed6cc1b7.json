@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "86e81a3e-7b83-404f-a05d-b9c7ed6cc1b7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-30T18:00:17.048Z",
+  "updatedAt": "2026-09-30T18:23:26.663Z",
+  "runs": [
+    {
+      "runId": "c105ec0b-28e5-4241-82bc-001a1355a2ab",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c105ec0b-28e5-4241-82bc-001a1355a2ab",
+      "status": "complete",
+      "startedAt": "2026-09-30T18:00:17.051Z",
+      "completedAt": "2026-09-30T18:23:26.663Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "c105ec0b-28e5-4241-82bc-001a1355a2ab",
+      "key": "native-v13",
+      "status": "completed",
+      "startedAt": "2026-09-30T18:00:17.103Z",
+      "updatedAt": "2026-09-30T18:23:26.488Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b075cf1d-b73b-46d5-824b-aaf6509d0193",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c105ec0b-28e5-4241-82bc-001a1355a2ab/native-v13-extraction-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/1d602189-57e3-4b87-8fb3-d8c06894cb20/run-0/session.jsonl"
+      ],
+      "runId": "b075cf1d-b73b-46d5-824b-aaf6509d0193",
+      "agent": "worker",
+      "completedAt": "2026-09-30T18:23:26.488Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/1d602189-57e3-4b87-8fb3-d8c06894cb20/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-30T18:23:26.488Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c105ec0b-28e5-4241-82bc-001a1355a2ab/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c105ec0b-28e5-4241-82bc-001a1355a2ab/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b075cf1d-b73b-46d5-824b-aaf6509d0193"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c105ec0b-28e5-4241-82bc-001a1355a2ab/native-v13-extraction-handoff.md\",\n  \"artifactPaths\": [\n    \"/tmp/pi-subagents-uid-1000/async-subagent-runs/b075cf1d-b73b-46d5-824b-aaf6509d0193\",\n    \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c105ec0b-28e5-4241-82bc-001a1355a2ab/native-v13-extraction-handoff.md\",\n    \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/1d602189-57e3-4b87-8fb3-d8c06894cb20/run-0/session.jsonl\"\n  ]\n} Trace: 2 event(s)."
+}

@@ -325,7 +325,7 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
           return;
         }
 
-        if (verb === "--design") throw new Error("Sol design is now mandatory and automatic; use /workflow <task> without --design.");
+        if (verb === "--design") throw new Error("Architecture design is now mandatory and automatic; use /workflow <task> without --design.");
         let goal = raw;
         if (!goal) {
           if (!ctx.hasUI) throw new Error("Usage: /workflow <task>");
@@ -342,7 +342,7 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
   pi.registerTool({
     name: "workflow_design",
     label: "Workflow Design",
-    description: "Run the mandatory Sol architecture consultation before workflow planning.",
+    description: "Run the mandatory configured architecture consultation before workflow planning.",
     parameters: Type.Object({}),
     executionMode: "sequential",
     async execute(_id, _params, signal, update, ctx) {
@@ -363,7 +363,7 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
           thinking: config.thinking.design,
           timeoutMs: config.specialistTimeoutMs,
           signal: combined,
-          onProgress: (progress) => update?.({ content: [{ type: "text", text: `Sol design · ${Math.round((progress.durationMs ?? 0) / 1000)}s · ${progress.currentTool ?? "thinking"}` }], details: progress }),
+          onProgress: (progress) => update?.({ content: [{ type: "text", text: `Architecture design · ${Math.round((progress.durationMs ?? 0) / 1000)}s · ${progress.currentTool ?? "thinking"}` }], details: progress }),
         });
         if (state.run?.id !== run.id || isTerminal(run.stage)) throw new Error("Discarded stale design result.");
         run.design = design;
@@ -402,7 +402,7 @@ export default function workflowExtension(pi: ExtensionAPI, overrides: Partial<W
     async execute(_id, params, signal, _update, ctx) {
       signal?.throwIfAborted();
       const run = activeRun(state);
-      if (!run.design) throw new Error("Automatic Sol design must complete through workflow_design before planning.");
+      if (!run.design) throw new Error("Automatic architecture design must complete through workflow_design before planning.");
       if (run.reviewDispatches > 0) throw new Error("The plan is frozen after the first independent review begins.");
       if (!["planning", "implementing", "reviewing"].includes(run.stage)) throw new Error(`workflow_plan is invalid during ${run.stage}. ${expectedNext(run)}`);
       const currentRevision = run.plan?.revision ?? 0;

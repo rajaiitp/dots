@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "faa71aa9-16a2-40f6-88c5-06d4ed1cd849",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T17:53:50.572Z",
+  "updatedAt": "2026-09-19T18:29:24.057Z",
+  "runs": [
+    {
+      "runId": "7d86f082-dde1-419f-ba44-2fefaa213f07",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7d86f082-dde1-419f-ba44-2fefaa213f07",
+      "status": "complete",
+      "startedAt": "2026-09-19T17:53:50.576Z",
+      "completedAt": "2026-09-19T18:29:24.057Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "7d86f082-dde1-419f-ba44-2fefaa213f07",
+      "key": "final-correction-consultation",
+      "status": "completed",
+      "startedAt": "2026-09-19T17:53:50.631Z",
+      "updatedAt": "2026-09-19T17:56:34.392Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/8af6a996-5457-44da-9e43-43600f08e72b",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/7d86f082-dde1-419f-ba44-2fefaa213f07/pmps-s1-final-correction-consultation.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b34f890f-497c-4b23-93e8-d7a50584d686/run-0/session.jsonl"
+      ],
+      "runId": "8af6a996-5457-44da-9e43-43600f08e72b",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-19T17:56:34.392Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b34f890f-497c-4b23-93e8-d7a50584d686/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T17:56:34.392Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7d86f082-dde1-419f-ba44-2fefaa213f07",
+      "key": "final-correction-build",
+      "status": "completed",
+      "startedAt": "2026-09-19T17:56:34.398Z",
+      "updatedAt": "2026-09-19T18:22:32.285Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c6c47e75-5f45-42c9-a65a-ec2f74b2bfdc",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/7d86f082-dde1-419f-ba44-2fefaa213f07/pmps-s1-final-correction.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c88eaa47-64e3-49a6-8166-e6a50fbb9204/run-0/session.jsonl"
+      ],
+      "runId": "c6c47e75-5f45-42c9-a65a-ec2f74b2bfdc",
+      "agent": "worker",
+      "completedAt": "2026-09-19T18:22:32.285Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c88eaa47-64e3-49a6-8166-e6a50fbb9204/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T18:22:32.285Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7d86f082-dde1-419f-ba44-2fefaa213f07",
+      "key": "final-correction-review",
+      "status": "completed",
+      "startedAt": "2026-09-19T18:22:32.293Z",
+      "updatedAt": "2026-09-19T18:29:23.880Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/2353b759-4a13-4c43-84a6-2851df522d65",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/7d86f082-dde1-419f-ba44-2fefaa213f07/pmps-s1-final-correction-review.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/3561d4ca-1582-473b-81c5-d0219bf4f27a/run-0/session.jsonl"
+      ],
+      "runId": "2353b759-4a13-4c43-84a6-2851df522d65",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T18:29:23.880Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/3561d4ca-1582-473b-81c5-d0219bf4f27a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T18:29:23.880Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7d86f082-dde1-419f-ba44-2fefaa213f07/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7d86f082-dde1-419f-ba44-2fefaa213f07/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8af6a996-5457-44da-9e43-43600f08e72b"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c6c47e75-5f45-42c9-a65a-ec2f74b2bfdc"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2353b759-4a13-4c43-84a6-2851df522d65"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"status\": \"PMPS_S1_TERMINAL_REVIEW_BLOCKED\",\n  \"consult\": {\n    \"key\": \"final-correction-consultation\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"8af6a996-5457-44da-9e43-43600f08e72b\",\n    \"output\": \"\\n\\nOutput saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/7d86f082-dde1-419f-ba44-2fefaa213f07/pmps-s1-final-correction-consultation.json (0 B, 0 lines). Read this file if needed.\",\n    \"structuredOutput\": {\n      \"verdict\": \"pass\",\n      \"scope\": \"Decision: PASS — read-only architecture validation of the proposed PMPS-S1 final-correction workflow.\",\n      \"findings\": [],\n      \"rationale\": \"Rationale: One sequential writer is the safest minimal architecture because the five P1s converge on the same live/replay state, checkpoint, artifact, result, verifier, and supervisor contracts. Constraints: retain the specification/evidence ceiling; inventory and never write the f8426953, 0652886e, and 8a997ef4 build trees;  Trace: 6 event(s)."
+}

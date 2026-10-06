@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "f434ffcb-9338-4a6b-9950-c1bd228bc4bc",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T11:09:13.297Z",
+  "updatedAt": "2026-09-19T11:51:02.217Z",
+  "runs": [
+    {
+      "runId": "563cefdd-a723-4057-8bc1-19a3d90a62ea",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/563cefdd-a723-4057-8bc1-19a3d90a62ea",
+      "status": "complete",
+      "startedAt": "2026-09-19T11:09:13.301Z",
+      "completedAt": "2026-09-19T11:51:02.217Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "563cefdd-a723-4057-8bc1-19a3d90a62ea",
+      "key": "review-crown",
+      "status": "completed",
+      "startedAt": "2026-09-19T11:09:13.355Z",
+      "updatedAt": "2026-09-19T11:17:10.547Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/011a2ef7-0dfb-46f8-b774-bd5b71927dbf",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/563cefdd-a723-4057-8bc1-19a3d90a62ea/three-independent-gold-architecture-reviews.review-crown.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/a8bda5d8-b2d3-4a25-9182-a95e30390f19/run-0/session.jsonl"
+      ],
+      "runId": "011a2ef7-0dfb-46f8-b774-bd5b71927dbf",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-09-19T11:17:10.547Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/a8bda5d8-b2d3-4a25-9182-a95e30390f19/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:17:10.547Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "563cefdd-a723-4057-8bc1-19a3d90a62ea",
+      "key": "review-cemsk",
+      "status": "completed",
+      "startedAt": "2026-09-19T11:09:13.409Z",
+      "updatedAt": "2026-09-19T11:17:00.538Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/8b58c808-b040-4ba4-9741-71565a3adfa5",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/563cefdd-a723-4057-8bc1-19a3d90a62ea/three-independent-gold-architecture-reviews.review-cemsk.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/52865151-a9cc-4f35-a97b-e91f46461629/run-0/session.jsonl"
+      ],
+      "runId": "8b58c808-b040-4ba4-9741-71565a3adfa5",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-09-19T11:17:00.538Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/52865151-a9cc-4f35-a97b-e91f46461629/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:17:00.538Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "563cefdd-a723-4057-8bc1-19a3d90a62ea",
+      "key": "review-asterion",
+      "status": "completed",
+      "startedAt": "2026-09-19T11:09:13.444Z",
+      "updatedAt": "2026-09-19T11:51:02.041Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/99c3cb2d-103b-4069-a143-64448ff3f272",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/563cefdd-a723-4057-8bc1-19a3d90a62ea/three-independent-gold-architecture-reviews.review-asterion.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b39d7c8c-97de-41c1-8c7f-c520b35821b6/run-0/session.jsonl"
+      ],
+      "runId": "99c3cb2d-103b-4069-a143-64448ff3f272",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-09-19T11:51:02.041Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b39d7c8c-97de-41c1-8c7f-c520b35821b6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T11:51:02.041Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/563cefdd-a723-4057-8bc1-19a3d90a62ea/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/563cefdd-a723-4057-8bc1-19a3d90a62ea/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/011a2ef7-0dfb-46f8-b774-bd5b71927dbf"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8b58c808-b040-4ba4-9741-71565a3adfa5"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/99c3cb2d-103b-4069-a143-64448ff3f272"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"crown\": {\n    \"key\": \"review-crown\",\n    \"ok\": true,\n    \"agent\": \"plan-reviewer\",\n    \"runId\": \"011a2ef7-0dfb-46f8-b774-bd5b71927dbf\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/563cefdd-a723-4057-8bc1-19a3d90a62ea/three-independent-gold-architecture-reviews.review-crown.md (6.8 KB, 46 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/563cefdd-a723-4057-8bc1-19a3d90a62ea/three-independent-gold-architecture-reviews.review-crown.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"011a2ef7-0dfb-46f8-b774-bd5b71927dbf\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/011a2ef7-0dfb-46f8-b774-bd5b71927dbf\",\n      \"/home/raja/.pi/agent/sessions/--home- Trace: 6 event(s)."
+}

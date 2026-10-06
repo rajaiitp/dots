@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "id": "95297aa1-b851-4c77-bc3b-2712747eb37b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-27T12:14:53.985Z",
+  "updatedAt": "2026-09-27T12:16:44.963Z",
+  "runs": [
+    {
+      "runId": "1b189cba-7354-4b73-9abe-5721657d2288",
+      "mode": "single",
+      "agent": "workflow-architect",
+      "status": "completed",
+      "startedAt": "2026-09-27T12:16:44.963Z",
+      "completedAt": "2026-09-27T12:16:44.963Z",
+      "usage": {
+        "tokens": 28779
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/1b189cba-7354-4b73-9abe-5721657d2288_workflow-architect_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/1b189cba-7354-4b73-9abe-5721657d2288_workflow-architect_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n{\n  \"decision\": \"Use one model-specific pre-suspend unload/post-resume reload hook. This is the safest practical workaround supported by the supplied evidence, not a proven firmware fix.\",\n  \"rationale\": [\n    \"The model-specific ArchWiki recommendation avoids the failing ath11k resume path instead of manipulating an already-wedged device.\",\n    \"The relevant kernel fixes and disabled NetworkManager powersave are already present.\"\n  ],\n  \"constraints\": [\n    \"Preserve unrelated staged and unstaged changes; make surgical Panel.qml edits, not a whole-file restore.\",\n    \"Leave BIOS, kernel, firmware, powersave settings and the ordinary dotfiles installer unchanged.\",\n    \"Do not invoke suspend, unload modules, restart NetworkManager or execute either hook during verification.\"\n  ],\n  \"risks\": [\n    \"Module removal can fail or hang; a systemd-sleep hook's nonzero exit does not veto suspend.\",\n    \"Wi-Fi disappears during sleep preparation; reconnection takes time and Wi-Fi wake becomes unavailable.\",\n    \"Static checks cannot demonstrate successful hardware resume. A later explicitly approved local suspend test is required.\"\n  ],\n  \"implementation_notes\": {\n    \"plan\": [\n      \"Track 90-ath11k-suspend; later install one root-owned 0755 copy at /usr/lib/systemd/system-sleep/90-ath11k-suspend, never a symlink into the user-writable repository. Confirm this machine and PCI identity before installation.\",\n      \"Accept only pre/post with operation suspend; other arguments, including manual, do nothing. Pre records whether ath11k_pci was loaded in root-private /run state, then synchronously runs modprobe -r ath11k_pci. Post runs modprobe ath11k_pci only when that state exists, clearing it after successful restoration. Check state-write failures before unloading; log module-command failures. Preserve an initially unloaded module.\",\n      \"Use fixed trusted command paths. No forced removal, PCI reset/bind/unbind writes, recovery retries...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": true,
+      "inferredReason": [
+        "read-only task wording"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": [],
+      "reason": "disabled by deprecated false shorthand"
+    },
+    "inferredReason": [
+      "read-only task wording"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

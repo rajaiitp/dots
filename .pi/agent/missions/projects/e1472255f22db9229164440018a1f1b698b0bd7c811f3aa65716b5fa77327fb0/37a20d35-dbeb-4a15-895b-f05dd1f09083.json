@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "37a20d35-dbeb-4a15-895b-f05dd1f09083",
+  "title": "Evaluate reconstructed V13 standalone non-inferiority",
+  "objective": "Freeze and execute one strict standalone V13 comparability gate; authorize later generalization only on pass.",
+  "status": "completed",
+  "createdAt": "2026-10-01T16:25:54.141Z",
+  "updatedAt": "2026-10-01T16:42:54.537Z",
+  "runs": [
+    {
+      "runId": "bbb7dc0f-b755-4b16-bc96-e2cdce9ec572",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bbb7dc0f-b755-4b16-bc96-e2cdce9ec572",
+      "status": "complete",
+      "startedAt": "2026-10-01T16:25:54.145Z",
+      "completedAt": "2026-10-01T16:42:54.537Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "bbb7dc0f-b755-4b16-bc96-e2cdce9ec572",
+      "key": "v13-gate",
+      "status": "completed",
+      "startedAt": "2026-10-01T16:25:54.189Z",
+      "updatedAt": "2026-10-01T16:42:54.355Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ef7fa0fc-5e5d-4839-9125-cd13ea6cd9cf",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bbb7dc0f-b755-4b16-bc96-e2cdce9ec572/v13-standalone-noninferiority-handoff.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/283a370c-81d9-4936-ad70-04a6e3151954/run-0/session.jsonl"
+      ],
+      "runId": "ef7fa0fc-5e5d-4839-9125-cd13ea6cd9cf",
+      "agent": "worker",
+      "completedAt": "2026-10-01T16:42:54.355Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/283a370c-81d9-4936-ad70-04a6e3151954/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-01T16:42:54.355Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bbb7dc0f-b755-4b16-bc96-e2cdce9ec572/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bbb7dc0f-b755-4b16-bc96-e2cdce9ec572/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ef7fa0fc-5e5d-4839-9125-cd13ea6cd9cf"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"runId\": \"ef7fa0fc-5e5d-4839-9125-cd13ea6cd9cf\",\n  \"output\": \"Implemented the pre-freeze standalone V13 gate code and focused tests, but did not freeze or execute the comparison because the required historical target-idempotence test exceeded the 30-second child-command cap.\\n\\nChanged files:\\n- `model_evaluation/src/model_evaluation/v13_reconstruction_noninferiority.py` — SHA-256 `d22c853c78e7db95b9233b97e89bdd91a208706a4a47dcf36afa3c4c3a3c7759`\\n- `model_evaluation/tests/test_v13_reconstruction_noninferiority.py` — SHA-256 `85533c377cdf8039ce1d5d391f48541027443adc50fe72a34048be3fdfa630af`\\n\\nImplemented scope:\\n- Exact development/full-history conjunction and immutable-tolerance comparisons for CAGR edge, excess-Sharpe edge, MaxDD edge, turnover ratio, and both no-borrowing flags.\\n- Fixed candidate/reference/common-layer identities and hash validation.\\n- Target-idempotence audit, candidate-supplied-return prohibition, exclusive one-shot marker, exact result reconstruction, dete Trace: 2 event(s)."
+}

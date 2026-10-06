@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "f19188c4-d159-47aa-9eeb-756c20dcee84",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-20T14:14:24.893Z",
+  "updatedAt": "2026-09-20T14:16:24.915Z",
+  "runs": [
+    {
+      "runId": "7d3cc501-690b-4d88-86a4-1ac1c2ffe5ec",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "failed",
+      "startedAt": "2026-09-20T14:16:24.914Z",
+      "completedAt": "2026-09-20T14:16:24.914Z",
+      "usage": {
+        "tokens": 45795
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/subagent-artifacts/7d3cc501-690b-4d88-86a4-1ac1c2ffe5ec_reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/subagent-artifacts/7d3cc501-690b-4d88-86a4-1ac1c2ffe5ec_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/shaadi",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nSubagent timed out after 120000ms.\n\nOutput:\nSubagent timed out after 120000ms.\n\nRecovery summary:\n- termination: timed-out\n- changed tracked files: unavailable (Command failed: git -c core.fsmonitor=false diff --no-ext-diff --name-only -z HEAD --\nwarning: Not a git repository. Use --no-index to compare two paths outside a working tree\nusage: git diff --no-index [<options>] <path> <path> [<pathspec>...]\n\nDiff output format options\n    -p, --patch           generate patch\n    -s, --no-patch        suppress diff output\n    -u                    generate patch\n    -U, --unified[=<n>]   generate diffs with <n> lines context\n    -W, --[no-]function-context\n                          generate diffs with <n> lines context\n    --raw                 generate the diff in raw format\n    --patch-with-raw      synonym for '-p --raw'\n    --patch-with-stat     synonym for '-p --stat'\n    --numstat             machine friendly --stat\n    --shortstat           output only the last line of --stat\n    -X, --dirstat[=<param1>,<param2>...]\n                          output the distribution of relative amount of changes for each sub-directory\n    --cumulative          synonym for --dirstat=cumulative\n    --dirstat-by-file[=<param1>,<param2>...]\n                          synonym for --dirstat=files,<param1>,<param2>...\n    --check               warn if changes introduce conflict markers or whitespace errors\n    --summary             condensed summary such as creations, renames and mode changes\n    --name-only           show only names of changed files\n    --name-status         show only names and status of changed files\n    --stat[=<width>[,<name-width>[,<count>]]]\n                          generate diffstat\n    --stat-width <width>  generate diffstat with a given width\n    --stat-name-width <width>\n                          generate diffstat with a given name width\n    --stat-graph-width <width>\n                          generate diffstat with a given...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

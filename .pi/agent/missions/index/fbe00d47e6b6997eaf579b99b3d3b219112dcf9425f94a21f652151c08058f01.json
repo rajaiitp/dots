@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "37a20d35-dbeb-4a15-895b-f05dd1f09083",
+  "projectRoot": "/home/raja/Projects/mind_me",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/e1472255f22db9229164440018a1f1b698b0bd7c811f3aa65716b5fa77327fb0/37a20d35-dbeb-4a15-895b-f05dd1f09083.json",
+  "title": "Evaluate reconstructed V13 standalone non-inferiority",
+  "status": "completed",
+  "updatedAt": "2026-10-01T16:42:54.537Z",
+  "lastRunId": "bbb7dc0f-b755-4b16-bc96-e2cdce9ec572"
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "a4931e70-3bcd-4702-a30a-cd821be17769",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T13:46:18.632Z",
+  "updatedAt": "2026-09-19T13:57:11.058Z",
+  "runs": [
+    {
+      "runId": "2ac39d92-f8ba-4e0e-8c58-0df803ca6c20",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20",
+      "status": "complete",
+      "startedAt": "2026-09-19T13:46:18.638Z",
+      "completedAt": "2026-09-19T13:57:11.058Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "2ac39d92-f8ba-4e0e-8c58-0df803ca6c20",
+      "key": "crown-p1-final",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:46:18.726Z",
+      "updatedAt": "2026-09-19T13:54:04.568Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c168e931-5e43-41a4-8e16-b9674082336a",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/final-p1-fixes.crown-p1-final.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/e564c7c8-d25d-4eeb-8edd-dcab73fb4b74/run-0/session.jsonl"
+      ],
+      "runId": "c168e931-5e43-41a4-8e16-b9674082336a",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:54:04.568Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/e564c7c8-d25d-4eeb-8edd-dcab73fb4b74/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:54:04.568Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "2ac39d92-f8ba-4e0e-8c58-0df803ca6c20",
+      "key": "cemsk-p1-final",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:54:04.572Z",
+      "updatedAt": "2026-09-19T13:57:10.889Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b51dcbec-417d-4092-a561-e08f4a5a0d27",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/final-p1-fixes.cemsk-p1-final.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6c43c3bd-4400-483f-b815-93a5651b814f/run-0/session.jsonl"
+      ],
+      "runId": "b51dcbec-417d-4092-a561-e08f4a5a0d27",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:57:10.889Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6c43c3bd-4400-483f-b815-93a5651b814f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:57:10.889Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c168e931-5e43-41a4-8e16-b9674082336a"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b51dcbec-417d-4092-a561-e08f4a5a0d27"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"crown\": {\n    \"key\": \"crown-p1-final\",\n    \"ok\": true,\n    \"agent\": \"worker\",\n    \"runId\": \"c168e931-5e43-41a4-8e16-b9674082336a\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/final-p1-fixes.crown-p1-final.md (1.8 KB, 27 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/2ac39d92-f8ba-4e0e-8c58-0df803ca6c20/final-p1-fixes.crown-p1-final.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"c168e931-5e43-41a4-8e16-b9674082336a\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/c168e931-5e43-41a4-8e16-b9674082336a\",\n      \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/2ac39d92 Trace: 4 event(s)."
+}

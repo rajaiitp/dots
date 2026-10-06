@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "ca1492c1-3542-4724-ae4b-dda597cfa9b4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-19T09:58:49.660Z",
+  "updatedAt": "2026-09-19T10:02:49.716Z",
+  "runs": [
+    {
+      "runId": "31484c6f-505a-45a8-b45f-1a198a3b7071",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "failed",
+      "startedAt": "2026-09-19T10:02:49.715Z",
+      "completedAt": "2026-09-19T10:02:49.715Z",
+      "usage": {
+        "tokens": 30080
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nSubagent timed out after 240000ms.\n\nOutput:\nSubagent timed out after 240000ms.\n\nRecovery summary:\n- termination: timed-out\n- changed tracked files: none\n- session file: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/31484c6f-505a-45a8-b45f-1a198a3b7071/run-0/session.jsonl\n- transcript: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_transcript.jsonl\n- output artifact: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_output.md\n- metadata artifact: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_meta.json\nWarning: Inspect partial changes before retrying or resuming the child.\n\nOutput artifact: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/31484c6f-505a-45a8-b45f-1a198a3b7071_plan-reviewer_0_output.md",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

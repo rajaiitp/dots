@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "0a5f6136-029c-41a7-b82c-2f780c63001b",
+  "projectRoot": "/home/raja/Projects/shaadi",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/29aafaa00cdcdc6a24466326d7601bdc13f1c82fa82ec27a9d0665089c7b8bb9/0a5f6136-029c-41a7-b82c-2f780c63001b.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-09-21T06:27:38.919Z",
+  "lastRunId": "3b5eed60-4217-418c-b6a5-af263bd8e086"
+}

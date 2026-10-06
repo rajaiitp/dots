@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "id": "bc725d9a-793a-4b55-85a2-d985efc71517",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T14:02:00.829Z",
+  "updatedAt": "2026-09-19T14:07:17.535Z",
+  "runs": [
+    {
+      "runId": "f010b948-c110-4838-8822-5ae670635d7a",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-09-19T14:07:17.535Z",
+      "completedAt": "2026-09-19T14:07:17.535Z",
+      "usage": {
+        "tokens": 87507
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/f010b948-c110-4838-8822-5ae670635d7a_worker_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/f010b948-c110-4838-8822-5ae670635d7a/crown-final-order-fix.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/f010b948-c110-4838-8822-5ae670635d7a_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nImplemented the final two CROWN P1 fixes.\n\nChanged files:\n- `model_evaluation/src/model_evaluation/crown_png_a2_synth/core.py`\n- `model_evaluation/tests/test_crown_png_a2_synth.py`\n\nThe closed-session transition now accrues cash, processes observations/marks/gaps and forced gap actions, applies ordered lifecycle events, and only then executes the committed target. Successor aggregation preserves current-session observed marks, while gapped successors retain value-based carrying. `build_target()` now removes both re-entry-blocked and permanently terminated IDs before scoring/allocation.\n\nTests added or updated:\n- Added a formation test proving the highest-scoring terminal ID appears in a comparable baseline target but cannot appear when terminal.\n- Updated the combined cash-accrual/mark/distribution/split fixture to prove the new ordering via a post-event `2.0` mark and `98.0` NAV.\n- Strengthened successor and cash-and-stock settlement checks to assert observed successor marks survive lifecycle processing.\n\nValidation:\n- Focused project-venv pytest: 21 passed.\n- `py_compile`: passed for package and focused test.\n- Contract SHA-256 assertion: passed (`c840ab345a74a4531c4ac088ff601e1744151a64d1a38ad869957879349e7160`).\n- Synthetic-only/deferred contract assertions: passed.\n- Diff whitespace check: clean; staged files: 0.\n\nOpen risks/questions:\n- No known functional blocker. The repository has broad pre-existing untracked/modified content, and these CROWN files are untracked in the current worktree, so Git cannot provide a baseline line diff for them.\n- Contract semantics text was not changed, so the contract file and embedded hash were intentionally left unchanged.\n\nRecommended next step: review and commit only the two changed CROWN implementation/test files together with the existing contract artifact as appropriate for the parent worktree.\n\nOutput saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-a...",
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": true,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files",
+            "validation-output",
+            "diff-summary"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files",
+        "validation-output",
+        "diff-summary"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files",
+          "validation-output",
+          "diff-summary"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "passed",
+        "message": "tests-added evidence present."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "evidence:validation-output",
+        "status": "passed",
+        "message": "validation-output evidence present."
+      },
+      {
+        "id": "evidence:diff-summary",
+        "status": "passed",
+        "message": "diff-summary evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Session ordering and terminal-ID formation exclusion were implemented and validated by 21 focused tests."
+        }
+      ],
+      "changedFiles": [
+        "model_evaluation/src/model_evaluation/crown_png_a2_synth/core.py",
+        "model_evaluation/tests/test_crown_png_a2_synth.py"
+      ],
+      "testsAddedOrUpdated": [
+        "Terminal-ID formation exclusion test",
+        "Combined mark/distribution/split ordering fixture",
+        "Successor and settlement mark reconciliation assertions"
+      ],
+      "commandsRun": [
+        {
+          "command": "cd model_evaluation && PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_crown_png_a2_synth.py",
+          "result": "passed",
+          "summary": "21 passed"
+        },
+        {
+          "command": "project-venv py_compile, contract hash/status assertions, and diff hygiene",
+          "result": "passed",
+          "summary": "All checks passed"
+        }
+      ],
+      "validationOutput": [
+        "21 passed",
+        "contract SHA-256 matched",
+        "synthetic-only/deferred status preserved",
+        "diff-check=clean; staged-files=0"
+      ],
+      "residualRisks": [
+        "Scoped files are untracked, preventing a baseline Git diff."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Reordered accounting to cash, observations/gaps, lifecycle, execution; preserved adjusted marks; excluded terminal and blocked IDs before allocation.",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": "Full findings written to crown-final-order-fix.md at the authoritative output path."
+    }
+  }
+}

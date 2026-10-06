@@ -1,5 +1,9 @@
 -- auto-session
 require("auto-session").setup({
+    enabled           = true,
+    auto_save         = true,
+    auto_restore      = true,
+    auto_create       = true,
     pre_save_cmds     = { "silent! Neotree close" },
     post_restore_cmds = {
         "silent! Neotree close",

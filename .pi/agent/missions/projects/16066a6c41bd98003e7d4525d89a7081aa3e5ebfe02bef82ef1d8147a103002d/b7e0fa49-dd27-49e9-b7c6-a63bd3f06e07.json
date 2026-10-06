@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "b7e0fa49-dd27-49e9-b7c6-a63bd3f06e07",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-05T20:13:30.877Z",
+  "updatedAt": "2026-10-05T20:14:14.372Z",
+  "runs": [
+    {
+      "runId": "db006df9-7635-4363-a334-c9b34129ed0f",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "failed",
+      "startedAt": "2026-10-05T20:14:14.371Z",
+      "completedAt": "2026-10-05T20:14:14.371Z",
+      "usage": {
+        "tokens": 1805
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/db006df9-7635-4363-a334-c9b34129ed0f_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/db006df9-7635-4363-a334-c9b34129ed0f_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nRequest was aborted\n\nOutput artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/db006df9-7635-4363-a334-c9b34129ed0f_plan-reviewer_0_output.md",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "3f93eaa3-5751-42a5-b8b7-d84c887ca7d6",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T12:51:07.002Z",
+  "updatedAt": "2026-09-19T12:55:19.044Z",
+  "runs": [
+    {
+      "runId": "bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "status": "complete",
+      "startedAt": "2026-09-19T12:51:07.005Z",
+      "completedAt": "2026-09-19T12:55:19.044Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "key": "review-common",
+      "status": "completed",
+      "startedAt": "2026-09-19T12:51:07.075Z",
+      "updatedAt": "2026-09-19T12:53:37.278Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c902aa53-7051-4bf5-ad26-28c774b7069e",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-common.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b225223c-e82b-46b1-a3dd-e36a438ee608/run-0/session.jsonl"
+      ],
+      "runId": "c902aa53-7051-4bf5-ad26-28c774b7069e",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T12:53:37.278Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/b225223c-e82b-46b1-a3dd-e36a438ee608/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T12:53:37.278Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "key": "review-crown",
+      "status": "completed",
+      "startedAt": "2026-09-19T12:51:07.111Z",
+      "updatedAt": "2026-09-19T12:55:18.872Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c8b77636-39f6-4ef5-bda6-2ddadb791411",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-crown.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6ad695cb-39dc-4edc-ade0-5454bef12f08/run-0/session.jsonl"
+      ],
+      "runId": "c8b77636-39f6-4ef5-bda6-2ddadb791411",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T12:55:18.872Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6ad695cb-39dc-4edc-ade0-5454bef12f08/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T12:55:18.872Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "key": "review-cemsk",
+      "status": "completed",
+      "startedAt": "2026-09-19T12:51:07.133Z",
+      "updatedAt": "2026-09-19T12:55:16.488Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/f41c186c-8dc1-4485-9261-1b05cbdb9e73",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-cemsk.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/a9ba452f-420e-4ae2-9cb5-38ceb6c10789/run-0/session.jsonl"
+      ],
+      "runId": "f41c186c-8dc1-4485-9261-1b05cbdb9e73",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T12:55:16.488Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/a9ba452f-420e-4ae2-9cb5-38ceb6c10789/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T12:55:16.488Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "bdf05aeb-1574-4c77-a729-48ace1f7e059",
+      "key": "review-asterion",
+      "status": "completed",
+      "startedAt": "2026-09-19T12:51:07.158Z",
+      "updatedAt": "2026-09-19T12:54:44.950Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/36e33392-b82e-43be-b008-ebd8055fe68f",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-asterion.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6108dd8c-1088-452f-82f5-a2d47e00ddba/run-0/session.jsonl"
+      ],
+      "runId": "36e33392-b82e-43be-b008-ebd8055fe68f",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T12:54:44.950Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6108dd8c-1088-452f-82f5-a2d47e00ddba/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T12:54:44.950Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bdf05aeb-1574-4c77-a729-48ace1f7e059/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bdf05aeb-1574-4c77-a729-48ace1f7e059/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c902aa53-7051-4bf5-ad26-28c774b7069e"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c8b77636-39f6-4ef5-bda6-2ddadb791411"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f41c186c-8dc1-4485-9261-1b05cbdb9e73"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36e33392-b82e-43be-b008-ebd8055fe68f"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: {\n  \"common\": {\n    \"key\": \"review-common\",\n    \"ok\": true,\n    \"agent\": \"reviewer\",\n    \"runId\": \"c902aa53-7051-4bf5-ad26-28c774b7069e\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-common.md (5.5 KB, 26 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/bdf05aeb-1574-4c77-a729-48ace1f7e059/three-independent-gold-synthetic-reviews.review-common.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"c902aa53-7051-4bf5-ad26-28c774b7069e\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/c902aa53-7051-4bf5-ad26-28c774b7069e\",\n      \"/home/raja/.pi/agent/sessions/--home-raja-Pr Trace: 8 event(s)."
+}

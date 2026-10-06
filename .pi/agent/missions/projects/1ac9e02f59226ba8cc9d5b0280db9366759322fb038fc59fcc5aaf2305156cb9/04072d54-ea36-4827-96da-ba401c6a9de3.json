@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "04072d54-ea36-4827-96da-ba401c6a9de3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T14:07:27.417Z",
+  "updatedAt": "2026-09-19T14:08:44.595Z",
+  "runs": [
+    {
+      "runId": "e56f30be-d7bf-46c2-8955-f2c3f2525132",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "completed",
+      "startedAt": "2026-09-19T14:08:44.595Z",
+      "completedAt": "2026-09-19T14:08:44.595Z",
+      "usage": {
+        "tokens": 23676
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/e56f30be-d7bf-46c2-8955-f2c3f2525132_reviewer_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/e56f30be-d7bf-46c2-8955-f2c3f2525132/crown-final-acceptance.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/e56f30be-d7bf-46c2-8955-f2c3f2525132_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Review\n\n- **PASS — Session ordering:** cash accrual occurs at `core.py:1007`, marking/gap recovery at `core.py:1038-1085`, lifecycle processing at `core.py:1087-1089`, and affordable execution at `core.py:1095-1103`, matching A2’s required order (`research/NEXT_GOLD_CROWN_PNG_A2.md:101`).\n- **PASS — Post-event valuations:** distributions reduce the observed mark (`core.py:938-946`) and splits adjust units and mark (`core.py:947-953`). Tests verify post-event mark `2.0`, cash `90.0`, NAV `98.0`, and later gap-recovery NAV `114.0` (`test_crown_png_a2_synth.py:326-364`).\n- **PASS — Terminal-ID exclusion:** `build_target()` excludes `state.terminated_ids` before both retained-target filtering and allocation (`core.py:833-855`). The regression test confirms a high-scoring terminal ID is not emitted (`test_crown_png_a2_synth.py:307-323`), consistent with the contract (`crown_png_a2_synth_v1_contract.json:20`).\n\nNo issues found.\n\n**Merge verdict: OK**\n\nOutput saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/e56f30be-d7bf-46c2-8955-f2c3f2525132/crown-final-acceptance.md (969 B, 9 lines). Read this file if needed.",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

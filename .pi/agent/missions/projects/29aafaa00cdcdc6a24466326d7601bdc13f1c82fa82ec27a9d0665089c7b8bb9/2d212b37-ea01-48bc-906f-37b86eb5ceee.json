@@ -1,0 +1,2827 @@
+{
+  "schemaVersion": 1,
+  "id": "2d212b37-ea01-48bc-906f-37b86eb5ceee",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-20T20:31:29.324Z",
+  "updatedAt": "2026-09-20T20:31:31.204Z",
+  "runs": [
+    {
+      "runId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "status": "complete",
+      "startedAt": "2026-09-20T20:31:29.326Z",
+      "completedAt": "2026-09-20T20:31:31.204Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.618Z",
+      "updatedAt": "2026-09-20T20:31:29.625Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.625Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f5b1ea53-3bc0-4c0c-b4da-e46e743630c3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.625Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.626Z",
+      "updatedAt": "2026-09-20T20:31:29.631Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.631Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e8918c8a-3cd6-4355-a3d9-e1245444ba05/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.631Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.632Z",
+      "updatedAt": "2026-09-20T20:31:29.636Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.636Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/031daf2f-0f84-4ccf-8f61-fbe1163301dc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.636Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.637Z",
+      "updatedAt": "2026-09-20T20:31:29.642Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.642Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6b63ad72-5a6f-496f-a6aa-24e930721445/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.642Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.644Z",
+      "updatedAt": "2026-09-20T20:31:29.649Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.649Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/9bf96789-be8d-4cd1-9883-6bf2e3bbc912/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.649Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.650Z",
+      "updatedAt": "2026-09-20T20:31:29.656Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.656Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c144063a-03fb-4418-9e87-4f0611506906/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.656Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.657Z",
+      "updatedAt": "2026-09-20T20:31:29.663Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.663Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6bd1b058-cc95-4005-b0dc-cf6f8164b151/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.663Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.664Z",
+      "updatedAt": "2026-09-20T20:31:29.668Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.668Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1f172637-cd13-47c6-b7d2-ee08689221dc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.668Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.670Z",
+      "updatedAt": "2026-09-20T20:31:29.676Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.676Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/0f3b28c1-4ddf-44a5-903e-e35027636ddf/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.676Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.677Z",
+      "updatedAt": "2026-09-20T20:31:29.681Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.681Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/508cd2de-efda-437f-880c-ed5362c80590/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.681Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.682Z",
+      "updatedAt": "2026-09-20T20:31:29.687Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.687Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f027e59a-179e-4d9a-bc5a-6649e9bc2453/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.687Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.688Z",
+      "updatedAt": "2026-09-20T20:31:29.693Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.693Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1fd22ba4-b3cf-448c-af0f-e6dadb436ea7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.693Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.694Z",
+      "updatedAt": "2026-09-20T20:31:29.699Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.699Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/3979d120-da2d-42b4-b0a1-406b741e3fbe/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.699Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.700Z",
+      "updatedAt": "2026-09-20T20:31:29.705Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.705Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/aaa9e60f-7900-4467-b6b1-eb34b7ab35e3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.705Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.707Z",
+      "updatedAt": "2026-09-20T20:31:29.716Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.716Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/19619787-feae-4916-a118-74a0af2ad768/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.716Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.718Z",
+      "updatedAt": "2026-09-20T20:31:29.723Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.723Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/b572dd06-a6a8-47ff-81fe-138515e456c6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.723Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.724Z",
+      "updatedAt": "2026-09-20T20:31:29.729Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.729Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6f8c56db-c13f-4dc3-8313-5b07c8ddca88/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.729Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.730Z",
+      "updatedAt": "2026-09-20T20:31:29.735Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.735Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4c7bc5b2-cfe1-47eb-a24f-e53023095529/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.735Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.736Z",
+      "updatedAt": "2026-09-20T20:31:29.741Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.741Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1edbc021-a3ba-425f-8d78-21f8596a653c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.741Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.742Z",
+      "updatedAt": "2026-09-20T20:31:29.748Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.748Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f2edd62c-3b35-401a-8fdf-2b814967b97a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.748Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.749Z",
+      "updatedAt": "2026-09-20T20:31:29.754Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.754Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/43464e57-8b0d-4264-9cbc-e4dc824bd333/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.754Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.755Z",
+      "updatedAt": "2026-09-20T20:31:29.759Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.759Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fdb7aace-da85-4c09-a3e3-dd7f2d791ccc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.759Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.760Z",
+      "updatedAt": "2026-09-20T20:31:29.765Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.765Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6ea476d0-4917-4daf-abaa-b6b904a69940/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.765Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.767Z",
+      "updatedAt": "2026-09-20T20:31:29.773Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.773Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/93c6ef9e-10c4-4215-a1d7-c1aaa4e83a22/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.773Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.774Z",
+      "updatedAt": "2026-09-20T20:31:29.779Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.779Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/66061fa1-cf00-4784-8774-c690b0885277/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.779Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.780Z",
+      "updatedAt": "2026-09-20T20:31:29.787Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.787Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/71e5f97d-4279-4657-9032-040f64d0bbbe/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.787Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.788Z",
+      "updatedAt": "2026-09-20T20:31:29.793Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.793Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4125ad8e-d72c-4802-bd24-a454ab447443/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.793Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.794Z",
+      "updatedAt": "2026-09-20T20:31:29.799Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.799Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/8b7f3b41-65d9-443f-a267-7bb24ff00a64/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.799Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.800Z",
+      "updatedAt": "2026-09-20T20:31:29.805Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.805Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/9fc0e018-47d7-4500-ae43-3d41047b130e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.805Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.807Z",
+      "updatedAt": "2026-09-20T20:31:29.812Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.812Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/deda1f08-106f-494b-91a9-8bc9af1e81c1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.812Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-1-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.813Z",
+      "updatedAt": "2026-09-20T20:31:29.818Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.818Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/b332fede-ec43-46f3-957a-858935ff98cc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.818Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.819Z",
+      "updatedAt": "2026-09-20T20:31:29.824Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.824Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c2d92221-aad3-485e-a59f-8c75a5f7421c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.824Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.825Z",
+      "updatedAt": "2026-09-20T20:31:29.830Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.830Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/a1beeae9-a1b0-4291-a1d4-72635f161b58/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.830Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.832Z",
+      "updatedAt": "2026-09-20T20:31:29.836Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.836Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/726f4831-cb14-46f2-8605-8597981c3baa/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.836Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.838Z",
+      "updatedAt": "2026-09-20T20:31:29.843Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.843Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fbe81c0a-3b02-44a8-9907-6cd58c758b09/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.843Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.844Z",
+      "updatedAt": "2026-09-20T20:31:29.849Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.849Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/04a3cbde-850d-464d-b009-32f886a43827/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.849Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.850Z",
+      "updatedAt": "2026-09-20T20:31:29.855Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.855Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fc57d23e-4ddc-4de0-ae99-cfeae277354a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.855Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.856Z",
+      "updatedAt": "2026-09-20T20:31:29.861Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.861Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1af0409a-1102-4f31-a391-6ab47dba6144/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.861Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.862Z",
+      "updatedAt": "2026-09-20T20:31:29.867Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.867Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f2c130ee-7f80-4339-82b6-539ecdc376bc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.867Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.868Z",
+      "updatedAt": "2026-09-20T20:31:29.875Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.875Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1ee2ddb5-4e95-4d45-a931-f353ce6cee20/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.875Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.876Z",
+      "updatedAt": "2026-09-20T20:31:29.881Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.881Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/035e492b-8537-442b-8acc-a19e87102003/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.881Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.883Z",
+      "updatedAt": "2026-09-20T20:31:29.891Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.891Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/73269d33-8f07-4e15-845e-97afbb30dfa4/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.891Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.892Z",
+      "updatedAt": "2026-09-20T20:31:29.898Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.898Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/42379678-f5d2-40ef-8a19-936c87e1896e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.898Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.900Z",
+      "updatedAt": "2026-09-20T20:31:29.905Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.905Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/095cac3f-737e-446d-bcdd-9b49fe252f4f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.905Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.906Z",
+      "updatedAt": "2026-09-20T20:31:29.911Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.911Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/54f387c4-8bad-4506-b6a8-e172c5f71212/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.911Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.913Z",
+      "updatedAt": "2026-09-20T20:31:29.918Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.918Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4f425fdc-8494-4b57-9290-007162ebb4a7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.918Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.920Z",
+      "updatedAt": "2026-09-20T20:31:29.930Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.930Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e4ec4209-1b6e-4a8b-a401-a4454e93ec69/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.930Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.932Z",
+      "updatedAt": "2026-09-20T20:31:29.939Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.939Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/2fd15a9d-f625-4c34-8a59-d889c2de3e59/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.939Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.940Z",
+      "updatedAt": "2026-09-20T20:31:29.945Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.945Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/636d7260-24f9-4f2e-b599-f6274ce1609f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.945Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.947Z",
+      "updatedAt": "2026-09-20T20:31:29.951Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.951Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c07baef2-fa5c-49bd-af9d-0b9c2a3b4785/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.951Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.953Z",
+      "updatedAt": "2026-09-20T20:31:29.958Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.958Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d455956c-9af6-4c23-9dd7-678d6a3f626f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.958Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.960Z",
+      "updatedAt": "2026-09-20T20:31:29.966Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.966Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/b0e07fbd-7518-4a4e-82ae-27a3912fddd3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.966Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.967Z",
+      "updatedAt": "2026-09-20T20:31:29.973Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.973Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ceda607c-bd50-482f-9adf-3bd441db1f4a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.973Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.975Z",
+      "updatedAt": "2026-09-20T20:31:29.981Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.981Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/a874fa17-0796-4195-926a-108e8a0fcefe/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.981Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.982Z",
+      "updatedAt": "2026-09-20T20:31:29.989Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.989Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/af2fc69d-e8a5-4a3b-bf99-1ee0133c5629/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.989Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.991Z",
+      "updatedAt": "2026-09-20T20:31:29.997Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:29.997Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/94e1bc32-55ef-4e8e-aac2-cdcf4c34d7df/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:29.997Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:29.999Z",
+      "updatedAt": "2026-09-20T20:31:30.006Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.006Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/47f8ee54-adb4-4f15-a662-6a5b85e78535/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.006Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.008Z",
+      "updatedAt": "2026-09-20T20:31:30.017Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.017Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/142bf790-91d9-4ede-ab59-833d706a1d16/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.017Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.018Z",
+      "updatedAt": "2026-09-20T20:31:30.024Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.024Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/42214c56-f5ec-471f-a50a-f269e16af498/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.024Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.025Z",
+      "updatedAt": "2026-09-20T20:31:30.030Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.030Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/0d7dafe7-9639-4717-8ad9-2efcbf2082ac/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.030Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.032Z",
+      "updatedAt": "2026-09-20T20:31:30.037Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.037Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/af116ff5-9787-444a-9896-8e5753ae43dd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.037Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-2-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.038Z",
+      "updatedAt": "2026-09-20T20:31:30.044Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.044Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/71b084c9-25e2-409f-ac9d-f5155d4fe464/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.044Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.045Z",
+      "updatedAt": "2026-09-20T20:31:30.051Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.051Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/85c44ac2-d277-4235-aab5-0b83ac6a7f43/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.051Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.052Z",
+      "updatedAt": "2026-09-20T20:31:30.057Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.057Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/68aef48f-f621-431f-a234-5107828b64ce/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.057Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.059Z",
+      "updatedAt": "2026-09-20T20:31:30.065Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.065Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/32a93d5d-cbe8-4197-8fb9-64836c9cccf1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.065Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.067Z",
+      "updatedAt": "2026-09-20T20:31:30.073Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.073Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/dbbc488c-3e89-419f-910d-f1c67861b0fd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.073Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.074Z",
+      "updatedAt": "2026-09-20T20:31:30.083Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.083Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/bdca275b-ac26-40f7-972c-067badca6d55/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.083Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.084Z",
+      "updatedAt": "2026-09-20T20:31:30.090Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.090Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/29bd6736-2cef-4ba8-a238-6935607a6ca7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.090Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.092Z",
+      "updatedAt": "2026-09-20T20:31:30.097Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.097Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6fd07c35-5785-408e-bd74-95c53f502f11/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.097Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.099Z",
+      "updatedAt": "2026-09-20T20:31:30.105Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.105Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c2985532-f601-4abc-9aed-8f93d93daa1d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.105Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.106Z",
+      "updatedAt": "2026-09-20T20:31:30.112Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.112Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f2c6ece5-404e-45eb-a798-8efa34f1e7f9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.112Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.114Z",
+      "updatedAt": "2026-09-20T20:31:30.119Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.119Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e2c52654-a08d-41d8-92de-b54c3d6aad9f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.119Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.121Z",
+      "updatedAt": "2026-09-20T20:31:30.126Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.126Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ebe93d09-11a9-4c19-9a88-33e51bc2d8d4/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.126Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.128Z",
+      "updatedAt": "2026-09-20T20:31:30.133Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.133Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/efe8d6e9-b1ba-4c01-aa48-9bd6ca1a0221/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.133Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.135Z",
+      "updatedAt": "2026-09-20T20:31:30.140Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.140Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/36642dd8-a254-40a1-8484-ac52b929c773/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.140Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.142Z",
+      "updatedAt": "2026-09-20T20:31:30.148Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.148Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4e9d0cf9-705e-40b6-935f-52bf32e056e7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.148Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.149Z",
+      "updatedAt": "2026-09-20T20:31:30.154Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.154Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e3e96ced-8543-4d7f-a0ed-3cd34d7b8c5f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.154Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.156Z",
+      "updatedAt": "2026-09-20T20:31:30.161Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.161Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/cbb94da5-002a-48f0-93ee-9145c2ef707d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.161Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.163Z",
+      "updatedAt": "2026-09-20T20:31:30.168Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.168Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/43955125-51ed-4db4-9fff-470285c10b30/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.168Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.170Z",
+      "updatedAt": "2026-09-20T20:31:30.176Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.176Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d07c3f18-c7e8-4a7e-a84b-3f334b81de21/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.176Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.177Z",
+      "updatedAt": "2026-09-20T20:31:30.182Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.182Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f27b16c5-86e2-43dc-af97-9733009b9fbe/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.182Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.184Z",
+      "updatedAt": "2026-09-20T20:31:30.189Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.189Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d92f51fe-1ce1-4bec-8d27-0c99f9fb2494/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.189Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.191Z",
+      "updatedAt": "2026-09-20T20:31:30.197Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.197Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/de69885b-1788-46cd-91d8-36f528cb413a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.197Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.198Z",
+      "updatedAt": "2026-09-20T20:31:30.203Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.203Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/24bec6ab-b3ab-4391-8626-3e81293d04c7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.203Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.205Z",
+      "updatedAt": "2026-09-20T20:31:30.210Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.210Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/8495c3b1-39cb-4211-a34b-4328d0f6266a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.210Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.212Z",
+      "updatedAt": "2026-09-20T20:31:30.217Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.217Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1e4ee160-49b8-49ef-8041-b6d5dfade78f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.217Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.219Z",
+      "updatedAt": "2026-09-20T20:31:30.224Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.224Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/62b2d331-b24c-4823-9e29-eb27516c2b75/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.224Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.226Z",
+      "updatedAt": "2026-09-20T20:31:30.231Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.231Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/27f89832-5bb3-434a-ae75-d0ed5d408fa8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.231Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.233Z",
+      "updatedAt": "2026-09-20T20:31:30.238Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.238Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f1b93ced-9933-4197-9cda-7e7265417b36/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.238Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.240Z",
+      "updatedAt": "2026-09-20T20:31:30.246Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.246Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f2ce5032-c491-48ba-b97c-320de952ec51/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.246Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.248Z",
+      "updatedAt": "2026-09-20T20:31:30.254Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.254Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/81ee65fc-4adf-4c5a-b3eb-be37c8b30842/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.254Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.256Z",
+      "updatedAt": "2026-09-20T20:31:30.262Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.262Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/44b81f38-fcb2-4bd1-a8e6-6ece28e9f829/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.262Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-3-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.263Z",
+      "updatedAt": "2026-09-20T20:31:30.269Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.269Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fe5d8af8-71e2-4901-9dc7-aab8641f447a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.269Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.271Z",
+      "updatedAt": "2026-09-20T20:31:30.276Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.276Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d2e7f2c7-e132-4461-b6ff-7379ebaa9a62/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.276Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.278Z",
+      "updatedAt": "2026-09-20T20:31:30.283Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.283Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/dd06e147-fdee-4b69-aae6-a14742daf7e6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.283Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.285Z",
+      "updatedAt": "2026-09-20T20:31:30.291Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.291Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/93dcb092-8873-4b62-8b7d-e6f45c6e46f8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.291Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.293Z",
+      "updatedAt": "2026-09-20T20:31:30.300Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.300Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c0820717-948c-47b0-b35c-de8444eb9e04/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.300Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.303Z",
+      "updatedAt": "2026-09-20T20:31:30.309Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.309Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/9eca29a1-be82-4204-a625-fd4d973c7f65/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.309Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.311Z",
+      "updatedAt": "2026-09-20T20:31:30.318Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.318Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/b2487bc6-5b54-45d6-a62c-559e9259a6fd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.318Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.320Z",
+      "updatedAt": "2026-09-20T20:31:30.326Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.326Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/bf1dd26e-e314-4231-baef-761c0b13c3cd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.326Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.328Z",
+      "updatedAt": "2026-09-20T20:31:30.334Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.334Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/1f4ae0e5-9726-487f-8541-f38e2b09c4bf/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.334Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.336Z",
+      "updatedAt": "2026-09-20T20:31:30.342Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.342Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ce36cc86-8d32-4fbd-b0f8-329bbc545173/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.342Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.344Z",
+      "updatedAt": "2026-09-20T20:31:30.350Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.350Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/17367c71-77c1-475e-a4ed-a016e5cd7d81/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.350Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.352Z",
+      "updatedAt": "2026-09-20T20:31:30.360Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.360Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/0b85820e-a459-4e94-9432-c2ae4501f37c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.360Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.363Z",
+      "updatedAt": "2026-09-20T20:31:30.370Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.370Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ddd9971d-4429-4552-b9bb-bb79080e84b5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.370Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.372Z",
+      "updatedAt": "2026-09-20T20:31:30.379Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.379Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4de612c8-4684-41a7-bea4-9d83cc226216/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.379Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.381Z",
+      "updatedAt": "2026-09-20T20:31:30.387Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.387Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6acf9feb-8ac2-41cc-ab25-53151592dd00/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.387Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.390Z",
+      "updatedAt": "2026-09-20T20:31:30.396Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.396Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f705e0d4-1b1f-4349-a222-af1b0a28134b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.396Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.398Z",
+      "updatedAt": "2026-09-20T20:31:30.403Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.403Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/dd2ac35b-c8db-4922-aa43-fbf44b0ef455/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.403Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.405Z",
+      "updatedAt": "2026-09-20T20:31:30.411Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.411Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/bada6e9e-e402-45d8-95a9-ca23d130a802/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.411Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.413Z",
+      "updatedAt": "2026-09-20T20:31:30.418Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.418Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ff792389-666c-4d2f-a255-826cc96ade94/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.418Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.421Z",
+      "updatedAt": "2026-09-20T20:31:30.426Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.426Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/a76f5b3c-6e7f-4247-99b5-2bc308d5a26c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.426Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.428Z",
+      "updatedAt": "2026-09-20T20:31:30.434Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.434Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/5a45da56-496a-4b37-9eea-74c94c9046a7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.434Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.436Z",
+      "updatedAt": "2026-09-20T20:31:30.442Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.442Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4b71b4e8-ec17-4723-a0f7-8570119ce5dd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.442Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.444Z",
+      "updatedAt": "2026-09-20T20:31:30.450Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.450Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/0277fa3a-68a3-462b-98f2-40c0048a6644/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.450Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.452Z",
+      "updatedAt": "2026-09-20T20:31:30.459Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.459Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/a6a0d4cd-dac3-4b1a-b11d-a012fe09ed59/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.459Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.461Z",
+      "updatedAt": "2026-09-20T20:31:30.467Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.467Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/3a60c30a-0ab4-4864-9f68-0fc6fa00ff27/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.467Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.469Z",
+      "updatedAt": "2026-09-20T20:31:30.475Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.475Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/2e1bee72-8504-46ae-b80a-4df8cfefcdf2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.475Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.477Z",
+      "updatedAt": "2026-09-20T20:31:30.482Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.482Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/5829ce99-79db-4a3a-9cb0-701facf00daa/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.482Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.485Z",
+      "updatedAt": "2026-09-20T20:31:30.491Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.491Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e0498213-0701-4559-b794-2d88a5724a98/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.491Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.493Z",
+      "updatedAt": "2026-09-20T20:31:30.500Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.500Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/468b3177-90d6-43b4-ba3d-ec62b7e3f691/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.500Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.502Z",
+      "updatedAt": "2026-09-20T20:31:30.508Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.508Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/b2e6a34a-72b6-48dc-9565-6e81a4018ce2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.508Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.510Z",
+      "updatedAt": "2026-09-20T20:31:30.516Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.516Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/aba44356-20f3-4614-9f18-21459be0a271/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.516Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-4-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.519Z",
+      "updatedAt": "2026-09-20T20:31:30.526Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.526Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f8dac269-baa3-4e6d-bed6-72746518598d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.526Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.529Z",
+      "updatedAt": "2026-09-20T20:31:30.535Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.535Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f99ed2fa-25f4-4bec-ba9c-d288d75ceb97/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.535Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.537Z",
+      "updatedAt": "2026-09-20T20:31:30.543Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.543Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/bc0d7b49-8d3e-46c1-a70e-3a628cc13305/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.543Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.546Z",
+      "updatedAt": "2026-09-20T20:31:30.551Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.551Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4ae4436f-9785-4d30-b9c1-7229c71c06a2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.551Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.554Z",
+      "updatedAt": "2026-09-20T20:31:30.560Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.560Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/727974a4-9661-4dc1-97da-3312f71cf178/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.560Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.562Z",
+      "updatedAt": "2026-09-20T20:31:30.568Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.568Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fee2900e-6d96-4f03-93f7-6ab6ea225bac/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.568Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.571Z",
+      "updatedAt": "2026-09-20T20:31:30.577Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.577Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/88a9e597-bf84-4940-8757-18e9411dc80f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.577Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.579Z",
+      "updatedAt": "2026-09-20T20:31:30.586Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.586Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e35dd1a3-8df8-4922-a972-c5dfa6def0ee/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.586Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.588Z",
+      "updatedAt": "2026-09-20T20:31:30.595Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.595Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/c6a9d493-5632-4900-a853-8caec601ad7f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.595Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.597Z",
+      "updatedAt": "2026-09-20T20:31:30.603Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.603Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/de174b1b-0a88-456c-abbe-9f41d89b698d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.603Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.606Z",
+      "updatedAt": "2026-09-20T20:31:30.612Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.612Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/27510ddc-6836-4459-b333-7d85affec6e2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.612Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.614Z",
+      "updatedAt": "2026-09-20T20:31:30.620Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.620Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/69f46d10-9747-4cc3-996c-0fb9b73ba5db/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.620Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.623Z",
+      "updatedAt": "2026-09-20T20:31:30.628Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.628Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e01b8861-71d6-4845-b625-2b26b4c6bb36/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.628Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.631Z",
+      "updatedAt": "2026-09-20T20:31:30.637Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.637Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ec3df526-7e0c-4566-85cd-cdfe3577dc67/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.637Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.640Z",
+      "updatedAt": "2026-09-20T20:31:30.646Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.646Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6c7974a6-ab90-4c2d-af6e-e059eab3444a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.646Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.649Z",
+      "updatedAt": "2026-09-20T20:31:30.655Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.655Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d99e4e5d-ab06-40fc-b7e3-bcf99d1de78a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.655Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.657Z",
+      "updatedAt": "2026-09-20T20:31:30.663Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.663Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/2fe117e9-83d0-409b-9d18-4366ac6097fc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.663Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.665Z",
+      "updatedAt": "2026-09-20T20:31:30.671Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.671Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f057cbb0-eee3-45d0-a0a1-fce24d507b7a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.671Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.674Z",
+      "updatedAt": "2026-09-20T20:31:30.681Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.681Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fd26fe09-8c29-44c2-a5bb-6812b6c14b9e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.681Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.683Z",
+      "updatedAt": "2026-09-20T20:31:30.689Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.689Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fb56323f-a960-4237-a588-f2ae665eea7e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.689Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.691Z",
+      "updatedAt": "2026-09-20T20:31:30.698Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.698Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6e69a91d-8b1d-4271-a077-b43914b5933f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.698Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.700Z",
+      "updatedAt": "2026-09-20T20:31:30.708Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.708Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/27c25cea-41bd-49a2-9a22-3ce95cb53fae/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.708Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.712Z",
+      "updatedAt": "2026-09-20T20:31:30.720Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.720Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ceb4fc99-4f96-44ec-a5d8-36f04f341b6b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.720Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.722Z",
+      "updatedAt": "2026-09-20T20:31:30.728Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.728Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/00a4d43f-68d6-4317-b25b-b475dd04f74c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.728Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.731Z",
+      "updatedAt": "2026-09-20T20:31:30.737Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.737Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4eb637e9-cd7f-4b62-9d97-56a8d4efe536/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.737Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.740Z",
+      "updatedAt": "2026-09-20T20:31:30.746Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.746Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e32f285a-f16a-43b3-841c-646cc7c27ec8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.746Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.749Z",
+      "updatedAt": "2026-09-20T20:31:30.755Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.755Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/dc9ec871-19d8-4700-8cb1-f1a0ef1f86b9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.755Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.758Z",
+      "updatedAt": "2026-09-20T20:31:30.764Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.764Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/02171380-82fd-4982-854c-37f70be5af9d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.764Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.767Z",
+      "updatedAt": "2026-09-20T20:31:30.774Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.774Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d57c71ef-1bc6-4aa1-9f98-0cd6f59e2824/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.774Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.776Z",
+      "updatedAt": "2026-09-20T20:31:30.783Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.783Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6cbdac88-6ac0-4015-bca3-dc187e4e16f8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.783Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.785Z",
+      "updatedAt": "2026-09-20T20:31:30.792Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.792Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f6d64985-c4ac-4740-9b3f-2601f0b9daa9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.792Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-5-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.794Z",
+      "updatedAt": "2026-09-20T20:31:30.801Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.801Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/750a41dd-c50d-4e9f-b800-154d32baae4c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.801Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-001",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.804Z",
+      "updatedAt": "2026-09-20T20:31:30.813Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.813Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e1f77248-62f3-4578-8985-ffcead4eb9dc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.813Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-002",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.818Z",
+      "updatedAt": "2026-09-20T20:31:30.825Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.825Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d3342715-66d9-4120-ba3a-571f7f3f87f1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.825Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-003",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.828Z",
+      "updatedAt": "2026-09-20T20:31:30.834Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.834Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/0cf9231b-5834-48d8-ae14-8731c9ecec77/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.834Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-004",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.837Z",
+      "updatedAt": "2026-09-20T20:31:30.844Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.844Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/e2cd1bcc-21d8-46f5-9a96-e6fd11d6c5b9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.844Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-005",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.847Z",
+      "updatedAt": "2026-09-20T20:31:30.854Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.854Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/7fd6b0dd-94af-4527-b77d-53ef0e7b5cef/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.854Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-006",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.857Z",
+      "updatedAt": "2026-09-20T20:31:30.864Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.864Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/355d795a-9412-46ad-ba43-6d828f415d0f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.864Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-007",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.867Z",
+      "updatedAt": "2026-09-20T20:31:30.874Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.874Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6fe1ec7b-530e-4bcc-adc7-0fcad4c54b19/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.874Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-008",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.877Z",
+      "updatedAt": "2026-09-20T20:31:30.883Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.883Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/d7a8f03d-d480-4c0b-8183-24b9e6a928bb/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.883Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-009",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.886Z",
+      "updatedAt": "2026-09-20T20:31:30.893Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.893Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6cb7110f-83e4-4c36-a8e0-b59f16c857f5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.893Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-010",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.896Z",
+      "updatedAt": "2026-09-20T20:31:30.903Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.903Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/367a1ae5-4a49-49a4-918c-3ae7e4aaa5c5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.903Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-011",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.906Z",
+      "updatedAt": "2026-09-20T20:31:30.912Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.912Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f70a4bf1-c879-4287-978f-9677f0d9eecf/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.912Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-012",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.915Z",
+      "updatedAt": "2026-09-20T20:31:30.922Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.922Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/a8513bd6-7baa-4e6a-8c7b-edddb5c552fd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.922Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-013",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.925Z",
+      "updatedAt": "2026-09-20T20:31:30.932Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.932Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/045a4331-ede8-4e6a-a5ab-005760d72d98/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.932Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-014",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.936Z",
+      "updatedAt": "2026-09-20T20:31:30.943Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.942Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/5569f500-7147-4db7-b395-16c4898aa04c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.943Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-015",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.945Z",
+      "updatedAt": "2026-09-20T20:31:30.952Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.952Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/20f63111-7c06-4327-95c6-df3e74ecf778/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.952Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-016",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.955Z",
+      "updatedAt": "2026-09-20T20:31:30.962Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.962Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/67229415-4dd1-4366-a818-2a44243363be/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.962Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-017",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.965Z",
+      "updatedAt": "2026-09-20T20:31:30.972Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.972Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/767e7148-cd68-4e64-ac22-42aeddb1cde8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.972Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-018",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.977Z",
+      "updatedAt": "2026-09-20T20:31:30.986Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.986Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/bceada34-91bc-4212-91ad-4d3a23ae4f26/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.986Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-019",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:30.990Z",
+      "updatedAt": "2026-09-20T20:31:30.997Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:30.997Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/351267b7-401e-40ab-90ae-4b2b9d28b303/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:30.997Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-020",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.000Z",
+      "updatedAt": "2026-09-20T20:31:31.007Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.007Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/6d5cdf4e-d4dd-43dd-8836-3193828c6c89/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.007Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-021",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.010Z",
+      "updatedAt": "2026-09-20T20:31:31.017Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.017Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/866739c8-02be-48e8-96bf-3b2854969ee8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.017Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-022",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.020Z",
+      "updatedAt": "2026-09-20T20:31:31.028Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.028Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/fa7e03bf-042d-436a-bb07-5611d4965ad9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.028Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-023",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.030Z",
+      "updatedAt": "2026-09-20T20:31:31.037Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.037Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/f951d69f-e832-41de-8cd3-37f304729146/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.037Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-024",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.040Z",
+      "updatedAt": "2026-09-20T20:31:31.046Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.046Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/928b1cfe-988c-49e0-bbfb-51caf31ac79b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.046Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-025",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.049Z",
+      "updatedAt": "2026-09-20T20:31:31.056Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.056Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/3ab1611a-1337-44c2-8d6b-f0356739f68a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.056Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-026",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.059Z",
+      "updatedAt": "2026-09-20T20:31:31.066Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.066Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4d4097e3-bff4-429a-bf6b-e80e895c0a60/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.066Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-027",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.069Z",
+      "updatedAt": "2026-09-20T20:31:31.075Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.075Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/ee2ad224-5e67-4e0e-971c-32b798179b34/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.075Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-028",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.079Z",
+      "updatedAt": "2026-09-20T20:31:31.086Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.086Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/4378e04d-7d9e-4124-b7a8-0119fddc61aa/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.086Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-029",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.089Z",
+      "updatedAt": "2026-09-20T20:31:31.096Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.096Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/dc28923c-4506-4371-bfbe-3225125b6bbd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.096Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-030",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.099Z",
+      "updatedAt": "2026-09-20T20:31:31.106Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.106Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/52052c52-863d-4e6e-9f5b-a001213242ce/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.106Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "893d2b3f-d906-41bd-ad1d-9ce93b8045ec",
+      "key": "pass-6-batch-031",
+      "status": "failed",
+      "startedAt": "2026-09-20T20:31:31.118Z",
+      "updatedAt": "2026-09-20T20:31:31.125Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-09-20T20:31:31.125Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64/82df3915-9d17-45ef-8f33-590fd9d5bdb2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T20:31:31.125Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/893d2b3f-d906-41bd-ad1d-9ce93b8045ec/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/893d2b3f-d906-41bd-ad1d-9ce93b8045ec/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/shaadi",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64.jsonl",
+  "summary": "Workflow completed with 186 child run(s). Return: {\n  \"completedJobs\": 186,\n  \"expectedJobs\": 186\n} Trace: 372 event(s). Preflight advisory: workflow key 'pass-1-batch-001' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-002' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-003' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-004' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-005' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-006' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-007' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-008' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-009' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-010' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-011' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-012' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-013' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-014' launched without a declared lane. Preflight advisory: workflow key 'pass-1-batch-015' launched without a declared lane. Preflight advisory: 172 additional mismatch warning(s) omitted."
+}
