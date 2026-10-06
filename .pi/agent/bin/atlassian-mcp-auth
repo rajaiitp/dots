@@ -1,0 +1,102 @@
+#!/bin/sh
+
+set -eu
+
+readonly EMAIL_SERVICE="pi-atlassian-mcp-email"
+readonly EMAIL_ACCOUNT="email"
+readonly TOKEN_SERVICE="pi-atlassian-mcp-api-token"
+readonly TOKEN_ACCOUNT="api-token"
+
+usage() {
+  printf 'Usage: %s {set|header|status|clear}\n' "$0" >&2
+  exit 64
+}
+
+credential_has_value() {
+  value=$(security find-generic-password -a "$2" -s "$1" -w 2>/dev/null) || return 1
+  [ -n "$value" ]
+}
+
+restore_terminal() {
+  stty echo 2>/dev/null || true
+}
+
+case "${1:-}" in
+  set)
+    if [ ! -t 0 ]; then
+      printf 'Run this command in an interactive terminal.\n' >&2
+      exit 1
+    fi
+
+    printf 'Atlassian account email: ' >&2
+    IFS= read -r email
+    case "$email" in
+      ?*@?*) ;;
+      *)
+        printf 'A valid Atlassian account email is required.\n' >&2
+        exit 1
+        ;;
+    esac
+
+    security add-generic-password \
+      -a "$EMAIL_ACCOUNT" \
+      -s "$EMAIL_SERVICE" \
+      -l "Pi Atlassian MCP account email" \
+      -U \
+      -w "$email" >/dev/null
+
+    printf 'Scoped read-only Atlassian API token: ' >&2
+    trap restore_terminal EXIT HUP INT TERM
+    stty -echo
+    IFS= read -r token
+    restore_terminal
+    trap - EXIT HUP INT TERM
+    printf '\n' >&2
+    if [ -z "$token" ]; then
+      printf 'The API token cannot be empty.\n' >&2
+      exit 1
+    fi
+
+    security add-generic-password \
+      -a "$TOKEN_ACCOUNT" \
+      -s "$TOKEN_SERVICE" \
+      -l "Pi Atlassian MCP read-only API token" \
+      -U \
+      -w "$token" >/dev/null
+    unset token
+
+    printf 'Atlassian MCP credentials stored in the macOS Keychain.\n'
+    ;;
+
+  header)
+    email=$(security find-generic-password -a "$EMAIL_ACCOUNT" -s "$EMAIL_SERVICE" -w 2>/dev/null) || {
+      printf 'Atlassian account email is not configured; run: %s set\n' "$0" >&2
+      exit 1
+    }
+    token=$(security find-generic-password -a "$TOKEN_ACCOUNT" -s "$TOKEN_SERVICE" -w 2>/dev/null) || {
+      printf 'Atlassian API token is not configured; run: %s set\n' "$0" >&2
+      exit 1
+    }
+
+    encoded=$(printf '%s:%s' "$email" "$token" | base64 | tr -d '\r\n')
+    printf 'Basic %s\n' "$encoded"
+    ;;
+
+  status)
+    if credential_has_value "$EMAIL_SERVICE" "$EMAIL_ACCOUNT" && \
+       credential_has_value "$TOKEN_SERVICE" "$TOKEN_ACCOUNT"; then
+      printf 'Atlassian MCP credentials are configured in the macOS Keychain.\n'
+    else
+      printf 'Atlassian MCP credentials are not configured.\n'
+      exit 1
+    fi
+    ;;
+
+  clear)
+    security delete-generic-password -a "$EMAIL_ACCOUNT" -s "$EMAIL_SERVICE" >/dev/null 2>&1 || true
+    security delete-generic-password -a "$TOKEN_ACCOUNT" -s "$TOKEN_SERVICE" >/dev/null 2>&1 || true
+    printf 'Atlassian MCP credentials removed from the macOS Keychain.\n'
+    ;;
+
+  *) usage ;;
+esac

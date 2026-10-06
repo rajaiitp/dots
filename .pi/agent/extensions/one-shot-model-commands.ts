@@ -9,6 +9,7 @@ const PROVIDER = "openai-codex";
 const THINKING_LEVEL: ModelThinkingLevel = "xhigh";
 
 const TARGET_MODELS = {
+	luna: "gpt-5.6-luna",
 	sol: "gpt-5.6-sol",
 	terra: "gpt-5.6-terra",
 	luna: "gpt-5.6-luna",
@@ -81,6 +82,11 @@ export default function oneShotModelCommands(pi: ExtensionAPI) {
 		pi.setThinkingLevel(previous.thinkingLevel);
 		ctx.ui.notify("Restored the previous model and thinking level.", "info");
 	}
+
+	pi.registerCommand("luna", {
+		description: "Run one prompt with GPT-5.6 Luna at xhigh, then restore the current model",
+		handler: async (args, ctx) => runOneShot("luna", args, ctx),
+	});
 
 	pi.registerCommand("sol", {
 		description: "Run one prompt with GPT-5.6 Sol at xhigh, then restore the current model",

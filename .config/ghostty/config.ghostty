@@ -1,16 +1,23 @@
+theme = "Gruvbox Dark"
 config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
 
-font-family = "JetBrains Mono"
-font-family-bold = "JetBrains Mono"
-font-size = 9
+# font-family = "JetBrains Mono"
+# font-style = Light
+# font-family-bold = "JetBrains Mono"
+# font-style-bold = Regular
+font-size = 10
+# adjust-cell-width = -10%
 
+# window-padding-x = 5
+# window-padding-y = 5,0
 confirm-close-surface = false
-window-show-tab-bar = never
-
-copy-on-select = clipboard
-bell-features = no-system,no-audio
-
+window-decoration = false
 # resize-overlay = never
+# window-show-tab-bar = never
+
+# copy-on-select = clipboard
+# bell-features = no-system,no-audio
+
 # keybind = ctrl+tab=csi:9;5u
 # keybind = ctrl+shift+tab=csi:9;6u
 # keybind = ctrl+shift+p=unbind

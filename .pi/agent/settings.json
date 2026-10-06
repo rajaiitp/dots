@@ -13,7 +13,8 @@
     "npm:pi-powerline-footer",
     "npm:pi-quota-status",
     "npm:pi-web-access",
-    "npm:pi-observational-memory"
+    "npm:pi-observational-memory",
+    "npm:pi-mcp-adapter@2.36.0"
   ],
   "theme": "dark",
   "tuiMode": "fullscreen",

@@ -19,6 +19,12 @@ vim.api.nvim_create_user_command("MarkdownRenderToggle", toggle_render_for_curre
 require("render-markdown").setup({
     render_modes = true,  -- render in all modes
     debounce = 50,        -- reduce re-render frequency for smoother scrolling
+    pipe_table = {
+        enabled = true,
+        cell = "trimmed",
+        wrap = true,
+        min_width = 0,
+    },
     anti_conceal = {
         enabled = true,
         above = 0,
@@ -26,6 +32,7 @@ require("render-markdown").setup({
         disabled_modes = { "n", "v", "V" },  -- disable anti-conceal in normal and visual (keeps everything rendered)
     },
     win_options  = {
+        wrap = { default = true, rendered = true },
         conceallevel  = { default = 2, rendered = 3 },
         concealcursor = { default = "n", rendered = "nc" },  -- normal+command: don't reveal on cursor line
     },
@@ -59,8 +66,4 @@ require("render-markdown").setup({
         checked   = { icon = "󰄵 ", highlight = "RenderMarkdownChecked" },
     },
     link = { enabled = true, hyperlink = "󰌷 ", highlight = "RenderMarkdownLink" },
-    pipe_table = {
-        -- Replace wide rows with wrapped virtual lines to preserve column alignment.
-        wrap = true,
-    },
 })
