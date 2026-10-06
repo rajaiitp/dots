@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "id": "8e046795-a8a4-4c39-8386-7248a948a641",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-04T19:59:57.452Z",
+  "updatedAt": "2026-10-04T19:59:57.468Z",
+  "runs": [
+    {
+      "runId": "b2dca17e-7180-4b2a-bfb6-c3e0638aa31d",
+      "mode": "single",
+      "agent": "workflow-architect",
+      "status": "failed",
+      "startedAt": "2026-10-04T19:59:57.468Z",
+      "completedAt": "2026-10-04T19:59:57.468Z"
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/b2dca17e-7180-4b2a-bfb6-c3e0638aa31d_workflow-architect_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/b2dca17e-7180-4b2a-bfb6-c3e0638aa31d_workflow-architect_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/herdr-unified-tree-v0.9.3",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nAgent 'workflow-architect' was given an implementation task, but its tool allowlist has no mutation-capable tools. Add bash, edit, write, or another mutation-capable tool to the agent, or use a read-only task/agent.\n\nOutput artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/b2dca17e-7180-4b2a-bfb6-c3e0638aa31d_workflow-architect_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  }
+}

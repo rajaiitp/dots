@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "9616cd42-2180-4856-9981-a5b8b4ed5779",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-04T20:00:08.472Z",
+  "updatedAt": "2026-10-04T20:03:08.827Z",
+  "runs": [
+    {
+      "runId": "ad287f6e-522c-46cc-9b18-60da0dd404b8",
+      "mode": "single",
+      "agent": "workflow-architect",
+      "status": "failed",
+      "startedAt": "2026-10-04T20:03:08.827Z",
+      "completedAt": "2026-10-04T20:03:08.827Z",
+      "usage": {
+        "tokens": 71506
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/herdr-unified-tree-v0.9.3",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nSubagent timed out after 180000ms.\n\nOutput:\nSubagent timed out after 180000ms.\n\nRecovery summary:\n- termination: timed-out\n- changed tracked files: none\n- session file: /home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b/ad287f6e-522c-46cc-9b18-60da0dd404b8/run-0/session.jsonl\n- transcript: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_transcript.jsonl\n- output artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_output.md\n- metadata artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_meta.json\nWarning: Inspect partial changes before retrying or resuming the child.\n\nOutput artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/ad287f6e-522c-46cc-9b18-60da0dd404b8_workflow-architect_0_output.md",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only task wording"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only task wording"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "bbea81fe-48a8-4766-adc9-16bdb4b8dbf7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-30T14:28:55.042Z",
+  "updatedAt": "2026-09-30T15:33:09.744Z",
+  "runs": [
+    {
+      "runId": "af6aa063-eb09-4222-9501-9ff9754d1a6f",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/af6aa063-eb09-4222-9501-9ff9754d1a6f",
+      "status": "failed",
+      "startedAt": "2026-09-30T14:28:55.045Z",
+      "completedAt": "2026-09-30T15:33:09.744Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "af6aa063-eb09-4222-9501-9ff9754d1a6f",
+      "key": "g11",
+      "status": "failed",
+      "startedAt": "2026-09-30T14:28:55.088Z",
+      "updatedAt": "2026-09-30T15:33:09.722Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c4a1d704-ddf4-4b60-88a6-5f45daa5aaab",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/14da7cbc-4299-4972-bce1-1ae2a3bbfec3/run-0/session.jsonl"
+      ],
+      "runId": "c4a1d704-ddf4-4b60-88a6-5f45daa5aaab",
+      "agent": "worker",
+      "completedAt": "2026-09-30T15:33:09.722Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63/14da7cbc-4299-4972-bce1-1ae2a3bbfec3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-30T15:33:09.722Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/af6aa063-eb09-4222-9501-9ff9754d1a6f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/af6aa063-eb09-4222-9501-9ff9754d1a6f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c4a1d704-ddf4-4b60-88a6-5f45daa5aaab"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-29T22-01-01-472Z_01a0ef2f-7b20-790b-b194-29a7746d1e63.jsonl",
+  "summary": "Error: Run 'g11' failed: Run fan-out: 1/64 used, 63 remaining\nTool 'bash' exceeded its timeout of 1800000ms.\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)"
+}

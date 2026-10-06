@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "905a2a22-58a0-49dc-9b0c-d287a3ea2511",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-19T13:57:53.615Z",
+  "updatedAt": "2026-09-19T14:01:34.207Z",
+  "runs": [
+    {
+      "runId": "c05d8a6b-2962-420b-888a-47ffcd586cf9",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c05d8a6b-2962-420b-888a-47ffcd586cf9",
+      "status": "complete",
+      "startedAt": "2026-09-19T13:57:53.618Z",
+      "completedAt": "2026-09-19T14:01:34.207Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "c05d8a6b-2962-420b-888a-47ffcd586cf9",
+      "key": "final-crown",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:57:53.658Z",
+      "updatedAt": "2026-09-19T14:01:34.039Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ca9c6bec-478a-4c9e-a0f9-7a485d535ade",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c05d8a6b-2962-420b-888a-47ffcd586cf9/final-crown-cemsk-acceptance.final-crown.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/99d37610-8d99-4926-9b3a-762e7283eaec/run-0/session.jsonl"
+      ],
+      "runId": "ca9c6bec-478a-4c9e-a0f9-7a485d535ade",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T14:01:34.039Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/99d37610-8d99-4926-9b3a-762e7283eaec/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T14:01:34.039Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "c05d8a6b-2962-420b-888a-47ffcd586cf9",
+      "key": "final-cemsk",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:57:53.686Z",
+      "updatedAt": "2026-09-19T13:58:59.801Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/95b8a8c2-fa32-4486-aaed-b9d0c3080607",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c05d8a6b-2962-420b-888a-47ffcd586cf9/final-crown-cemsk-acceptance.final-cemsk.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/dffcea6c-1f5d-429c-a2f4-11afc8cccf24/run-0/session.jsonl"
+      ],
+      "runId": "95b8a8c2-fa32-4486-aaed-b9d0c3080607",
+      "agent": "reviewer",
+      "completedAt": "2026-09-19T13:58:59.801Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/dffcea6c-1f5d-429c-a2f4-11afc8cccf24/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:58:59.801Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c05d8a6b-2962-420b-888a-47ffcd586cf9/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c05d8a6b-2962-420b-888a-47ffcd586cf9/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ca9c6bec-478a-4c9e-a0f9-7a485d535ade"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/95b8a8c2-fa32-4486-aaed-b9d0c3080607"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"crown\": {\n    \"key\": \"final-crown\",\n    \"ok\": true,\n    \"agent\": \"reviewer\",\n    \"runId\": \"ca9c6bec-478a-4c9e-a0f9-7a485d535ade\",\n    \"output\": \"Output saved to: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c05d8a6b-2962-420b-888a-47ffcd586cf9/final-crown-cemsk-acceptance.final-crown.md (3.6 KB, 28 lines). Read this file if needed.\",\n    \"requestedContext\": \"fresh\",\n    \"resolvedContext\": \"fresh\",\n    \"outputReference\": \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c05d8a6b-2962-420b-888a-47ffcd586cf9/final-crown-cemsk-acceptance.final-crown.md\",\n    \"resumability\": {\n      \"state\": \"resumable\"\n    },\n    \"continuation\": {\n      \"runIds\": [\n        \"ca9c6bec-478a-4c9e-a0f9-7a485d535ade\"\n      ]\n    },\n    \"artifactPaths\": [\n      \"/tmp/pi-subagents-uid-1000/async-subagent-runs/ca9c6bec-478a-4c9e-a0f9-7a485d535ade\",\n      \"/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artif Trace: 4 event(s)."
+}

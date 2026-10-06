@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "273a22db-29ef-4369-a9f5-cf8ecd18c77e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-13T13:25:29.992Z",
+  "updatedAt": "2026-09-13T13:30:34.824Z",
+  "runs": [
+    {
+      "runId": "23c3298d-eb76-4fdb-81bb-b0f2b01f6aff",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-09-13T13:30:34.824Z",
+      "completedAt": "2026-09-13T13:30:34.824Z",
+      "usage": {
+        "tokens": 64195
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/23c3298d-eb76-4fdb-81bb-b0f2b01f6aff_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/23c3298d-eb76-4fdb-81bb-b0f2b01f6aff/ccora_plan_review.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/23c3298d-eb76-4fdb-81bb-b0f2b01f6aff_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nBLOCKED — strict CCORA-G1 metrics cannot be produced until a certified exact action implementation, source-identity closure, and full-scale resource feasibility are established before registration.\n\n## Critical gaps\n- The plan never replaces SLSQP with the required pinned sparse conic formulation and primal/dual certificate. Adding a solver may also violate V1’s frozen runtime and `uv.lock`; if no compliant solver can run within that environment, this evaluation cannot proceed under V1.\n- Reusing the prototype plus an adapter is insufficient. The prototype lacks entrant-age residual fallback, forced-disappearance scenarios, prescribed market/class covariance geometry, exact feasible-set diameter, certified abstention projection, executable regret validation, and sequential portfolio accounting.\n- The contract calls the 917 columns `stock_symbols`, not permanent identities. Existing insider handling admits direct-ticker identity limitations. The plan omits membership decisions/confidence, fallback-source and PIT successor-action inputs needed to prove identity, eligibility, and gap lifecycle closure. Unresolvable names must be excluded; if canonical V1 inputs cannot establish sufficient PIT identity intervals, strict CCORA-G1 is blocked.\n- The plan does not define separate execution and learning clocks. Return \\(t\\) may update close-\\(t\\) drift/forced exits but cannot affect score, residuals, geometry, or controller feedback until target \\(t+1\\). Non-decision-session targets must represent no-trade drift rather than forward-filled weights that cause daily rebalancing.\n- Hashing only the top-level compiler leaves imported `ccora` modules, source rules, solver, and configuration mutable after registration. All transitive executable dependencies must be contract-bound.\n- `charged_prior_attempts=2956` is unsupported without an append-only inventory. Repository contracts establish 2,953 attempts through V3; any additional...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

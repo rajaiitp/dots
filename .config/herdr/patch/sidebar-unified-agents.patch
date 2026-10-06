@@ -1,6 +1,6 @@
-diff --git i/src/client/shell.rs w/src/client/shell.rs
+diff --git c/src/client/shell.rs w/src/client/shell.rs
 index 2d180443..9cec3a49 100644
---- i/src/client/shell.rs
+--- c/src/client/shell.rs
 +++ w/src/client/shell.rs
 @@ -14,7 +14,6 @@ mod endpoint_agent_state;
  mod endpoint_agents;
@@ -26,9 +26,9 @@ index 2d180443..9cec3a49 100644
  pub(crate) use state::*;
  #[cfg(test)]
  pub(super) use surface_patch::apply_composed_surface_patch;
-diff --git i/src/client/shell/actions.rs w/src/client/shell/actions.rs
+diff --git c/src/client/shell/actions.rs w/src/client/shell/actions.rs
 index 9d0a3bd5..968960be 100644
---- i/src/client/shell/actions.rs
+--- c/src/client/shell/actions.rs
 +++ w/src/client/shell/actions.rs
 @@ -880,24 +880,33 @@ impl ClientShellState {
  
@@ -96,9 +96,9 @@ index 9d0a3bd5..968960be 100644
                  Some(Method::PaneFocus(PaneTarget { pane_id }))
              }
              KeybindAction::SwitchWorkspace(index) => {
-diff --git i/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
-index e43ab8cc..67d3ce02 100644
---- i/src/client/shell/agent_sidebar.rs
+diff --git c/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
+index e43ab8cc..8e1e9a29 100644
+--- c/src/client/shell/agent_sidebar.rs
 +++ w/src/client/shell/agent_sidebar.rs
 @@ -49,202 +49,6 @@ pub(super) fn ordered_agent_pane_ids(
          .collect()
@@ -303,50 +303,64 @@ index e43ab8cc..67d3ce02 100644
  pub(super) fn agent_row(
      snapshot: &ClientShellSnapshot,
      pane_id: &str,
-@@ -310,6 +114,42 @@ pub(super) fn agent_row(
+@@ -264,14 +68,6 @@ pub(super) fn agent_row(
+         .panes
+         .iter()
+         .find(|pane| pane.pane_id == agent.pane_id);
+-    let tab_count = snapshot
+-        .tabs
+-        .iter()
+-        .filter(|candidate| candidate.workspace_id == agent.workspace_id)
+-        .count();
+-    let tab_label = tab
+-        .filter(|tab| tab_count > 1 || tab.custom_label)
+-        .map(|tab| tab.label.as_str());
+     let agent_label = agent
+         .display_agent
+         .as_deref()
+@@ -292,12 +88,12 @@ pub(super) fn agent_row(
+         .agent
+         .as_deref()
+         .and_then(crate::detect::parse_agent_label);
+-    let rows = crate::ui::sidebar_agent_rows(
++    let configured_rows = crate::ui::sidebar_agent_rows(
+         &config.agents,
+         crate::ui::AgentTokenContext {
+             machine,
+             workspace: &workspace.label,
+-            tab: tab_label,
++            tab: tab.map(|tab| tab.label.as_str()),
+             pane: agent
+                 .title
+                 .as_deref()
+@@ -310,34 +106,47 @@ pub(super) fn agent_row(
          },
          state_text,
      );
-+    let mut row = rows.into_iter().flatten().collect::<Vec<_>>();
-+    row.retain(|token| {
-+        !matches!(
-+            token.kind,
-+            crate::ui::ResolvedTokenKind::Machine(_)
-+                | crate::ui::ResolvedTokenKind::Workspace(_)
-+                | crate::ui::ResolvedTokenKind::Agent(_)
-+                | crate::ui::ResolvedTokenKind::StateText(_)
-+        )
-+    });
-+    if !row
-+        .iter()
-+        .any(|token| matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon))
-+    {
-+        row.insert(
-+            0,
-+            crate::ui::ResolvedToken {
-+                kind: crate::ui::ResolvedTokenKind::StateIcon,
-+                style: Default::default(),
-+            },
-+        );
-+    }
-+    if let Some(agent_label) = agent_label {
-+        let index = row
++    let configured_tokens = configured_rows.into_iter().flatten().collect::<Vec<_>>();
++    let style_for = |kind: fn(&crate::ui::ResolvedTokenKind) -> bool| {
++        configured_tokens
 +            .iter()
-+            .position(|token| matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon))
-+            .map_or(0, |index| index + 1);
-+        row.insert(
-+            index,
-+            crate::ui::ResolvedToken {
-+                kind: crate::ui::ResolvedTokenKind::Agent(agent_label.to_owned()),
-+                style: Default::default(),
-+            },
-+        );
++            .find(|token| kind(&token.kind))
++            .map(|token| token.style)
++            .unwrap_or_default()
++    };
++    let mut row = vec![crate::ui::ResolvedToken {
++        kind: crate::ui::ResolvedTokenKind::StateIcon,
++        style: style_for(|kind| matches!(kind, crate::ui::ResolvedTokenKind::StateIcon)),
++    }];
++    if let Some(tab) = tab {
++        row.push(crate::ui::ResolvedToken {
++            kind: crate::ui::ResolvedTokenKind::Tab(tab.label.clone()),
++            style: style_for(|kind| matches!(kind, crate::ui::ResolvedTokenKind::Tab(_))),
++        });
 +    }
-+    let rows = vec![row];
      Some(AgentRow {
          pane_id: agent.pane_id.clone(),
          status: agent.agent_status,
-@@ -318,26 +158,22 @@ pub(super) fn agent_row(
+         focused: agent.focused,
+-        rows,
++        rows: vec![row],
      })
  }
  
@@ -356,19 +370,18 @@ index e43ab8cc..67d3ce02 100644
      rect: Rect,
      row: &AgentRow,
 +    parent_indented: bool,
-+    last_child: bool,
      config: &ClientShellConfig,
  ) {
      let palette = &config.palette;
 -    let row_style = if row.focused {
 -        Style::default().bg(palette.active_row_bg)
 -    } else {
--        Style::default()
--    };
--    let name_style = if row.focused {
 +    let row_style = Style::default();
 +    let agent_style = if row.focused {
          Style::default()
+-    };
+-    let name_style = if row.focused {
+-        Style::default()
 -            .fg(palette.text)
 +            .fg(palette.blue)
              .add_modifier(Modifier::BOLD)
@@ -380,31 +393,17 @@ index e43ab8cc..67d3ce02 100644
      };
      let status_style = Style::default().fg(status_color(row.status, palette));
      let secondary = Style::default().fg(palette.overlay0);
-@@ -353,18 +189,34 @@ pub(super) fn render_agent_row(
+@@ -353,18 +162,20 @@ pub(super) fn render_agent_row(
      } else {
          row.rows.clone()
      };
-+    let base_indent = if parent_indented { 6 } else { 1 };
++    let indent = if parent_indented { 6 } else { 1 };
      for (index, tokens) in rows.iter().take(rect.height as usize).enumerate() {
 -        let indent = if index == 0 { 1 } else { 3 };
 -        let mut spans = vec![ratatui::text::Span::raw(" ".repeat(indent))];
-+        let branch = if index == 0 {
-+            if last_child {
-+                "└─ "
-+            } else {
-+                "├─ "
-+            }
-+        } else if last_child {
-+            "   "
-+        } else {
-+            "│  "
-+        };
-+        let prefix = format!("{}{branch}", " ".repeat(base_indent));
++        let prefix = " ".repeat(indent);
 +        let prefix_width = display_width(&prefix).min(u16::MAX as usize) as u16;
-+        let mut spans = vec![ratatui::text::Span::styled(
-+            prefix,
-+            Style::default().fg(palette.overlay0),
-+        )];
++        let mut spans = vec![ratatui::text::Span::raw(prefix)];
          spans.extend(crate::ui::resolved_token_spans(
              tokens,
              icon,
@@ -419,7 +418,7 @@ index e43ab8cc..67d3ce02 100644
          ));
          Paragraph::new(Line::from(spans)).style(row_style).render(
              Rect::new(rect.x, rect.y + index as u16, rect.width, 1),
-@@ -373,14 +225,6 @@ pub(super) fn render_agent_row(
+@@ -373,14 +184,6 @@ pub(super) fn render_agent_row(
      }
  }
  
@@ -434,9 +433,9 @@ index e43ab8cc..67d3ce02 100644
  fn display_width(text: &str) -> usize {
      unicode_width::UnicodeWidthStr::width(text)
  }
-diff --git i/src/client/shell/composition.rs w/src/client/shell/composition.rs
+diff --git c/src/client/shell/composition.rs w/src/client/shell/composition.rs
 index b7ab4a96..14a80ac2 100644
---- i/src/client/shell/composition.rs
+--- c/src/client/shell/composition.rs
 +++ w/src/client/shell/composition.rs
 @@ -62,12 +62,11 @@ impl ClientShellState {
              collapsed_groups: &self.collapsed_groups,
@@ -501,9 +500,9 @@ index b7ab4a96..14a80ac2 100644
                  tab_drag_insert_index,
                  selected_workspace_id: self
                      .navigate_workspace_id
-diff --git i/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
+diff --git c/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
 index b56b41fa..8d69724d 100644
---- i/src/client/shell/endpoint_agents.rs
+--- c/src/client/shell/endpoint_agents.rs
 +++ w/src/client/shell/endpoint_agents.rs
 @@ -1,177 +1,38 @@
 -use super::render::put_text;
@@ -608,15 +607,15 @@ index b56b41fa..8d69724d 100644
 -        }
 -        let rows = agent_rows(&self.endpoints, &self.active_endpoint_id, &self.config);
 -        let Some(target) = rows
--            .iter()
++        let worktree_key = self
++            .endpoints
+             .iter()
 -            .position(|row| &row.endpoint_id == endpoint_id && row.agent.pane_id == pane_id)
 -        else {
 -            return;
 -        };
 -        let heights = rows
-+        let worktree_key = self
-+            .endpoints
-             .iter()
+-            .iter()
 -            .map(|row| row.agent.rows.len().max(1).min(u16::MAX as usize) as u16)
 -            .collect::<Vec<_>>();
 -        let mut gaps = vec![self.config.agents.row_gap; rows.len()];
@@ -709,9 +708,9 @@ index b56b41fa..8d69724d 100644
 +        self.pending_agent_reveal = Some((endpoint_id.clone(), pane_id.to_owned()));
 +    }
  }
-diff --git i/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
+diff --git c/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
 index a1f7ac2c..7d6a29f7 100644
---- i/src/client/shell/endpoint_navigation.rs
+--- c/src/client/shell/endpoint_navigation.rs
 +++ w/src/client/shell/endpoint_navigation.rs
 @@ -167,10 +167,10 @@ impl ClientShellState {
              action,
@@ -748,10 +747,10 @@ index a1f7ac2c..7d6a29f7 100644
                  outcome.repaint = true;
              }
              return true;
-diff --git i/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
+diff --git c/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
 deleted file mode 100644
 index 96982487..00000000
---- i/src/client/shell/endpoint_sidebar.rs
+--- c/src/client/shell/endpoint_sidebar.rs
 +++ /dev/null
 @@ -1,649 +0,0 @@
 -use super::render::{display_width, put_right_text, put_text, ShellRenderState};
@@ -1403,9 +1402,9 @@ index 96982487..00000000
 -        1,
 -    )
 -}
-diff --git i/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
+diff --git c/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
 index fff28b71..ca5e0d00 100644
---- i/src/client/shell/endpoints.rs
+--- c/src/client/shell/endpoints.rs
 +++ w/src/client/shell/endpoints.rs
 @@ -209,10 +209,6 @@ impl ClientShellState {
      }
@@ -1441,9 +1440,9 @@ index fff28b71..ca5e0d00 100644
          }
          true
      }
-diff --git i/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
+diff --git c/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
 index f2df2941..98ea3f6f 100644
---- i/src/client/shell/mouse.rs
+--- c/src/client/shell/mouse.rs
 +++ w/src/client/shell/mouse.rs
 @@ -551,7 +551,39 @@ impl ClientShellState {
                      .get(entry.index)
@@ -1581,9 +1580,9 @@ index f2df2941..98ea3f6f 100644
                      self.persist_chrome_preferences(outcome);
                      outcome.repaint = true;
                      return;
-diff --git i/src/client/shell/render.rs w/src/client/shell/render.rs
+diff --git c/src/client/shell/render.rs w/src/client/shell/render.rs
 index 248216c1..57a05ee3 100644
---- i/src/client/shell/render.rs
+--- c/src/client/shell/render.rs
 +++ w/src/client/shell/render.rs
 @@ -7,10 +7,9 @@ pub(in crate::client::shell) mod sidebar;
  #[path = "../shell/tabs.rs"]
@@ -1642,24 +1641,30 @@ index 248216c1..57a05ee3 100644
                  buffer,
                  layout.sidebar,
 -                snapshot,
-                 config,
+-                config,
 -                state
 -                    .selected_workspace_id
 -                    .map(|target| target.workspace_id.as_str()),
-+                &mut state,
-                 &mut hits,
-+                include_endpoints,
-             );
-         } else {
+-                &mut hits,
+-            );
+-        } else {
 -            render_sidebar(
-+            super::sidebar_tree::render_expanded(
-                 buffer,
-                 layout.sidebar,
+-                buffer,
+-                layout.sidebar,
 -                snapshot,
-+                Some(snapshot),
                  config,
                  &mut state,
                  &mut hits,
++                include_endpoints,
++            );
++        } else {
++            super::sidebar_tree::render_expanded(
++                buffer,
++                layout.sidebar,
++                Some(snapshot),
++                config,
++                &mut state,
++                &mut hits,
 +                include_endpoints,
              );
          }
@@ -1672,9 +1677,9 @@ index 248216c1..57a05ee3 100644
          hits.agent_sort_toggle = Rect::default();
          hits.new_workspace = Rect::default();
          hits.machines.clear();
-diff --git i/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
-index f94f6bdc..9d804f99 100644
---- i/src/client/shell/sidebar.rs
+diff --git c/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
+index f94f6bdc..e30cf5f0 100644
+--- c/src/client/shell/sidebar.rs
 +++ w/src/client/shell/sidebar.rs
 @@ -12,449 +12,6 @@ fn workspace_selection_background(palette: &Palette) -> ratatui::style::Color {
      }
@@ -2134,9 +2139,36 @@ index f94f6bdc..9d804f99 100644
      dragged: bool,
      palette: &Palette,
  ) {
-@@ -696,14 +252,15 @@ pub(in crate::client::shell) fn render_workspace_rows(
+@@ -672,38 +228,20 @@ pub(in crate::client::shell) fn render_workspace_rows(
+         }
+         let mut x = area.x;
+         if entry.indented {
+-            let prefix = if row_index == 0 {
+-                if entry.last_child {
+-                    "   └─ "
+-                } else {
+-                    "   ├─ "
+-                }
+-            } else if entry.last_child {
+-                "        "
+-            } else {
+-                "   │    "
+-            };
+-            x = put_segment(
+-                buffer,
+-                x,
+-                y,
+-                area.right(),
+-                prefix,
+-                Style::default().fg(palette.overlay0),
+-            );
+-        } else if row_index == 0 {
+-            x = x.saturating_add(1);
++            let indent = if row_index == 0 { "      " } else { "        " };
++            x = put_segment(buffer, x, y, area.right(), indent, Style::default());
          } else {
-             x = x.saturating_add(3);
+-            x = x.saturating_add(3);
++            x = x.saturating_add(1);
          }
 -        let highlighted = focused || dragged;
          let workspace_style = Style::default()
@@ -2153,7 +2185,7 @@ index f94f6bdc..9d804f99 100644
                  Modifier::BOLD
              } else {
                  Modifier::empty()
-@@ -736,8 +293,6 @@ pub(in crate::client::shell) fn render_workspace_rows(
+@@ -736,8 +274,6 @@ pub(in crate::client::shell) fn render_workspace_rows(
          Some(workspace_selection_background(palette))
      } else if dragged {
          Some(palette.surface1)
@@ -2162,12 +2194,12 @@ index f94f6bdc..9d804f99 100644
      } else {
          None
      };
-diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
+diff --git c/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 00000000..c672869c
+index 00000000..b43058ca
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,996 @@
+@@ -0,0 +1,1000 @@
 +use super::*;
 +
 +const MIN_WORKSPACE_TREE_GAP: u16 = 2;
@@ -2194,7 +2226,6 @@ index 00000000..c672869c
 +        endpoint_index: usize,
 +        row: super::agent_sidebar::AgentRow,
 +        parent_indented: bool,
-+        last_child: bool,
 +        stale: bool,
 +        active_workspace: bool,
 +    },
@@ -2280,7 +2311,15 @@ index 00000000..c672869c
 +            .filter_map(|row| {
 +                let row = row
 +                    .into_iter()
-+                    .filter(|token| !matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon))
++                    .filter_map(|mut token| {
++                        if matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon) {
++                            return None;
++                        }
++                        if let crate::ui::ResolvedTokenKind::Branch(branch) = &mut token.kind {
++                            *branch = format!("({branch})");
++                        }
++                        Some(token)
++                    })
 +                    .collect::<Vec<_>>();
 +                (!row.is_empty()).then_some(row)
 +            })
@@ -2319,7 +2358,6 @@ index 00000000..c672869c
 +                        endpoint_index,
 +                        row,
 +                        parent_indented: entry.indented,
-+                        last_child: agent_index + 1 == agent_count,
 +                        stale: endpoint.status != ClientEndpointStatus::Online,
 +                        active_workspace,
 +                    },
@@ -2591,7 +2629,6 @@ index 00000000..c672869c
 +                endpoint_index,
 +                row,
 +                parent_indented,
-+                last_child,
 +                stale,
 +                active_workspace,
 +            } => {
@@ -2611,7 +2648,6 @@ index 00000000..c672869c
 +                    nested,
 +                    row,
 +                    *parent_indented,
-+                    *last_child,
 +                    config,
 +                );
 +                if *stale {
@@ -3164,9 +3200,9 @@ index 00000000..c672869c
 +    })
 +    .collect()
 +}
-diff --git i/src/client/shell/state.rs w/src/client/shell/state.rs
+diff --git c/src/client/shell/state.rs w/src/client/shell/state.rs
 index c170c9b0..92100f32 100644
---- i/src/client/shell/state.rs
+--- c/src/client/shell/state.rs
 +++ w/src/client/shell/state.rs
 @@ -2,7 +2,6 @@ use super::*;
  
@@ -3221,9 +3257,9 @@ index c170c9b0..92100f32 100644
          self.tab_scroll = 0;
          self.mobile_switcher_scroll = 0;
          self.reveal_focused_workspace = true;
-diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b1224..7d205805 100644
---- i/src/client/shell/tests/agents_worktrees_notifications.rs
+diff --git c/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
+index 5b8b1224..2accf8d9 100644
+--- c/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
      state.set_snapshot(Box::new(snapshot()));
@@ -3263,7 +3299,17 @@ index 5b8b1224..7d205805 100644
          modifiers: KeyModifiers::empty(),
      })]);
      assert!(pane.requests.is_empty());
-@@ -147,12 +149,13 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -131,7 +133,8 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+         .collect::<Vec<_>>()
+         .join("\n");
+     assert!(text.contains("main"));
+-    assert!(text.contains("└─"));
++    assert!(!text.contains("└─"));
++    assert!(!text.contains("├─"));
+     assert!(text.contains("feature"));
+ 
+     let mut replacement = (**state.snapshot.as_ref().expect("snapshot")).clone();
+@@ -147,12 +150,13 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
      state.set_pane_surface(replacement_surface);
      let collapsed = state.compose(106, 20).expect("collapsed worktree group");
      let parent = state.hits.workspaces[0].rect;
@@ -3283,17 +3329,31 @@ index 5b8b1224..7d205805 100644
  
      let mut next = ClientShellInput::default();
      state.record_binding(
-@@ -502,9 +505,22 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -430,7 +434,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
+ }
+ 
+ #[test]
+-fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
++fn agent_sidebar_honors_priority_symbols_tabs_and_stable_hits() {
+     let mut projected = snapshot();
+     let mut second_pane = projected.panes[0].clone();
+     second_pane.pane_id = "pane_2".into();
+@@ -502,9 +506,26 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
 -    assert!(text.contains("× needs input"), "frame: {text}");
-+    assert!(!text.contains("needs i"), "frame: {text}");
-+    assert!(text.contains("waiting"), "frame: {text}");
-+    assert!(text.contains("review"), "frame: {text}");
-+    assert!(text.contains("pi one"), "frame: {text}");
-     assert!(text.contains("pi two"), "frame: {text}");
+-    assert!(text.contains("pi two"), "frame: {text}");
 -    assert!(text.contains("waiting for"), "frame: {text}");
++    for hidden in ["needs i", "waiting", "review", "pi one", "pi two"] {
++        assert!(
++            !text.contains(hidden),
++            "unexpected {hidden:?} in frame: {text}"
++        );
++    }
++    for (rect, _) in &state.hits.agents {
++        cell_symbol_position(&frame, *rect, "1");
++    }
 +    let expanded_buffer = frame
 +        .to_ratatui_buffer()
 +        .expect("expanded agent sidebar buffer");
@@ -3308,7 +3368,7 @@ index 5b8b1224..7d205805 100644
      assert_eq!(
          state
              .hits
-@@ -538,23 +554,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +559,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -3336,7 +3396,7 @@ index 5b8b1224..7d205805 100644
      );
  
      state.sidebar_collapsed = true;
-@@ -569,6 +576,219 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,13 +581,304 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -3361,9 +3421,10 @@ index 5b8b1224..7d205805 100644
 +        };
 +        assert!((rect.x..rect.right()).all(|x| compact_buffer[(x, rect.y)].bg == expected));
 +    }
-+}
-+
-+#[test]
+ }
+ 
+ #[test]
+-fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
 +fn agent_reveal_waits_for_visible_unified_tree_geometry() {
 +    let mut projected = snapshot();
 +    projected.agents = vec![ClientShellAgent {
@@ -3489,7 +3550,8 @@ index 5b8b1224..7d205805 100644
 +        assert!((active.x..active.right())
 +            .all(|x| buffer[(x, padding_y)].bg == state.config.palette.active_row_bg));
 +    }
-+    let (_, branch_y) = cell_symbol_position(&frame, active, "main");
++    let (branch_x, branch_y) = cell_symbol_position(&frame, active, "(main)");
++    assert_eq!(branch_x, workspace_x);
 +    assert_eq!(branch_y, workspace_y + 1);
 +    let inactive = state.hits.workspaces[1].rect;
 +    assert!((inactive.x..inactive.right())
@@ -3497,15 +3559,21 @@ index 5b8b1224..7d205805 100644
 +    let agent = state.hits.agents[0].0;
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
 +    let (icon_x, icon_y) = cell_symbol_position(&frame, agent, icon);
++    assert_eq!(icon_x, workspace_x);
 +    let icon_cell = &buffer[(icon_x, icon_y)];
 +    assert_eq!(icon_cell.fg, state.config.palette.panel_bg);
 +    assert!(icon_cell.modifier.contains(Modifier::BOLD));
-+    let (name_x, name_y) = cell_symbol_position(&frame, agent, "tree agent");
-+    let name_cell = &buffer[(name_x, name_y)];
-+    assert_eq!(name_cell.fg, state.config.palette.panel_bg);
-+    assert!(name_cell.modifier.contains(Modifier::BOLD));
++    let (tab_x, tab_y) = cell_symbol_position(&frame, agent, "1");
++    let tab_cell = &buffer[(tab_x, tab_y)];
++    assert_eq!(tab_cell.fg, state.config.palette.panel_bg);
++    assert!(tab_cell.modifier.contains(Modifier::BOLD));
 +    assert!((agent.x..agent.right())
 +        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.selection_bg));
++    let agent_text = (agent.x..agent.right())
++        .map(|x| buffer[(x, agent.y)].symbol())
++        .collect::<String>();
++    assert!(!agent_text.contains("└─"), "agent row: {agent_text}");
++    assert!(!agent_text.contains("├─"), "agent row: {agent_text}");
 +    let text = frame
 +        .cells
 +        .chunks(frame.width as usize)
@@ -3517,7 +3585,7 @@ index 5b8b1224..7d205805 100644
 +        .collect::<Vec<_>>()
 +        .join("\n");
 +    assert!(!text.contains("client-shell · main"), "frame: {text}");
-+    assert!(text.contains("tree agent"), "frame: {text}");
++    assert!(!text.contains("tree agent"), "frame: {text}");
 +    assert!(!text.contains("working"), "frame: {text}");
 +    assert!(!text.contains("empty-space · main"), "frame: {text}");
 +    assert!(!text.contains("spaces · agents"), "frame: {text}");
@@ -3553,20 +3621,47 @@ index 5b8b1224..7d205805 100644
 +        })]);
 +    assert!(!scroll.repaint);
 +    assert_eq!(state.workspace_scroll, 0);
- }
- 
- #[test]
-@@ -599,14 +819,56 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
-     let row = state.hits.agents.first().expect("agent row hit").0;
-     let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
- 
--    for (label, needle) in [("tab", "second"), ("agent", "reviewer"), ("separator", "·")] {
--        let (x, y) = cell_symbol_position(&frame, row, needle);
--        let cell = buffer.cell((x, y)).expect("muted sidebar cell");
--        assert!(
--            !cell.modifier.contains(Modifier::DIM),
--            "{label} cell at ({x},{y}) should not stack terminal faint: {cell:?}"
--        );
++}
++
++#[test]
++fn agent_sidebar_rows_show_only_status_and_tab_name() {
++    use crate::config::AgentSidebarToken;
++
+     let mut projected = snapshot();
+     projected.tabs[0].label = "second".into();
+-    projected.tabs[0].custom_label = true;
++    projected.tabs[0].custom_label = false;
++    projected.agents = vec![ClientShellAgent {
++        pane_id: "pane_1".into(),
++        workspace_id: "ws_1".into(),
++        tab_id: "tab_1".into(),
++        name: Some("reviewer".into()),
++        display_agent: None,
++        agent: Some("pi".into()),
++        title: Some("pane-name".into()),
++        terminal_title: Some("terminal-title".into()),
++        terminal_title_stripped: Some("stripped-title".into()),
++        agent_status: AgentStatus::Working,
++        state_change_seq: 1,
++        state_labels: vec![("working".into(), "busy".into())],
++        tokens: vec![("ticket".into(), "custom-value".into())],
++        focused: true,
++    }];
++    let mut config = Config::default();
++    config.ui.sidebar.agents.rows = vec![vec![
++        AgentSidebarToken::Agent,
++        AgentSidebarToken::StateText,
++        AgentSidebarToken::Pane,
++        AgentSidebarToken::TerminalTitle,
++        AgentSidebarToken::Custom("ticket".into()),
++    ]];
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 30).expect("agent sidebar frame");
++    let row = state.hits.agents.first().expect("agent row hit").0;
++    let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
++
 +    let mut row_text = String::new();
 +    for y in row.y..row.bottom() {
 +        for x in row.x..row.right() {
@@ -3576,9 +3671,24 @@ index 5b8b1224..7d205805 100644
 +                    .as_str(),
 +            );
 +        }
-     }
-+    assert!(row_text.contains("reviewer"), "row: {row_text}");
-+    assert!(!row_text.contains("working"), "row: {row_text}");
++    }
++    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
++    assert!(row_text.contains(icon), "row: {row_text}");
++    assert!(row_text.contains("second"), "row: {row_text}");
++    for hidden in [
++        "reviewer",
++        "pi",
++        "busy",
++        "pane-name",
++        "terminal-title",
++        "stripped-title",
++        "custom-value",
++    ] {
++        assert!(
++            !row_text.contains(hidden),
++            "unexpected {hidden:?} in row: {row_text}"
++        );
++    }
 +    let (x, y) = cell_symbol_position(&frame, row, "second");
 +    let cell = buffer.cell((x, y)).expect("muted sidebar cell");
 +    assert!(
@@ -3590,37 +3700,37 @@ index 5b8b1224..7d205805 100644
 +#[test]
 +fn workspace_branch_renders_below_name_before_child_agent() {
 +    let mut projected = snapshot();
-+    projected.agents = vec![ClientShellAgent {
-+        pane_id: "pane_1".into(),
-+        workspace_id: "ws_1".into(),
-+        tab_id: "tab_1".into(),
-+        name: Some("reviewer".into()),
-+        display_agent: None,
-+        agent: Some("pi".into()),
-+        title: None,
-+        terminal_title: None,
-+        terminal_title_stripped: None,
-+        agent_status: AgentStatus::Working,
-+        state_change_seq: 1,
-+        state_labels: Vec::new(),
-+        tokens: Vec::new(),
-+        focused: true,
-+    }];
-+    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
-+    state.set_snapshot(Box::new(projected));
-+    state.set_pane_surface(surface());
+     projected.agents = vec![ClientShellAgent {
+         pane_id: "pane_1".into(),
+         workspace_id: "ws_1".into(),
+@@ -595,18 +898,15 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+     state.set_snapshot(Box::new(projected));
+     state.set_pane_surface(surface());
+-    let frame = state.compose(106, 30).expect("agent sidebar frame");
+-    let row = state.hits.agents.first().expect("agent row hit").0;
+-    let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
 +    let frame = state.compose(106, 30).expect("workspace tree frame");
 +    let workspace = state.hits.workspaces.first().expect("workspace hit").rect;
 +    let agent = state.hits.agents.first().expect("agent hit").0;
-+    let (_, workspace_y) = cell_symbol_position(&frame, workspace, "client-shell");
-+    let (_, branch_y) = cell_symbol_position(&frame, workspace, "main");
-+
++    let (workspace_x, workspace_y) = cell_symbol_position(&frame, workspace, "client-shell");
++    let (branch_x, branch_y) = cell_symbol_position(&frame, workspace, "(main)");
+ 
+-    for (label, needle) in [("tab", "second"), ("agent", "reviewer"), ("separator", "·")] {
+-        let (x, y) = cell_symbol_position(&frame, row, needle);
+-        let cell = buffer.cell((x, y)).expect("muted sidebar cell");
+-        assert!(
+-            !cell.modifier.contains(Modifier::DIM),
+-            "{label} cell at ({x},{y}) should not stack terminal faint: {cell:?}"
+-        );
+-    }
++    assert_eq!(branch_x, workspace_x);
 +    assert_eq!(branch_y, workspace_y + 1);
 +    assert_eq!(agent.y, branch_y + 1);
  }
  
  #[test]
-@@ -739,61 +1001,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+@@ -739,61 +1039,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -3700,14 +3810,6 @@ index 5b8b1224..7d205805 100644
      assert_eq!(
 -        state.config.agent_panel_sort,
 -        crate::config::AgentPanelSortConfig::Priority
--    );
--    assert!(click.actions.is_empty());
--    let reloaded_config =
--        ClientShellConfig::from_config(&Config::default()).with_preferences_path(path.clone());
--    let reloaded = ClientShellState::new(reloaded_config);
--    assert_eq!(
--        reloaded.config.agent_panel_sort,
--        crate::config::AgentPanelSortConfig::Priority
 +        state
 +            .hits
 +            .agents
@@ -3716,6 +3818,14 @@ index 5b8b1224..7d205805 100644
 +            .collect::<Vec<_>>(),
 +        ["pane_3", "pane_1", "pane_2"]
      );
+-    assert!(click.actions.is_empty());
+-    let reloaded_config =
+-        ClientShellConfig::from_config(&Config::default()).with_preferences_path(path.clone());
+-    let reloaded = ClientShellState::new(reloaded_config);
+-    assert_eq!(
+-        reloaded.config.agent_panel_sort,
+-        crate::config::AgentPanelSortConfig::Priority
+-    );
 -    assert!(reloaded.agent_panel_sort_manual);
 -    std::fs::remove_file(path).expect("remove agent sort preferences");
 +}
@@ -3743,9 +3853,9 @@ index 5b8b1224..7d205805 100644
  }
  
  #[test]
-diff --git i/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
+diff --git c/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
 index ed21bc8a..b496e4de 100644
---- i/src/client/shell/tests/chrome_context.rs
+--- c/src/client/shell/tests/chrome_context.rs
 +++ w/src/client/shell/tests/chrome_context.rs
 @@ -148,7 +148,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
  fn focused_workspace_change_reveals_new_workspace_in_full_sidebar() {
@@ -3831,9 +3941,9 @@ index ed21bc8a..b496e4de 100644
  }
  
  #[test]
-diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1..bafb8229 100644
---- i/src/client/shell/tests/endpoints.rs
+diff --git c/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
+index f327f8c1..078d7795 100644
+--- c/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
 @@ -112,6 +112,9 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
      ));
@@ -4146,7 +4256,16 @@ index f327f8c1..bafb8229 100644
  
      state.collapsed_endpoints.insert(endpoint_id.clone());
      let frame = state.compose(100, 28).expect("collapsed endpoint frame");
-@@ -1047,22 +1076,14 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
+@@ -1010,7 +1039,7 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
+ }
+ 
+ #[test]
+-fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
++fn aggregate_agents_show_only_status_and_tab_with_endpoint_colors() {
+     use crate::api::schema::AgentStatus;
+     use crate::config::{AgentSidebarToken, StatusIndicatorStyle};
+ 
+@@ -1047,22 +1076,18 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -4166,18 +4285,22 @@ index f327f8c1..bafb8229 100644
 -        crate::config::AgentPanelSortConfig::Priority
 -    );
 -    assert!(click.actions.is_empty());
-+    assert!(text.contains("└─ ○"), "frame: {text}");
-+    assert!(text.contains("└─ ×"), "frame: {text}");
++    assert!(text.contains(" ○"), "frame: {text}");
++    assert!(text.contains(" ×"), "frame: {text}");
++    assert!(!text.contains("└─"), "frame: {text}");
++    assert!(!text.contains("├─"), "frame: {text}");
 +    assert!(!text.contains("idle"), "frame: {text}");
 +    assert!(!text.contains("blocked"), "frame: {text}");
-+    assert!(text.contains("local agent"), "frame: {text}");
-+    assert!(text.contains("remote agent"), "frame: {text}");
++    assert!(!text.contains("local agent"), "frame: {text}");
++    assert!(!text.contains("remote agent"), "frame: {text}");
++    assert!(!text.contains("Local local agent"), "frame: {text}");
++    assert!(!text.contains("Build remote agent"), "frame: {text}");
 +    assert!(!text.contains("grouped"), "frame: {text}");
 +    assert!(state.hits.agent_sort_toggle.is_empty());
  
      let buffer = frame
          .to_ratatui_buffer()
-@@ -1104,37 +1125,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
+@@ -1104,37 +1129,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view.clone()));
      state.set_test_endpoint_agent_view(&endpoint_id, Some(view));
  
@@ -4235,7 +4358,7 @@ index f327f8c1..bafb8229 100644
  }
  
  #[test]
-@@ -1191,20 +1206,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
+@@ -1191,20 +1210,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
      });
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4266,7 +4389,7 @@ index f327f8c1..bafb8229 100644
  }
  
  #[test]
-@@ -1247,20 +1258,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
+@@ -1247,20 +1262,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
          }),
      );
  
@@ -4298,7 +4421,7 @@ index f327f8c1..bafb8229 100644
  }
  
  #[test]
-@@ -1333,19 +1341,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
+@@ -1333,19 +1345,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
      remote.agents = vec![agent("remote agent", AgentStatus::Idle, 1)];
      state.set_endpoint_snapshot(&endpoint_id, Box::new(remote));
  
@@ -4328,7 +4451,7 @@ index f327f8c1..bafb8229 100644
  }
  
  #[test]
-@@ -1385,21 +1390,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1385,21 +1394,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
      }];
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4362,7 +4485,7 @@ index f327f8c1..bafb8229 100644
      );
  
      let mut outcome = ClientShellInput::default();
-@@ -1411,7 +1413,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1411,7 +1417,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: selected,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4371,7 +4494,7 @@ index f327f8c1..bafb8229 100644
      ));
  }
  
-@@ -1509,39 +1511,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1509,39 +1515,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
      let mut local = snapshot();
      local.agents = vec![agent("local agent", AgentStatus::Idle, 2)];
      state.set_snapshot(Box::new(local));
@@ -4427,7 +4550,7 @@ index f327f8c1..bafb8229 100644
      );
      let mut outcome = ClientShellInput::default();
      assert!(
-@@ -1552,7 +1547,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1552,7 +1551,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: activated,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4436,7 +4559,7 @@ index f327f8c1..bafb8229 100644
      ));
  }
  
-@@ -1895,7 +1890,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1895,7 +1894,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          previous_surface.projection_revision += 1;
          state.set_pane_surface(previous_surface);
          assert!(state.pending_pane_surface.is_some());
@@ -4445,7 +4568,7 @@ index f327f8c1..bafb8229 100644
  
          state.mark_endpoint_disconnected(&endpoint_id);
          let mut reconnected = snapshot();
-@@ -1922,7 +1917,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1922,7 +1921,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          assert_eq!(state.pane_surface.as_ref().unwrap().projection_revision, 1);
          assert_eq!(state.pane_surface.as_ref().unwrap().surface_revision, 1);
          assert!(state.pending_pane_surface.is_none());
@@ -4454,19 +4577,19 @@ index f327f8c1..bafb8229 100644
          assert!(state.compose(106, 20).is_some());
      }
  }
-@@ -1991,7 +1986,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
+@@ -1991,7 +1990,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
          Some(ClientEndpointStatus::Reconnecting)
      );
      assert!(text.contains("◐ reconnecting"), "frame: {text}");
 -    assert!(text.contains("Build · remote agent"), "frame: {text}");
 +    assert!(!text.contains("blocked"), "frame: {text}");
-+    assert!(text.contains("remote agent"), "frame: {text}");
++    assert!(!text.contains("remote agent"), "frame: {text}");
      assert!(
          text.contains("LIVE"),
          "frozen surface should remain: {text}"
-diff --git i/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
+diff --git c/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
 index c9f02278..0ec9d82f 100644
---- i/src/client/shell/tests/popup_focus_projection.rs
+--- c/src/client/shell/tests/popup_focus_projection.rs
 +++ w/src/client/shell/tests/popup_focus_projection.rs
 @@ -165,7 +165,7 @@ fn desktop_composition_keeps_shell_outside_origin_relative_surface() {
          })
@@ -4499,7 +4622,22 @@ index c9f02278..0ec9d82f 100644
 -        assert!(track.width > 0);
 -        let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
 -        assert!(thumb.len > 1);
--        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
++    let track = state.hits.workspace_scrollbar;
++    let metrics = state
++        .hits
++        .workspace_scroll_metrics
++        .expect("unified sidebar metrics");
++    assert!(track.width > 0);
++    let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
++    assert!(thumb.len > 1);
++    state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
++        kind: MouseEventKind::Down(MouseButton::Left),
++        column: track.x,
++        row: thumb.top,
++        modifiers: KeyModifiers::empty(),
++    })]);
++    let dragged =
+         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
 -            kind: MouseEventKind::Down(MouseButton::Left),
 -            column: track.x,
 -            row: thumb.top,
@@ -4518,22 +4656,7 @@ index c9f02278..0ec9d82f 100644
 -        } else {
 -            assert_eq!(state.workspace_scroll, metrics.max_offset_from_bottom);
 -        }
-+    let track = state.hits.workspace_scrollbar;
-+    let metrics = state
-+        .hits
-+        .workspace_scroll_metrics
-+        .expect("unified sidebar metrics");
-+    assert!(track.width > 0);
-+    let thumb = crate::ui::scrollbar_thumb(metrics, track).expect("scrollbar thumb");
-+    assert!(thumb.len > 1);
-+    state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
-+        kind: MouseEventKind::Down(MouseButton::Left),
-+        column: track.x,
-+        row: thumb.top,
-+        modifiers: KeyModifiers::empty(),
-+    })]);
-+    let dragged =
-         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+-        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
 -            kind: MouseEventKind::Up(MouseButton::Left),
 +            kind: MouseEventKind::Drag(MouseButton::Left),
              column: track.x,
@@ -4552,9 +4675,9 @@ index c9f02278..0ec9d82f 100644
  }
  
  #[test]
-diff --git i/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
+diff --git c/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
 index c117a319..bf151e84 100644
---- i/src/client/shell/tests/workspace_navigation.rs
+--- c/src/client/shell/tests/workspace_navigation.rs
 +++ w/src/client/shell/tests/workspace_navigation.rs
 @@ -71,6 +71,15 @@ fn workspace_rect(state: &ClientShellState, endpoint: &ClientEndpointId, workspa
          .expect("visible workspace")
@@ -4713,9 +4836,9 @@ index c117a319..bf151e84 100644
      }
  }
  
-diff --git i/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
+diff --git c/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
 index 19fa1a39..b5c8de24 100644
---- i/src/client/shell/workspace_navigation.rs
+--- c/src/client/shell/workspace_navigation.rs
 +++ w/src/client/shell/workspace_navigation.rs
 @@ -108,26 +108,13 @@ impl ClientShellState {
              let Some(snapshot) = endpoint.snapshot.as_deref() else {
@@ -4749,9 +4872,9 @@ index 19fa1a39..b5c8de24 100644
              for entry in entries {
                  targets.push(WorkspaceNavigationTarget {
                      endpoint_id: endpoint.endpoint_id.clone(),
-diff --git i/src/ui.rs w/src/ui.rs
+diff --git c/src/ui.rs w/src/ui.rs
 index 141e09d3..a4f38096 100644
---- i/src/ui.rs
+--- c/src/ui.rs
 +++ w/src/ui.rs
 @@ -32,9 +32,8 @@ pub(crate) use self::scrollbar::{
      scrollbar_thumb_grab_offset,
@@ -4765,9 +4888,9 @@ index 141e09d3..a4f38096 100644
  };
  use self::status::copy_feedback_rect;
  pub(crate) use self::status::{render_config_diagnostic_buffer, render_copy_feedback_buffer};
-diff --git i/src/ui/sidebar.rs w/src/ui/sidebar.rs
+diff --git c/src/ui/sidebar.rs w/src/ui/sidebar.rs
 index cbf6f1a9..86ca750f 100644
---- i/src/ui/sidebar.rs
+--- c/src/ui/sidebar.rs
 +++ w/src/ui/sidebar.rs
 @@ -1,7 +1,6 @@
  mod tokens;

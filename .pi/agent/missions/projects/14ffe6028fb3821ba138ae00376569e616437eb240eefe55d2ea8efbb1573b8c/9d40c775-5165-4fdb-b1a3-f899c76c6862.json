@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "9d40c775-5165-4fdb-b1a3-f899c76c6862",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-20T14:18:35.232Z",
+  "updatedAt": "2026-09-20T14:27:55.586Z",
+  "runs": [
+    {
+      "runId": "131f150d-bcc1-4c57-8750-468607c35783",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/131f150d-bcc1-4c57-8750-468607c35783",
+      "status": "complete",
+      "startedAt": "2026-09-20T14:18:35.235Z",
+      "completedAt": "2026-09-20T14:27:55.586Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "131f150d-bcc1-4c57-8750-468607c35783",
+      "key": "vol-target",
+      "status": "completed",
+      "startedAt": "2026-09-20T14:18:35.281Z",
+      "updatedAt": "2026-09-20T14:27:55.396Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/970aca9b-75ad-4deb-b35a-5cd8500fe1fb",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/131f150d-bcc1-4c57-8750-468607c35783/challenger-lanes.vol-target.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-290Z_01a0bf2e-df9a-7310-ad4f-b8f6d269cfc4.jsonl"
+      ],
+      "runId": "970aca9b-75ad-4deb-b35a-5cd8500fe1fb",
+      "agent": "worker",
+      "completedAt": "2026-09-20T14:27:55.396Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-290Z_01a0bf2e-df9a-7310-ad4f-b8f6d269cfc4.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T14:27:55.396Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "131f150d-bcc1-4c57-8750-468607c35783",
+      "key": "drawdown-hysteresis",
+      "status": "completed",
+      "startedAt": "2026-09-20T14:18:35.314Z",
+      "updatedAt": "2026-09-20T14:26:16.744Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/aa583d33-63d5-4304-8f86-fcdae3514726",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/131f150d-bcc1-4c57-8750-468607c35783/challenger-lanes.drawdown-hysteresis.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-320Z_01a0bf2e-dfb8-701d-9e96-b399d2fd565e.jsonl"
+      ],
+      "runId": "aa583d33-63d5-4304-8f86-fcdae3514726",
+      "agent": "worker",
+      "completedAt": "2026-09-20T14:26:16.744Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-320Z_01a0bf2e-dfb8-701d-9e96-b399d2fd565e.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T14:26:16.744Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "131f150d-bcc1-4c57-8750-468607c35783",
+      "key": "turnover-risk",
+      "status": "completed",
+      "startedAt": "2026-09-20T14:18:35.340Z",
+      "updatedAt": "2026-09-20T14:26:21.756Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/2b3424e9-6edd-46e3-bb73-acc0d0af7225",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/131f150d-bcc1-4c57-8750-468607c35783/challenger-lanes.turnover-risk.json",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-346Z_01a0bf2e-dfd2-72d5-bd01-7b43db1b45ab.jsonl"
+      ],
+      "runId": "2b3424e9-6edd-46e3-bb73-acc0d0af7225",
+      "agent": "worker",
+      "completedAt": "2026-09-20T14:26:21.756Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20/forks/2026-09-20T14-18-35-346Z_01a0bf2e-dfd2-72d5-bd01-7b43db1b45ab.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-20T14:26:21.756Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/131f150d-bcc1-4c57-8750-468607c35783/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/131f150d-bcc1-4c57-8750-468607c35783/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/970aca9b-75ad-4deb-b35a-5cd8500fe1fb"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aa583d33-63d5-4304-8f86-fcdae3514726"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2b3424e9-6edd-46e3-bb73-acc0d0af7225"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-wip-current-tree",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-20T14-07-52-809Z_01a0bf25-11e9-7a0c-9a6f-4b33e2727e20.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: [\n  {\n    \"key\": \"vol-target\",\n    \"ok\": true,\n    \"agent\": \"worker\",\n    \"runId\": \"970aca9b-75ad-4deb-b35a-5cd8500fe1fb\",\n    \"output\": \"{\\n  \\\"lane\\\": \\\"causal_volatility_budget_overlay\\\",\\n  \\\"status\\\": \\\"completed_no_representative_improvement\\\",\\n  \\\"benchmark\\\": {\\n    \\\"id\\\": \\\"model-improvement-benchmark-v1\\\",\\n    \\\"model\\\": \\\"availability_aware_conservative_v1_v23\\\",\\n    \\\"full_history_30bp\\\": {\\n      \\\"CAGR\\\": 0.31936870793314154,\\n      \\\"excess_sharpe\\\": 1.4991824390021424,\\n      \\\"Vol\\\": 0.1827650788080817,\\n      \\\"MaxDD\\\": -0.16402248163773714,\\n      \\\"Ulcer\\\": 0.03837122168190027,\\n      \\\"AnnualTurnoverWeight\\\": 8.132691376738737\\n    }\\n  },\\n  \\\"architecture\\\": {\\n    \\\"windows_sessions\\\": [63, 126],\\n    \\\"annual_risk_budgets\\\": [0.16, 0.18, 0.2],\\n    \\\"update_rule\\\": \\\"canonical_position modulo 5 equals zero after window warm-up\\\",\\n    \\\"signal\\\": \\\"annualized sample volatility of reference 30bp net returns over [t-window,t), excluding t\\\",\\n    \\\"multiplier Trace: 6 event(s)."
+}

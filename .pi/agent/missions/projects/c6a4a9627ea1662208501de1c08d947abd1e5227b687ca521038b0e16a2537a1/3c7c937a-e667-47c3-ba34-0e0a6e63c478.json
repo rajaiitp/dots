@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "3c7c937a-e667-47c3-ba34-0e0a6e63c478",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-04T20:06:33.791Z",
+  "updatedAt": "2026-10-04T20:09:18.067Z",
+  "runs": [
+    {
+      "runId": "eb506a59-ed27-4c28-adfc-c9d7517241de",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-04T20:09:18.066Z",
+      "completedAt": "2026-10-04T20:09:18.066Z",
+      "usage": {
+        "tokens": 57538
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/eb506a59-ed27-4c28-adfc-c9d7517241de_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/eb506a59-ed27-4c28-adfc-c9d7517241de_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/herdr-unified-tree-v0.9.3",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — the design is viable, but reveal lifecycle, filtering/sort integration, and installation cleanup are underspecified in ways that can violate requirements or lose rollback data.\n\n## Critical gaps\n- Removing the Agents section also removes its sort/filter header; the plan does not relocate the sort toggle or active `agent_view_label`, including the rule that sorting is disabled while a filtered view is active.\n- Federated children must be derived from the aggregate agent projection, not independently from each snapshot; otherwise endpoint agent-view filtering, ordering, and stale semantics can change.\n- `pending_agent_reveal` currently uses previous-frame geometry and is consumed before activation succeeds. With a unified tree it must survive zero-height/hidden composition and account for collapsed machine/worktree ancestors, or focus actions can never reveal their target.\n- Cleanup and replacement are not transactionally sequenced. Commit verification alone does not ensure clean source, staging may be cross-filesystem, and broad deletion across discovered checkouts can remove rollback data or unrelated files before installation is proven successful.\n\n## Important improvements\n- Define the projection’s stable row identity, logical row height/gap, and endpoint-qualified hit target. Explicitly group filtered aggregate agents by workspace while applying priority sorting only within each workspace.\n- Make workspace drag targets operate on workspace subtree boundaries and reject agent rows and foreign endpoint subtrees.\n- Retire all runtime use of agent-body metrics, agent scrollbar, section-divider hit handling, and agent-scroll resets; retaining the obsolete persisted split field is sufficient for compatibility.\n- Build from a disposable clean checkout/worktree at the pinned commit and capture baseline diffs for every checkout before changing artifacts.\n- Restrict cleanup to an explicit inventory, avoid symlink ...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

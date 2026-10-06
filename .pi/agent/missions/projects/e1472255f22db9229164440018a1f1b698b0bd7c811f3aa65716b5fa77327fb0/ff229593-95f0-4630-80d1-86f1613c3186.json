@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "ff229593-95f0-4630-80d1-86f1613c3186",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-27T11:51:55.347Z",
+  "updatedAt": "2026-09-27T12:15:25.038Z",
+  "runs": [
+    {
+      "runId": "137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "status": "complete",
+      "startedAt": "2026-09-27T11:51:55.355Z",
+      "completedAt": "2026-09-27T12:15:25.038Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "key": "freeze-d1",
+      "status": "completed",
+      "startedAt": "2026-09-27T11:51:55.404Z",
+      "updatedAt": "2026-09-27T11:54:40.167Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/8013d24e-aaa4-4d85-b32c-9a67f84f1cd5",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6ed2fbe1-c182-4738-ac01-169027a4613b/run-0/session.jsonl"
+      ],
+      "runId": "8013d24e-aaa4-4d85-b32c-9a67f84f1cd5",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-27T11:54:40.167Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/6ed2fbe1-c182-4738-ac01-169027a4613b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-27T11:54:40.167Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "key": "freeze-review-d1",
+      "status": "completed",
+      "startedAt": "2026-09-27T11:54:40.171Z",
+      "updatedAt": "2026-09-27T11:57:58.572Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/9f6b1ce2-98bc-404f-b785-64441eac2e4f",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/d8113908-e39a-4ebd-a0f5-7a0bd49ce9f3/run-0/session.jsonl"
+      ],
+      "runId": "9f6b1ce2-98bc-404f-b785-64441eac2e4f",
+      "agent": "reviewer",
+      "completedAt": "2026-09-27T11:57:58.572Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/d8113908-e39a-4ebd-a0f5-7a0bd49ce9f3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-27T11:57:58.572Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "key": "run-d1",
+      "status": "completed",
+      "startedAt": "2026-09-27T11:57:58.577Z",
+      "updatedAt": "2026-09-27T12:10:12.439Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/86b12779-c932-4b7f-acf8-f7a742b07f7d",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/4cd82490-964f-4bd9-9f06-8e1f1647f2d9/run-0/session.jsonl"
+      ],
+      "runId": "86b12779-c932-4b7f-acf8-f7a742b07f7d",
+      "agent": "worker",
+      "completedAt": "2026-09-27T12:10:12.439Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/4cd82490-964f-4bd9-9f06-8e1f1647f2d9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-27T12:10:12.439Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "137f9cfb-826f-4fbb-80b2-a107cef1d1c2",
+      "key": "audit-d1",
+      "status": "completed",
+      "startedAt": "2026-09-27T12:10:12.444Z",
+      "updatedAt": "2026-09-27T12:15:24.863Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/a21a5d64-de92-43c3-a627-14e59be54cef",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/45946510-726e-4016-b727-76b44873a477/run-0/session.jsonl"
+      ],
+      "runId": "a21a5d64-de92-43c3-a627-14e59be54cef",
+      "agent": "reviewer",
+      "completedAt": "2026-09-27T12:15:24.863Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/45946510-726e-4016-b727-76b44873a477/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-27T12:15:24.863Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/137f9cfb-826f-4fbb-80b2-a107cef1d1c2/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/137f9cfb-826f-4fbb-80b2-a107cef1d1c2/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8013d24e-aaa4-4d85-b32c-9a67f84f1cd5"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9f6b1ce2-98bc-404f-b785-64441eac2e4f"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/86b12779-c932-4b7f-acf8-f7a742b07f7d"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a21a5d64-de92-43c3-a627-14e59be54cef"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: {\n  \"freeze\": {\n    \"key\": \"freeze-d1\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"8013d24e-aaa4-4d85-b32c-9a67f84f1cd5\",\n    \"output\": \"{\\n  \\\"decision\\\": \\\"Use a new UPP-D1 direct runner with pinned H1 policy/optimizer semantics, H2-corrected execution semantics, and separate post-completion V1 scoring. Do not inherit H2’s admission, sandbox, or artifact framework.\\\",\\n  \\\"rationale\\\": [\\n    \\\"Retains the existing search family and accounting comparison while removing infrastructure unrelated to this retrospective diagnostic.\\\"\\n  ],\\n  \\\"constraints\\\": [\\n    \\\"Identity: upp-d1-unregistered-approximate-retrospective-v1. No holdout, registration, independent-evidence, Gold, deployment, or investment-authorization claim.\\\",\\n    \\\"Only new D1 files may eventually be written; H1/H2 and all prior files remain unchanged. This consultation performs no edits or candidate execution.\\\",\\n    \\\"One worker and one numerical-library thread; cumulative campaign wall time i Trace: 8 event(s)."
+}

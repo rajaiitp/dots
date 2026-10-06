@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "8cfde3a3-0f87-4ba1-a5a1-d7f22aecae6e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-21T06:25:13.536Z",
+  "updatedAt": "2026-09-21T06:25:13.691Z",
+  "runs": [
+    {
+      "runId": "921325ee-7127-4ff6-a4b4-646fe5720c78",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/921325ee-7127-4ff6-a4b4-646fe5720c78",
+      "status": "failed",
+      "startedAt": "2026-09-21T06:25:13.587Z",
+      "completedAt": "2026-09-21T06:25:13.690Z"
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/921325ee-7127-4ff6-a4b4-646fe5720c78/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/921325ee-7127-4ff6-a4b4-646fe5720c78/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/shaadi",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-shaadi--/2026-09-20T10-37-53-544Z_01a0be64-d208-78a8-acf8-7422fb4e3e64.jsonl",
+  "summary": "Error: runs.lanes canonical JSON exceeds 64 KiB.\n    at validateLaneSpecs ([worker eval]:381:77)\n    at runLanes ([worker eval]:501:17)\n    at Object.lanes ([worker eval]:695:12)\n    at workflow-script.js:18:28\n    at workflow-script.js:20:3\n    at Script.runInContext (node:vm:150:12)\n    at MessagePort.<anonymous> ([worker eval]:931:46)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: declared lane 'pass-1' was not launched. Preflight advisory: declared lane 'pass-2' was not launched. Preflight advisory: declared lane 'pass-3' was not launched. Preflight advisory: declared lane 'pass-4' was not launched."
+}

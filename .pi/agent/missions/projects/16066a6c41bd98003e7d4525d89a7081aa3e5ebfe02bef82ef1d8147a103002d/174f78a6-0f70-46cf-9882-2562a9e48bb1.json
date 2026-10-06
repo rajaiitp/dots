@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "174f78a6-0f70-46cf-9882-2562a9e48bb1",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-04T18:21:21.758Z",
+  "updatedAt": "2026-10-04T18:28:24.720Z",
+  "runs": [
+    {
+      "runId": "780aada2-14b4-483f-a716-c6dd47028364",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/780aada2-14b4-483f-a716-c6dd47028364",
+      "status": "complete",
+      "startedAt": "2026-10-04T18:21:21.762Z",
+      "completedAt": "2026-10-04T18:28:24.720Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "780aada2-14b4-483f-a716-c6dd47028364",
+      "key": "architecture",
+      "status": "completed",
+      "startedAt": "2026-10-04T18:21:21.819Z",
+      "updatedAt": "2026-10-04T18:23:28.045Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1ff9ab51-089f-40fe-8c5f-96c399bb3f42",
+        "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b/55503400-d4a3-4bca-8092-9d68b65ac25a/run-0/session.jsonl"
+      ],
+      "runId": "1ff9ab51-089f-40fe-8c5f-96c399bb3f42",
+      "agent": "workflow-architect",
+      "completedAt": "2026-10-04T18:23:28.045Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b/55503400-d4a3-4bca-8092-9d68b65ac25a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-04T18:23:28.045Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "780aada2-14b4-483f-a716-c6dd47028364",
+      "key": "plan-review",
+      "status": "completed",
+      "startedAt": "2026-10-04T18:23:28.054Z",
+      "updatedAt": "2026-10-04T18:28:24.548Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1cba8f5b-efcf-4ae0-a712-73dba8fce824",
+        "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b/86a84614-6526-4154-a180-b2152b3178ac/run-0/session.jsonl"
+      ],
+      "runId": "1cba8f5b-efcf-4ae0-a712-73dba8fce824",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-10-04T18:28:24.548Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b/86a84614-6526-4154-a180-b2152b3178ac/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-04T18:28:24.548Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/780aada2-14b4-483f-a716-c6dd47028364/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/780aada2-14b4-483f-a716-c6dd47028364/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/1ff9ab51-089f-40fe-8c5f-96c399bb3f42"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/1cba8f5b-efcf-4ae0-a712-73dba8fce824"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"architecture\": {\n    \"key\": \"architecture\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"1ff9ab51-089f-40fe-8c5f-96c399bb3f42\",\n    \"output\": \"{\\n  \\\"decision\\\": \\\"Replace the sidebar patch with a client-shell-only port, retire kitty-graphics.patch, and retain the installer’s staged-build/backup model while correcting cross-version handoff safety.\\\",\\n  \\\"rationale\\\": [\\n    \\\"v0.9.3 moved presentation into src/client/shell/. src/ui.rs now computes server-side pane surfaces; transplanting the old AppState/input/render changes would restore obsolete server/TUI coupling.\\\",\\n    \\\"apply_pane_terminal_env already removes outer terminal handles and deliberately sets TERM_PROGRAM=herdr plus its version. The old graphics patch would undo this supported identity contract; native Kitty rendering needs no replacement patch.\\\"\\n  ],\\n  \\\"constraints\\\": [\\n    \\\"Keep layout, picker state and hit areas client-local. Do not change published codecs, protocol snapshots, serve Trace: 4 event(s)."
+}

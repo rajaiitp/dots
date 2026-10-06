@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "460fff5d-844d-4d4d-a7ac-cd4aa93bd02c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-19T23:29:59.024Z",
+  "updatedAt": "2026-09-19T23:51:15.597Z",
+  "runs": [
+    {
+      "runId": "271c360e-e7ca-4ec0-92d6-538a402e4eee",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/271c360e-e7ca-4ec0-92d6-538a402e4eee",
+      "status": "failed",
+      "startedAt": "2026-09-19T23:29:59.028Z",
+      "completedAt": "2026-09-19T23:51:15.597Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "271c360e-e7ca-4ec0-92d6-538a402e4eee",
+      "key": "r2-code-fix-retry",
+      "status": "failed",
+      "startedAt": "2026-09-19T23:29:59.078Z",
+      "updatedAt": "2026-09-19T23:51:15.577Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ceacd38d-7483-4d6e-b71b-51949f5959a0",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/eb2ea74c-d61d-4c2a-b2f6-62dcdc9b9822/run-0/session.jsonl"
+      ],
+      "runId": "ceacd38d-7483-4d6e-b71b-51949f5959a0",
+      "agent": "worker",
+      "completedAt": "2026-09-19T23:51:15.577Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/eb2ea74c-d61d-4c2a-b2f6-62dcdc9b9822/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T23:51:15.577Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/271c360e-e7ca-4ec0-92d6-538a402e4eee/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/271c360e-e7ca-4ec0-92d6-538a402e4eee/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ceacd38d-7483-4d6e-b71b-51949f5959a0"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Error: Run 'r2-code-fix-retry' failed: Run fan-out: 1/6 used, 5 remaining\nfetch failed\nRequired file-only output was not produced: /home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/271c360e-e7ca-4ec0-92d6-538a402e4eee/poc-r2-code-fix-retry.md\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: declared lane 'r2-code-review-retry' was not launched. Preflight advisory: declared lane 'r2-code-fix-final' was not launched. Preflight advisory: declared lane 'r2-code-review-final' was not launched. Preflight advisory: declared lane 'r2-evaluate-recovery' was not launched. Preflight advisory: declared lane 'r2-result-audit-recovery' was not launched."
+}

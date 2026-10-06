@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "6de3287c-1fb3-4c65-ad80-e427b6e53d03",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-05T18:45:55.921Z",
+  "updatedAt": "2026-10-05T18:48:59.662Z",
+  "runs": [
+    {
+      "runId": "bf86a531-30cd-402d-bc3f-867991e1f01a",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-05T18:48:59.662Z",
+      "completedAt": "2026-10-05T18:48:59.662Z",
+      "usage": {
+        "tokens": 63011
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/bf86a531-30cd-402d-bc3f-867991e1f01a_reviewer_0_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/outputs/bf86a531-30cd-402d-bc3f-867991e1f01a/style-review.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/bf86a531-30cd-402d-bc3f-867991e1f01a_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-09-26T19-08-41-874Z_01a0df1e-a212-7ba8-89a9-a58f99e4df6b.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Review\n\n**Status: `requested_changes`**\n\n### Correct\n\n- Active desktop workspaces use accent-colored bold text without a persistent background (`src/client/shell/sidebar.rs:244-262`, `src/client/shell/sidebar_tree.rs:329-359`).\n- Transient navigation selection retains a distinct row background, including terminal-theme fallback handling (`src/client/shell/sidebar_tree.rs:329-341`, `593-622`).\n- Workspace metadata is flattened onto one line (`src/client/shell/sidebar_tree.rs:97-105`).\n- Detected agents are nested beneath their workspace; ordinary terminal panes are excluded because rows originate only from `snapshot.agents` (`src/client/shell/sidebar_tree.rs:50-63`).\n- Agent identity tokens are removed, while missing state-icon/state-text tokens are restored (`src/client/shell/agent_sidebar.rs:112-147`).\n- Desktop heading and grouped/priority control are absent; their hit regions remain empty. Mobile rendering remains on its separate path.\n- Hit rectangles encompass complete visible workspace/agent rows, including nested endpoint layouts (`src/client/shell/sidebar_tree.rs:274-299`, `369-425`).\n\n### Findings\n\n- **P1 — Trailing subtree gaps produce false overflow and incorrect scrolling.**  \n  `rows()` gives every terminal workspace subtree a nonzero trailing gap, including the final row (`src/client/shell/sidebar_tree.rs:106-119`, `131-143`). Scroll metrics count that final gap (`src/client/shell/scroll.rs:18-29`), although the requirement calls for a blank row *before the next workspace*. For two one-line rows with gaps `[1, 1]` and a three-line viewport, both rows render, but `list_scroll_metrics` reports `max_offset_from_bottom == 1`; this unnecessarily shows a scrollbar, reduces content width, and permits scrolling the first visible row away.  \n  **Smallest fix:** normalize the final emitted tree row’s `gap_after` to zero, then add an exact-fit regression covering metrics, scrollbar visibility, width, and wheel scrolling....",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

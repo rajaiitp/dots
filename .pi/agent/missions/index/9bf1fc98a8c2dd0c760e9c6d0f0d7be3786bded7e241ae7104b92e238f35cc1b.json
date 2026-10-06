@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "ca1492c1-3542-4724-ae4b-dda597cfa9b4",
+  "projectRoot": "/home/raja/Projects/mind_me-ccora-g1",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/1ac9e02f59226ba8cc9d5b0280db9366759322fb038fc59fcc5aaf2305156cb9/ca1492c1-3542-4724-ae4b-dda597cfa9b4.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-09-19T10:02:49.716Z",
+  "lastRunId": "31484c6f-505a-45a8-b45f-1a198a3b7071"
+}

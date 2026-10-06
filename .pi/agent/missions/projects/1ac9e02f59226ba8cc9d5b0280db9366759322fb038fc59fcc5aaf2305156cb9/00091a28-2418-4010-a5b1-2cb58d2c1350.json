@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "00091a28-2418-4010-a5b1-2cb58d2c1350",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-19T12:57:53.181Z",
+  "updatedAt": "2026-09-19T13:35:35.297Z",
+  "runs": [
+    {
+      "runId": "c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "status": "failed",
+      "startedAt": "2026-09-19T12:57:53.185Z",
+      "completedAt": "2026-09-19T13:35:35.297Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "key": "fix-common",
+      "status": "completed",
+      "startedAt": "2026-09-19T12:57:53.232Z",
+      "updatedAt": "2026-09-19T13:04:51.187Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/5740ddbd-9ff5-4a97-ba74-6aa4342991be",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b/three-independent-gold-synthetic-fixes.fix-common.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/45424f97-4255-4343-90ef-5ebe4560ec86/run-0/session.jsonl"
+      ],
+      "runId": "5740ddbd-9ff5-4a97-ba74-6aa4342991be",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:04:51.187Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/45424f97-4255-4343-90ef-5ebe4560ec86/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:04:51.187Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "key": "fix-crown",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:04:51.193Z",
+      "updatedAt": "2026-09-19T13:18:58.635Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/0fcc03e4-d06a-4f35-9f39-691937010968",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b/three-independent-gold-synthetic-fixes.fix-crown.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8a654a66-90df-4386-9ef5-23eddf8e1981/run-0/session.jsonl"
+      ],
+      "runId": "0fcc03e4-d06a-4f35-9f39-691937010968",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:18:58.635Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/8a654a66-90df-4386-9ef5-23eddf8e1981/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:18:58.635Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "key": "fix-cemsk",
+      "status": "completed",
+      "startedAt": "2026-09-19T13:18:58.641Z",
+      "updatedAt": "2026-09-19T13:27:07.692Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ff06b462-0140-4846-bdec-9e8c43b54d21",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/outputs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b/three-independent-gold-synthetic-fixes.fix-cemsk.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/3a74b479-0edf-45af-bac1-9edd3937aa01/run-0/session.jsonl"
+      ],
+      "runId": "ff06b462-0140-4846-bdec-9e8c43b54d21",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:27:07.692Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/3a74b479-0edf-45af-bac1-9edd3937aa01/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:27:07.692Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "c44e7438-7114-4bea-b1b6-7e9bb84b3d1b",
+      "key": "fix-asterion",
+      "status": "failed",
+      "startedAt": "2026-09-19T13:27:07.697Z",
+      "updatedAt": "2026-09-19T13:35:35.265Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b484a216-fbd1-4ad4-9673-0dc401c0095d",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/519d2e17-b73f-429b-a930-8d1c2f784b5b/run-0/session.jsonl"
+      ],
+      "runId": "b484a216-fbd1-4ad4-9673-0dc401c0095d",
+      "agent": "worker",
+      "completedAt": "2026-09-19T13:35:35.265Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/519d2e17-b73f-429b-a930-8d1c2f784b5b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-19T13:35:35.265Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c44e7438-7114-4bea-b1b6-7e9bb84b3d1b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5740ddbd-9ff5-4a97-ba74-6aa4342991be"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0fcc03e4-d06a-4f35-9f39-691937010968"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ff06b462-0140-4846-bdec-9e8c43b54d21"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b484a216-fbd1-4ad4-9673-0dc401c0095d"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Error: Run 'fix-asterion' failed: Run fan-out: 4/64 used, 60 remaining\nfetch failed\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)"
+}

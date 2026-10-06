@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "43c7839b-d93d-4eaf-aa94-b6f91e32f822",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-14T19:03:27.790Z",
+  "updatedAt": "2026-09-14T19:08:25.187Z",
+  "runs": [
+    {
+      "runId": "96d655d9-ba2b-43e1-89f1-f9a98f89031c",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/96d655d9-ba2b-43e1-89f1-f9a98f89031c",
+      "status": "complete",
+      "startedAt": "2026-09-14T19:03:27.791Z",
+      "completedAt": "2026-09-14T19:08:25.186Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "96d655d9-ba2b-43e1-89f1-f9a98f89031c",
+      "key": "v8-architecture-review",
+      "status": "completed",
+      "startedAt": "2026-09-14T19:03:27.833Z",
+      "updatedAt": "2026-09-14T19:08:25.006Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6ee7e75c-f9d2-45b4-81ef-a521847b06c0",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c4dfb1f8-85ce-447d-abd4-272acb47b9d1/run-0/session.jsonl"
+      ],
+      "runId": "6ee7e75c-f9d2-45b4-81ef-a521847b06c0",
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-14T19:08:25.006Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/c4dfb1f8-85ce-447d-abd4-272acb47b9d1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-14T19:08:25.006Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/96d655d9-ba2b-43e1-89f1-f9a98f89031c/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/96d655d9-ba2b-43e1-89f1-f9a98f89031c/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6ee7e75c-f9d2-45b4-81ef-a521847b06c0"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Workflow completed with 1 child run(s). Return: {\n  \"design\": {\n    \"key\": \"v8-architecture-review\",\n    \"ok\": true,\n    \"agent\": \"workflow-architect\",\n    \"runId\": \"6ee7e75c-f9d2-45b4-81ef-a521847b06c0\",\n    \"output\": \"\",\n    \"structuredOutput\": {\n      \"verdict\": \"blocked\",\n      \"summary\": \"The proposal states goals and boundaries but is not an executable mathematical contract. Material choices in clocks, event handling, terminalization, refitting, and the 82-parameter map can produce different trajectories or causal violations.\",\n      \"requiredCorrections\": [\n        \"Make benchmark V3 additive and self-contained: assign a new ID/schema/module, pin every permitted primitive, calendar, cash, lifecycle, and settlement input, distinguish policy-visible data from executor-only events, and leave all V2-V7 contracts, code paths, artifacts, and evidence hashes unchanged.\",\n        \"Specify the streaming state transition exactly. Target t must be sealed from information and endogenous state available through t-1; session t must then ma Trace: 2 event(s). Preflight advisory: declared lane 'v8-foundation-writer' was not launched."
+}

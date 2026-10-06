@@ -20,13 +20,13 @@ show_last_workspace_path = true
 startup_command = "pi"
 preview_command = "eza --icons=always -la {}"
 
-# New worktree workspaces under ~/Dev start Pi in the root pane and tuicr in a
-# named Herdr tab. Existing workspaces are focused without rerunning commands.
+# New workspaces under the home directory start Pi in the root pane and tuicr
+# in a named Herdr tab. Existing workspaces are focused without rerunning commands.
 [[window]]
 name = "tuicr"
-startup_script = "tuicr track"
+startup_script = "first_tab=$(herdr tab list --workspace \"$HERDR_WORKSPACE_ID\" | jq -r '.result.tabs | min_by(.number).tab_id'); herdr tab focus \"$first_tab\"; exec tuicr"
 
 [[wildcard]]
-pattern = "~/Dev/**"
+pattern = "~/**"
 startup_command = "pi"
 windows = ["tuicr"]

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "0e234d4b-ec95-433c-a16b-7ae596bbc430",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-09-14T20:43:39.492Z",
+  "updatedAt": "2026-09-14T20:46:03.303Z",
+  "runs": [
+    {
+      "runId": "3f685fe7-ccbb-4614-bb81-11b4c1eccccb",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3f685fe7-ccbb-4614-bb81-11b4c1eccccb",
+      "status": "complete",
+      "startedAt": "2026-09-14T20:43:39.510Z",
+      "completedAt": "2026-09-14T20:46:03.303Z",
+      "usage": {
+        "tokens": 56488
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3f685fe7-ccbb-4614-bb81-11b4c1eccccb/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3f685fe7-ccbb-4614-bb81-11b4c1eccccb/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/subagent-artifacts/3f685fe7-ccbb-4614-bb81-11b4c1eccccb_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "reviewer:\n(no output)"
+}

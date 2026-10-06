@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "356a63d0-adea-4261-bfec-864cb25dcbe7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-09-14T19:02:30.848Z",
+  "updatedAt": "2026-09-14T19:02:30.976Z",
+  "runs": [
+    {
+      "runId": "f357cd05-5fce-45d7-b829-e36fcc1654aa",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f357cd05-5fce-45d7-b829-e36fcc1654aa",
+      "status": "failed",
+      "startedAt": "2026-09-14T19:02:30.851Z",
+      "completedAt": "2026-09-14T19:02:30.976Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "f357cd05-5fce-45d7-b829-e36fcc1654aa",
+      "key": "v8-architecture",
+      "status": "failed",
+      "startedAt": "2026-09-14T19:02:30.948Z",
+      "updatedAt": "2026-09-14T19:02:30.962Z",
+      "artifactPaths": [],
+      "agent": "workflow-architect",
+      "completedAt": "2026-09-14T19:02:30.962Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150/9fa743b3-b946-4676-8c63-fb8c410ee4c4/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-09-14T19:02:30.962Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f357cd05-5fce-45d7-b829-e36fcc1654aa/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f357cd05-5fce-45d7-b829-e36fcc1654aa/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/mind_me-ccora-g1",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-mind_me--/2026-09-13T09-46-14-611Z_01a09a29-04d3-7323-ad8d-abe971ec2150.jsonl",
+  "summary": "Error: Run 'v8-architecture' failed: Run fan-out: 1/2 used, 1 remaining\nAgent 'workflow-architect' was given an implementation task, but its tool allowlist has no mutation-capable tools. Add bash, edit, write, or another mutation-capable tool to the agent, or use a read-only task/agent.\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: declared lane 'v8-foundation' was not launched."
+}
