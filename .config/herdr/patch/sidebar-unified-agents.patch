@@ -1,6 +1,6 @@
-diff --git c/src/client/shell.rs w/src/client/shell.rs
+diff --git i/src/client/shell.rs w/src/client/shell.rs
 index 2d180443..9cec3a49 100644
---- c/src/client/shell.rs
+--- i/src/client/shell.rs
 +++ w/src/client/shell.rs
 @@ -14,7 +14,6 @@ mod endpoint_agent_state;
  mod endpoint_agents;
@@ -26,11 +26,42 @@ index 2d180443..9cec3a49 100644
  pub(crate) use state::*;
  #[cfg(test)]
  pub(super) use surface_patch::apply_composed_surface_patch;
-diff --git c/src/client/shell/actions.rs w/src/client/shell/actions.rs
-index 9d0a3bd5..968960be 100644
---- c/src/client/shell/actions.rs
+diff --git i/src/client/shell/actions.rs w/src/client/shell/actions.rs
+index 9d0a3bd5..dc1f4eb2 100644
+--- i/src/client/shell/actions.rs
 +++ w/src/client/shell/actions.rs
-@@ -880,24 +880,33 @@ impl ClientShellState {
+@@ -1,6 +1,30 @@
+ use super::*;
+ 
++const TODO_WORKSPACE_COMMAND: &str = "~/.config/herdr/scripts/tuxedo-workspace.sh";
++const TODO_WORKSPACE_DESCRIPTION: &str = "Open Todo workspace";
++
+ impl ClientShellState {
++    pub(super) fn open_todo_workspace(&mut self, outcome: &mut ClientShellInput) {
++        let command = self
++            .config
++            .keybinds
++            .keybinds
++            .custom_commands
++            .iter()
++            .find(|command| {
++                command.action == crate::config::CustomCommandAction::Shell
++                    && (command.command == TODO_WORKSPACE_COMMAND
++                        || command.description.as_deref() == Some(TODO_WORKSPACE_DESCRIPTION))
++            })
++            .cloned();
++        let Some(command) = command else {
++            self.set_endpoint_error("Todo workspace command is not configured");
++            outcome.repaint = true;
++            return;
++        };
++        self.record_binding(crate::input::KeybindMatch::Command(command), outcome);
++    }
++
+     pub(super) fn record_binding(
+         &mut self,
+         binding: crate::input::KeybindMatch,
+@@ -880,24 +904,33 @@ impl ClientShellState {
  
          match action {
              KeybindAction::FocusAgent(index) => {
@@ -77,7 +108,7 @@ index 9d0a3bd5..968960be 100644
                  });
                  let next = match (current, action) {
                      (Some(current), KeybindAction::PreviousAgent) => {
-@@ -908,15 +917,9 @@ impl ClientShellState {
+@@ -908,15 +941,9 @@ impl ClientShellState {
                      (None, KeybindAction::NextAgent) => 0,
                      _ => unreachable!("relative agent action"),
                  };
@@ -96,11 +127,30 @@ index 9d0a3bd5..968960be 100644
                  Some(Method::PaneFocus(PaneTarget { pane_id }))
              }
              KeybindAction::SwitchWorkspace(index) => {
-diff --git c/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
-index e43ab8cc..8e1e9a29 100644
---- c/src/client/shell/agent_sidebar.rs
+diff --git i/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
+index e43ab8cc..b022cdbe 100644
+--- i/src/client/shell/agent_sidebar.rs
 +++ w/src/client/shell/agent_sidebar.rs
-@@ -49,202 +49,6 @@ pub(super) fn ordered_agent_pane_ids(
+@@ -1,17 +1,10 @@
+ use std::collections::HashMap;
+ 
+-use ratatui::{
+-    buffer::Buffer,
+-    layout::Rect,
+-    style::{Modifier, Style},
+-    text::Line,
+-    widgets::{Paragraph, Widget},
+-};
+-
+ use super::*;
+ 
+ pub(super) struct AgentRow {
+     pub(super) pane_id: String,
++    pub(super) label: String,
+     pub(super) status: crate::api::schema::AgentStatus,
+     pub(super) focused: bool,
+     pub(super) rows: Vec<Vec<crate::ui::ResolvedToken>>,
+@@ -49,202 +42,6 @@ pub(super) fn ordered_agent_pane_ids(
          .collect()
  }
  
@@ -303,7 +353,7 @@ index e43ab8cc..8e1e9a29 100644
  pub(super) fn agent_row(
      snapshot: &ClientShellSnapshot,
      pane_id: &str,
-@@ -264,14 +68,6 @@ pub(super) fn agent_row(
+@@ -264,14 +61,6 @@ pub(super) fn agent_row(
          .panes
          .iter()
          .find(|pane| pane.pane_id == agent.pane_id);
@@ -318,7 +368,7 @@ index e43ab8cc..8e1e9a29 100644
      let agent_label = agent
          .display_agent
          .as_deref()
-@@ -292,12 +88,12 @@ pub(super) fn agent_row(
+@@ -292,12 +81,12 @@ pub(super) fn agent_row(
          .agent
          .as_deref()
          .and_then(crate::detect::parse_agent_label);
@@ -333,7 +383,7 @@ index e43ab8cc..8e1e9a29 100644
              pane: agent
                  .title
                  .as_deref()
-@@ -310,34 +106,47 @@ pub(super) fn agent_row(
+@@ -310,81 +99,36 @@ pub(super) fn agent_row(
          },
          state_text,
      );
@@ -357,6 +407,10 @@ index e43ab8cc..8e1e9a29 100644
 +    }
      Some(AgentRow {
          pane_id: agent.pane_id.clone(),
++        label: tab
++            .map(|tab| tab.label.clone())
++            .or_else(|| agent_label.map(str::to_owned))
++            .unwrap_or_else(|| "agent".to_owned()),
          status: agent.agent_status,
          focused: agent.focused,
 -        rows,
@@ -365,63 +419,60 @@ index e43ab8cc..8e1e9a29 100644
  }
  
 -pub(super) fn render_agent_row(
-+pub(super) fn render_agent_tree_row(
-     buffer: &mut Buffer,
-     rect: Rect,
-     row: &AgentRow,
-+    parent_indented: bool,
-     config: &ClientShellConfig,
- ) {
-     let palette = &config.palette;
+-    buffer: &mut Buffer,
+-    rect: Rect,
+-    row: &AgentRow,
+-    config: &ClientShellConfig,
+-) {
+-    let palette = &config.palette;
 -    let row_style = if row.focused {
 -        Style::default().bg(palette.active_row_bg)
 -    } else {
-+    let row_style = Style::default();
-+    let agent_style = if row.focused {
-         Style::default()
+-        Style::default()
 -    };
 -    let name_style = if row.focused {
 -        Style::default()
 -            .fg(palette.text)
-+            .fg(palette.blue)
-             .add_modifier(Modifier::BOLD)
-     } else {
+-            .add_modifier(Modifier::BOLD)
+-    } else {
 -        Style::default()
 -            .fg(palette.subtext0)
 -            .add_modifier(Modifier::BOLD)
-+        Style::default().fg(palette.subtext0)
-     };
-     let status_style = Style::default().fg(status_color(row.status, palette));
-     let secondary = Style::default().fg(palette.overlay0);
-@@ -353,18 +162,20 @@ pub(super) fn render_agent_row(
-     } else {
-         row.rows.clone()
-     };
-+    let indent = if parent_indented { 6 } else { 1 };
-     for (index, tokens) in rows.iter().take(rect.height as usize).enumerate() {
+-    };
+-    let status_style = Style::default().fg(status_color(row.status, palette));
+-    let secondary = Style::default().fg(palette.overlay0);
+-    let icon = (
+-        status_icon(row.status, config.status_indicators),
+-        Style::default().fg(status_color(row.status, palette)),
+-    );
+-    let rows = if row.rows.is_empty() {
+-        vec![vec![crate::ui::ResolvedToken {
+-            kind: crate::ui::ResolvedTokenKind::StateIcon,
+-            style: Default::default(),
+-        }]]
+-    } else {
+-        row.rows.clone()
+-    };
+-    for (index, tokens) in rows.iter().take(rect.height as usize).enumerate() {
 -        let indent = if index == 0 { 1 } else { 3 };
 -        let mut spans = vec![ratatui::text::Span::raw(" ".repeat(indent))];
-+        let prefix = " ".repeat(indent);
-+        let prefix_width = display_width(&prefix).min(u16::MAX as usize) as u16;
-+        let mut spans = vec![ratatui::text::Span::raw(prefix)];
-         spans.extend(crate::ui::resolved_token_spans(
-             tokens,
-             icon,
-             status_style,
+-        spans.extend(crate::ui::resolved_token_spans(
+-            tokens,
+-            icon,
+-            status_style,
 -            name_style,
-             secondary,
-+            agent_style,
-             secondary,
-             palette,
+-            secondary,
+-            secondary,
+-            palette,
 -            rect.width.saturating_sub(indent as u16) as usize,
-+            rect.width.saturating_sub(prefix_width) as usize,
-         ));
-         Paragraph::new(Line::from(spans)).style(row_style).render(
-             Rect::new(rect.x, rect.y + index as u16, rect.width, 1),
-@@ -373,14 +184,6 @@ pub(super) fn render_agent_row(
-     }
- }
- 
+-        ));
+-        Paragraph::new(Line::from(spans)).style(row_style).render(
+-            Rect::new(rect.x, rect.y + index as u16, rect.width, 1),
+-            buffer,
+-        );
+-    }
+-}
+-
 -fn put_text(buffer: &mut Buffer, x: u16, y: u16, width: u16, text: &str, style: Style) {
 -    for (offset, character) in text.chars().take(width as usize).enumerate() {
 -        if let Some(cell) = buffer.cell_mut((x + offset as u16, y)) {
@@ -430,16 +481,22 @@ index e43ab8cc..8e1e9a29 100644
 -    }
 -}
 -
- fn display_width(text: &str) -> usize {
-     unicode_width::UnicodeWidthStr::width(text)
- }
-diff --git c/src/client/shell/composition.rs w/src/client/shell/composition.rs
-index b7ab4a96..14a80ac2 100644
---- c/src/client/shell/composition.rs
+-fn display_width(text: &str) -> usize {
+-    unicode_width::UnicodeWidthStr::width(text)
+-}
+-
+ fn sidebar_status_text(status: crate::api::schema::AgentStatus) -> &'static str {
+     use crate::api::schema::AgentStatus;
+     match status {
+diff --git i/src/client/shell/composition.rs w/src/client/shell/composition.rs
+index b7ab4a96..0d32c399 100644
+--- i/src/client/shell/composition.rs
 +++ w/src/client/shell/composition.rs
-@@ -62,12 +62,11 @@ impl ClientShellState {
+@@ -61,13 +61,13 @@ impl ClientShellState {
+             collapsed_endpoints: &self.collapsed_endpoints,
              collapsed_groups: &self.collapsed_groups,
              remote_collapsed_groups: &self.remote_collapsed_groups,
++            last_project_workspaces: &self.last_project_workspaces,
              workspace_scroll: &mut self.workspace_scroll,
 -            agent_scroll: &mut self.agent_scroll,
 +            pending_agent_reveal: &mut self.pending_agent_reveal,
@@ -451,7 +508,7 @@ index b7ab4a96..14a80ac2 100644
              tab_drag_insert_index: None,
              selected_workspace_id: self
                  .navigate_workspace_id
-@@ -78,25 +77,15 @@ impl ClientShellState {
+@@ -78,25 +78,15 @@ impl ClientShellState {
              dragged_workspace_id: None,
              workspace_drop_indicator_row: None,
          };
@@ -486,9 +543,11 @@ index b7ab4a96..14a80ac2 100644
          if !self.config.mouse_capture {
              self.hits = ShellHitMap::default();
          }
-@@ -218,12 +207,11 @@ impl ClientShellState {
+@@ -217,13 +207,13 @@ impl ClientShellState {
+                 collapsed_endpoints: &self.collapsed_endpoints,
                  collapsed_groups: &self.collapsed_groups,
                  remote_collapsed_groups: &self.remote_collapsed_groups,
++                last_project_workspaces: &self.last_project_workspaces,
                  workspace_scroll: &mut self.workspace_scroll,
 -                agent_scroll: &mut self.agent_scroll,
 +                pending_agent_reveal: &mut self.pending_agent_reveal,
@@ -500,9 +559,9 @@ index b7ab4a96..14a80ac2 100644
                  tab_drag_insert_index,
                  selected_workspace_id: self
                      .navigate_workspace_id
-diff --git c/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
+diff --git i/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
 index b56b41fa..8d69724d 100644
---- c/src/client/shell/endpoint_agents.rs
+--- i/src/client/shell/endpoint_agents.rs
 +++ w/src/client/shell/endpoint_agents.rs
 @@ -1,177 +1,38 @@
 -use super::render::put_text;
@@ -708,9 +767,9 @@ index b56b41fa..8d69724d 100644
 +        self.pending_agent_reveal = Some((endpoint_id.clone(), pane_id.to_owned()));
 +    }
  }
-diff --git c/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
+diff --git i/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
 index a1f7ac2c..7d6a29f7 100644
---- c/src/client/shell/endpoint_navigation.rs
+--- i/src/client/shell/endpoint_navigation.rs
 +++ w/src/client/shell/endpoint_navigation.rs
 @@ -167,10 +167,10 @@ impl ClientShellState {
              action,
@@ -747,10 +806,10 @@ index a1f7ac2c..7d6a29f7 100644
                  outcome.repaint = true;
              }
              return true;
-diff --git c/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
+diff --git i/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
 deleted file mode 100644
 index 96982487..00000000
---- c/src/client/shell/endpoint_sidebar.rs
+--- i/src/client/shell/endpoint_sidebar.rs
 +++ /dev/null
 @@ -1,649 +0,0 @@
 -use super::render::{display_width, put_right_text, put_text, ShellRenderState};
@@ -1402,9 +1461,9 @@ index 96982487..00000000
 -        1,
 -    )
 -}
-diff --git c/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
-index fff28b71..ca5e0d00 100644
---- c/src/client/shell/endpoints.rs
+diff --git i/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
+index fff28b71..339e795e 100644
+--- i/src/client/shell/endpoints.rs
 +++ w/src/client/shell/endpoints.rs
 @@ -209,10 +209,6 @@ impl ClientShellState {
      }
@@ -1440,15 +1499,71 @@ index fff28b71..ca5e0d00 100644
          }
          true
      }
-diff --git c/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
-index f2df2941..98ea3f6f 100644
---- c/src/client/shell/mouse.rs
+@@ -568,6 +561,41 @@ impl ClientShellState {
+             .is_some_and(|previous| previous.boot_id != snapshot.boot_id);
+         if boot_changed {
+             self.retire_endpoint_notifications(endpoint_id);
++            self.last_project_workspaces
++                .retain(|(saved_endpoint_id, _), _| saved_endpoint_id != endpoint_id);
++        }
++        let focused_workspace = snapshot
++            .focused_workspace_id
++            .as_deref()
++            .and_then(|workspace_id| {
++                snapshot
++                    .workspaces
++                    .iter()
++                    .find(|workspace| workspace.workspace_id == workspace_id)
++            })
++            .or_else(|| {
++                snapshot
++                    .workspaces
++                    .iter()
++                    .find(|workspace| workspace.focused)
++            });
++        if let Some(workspace) = focused_workspace {
++            let project_key = workspace
++                .worktree
++                .as_ref()
++                .map(|worktree| worktree.key.clone())
++                .or_else(|| {
++                    workspace
++                        .branch
++                        .as_ref()
++                        .map(|_| workspace.workspace_id.clone())
++                });
++            if let Some(project_key) = project_key {
++                self.last_project_workspaces.insert(
++                    (endpoint_id.clone(), project_key),
++                    workspace.workspace_id.clone(),
++                );
++            }
+         }
+         self.endpoints[index]
+             .agent_presentation
+diff --git i/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
+index f2df2941..c3a398f2 100644
+--- i/src/client/shell/mouse.rs
 +++ w/src/client/shell/mouse.rs
-@@ -551,7 +551,39 @@ impl ClientShellState {
+@@ -509,9 +509,10 @@ impl ClientShellState {
+     }
+ 
+     fn workspace_drop_target_at(&self, point: (u16, u16)) -> Option<(Option<String>, u16)> {
+-        if self.hits.workspace_body.height == 0
++        if self.sidebar_collapsed
++            || self.hits.workspace_body.height == 0
+             || point.1 < self.hits.workspace_body.y.saturating_sub(1)
+-            || point.1 >= self.hits.new_workspace.y
++            || point.1 >= self.hits.workspace_body.bottom()
+             || self.hits.workspaces.iter().any(|hit| {
+                 hit.endpoint_id != self.active_endpoint_id && super::contains(hit.rect, point)
+             })
+@@ -551,8 +552,40 @@ impl ClientShellState {
                      .get(entry.index)
                      .map(|workspace| workspace.workspace_id.clone())
              });
 -            let row = last_hit.rect.bottom();
+-            if row < self.hits.new_workspace.y {
 +            let next_workspace_y = self
 +                .hits
 +                .workspaces
@@ -1458,7 +1573,7 @@ index f2df2941..98ea3f6f 100644
 +                })
 +                .map(|hit| hit.rect.y)
 +                .min()
-+                .unwrap_or(self.hits.new_workspace.y);
++                .unwrap_or(self.hits.workspace_body.bottom());
 +            let local_agent_bottom = self
 +                .hits
 +                .agents
@@ -1482,10 +1597,11 @@ index f2df2941..98ea3f6f 100644
 +                .chain(endpoint_agent_bottom)
 +                .max()
 +                .unwrap_or_else(|| last_hit.rect.bottom());
-             if row < self.hits.new_workspace.y {
++            if row < self.hits.workspace_body.bottom() {
                  slots.push((before, row));
              }
-@@ -1016,22 +1048,6 @@ impl ClientShellState {
+         }
+@@ -1016,22 +1049,6 @@ impl ClientShellState {
                      }
                      return;
                  }
@@ -1508,7 +1624,7 @@ index f2df2941..98ea3f6f 100644
                  Some(ClientChromeDrag::NavigatorScrollbar { grab_row_offset }) => {
                      if let Some(metrics) = self.hits.navigator_scroll_metrics {
                          let offset = crate::ui::scrollbar_offset_from_drag_row(
-@@ -1331,7 +1347,6 @@ impl ClientShellState {
+@@ -1331,7 +1348,6 @@ impl ClientShellState {
                          self.persist_chrome_preferences(outcome);
                      }
                      ClientChromeDrag::WorkspaceScrollbar { .. }
@@ -1516,7 +1632,7 @@ index f2df2941..98ea3f6f 100644
                      | ClientChromeDrag::HelpScrollbar { .. }
                      | ClientChromeDrag::NavigatorScrollbar { .. }
                      | ClientChromeDrag::ProductAnnouncementScrollbar { .. }
-@@ -1865,23 +1880,6 @@ impl ClientShellState {
+@@ -1865,23 +1881,6 @@ impl ClientShellState {
                      outcome,
                  );
              }
@@ -1540,7 +1656,7 @@ index f2df2941..98ea3f6f 100644
              MouseEventKind::ScrollUp if super::contains(self.hits.workspace_body, point) => {
                  let next = self.workspace_scroll.saturating_sub(1);
                  if next != self.workspace_scroll {
-@@ -1960,30 +1958,6 @@ impl ClientShellState {
+@@ -1960,30 +1959,6 @@ impl ClientShellState {
                      }
                      return;
                  }
@@ -1571,7 +1687,7 @@ index f2df2941..98ea3f6f 100644
                  if super::contains(self.hits.agent_sort_toggle, point) {
                      let sort = match self.config.agent_panel_sort {
                          crate::config::AgentPanelSortConfig::Spaces => {
-@@ -1995,7 +1969,7 @@ impl ClientShellState {
+@@ -1995,7 +1970,7 @@ impl ClientShellState {
                      };
                      self.config.agent_panel_sort = sort;
                      self.agent_panel_sort_manual = true;
@@ -1580,9 +1696,40 @@ index f2df2941..98ea3f6f 100644
                      self.persist_chrome_preferences(outcome);
                      outcome.repaint = true;
                      return;
-diff --git c/src/client/shell/render.rs w/src/client/shell/render.rs
-index 248216c1..57a05ee3 100644
---- c/src/client/shell/render.rs
+@@ -2003,6 +1978,10 @@ impl ClientShellState {
+                 if self.handle_endpoint_machine_click(point, outcome) {
+                     return;
+                 }
++                if super::contains(self.hits.todo_launcher, point) {
++                    self.open_todo_workspace(outcome);
++                    return;
++                }
+                 if super::contains(self.hits.global_launcher, point) {
+                     self.toggle_global_menu();
+                     outcome.repaint = true;
+@@ -2059,11 +2038,14 @@ impl ClientShellState {
+                     self.persist_chrome_preferences(outcome);
+                     return;
+                 }
+-                let group_toggle = self.hits.workspaces.iter().find_map(|hit| {
+-                    let (rect, key) = hit.group_toggle.as_ref()?;
+-                    super::contains(*rect, point).then(|| (hit.endpoint_id.clone(), key.clone()))
+-                });
+-                if let Some((endpoint_id, key)) = group_toggle {
++                if let Some(repository) = self
++                    .hits
++                    .repositories
++                    .iter()
++                    .find(|repository| super::contains(repository.rect, point))
++                {
++                    let endpoint_id = repository.endpoint_id.clone();
++                    let key = repository.key.clone();
+                     self.toggle_collapsed_group(&endpoint_id, key);
+                     outcome.repaint = true;
+                     self.persist_chrome_preferences(outcome);
+diff --git i/src/client/shell/render.rs w/src/client/shell/render.rs
+index 248216c1..1e8dc230 100644
+--- i/src/client/shell/render.rs
 +++ w/src/client/shell/render.rs
 @@ -7,10 +7,9 @@ pub(in crate::client::shell) mod sidebar;
  #[path = "../shell/tabs.rs"]
@@ -1596,9 +1743,11 @@ index 248216c1..57a05ee3 100644
  pub(super) use tabs::{render_tab_bar, tab_bar_status_width};
  
  pub(in crate::client::shell) fn render_sidebar_background(
-@@ -237,12 +236,11 @@ pub(super) struct ShellRenderState<'a> {
+@@ -236,13 +235,13 @@ pub(super) struct ShellRenderState<'a> {
+     pub(super) collapsed_endpoints: &'a HashSet<ClientEndpointId>,
      pub(super) collapsed_groups: &'a HashSet<String>,
      pub(super) remote_collapsed_groups: &'a HashMap<ClientEndpointId, HashSet<String>>,
++    pub(super) last_project_workspaces: &'a HashMap<(ClientEndpointId, String), String>,
      pub(super) workspace_scroll: &'a mut usize,
 -    pub(super) agent_scroll: &'a mut usize,
 +    pub(super) pending_agent_reveal: &'a mut Option<(ClientEndpointId, String)>,
@@ -1610,7 +1759,7 @@ index 248216c1..57a05ee3 100644
      pub(super) tab_drag_insert_index: Option<usize>,
      pub(super) selected_workspace_id: Option<&'a WorkspaceNavigationTarget>,
      pub(super) reveal_navigation_workspace: &'a mut bool,
-@@ -268,44 +266,25 @@ pub(super) fn render_shell(
+@@ -268,44 +267,25 @@ pub(super) fn render_shell(
          );
      }
      if layout.sidebar.width > 0 {
@@ -1669,7 +1818,7 @@ index 248216c1..57a05ee3 100644
              );
          }
      }
-@@ -325,7 +304,6 @@ pub(super) fn render_shell(
+@@ -325,7 +305,6 @@ pub(super) fn render_shell(
          hits.sidebar_divider = Rect::default();
          hits.sidebar_section_divider = Rect::default();
          hits.workspace_scrollbar = Rect::default();
@@ -1677,9 +1826,9 @@ index 248216c1..57a05ee3 100644
          hits.agent_sort_toggle = Rect::default();
          hits.new_workspace = Rect::default();
          hits.machines.clear();
-diff --git c/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
-index f94f6bdc..e30cf5f0 100644
---- c/src/client/shell/sidebar.rs
+diff --git i/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
+index f94f6bdc..d5e8fd24 100644
+--- i/src/client/shell/sidebar.rs
 +++ w/src/client/shell/sidebar.rs
 @@ -12,449 +12,6 @@ fn workspace_selection_background(palette: &Palette) -> ratatui::style::Color {
      }
@@ -2131,7 +2280,69 @@ index f94f6bdc..e30cf5f0 100644
  pub(crate) fn workspace_entries(
      snapshot: &ClientShellSnapshot,
      collapsed_groups: &HashSet<String>,
-@@ -661,7 +218,6 @@ pub(in crate::client::shell) fn render_workspace_rows(
+@@ -544,56 +101,6 @@ pub(crate) fn workspace_entries(
+     entries
+ }
+ 
+-fn parent_group_key(snapshot: &ClientShellSnapshot, index: usize) -> Option<String> {
+-    let workspace = snapshot.workspaces.get(index)?;
+-    let worktree = workspace.worktree.as_ref()?;
+-    if worktree.is_linked_worktree {
+-        return None;
+-    }
+-    (snapshot
+-        .workspaces
+-        .iter()
+-        .filter(|candidate| {
+-            candidate
+-                .worktree
+-                .as_ref()
+-                .is_some_and(|candidate| candidate.key == worktree.key)
+-        })
+-        .count()
+-        >= 2)
+-        .then(|| worktree.key.clone())
+-}
+-
+-pub(in crate::client::shell) fn render_parent_group_toggle(
+-    buffer: &mut Buffer,
+-    workspace_rect: Rect,
+-    snapshot: &ClientShellSnapshot,
+-    workspace_index: usize,
+-    collapsed_groups: &HashSet<String>,
+-    palette: &Palette,
+-) -> Option<(Rect, String)> {
+-    let key = parent_group_key(snapshot, workspace_index)?;
+-    let toggle = Rect::new(
+-        workspace_rect.right().saturating_sub(1),
+-        workspace_rect.y,
+-        1,
+-        1,
+-    );
+-    put_text(
+-        buffer,
+-        toggle.x,
+-        toggle.y,
+-        toggle.width,
+-        if collapsed_groups.contains(&key) {
+-            "▸"
+-        } else {
+-            "▾"
+-        },
+-        Style::default().fg(palette.accent),
+-    );
+-    Some((toggle, key))
+-}
+-
+ pub(in crate::client::shell) fn displayed_workspace_status(
+     snapshot: &ClientShellSnapshot,
+     workspace: &ClientShellWorkspace,
+@@ -657,11 +164,10 @@ pub(in crate::client::shell) fn render_workspace_rows(
+     area: Rect,
+     status: crate::api::schema::AgentStatus,
+     indicators: crate::config::StatusIndicatorStyle,
+-    entry: &WorkspaceEntry,
++    indent: usize,
      rows: Vec<Vec<crate::ui::ResolvedToken>>,
      focused: bool,
      selected: bool,
@@ -2139,10 +2350,12 @@ index f94f6bdc..e30cf5f0 100644
      dragged: bool,
      palette: &Palette,
  ) {
-@@ -672,38 +228,20 @@ pub(in crate::client::shell) fn render_workspace_rows(
+@@ -670,40 +176,17 @@ pub(in crate::client::shell) fn render_workspace_rows(
+         if y >= area.bottom() {
+             break;
          }
-         let mut x = area.x;
-         if entry.indented {
+-        let mut x = area.x;
+-        if entry.indented {
 -            let prefix = if row_index == 0 {
 -                if entry.last_child {
 -                    "   └─ "
@@ -2164,13 +2377,12 @@ index f94f6bdc..e30cf5f0 100644
 -            );
 -        } else if row_index == 0 {
 -            x = x.saturating_add(1);
-+            let indent = if row_index == 0 { "      " } else { "        " };
-+            x = put_segment(buffer, x, y, area.right(), indent, Style::default());
-         } else {
+-        } else {
 -            x = x.saturating_add(3);
-+            x = x.saturating_add(1);
-         }
+-        }
 -        let highlighted = focused || dragged;
++        let prefix = " ".repeat(indent);
++        let x = put_segment(buffer, area.x, y, area.right(), &prefix, Style::default());
          let workspace_style = Style::default()
 -            .fg(if highlighted {
 +            .fg(if focused {
@@ -2185,7 +2397,7 @@ index f94f6bdc..e30cf5f0 100644
                  Modifier::BOLD
              } else {
                  Modifier::empty()
-@@ -736,8 +274,6 @@ pub(in crate::client::shell) fn render_workspace_rows(
+@@ -736,8 +219,6 @@ pub(in crate::client::shell) fn render_workspace_rows(
          Some(workspace_selection_background(palette))
      } else if dragged {
          Some(palette.surface1)
@@ -2194,38 +2406,57 @@ index f94f6bdc..e30cf5f0 100644
      } else {
          None
      };
-diff --git c/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
+diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 00000000..b43058ca
+index 00000000..dfdfef67
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,1000 @@
+@@ -0,0 +1,1436 @@
 +use super::*;
 +
-+const MIN_WORKSPACE_TREE_GAP: u16 = 2;
++const WORKSPACE_INDENT: usize = 1;
++const BRANCH_INDENT: usize = 4;
 +
 +pub(super) struct SidebarTreeRow {
 +    pub(super) kind: SidebarTreeRowKind,
-+    pub(super) gap_after: u16,
 +}
 +
 +pub(super) enum SidebarTreeRowKind {
-+    Padding {
-+        active_workspace: bool,
-+    },
++    Spacer,
 +    Endpoint {
 +        endpoint_index: usize,
++    },
++    Project {
++        endpoint_index: usize,
++        key: String,
++        label: String,
++        status: crate::api::schema::AgentStatus,
++        collapsible: bool,
++        collapsed: bool,
 +    },
 +    Workspace {
 +        endpoint_index: usize,
 +        entry: WorkspaceEntry,
 +        status: crate::api::schema::AgentStatus,
 +        rows: Vec<Vec<crate::ui::ResolvedToken>>,
++        indent: usize,
++        tree_branch: bool,
 +    },
 +    Agent {
 +        endpoint_index: usize,
 +        row: super::agent_sidebar::AgentRow,
-+        parent_indented: bool,
++        parent_last: Option<bool>,
++        last_child: bool,
++        stale: bool,
++        active_workspace: bool,
++    },
++    Tool {
++        endpoint_index: usize,
++        pane_id: String,
++        label: &'static str,
++        focused: bool,
++        parent_last: Option<bool>,
++        last_child: bool,
 +        stale: bool,
 +        active_workspace: bool,
 +    },
@@ -2234,13 +2465,16 @@ index 00000000..b43058ca
 +impl SidebarTreeRow {
 +    pub(super) fn height(&self) -> u16 {
 +        match &self.kind {
-+            SidebarTreeRowKind::Padding { .. } | SidebarTreeRowKind::Endpoint { .. } => 1,
++            SidebarTreeRowKind::Spacer
++            | SidebarTreeRowKind::Endpoint { .. }
++            | SidebarTreeRowKind::Project { .. } => 1,
 +            SidebarTreeRowKind::Workspace { rows, .. } => {
 +                rows.len().max(1).min(u16::MAX as usize) as u16
 +            }
 +            SidebarTreeRowKind::Agent { row, .. } => {
 +                row.rows.len().max(1).min(u16::MAX as usize) as u16
 +            }
++            SidebarTreeRowKind::Tool { .. } => 1,
 +        }
 +    }
 +}
@@ -2251,6 +2485,7 @@ index 00000000..b43058ca
 +    collapsed_endpoints: &HashSet<ClientEndpointId>,
 +    collapsed_groups: &HashSet<String>,
 +    remote_collapsed_groups: &HashMap<ClientEndpointId, HashSet<String>>,
++    last_project_workspaces: &HashMap<(ClientEndpointId, String), String>,
 +    config: &ClientShellConfig,
 +    include_endpoints: bool,
 +) -> Vec<SidebarTreeRow> {
@@ -2275,7 +2510,6 @@ index 00000000..b43058ca
 +        if include_endpoints {
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Endpoint { endpoint_index },
-+                gap_after: 0,
 +            });
 +            if collapsed_endpoints.contains(&endpoint.endpoint_id) {
 +                continue;
@@ -2291,99 +2525,342 @@ index 00000000..b43058ca
 +                .get(&endpoint.endpoint_id)
 +                .unwrap_or(&empty_collapsed_groups)
 +        };
-+        let entries = super::render::workspace_entries(snapshot, endpoint_collapsed_groups);
-+        for entry in entries.iter().copied() {
-+            let Some(workspace) = snapshot.workspaces.get(entry.index) else {
-+                continue;
-+            };
-+            let status = super::render::sidebar::displayed_workspace_status(
-+                snapshot,
-+                workspace,
-+                endpoint_collapsed_groups,
-+            );
-+            let workspace_rows = super::render::sidebar::workspace_rows(
-+                workspace,
-+                status,
-+                entry.indented,
-+                &config.spaces,
-+            )
-+            .into_iter()
-+            .filter_map(|row| {
-+                let row = row
-+                    .into_iter()
-+                    .filter_map(|mut token| {
-+                        if matches!(token.kind, crate::ui::ResolvedTokenKind::StateIcon) {
-+                            return None;
-+                        }
-+                        if let crate::ui::ResolvedTokenKind::Branch(branch) = &mut token.kind {
-+                            *branch = format!("({branch})");
-+                        }
-+                        Some(token)
-+                    })
-+                    .collect::<Vec<_>>();
-+                (!row.is_empty()).then_some(row)
-+            })
-+            .collect();
-+            let workspace_tree_gap = config.spaces.row_gap.max(MIN_WORKSPACE_TREE_GAP);
-+            let active_workspace = &endpoint.endpoint_id == active_endpoint_id && workspace.focused;
++        let entries = super::render::workspace_entries(snapshot, &empty_collapsed_groups);
++        let (projects, ungrouped_entries) = project_groups(
++            snapshot,
++            entries,
++            endpoint_collapsed_groups,
++            last_project_workspaces,
++            &endpoint.endpoint_id,
++        );
++        let mut has_context = false;
++        for project in projects {
++            append_context_spacer(&mut result, has_context);
 +            result.push(SidebarTreeRow {
-+                kind: SidebarTreeRowKind::Padding { active_workspace },
-+                gap_after: 0,
-+            });
-+            let pane_ids = agents_by_workspace
-+                .remove(&(endpoint_index, workspace.workspace_id.clone()))
-+                .unwrap_or_default();
-+            result.push(SidebarTreeRow {
-+                kind: SidebarTreeRowKind::Workspace {
++                kind: SidebarTreeRowKind::Project {
 +                    endpoint_index,
-+                    entry,
-+                    status,
-+                    rows: workspace_rows,
++                    key: project.key,
++                    label: project.label,
++                    status: project.status,
++                    collapsible: project.collapsible,
++                    collapsed: project.collapsed,
 +                },
-+                gap_after: 0,
 +            });
-+            let agent_count = pane_ids.len();
-+            for (agent_index, pane_id) in pane_ids.into_iter().enumerate() {
-+                let Some(mut row) = super::agent_sidebar::agent_row(
++            append_workspace_rows(
++                &mut result,
++                &mut agents_by_workspace,
++                endpoint_index,
++                endpoint,
++                snapshot,
++                endpoint_collapsed_groups,
++                active_endpoint_id,
++                config,
++                include_endpoints,
++                project.entries,
++                true,
++            );
++            has_context = true;
++        }
++        for entry in ungrouped_entries {
++            append_context_spacer(&mut result, has_context);
++            append_workspace_rows(
++                &mut result,
++                &mut agents_by_workspace,
++                endpoint_index,
++                endpoint,
++                snapshot,
++                endpoint_collapsed_groups,
++                active_endpoint_id,
++                config,
++                include_endpoints,
++                vec![entry],
++                false,
++            );
++            has_context = true;
++        }
++    }
++    result
++}
++
++fn append_context_spacer(result: &mut Vec<SidebarTreeRow>, needed: bool) {
++    if needed {
++        result.push(SidebarTreeRow {
++            kind: SidebarTreeRowKind::Spacer,
++        });
++    }
++}
++
++struct ProjectGroup {
++    key: String,
++    label: String,
++    entries: Vec<WorkspaceEntry>,
++    worktree: bool,
++    status: crate::api::schema::AgentStatus,
++    collapsible: bool,
++    collapsed: bool,
++}
++
++fn project_groups(
++    snapshot: &ClientShellSnapshot,
++    entries: Vec<WorkspaceEntry>,
++    collapsed_groups: &HashSet<String>,
++    last_project_workspaces: &HashMap<(ClientEndpointId, String), String>,
++    endpoint_id: &ClientEndpointId,
++) -> (Vec<ProjectGroup>, Vec<WorkspaceEntry>) {
++    let mut projects = Vec::<ProjectGroup>::new();
++    let mut ungrouped_entries = Vec::new();
++    for entry in entries {
++        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
++            continue;
++        };
++        let (key, label, worktree) = if let Some(worktree) = &workspace.worktree {
++            (worktree.key.clone(), worktree.label.clone(), true)
++        } else if workspace.branch.is_some() {
++            (
++                workspace.workspace_id.clone(),
++                workspace.label.clone(),
++                false,
++            )
++        } else {
++            ungrouped_entries.push(entry);
++            continue;
++        };
++        if let Some(project) = projects.iter_mut().find(|project| project.key == key) {
++            project.entries.push(entry);
++        } else {
++            projects.push(ProjectGroup {
++                key,
++                label,
++                entries: vec![entry],
++                worktree,
++                status: workspace.agent_status,
++                collapsible: false,
++                collapsed: false,
++            });
++        }
++    }
++    for project in &mut projects {
++        if !project.worktree {
++            continue;
++        }
++        let key = project.key.clone();
++        let members = snapshot.workspaces.iter().filter(|workspace| {
++            workspace
++                .worktree
++                .as_ref()
++                .is_some_and(|worktree| worktree.key == key)
++        });
++        project.collapsible = members.clone().count() >= 2
++            && members.clone().any(|workspace| {
++                workspace
++                    .worktree
++                    .as_ref()
++                    .is_some_and(|worktree| !worktree.is_linked_worktree)
++            });
++        project.collapsed = project.collapsible && collapsed_groups.contains(&project.key);
++        if project.collapsed {
++            project.status = members
++                .map(|workspace| workspace.agent_status)
++                .max_by_key(|status| status_priority(*status))
++                .unwrap_or(project.status);
++            let retained_workspace_id = last_project_workspaces
++                .get(&(endpoint_id.clone(), project.key.clone()))
++                .filter(|workspace_id| {
++                    project.entries.iter().any(|entry| {
++                        snapshot
++                            .workspaces
++                            .get(entry.index)
++                            .is_some_and(|workspace| &workspace.workspace_id == *workspace_id)
++                    })
++                })
++                .cloned()
++                .or_else(|| {
++                    project.entries.iter().find_map(|entry| {
++                        snapshot
++                            .workspaces
++                            .get(entry.index)
++                            .filter(|workspace| workspace.focused)
++                            .map(|workspace| workspace.workspace_id.clone())
++                    })
++                })
++                .or_else(|| {
++                    project.entries.first().and_then(|entry| {
++                        snapshot
++                            .workspaces
++                            .get(entry.index)
++                            .map(|workspace| workspace.workspace_id.clone())
++                    })
++                });
++            project.entries.retain(|entry| {
++                snapshot
++                    .workspaces
++                    .get(entry.index)
++                    .is_some_and(|workspace| {
++                        retained_workspace_id.as_ref() == Some(&workspace.workspace_id)
++                    })
++            });
++            if let Some(entry) = project.entries.first_mut() {
++                entry.last_child = true;
++            }
++        }
++    }
++    for project in &mut projects {
++        let entry_count = project.entries.len();
++        for (index, entry) in project.entries.iter_mut().enumerate() {
++            entry.last_child = index + 1 == entry_count;
++        }
++    }
++    (projects, ungrouped_entries)
++}
++
++#[allow(clippy::too_many_arguments)]
++fn append_workspace_rows(
++    result: &mut Vec<SidebarTreeRow>,
++    agents_by_workspace: &mut HashMap<(usize, String), Vec<String>>,
++    endpoint_index: usize,
++    endpoint: &ClientShellEndpoint,
++    snapshot: &ClientShellSnapshot,
++    endpoint_collapsed_groups: &HashSet<String>,
++    active_endpoint_id: &ClientEndpointId,
++    config: &ClientShellConfig,
++    include_endpoints: bool,
++    entries: Vec<WorkspaceEntry>,
++    nested: bool,
++) {
++    for entry in entries {
++        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
++            continue;
++        };
++        let status = super::render::sidebar::displayed_workspace_status(
++            snapshot,
++            workspace,
++            endpoint_collapsed_groups,
++        );
++        let workspace_rows = compact_workspace_rows(workspace, status, nested, &config.spaces);
++        let active_workspace = &endpoint.endpoint_id == active_endpoint_id && workspace.focused;
++        let pane_ids = agents_by_workspace
++            .remove(&(endpoint_index, workspace.workspace_id.clone()))
++            .unwrap_or_default();
++        let mut agent_rows = pane_ids
++            .into_iter()
++            .filter_map(|pane_id| {
++                let mut row = super::agent_sidebar::agent_row(
 +                    snapshot,
 +                    &pane_id,
 +                    config,
 +                    include_endpoints.then_some(endpoint.label.as_str()),
-+                ) else {
-+                    continue;
-+                };
++                )?;
 +                row.focused &= &endpoint.endpoint_id == active_endpoint_id;
-+                result.push(SidebarTreeRow {
-+                    kind: SidebarTreeRowKind::Agent {
-+                        endpoint_index,
-+                        row,
-+                        parent_indented: entry.indented,
-+                        stale: endpoint.status != ClientEndpointStatus::Online,
-+                        active_workspace,
-+                    },
-+                    gap_after: if agent_index + 1 == agent_count {
-+                        0
-+                    } else {
-+                        config.agents.row_gap
-+                    },
-+                });
-+            }
++                Some(row)
++            })
++            .collect::<Vec<_>>();
++        let agent_pane_ids = agent_rows
++            .iter()
++            .map(|row| row.pane_id.as_str())
++            .collect::<HashSet<_>>();
++        let tools = snapshot
++            .panes
++            .iter()
++            .filter(|pane| pane.workspace_id == workspace.workspace_id)
++            .filter(|pane| !agent_pane_ids.contains(pane.pane_id.as_str()))
++            .filter_map(|pane| {
++                let tab = snapshot.tabs.iter().find(|tab| tab.tab_id == pane.tab_id)?;
++                recognized_tool_label(&tab.label).map(|label| {
++                    (
++                        pane.pane_id.clone(),
++                        label,
++                        pane.focused && &endpoint.endpoint_id == active_endpoint_id,
++                    )
++                })
++            })
++            .collect::<Vec<_>>();
++        let child_count = agent_rows.len() + tools.len();
++        let parent_last = nested.then_some(entry.last_child);
++        result.push(SidebarTreeRow {
++            kind: SidebarTreeRowKind::Workspace {
++                endpoint_index,
++                entry,
++                status,
++                rows: workspace_rows,
++                indent: if nested {
++                    BRANCH_INDENT
++                } else {
++                    WORKSPACE_INDENT
++                },
++                tree_branch: nested,
++            },
++        });
++        for (index, row) in agent_rows.drain(..).enumerate() {
 +            result.push(SidebarTreeRow {
-+                kind: SidebarTreeRowKind::Padding { active_workspace },
-+                gap_after: workspace_tree_gap.saturating_sub(MIN_WORKSPACE_TREE_GAP),
++                kind: SidebarTreeRowKind::Agent {
++                    endpoint_index,
++                    row,
++                    parent_last,
++                    last_child: index + 1 == child_count,
++                    stale: endpoint.status != ClientEndpointStatus::Online,
++                    active_workspace,
++                },
++            });
++        }
++        let agent_count = child_count - tools.len();
++        for (index, (pane_id, label, focused)) in tools.into_iter().enumerate() {
++            result.push(SidebarTreeRow {
++                kind: SidebarTreeRowKind::Tool {
++                    endpoint_index,
++                    pane_id,
++                    label,
++                    focused,
++                    parent_last,
++                    last_child: agent_count + index + 1 == child_count,
++                    stale: endpoint.status != ClientEndpointStatus::Online,
++                    active_workspace,
++                },
 +            });
 +        }
 +    }
-+    if let Some(last) = result.last_mut() {
-+        last.gap_after = 0;
++}
++
++fn recognized_tool_label(label: &str) -> Option<&'static str> {
++    match label.trim().to_ascii_lowercase().as_str() {
++        "nvim" | "neovim" => Some("nvim"),
++        "tuicr" => Some("tuicr"),
++        _ => None,
 +    }
-+    result
++}
++
++fn compact_workspace_rows(
++    workspace: &ClientShellWorkspace,
++    status: crate::api::schema::AgentStatus,
++    nested: bool,
++    config: &SpacesSidebarConfig,
++) -> Vec<Vec<crate::ui::ResolvedToken>> {
++    let label = if nested {
++        workspace
++            .branch
++            .as_deref()
++            .and_then(|branch| branch.strip_prefix("worktree/").or(Some(branch)))
++            .unwrap_or(&workspace.label)
++    } else {
++        &workspace.label
++    };
++    let style = super::render::sidebar::workspace_rows(workspace, status, nested, config)
++        .into_iter()
++        .flatten()
++        .find_map(|token| match token.kind {
++            crate::ui::ResolvedTokenKind::Workspace(_) => Some(token.style),
++            _ => None,
++        })
++        .unwrap_or_default();
++    vec![vec![crate::ui::ResolvedToken {
++        kind: crate::ui::ResolvedTokenKind::Workspace(label.to_owned()),
++        style,
++    }]]
 +}
 +
 +pub(super) fn render_expanded(
 +    buffer: &mut Buffer,
 +    area: Rect,
-+    active_snapshot: Option<&ClientShellSnapshot>,
++    _active_snapshot: Option<&ClientShellSnapshot>,
 +    config: &ClientShellConfig,
 +    state: &mut super::render::ShellRenderState<'_>,
 +    hits: &mut ShellHitMap,
@@ -2421,11 +2898,12 @@ index 00000000..b43058ca
 +        state.collapsed_endpoints,
 +        state.collapsed_groups,
 +        state.remote_collapsed_groups,
++        state.last_project_workspaces,
 +        config,
 +        include_endpoints,
 +    );
 +    let heights = rows.iter().map(SidebarTreeRow::height).collect::<Vec<_>>();
-+    let gaps = rows.iter().map(|row| row.gap_after).collect::<Vec<_>>();
++    let gaps = vec![0; rows.len()];
 +    let reveal_navigation = !body.is_empty() && std::mem::take(state.reveal_navigation_workspace);
 +    let reveal_focus = !body.is_empty() && std::mem::take(state.reveal_focused_workspace);
 +    let reveal_agent = (!body.is_empty())
@@ -2496,7 +2974,6 @@ index 00000000..b43058ca
 +        .saturating_sub(metrics.offset_from_bottom);
 +    let show_scrollbar = metrics.max_offset_from_bottom > 0 && body.width > 1;
 +    let content_width = body.width.saturating_sub(u16::from(show_scrollbar));
-+    let empty_collapsed_groups = HashSet::new();
 +    let mut y = body.y;
 +    for (row_index, tree_row) in rows.iter().enumerate().skip(*state.workspace_scroll) {
 +        let height = tree_row.height().min(body.height);
@@ -2505,11 +2982,7 @@ index 00000000..b43058ca
 +        }
 +        let rect = Rect::new(body.x, y, content_width, height);
 +        match &tree_row.kind {
-+            SidebarTreeRowKind::Padding { active_workspace } => {
-+                if *active_workspace {
-+                    buffer.set_style(rect, Style::default().bg(palette.active_row_bg));
-+                }
-+            }
++            SidebarTreeRowKind::Spacer => {}
 +            SidebarTreeRowKind::Endpoint { endpoint_index } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let collapsed = state.collapsed_endpoints.contains(&endpoint.endpoint_id);
@@ -2535,11 +3008,75 @@ index 00000000..b43058ca
 +                    endpoint_id: endpoint.endpoint_id.clone(),
 +                });
 +            }
++            SidebarTreeRowKind::Project {
++                endpoint_index,
++                key,
++                label,
++                status,
++                collapsible,
++                collapsed,
++            } => {
++                let endpoint = &state.endpoints[*endpoint_index];
++                let control_width = if *collapsible {
++                    if *collapsed {
++                        4
++                    } else {
++                        2
++                    }
++                } else {
++                    0
++                };
++                put_text(
++                    buffer,
++                    rect.x,
++                    rect.y,
++                    rect.width.saturating_sub(control_width),
++                    &format!(" {label}"),
++                    Style::default()
++                        .fg(palette.accent)
++                        .add_modifier(Modifier::BOLD),
++                );
++                if *collapsible {
++                    if *collapsed {
++                        put_text(
++                            buffer,
++                            rect.right().saturating_sub(4),
++                            rect.y,
++                            2,
++                            status_icon(*status, config.status_indicators),
++                            Style::default().fg(status_color(*status, palette)),
++                        );
++                    }
++                    put_text(
++                        buffer,
++                        rect.right().saturating_sub(1),
++                        rect.y,
++                        1,
++                        if *collapsed { "▸" } else { "▾" },
++                        Style::default().fg(palette.accent),
++                    );
++                    hits.repositories.push(RepositoryHit {
++                        rect,
++                        endpoint_id: endpoint.endpoint_id.clone(),
++                        key: key.clone(),
++                    });
++                }
++                if endpoint.status != ClientEndpointStatus::Online {
++                    buffer.set_style(
++                        rect,
++                        Style::default()
++                            .fg(palette.overlay0)
++                            .add_modifier(Modifier::DIM),
++                    );
++                }
++            }
 +            SidebarTreeRowKind::Workspace {
 +                endpoint_index,
 +                entry,
 +                status,
 +                rows,
++                indent,
++                tree_branch,
 +            } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let Some(snapshot) = endpoint.snapshot.as_deref() else {
@@ -2586,13 +3123,50 @@ index 00000000..b43058ca
 +                    nested,
 +                    *status,
 +                    config.status_indicators,
-+                    entry,
++                    *indent,
 +                    rows.clone(),
 +                    focused,
 +                    selected,
 +                    dragged,
 +                    palette,
 +                );
++                if *tree_branch {
++                    put_text(
++                        buffer,
++                        nested.x,
++                        rect.y,
++                        BRANCH_INDENT as u16,
++                        if entry.last_child {
++                            " └─ "
++                        } else {
++                            " ├─ "
++                        },
++                        Style::default().fg(palette.overlay0),
++                    );
++                    let label_width = rows
++                        .first()
++                        .into_iter()
++                        .flatten()
++                        .find_map(|token| match &token.kind {
++                            crate::ui::ResolvedTokenKind::Workspace(label) => {
++                                Some(unicode_width::UnicodeWidthStr::width(label.as_str()) as u16)
++                            }
++                            _ => None,
++                        })
++                        .unwrap_or_default()
++                        .min(nested.width.saturating_sub(*indent as u16));
++                    buffer.set_style(
++                        Rect::new(
++                            nested.x.saturating_add(*indent as u16),
++                            rect.y,
++                            label_width,
++                            1,
++                        ),
++                        Style::default()
++                            .fg(palette.blue)
++                            .add_modifier(Modifier::BOLD),
++                    );
++                }
 +                if endpoint.status != ClientEndpointStatus::Online {
 +                    buffer.set_style(
 +                        rect,
@@ -2601,34 +3175,18 @@ index 00000000..b43058ca
 +                            .add_modifier(Modifier::DIM),
 +                    );
 +                }
-+                let endpoint_collapsed_groups = if endpoint.endpoint_id.is_local() {
-+                    state.collapsed_groups
-+                } else {
-+                    state
-+                        .remote_collapsed_groups
-+                        .get(&endpoint.endpoint_id)
-+                        .unwrap_or(&empty_collapsed_groups)
-+                };
-+                let group_toggle = super::render::sidebar::render_parent_group_toggle(
-+                    buffer,
-+                    rect,
-+                    snapshot,
-+                    entry.index,
-+                    endpoint_collapsed_groups,
-+                    palette,
-+                );
 +                hits.workspaces.push(WorkspaceHit {
 +                    rect,
 +                    endpoint_id: endpoint.endpoint_id.clone(),
 +                    workspace_id: workspace.workspace_id.clone(),
 +                    indented: entry.indented,
-+                    group_toggle,
 +                });
 +            }
 +            SidebarTreeRowKind::Agent {
 +                endpoint_index,
 +                row,
-+                parent_indented,
++                parent_last,
++                last_child,
 +                stale,
 +                active_workspace,
 +            } => {
@@ -2643,21 +3201,6 @@ index 00000000..b43058ca
 +                } else {
 +                    rect
 +                };
-+                super::agent_sidebar::render_agent_tree_row(
-+                    buffer,
-+                    nested,
-+                    row,
-+                    *parent_indented,
-+                    config,
-+                );
-+                if *stale {
-+                    buffer.set_style(
-+                        rect,
-+                        Style::default()
-+                            .fg(palette.overlay0)
-+                            .add_modifier(Modifier::DIM),
-+                    );
-+                }
 +                let row_style = if row.focused {
 +                    Some(focused_agent_style(palette, *stale))
 +                } else if *active_workspace {
@@ -2668,6 +3211,24 @@ index 00000000..b43058ca
 +                if let Some(row_style) = row_style {
 +                    buffer.set_style(rect, row_style);
 +                }
++                render_tree_child(
++                    buffer,
++                    nested,
++                    &row.label,
++                    Some(row.status),
++                    *parent_last,
++                    *last_child,
++                    row.focused,
++                    config,
++                );
++                if *stale {
++                    buffer.set_style(
++                        rect,
++                        Style::default()
++                            .fg(palette.overlay0)
++                            .add_modifier(Modifier::DIM),
++                    );
++                }
 +                if include_endpoints {
 +                    hits.endpoint_agents.push((
 +                        rect,
@@ -2676,6 +3237,65 @@ index 00000000..b43058ca
 +                    ));
 +                } else {
 +                    hits.agents.push((rect, row.pane_id.clone()));
++                }
++            }
++            SidebarTreeRowKind::Tool {
++                endpoint_index,
++                pane_id,
++                label,
++                focused,
++                parent_last,
++                last_child,
++                stale,
++                active_workspace,
++            } => {
++                let endpoint = &state.endpoints[*endpoint_index];
++                let nested = if include_endpoints {
++                    Rect::new(
++                        rect.x.saturating_add(2),
++                        rect.y,
++                        rect.width.saturating_sub(2),
++                        rect.height,
++                    )
++                } else {
++                    rect
++                };
++                let row_style = if *focused {
++                    Some(focused_agent_style(palette, *stale))
++                } else if *active_workspace {
++                    Some(Style::default().bg(palette.active_row_bg))
++                } else {
++                    None
++                };
++                if let Some(row_style) = row_style {
++                    buffer.set_style(rect, row_style);
++                }
++                render_tree_child(
++                    buffer,
++                    nested,
++                    label,
++                    None,
++                    *parent_last,
++                    *last_child,
++                    *focused,
++                    config,
++                );
++                if *stale {
++                    buffer.set_style(
++                        rect,
++                        Style::default()
++                            .fg(palette.overlay0)
++                            .add_modifier(Modifier::DIM),
++                    );
++                }
++                if include_endpoints {
++                    hits.endpoint_agents.push((
++                        rect,
++                        endpoint.endpoint_id.clone(),
++                        pane_id.clone(),
++                    ));
++                } else {
++                    hits.agents.push((rect, pane_id.clone()));
 +                }
 +            }
 +        }
@@ -2701,15 +3321,7 @@ index 00000000..b43058ca
 +            Style::default().fg(palette.accent),
 +        );
 +    }
-+    render_footer(
-+        buffer,
-+        footer,
-+        active_snapshot,
-+        state,
-+        config,
-+        hits,
-+        include_endpoints,
-+    );
++    render_footer(buffer, footer, config, hits);
 +}
 +
 +pub(super) fn render_collapsed(
@@ -2736,11 +3348,17 @@ index 00000000..b43058ca
 +        state.collapsed_endpoints,
 +        state.collapsed_groups,
 +        state.remote_collapsed_groups,
++        state.last_project_workspaces,
 +        config,
 +        include_endpoints,
 +    )
 +    .into_iter()
-+    .filter(|row| !matches!(&row.kind, SidebarTreeRowKind::Padding { .. }))
++    .filter(|row| {
++        !matches!(
++            &row.kind,
++            SidebarTreeRowKind::Spacer | SidebarTreeRowKind::Project { .. }
++        )
++    })
 +    .collect::<Vec<_>>();
 +    let heights = vec![1; tree_rows.len()];
 +    let gaps = vec![0; tree_rows.len()];
@@ -2793,7 +3411,7 @@ index 00000000..b43058ca
 +        }
 +        let rect = Rect::new(body.x, y, body.width, 1);
 +        match tree_row.kind {
-+            SidebarTreeRowKind::Padding { .. } => continue,
++            SidebarTreeRowKind::Spacer | SidebarTreeRowKind::Project { .. } => continue,
 +            SidebarTreeRowKind::Endpoint { endpoint_index } => {
 +                let endpoint = &state.endpoints[endpoint_index];
 +                let collapsed = state.collapsed_endpoints.contains(&endpoint.endpoint_id);
@@ -2917,7 +3535,6 @@ index 00000000..b43058ca
 +                    endpoint_id: endpoint.endpoint_id.clone(),
 +                    workspace_id: workspace.workspace_id.clone(),
 +                    indented: entry.indented,
-+                    group_toggle: None,
 +                });
 +            }
 +            SidebarTreeRowKind::Agent {
@@ -2963,6 +3580,45 @@ index 00000000..b43058ca
 +                    hits.agents.push((rect, row.pane_id));
 +                }
 +            }
++            SidebarTreeRowKind::Tool {
++                endpoint_index,
++                pane_id,
++                label,
++                focused,
++                stale,
++                active_workspace,
++                ..
++            } => {
++                let endpoint = &state.endpoints[endpoint_index];
++                put_text(
++                    buffer,
++                    rect.x,
++                    rect.y,
++                    rect.width,
++                    &format!("└{}", label.chars().next().unwrap_or('?')),
++                    Style::default().fg(if stale {
++                        palette.overlay0
++                    } else {
++                        palette.blue
++                    }),
++                );
++                let row_style = if focused {
++                    Some(focused_agent_style(palette, stale))
++                } else if active_workspace {
++                    Some(Style::default().bg(palette.active_row_bg))
++                } else {
++                    None
++                };
++                if let Some(row_style) = row_style {
++                    buffer.set_style(rect, row_style);
++                }
++                if include_endpoints {
++                    hits.endpoint_agents
++                        .push((rect, endpoint.endpoint_id.clone(), pane_id));
++                } else {
++                    hits.agents.push((rect, pane_id));
++                }
++            }
 +        }
 +        y = y.saturating_add(1);
 +    }
@@ -2998,6 +3654,59 @@ index 00000000..b43058ca
 +    );
 +}
 +
++fn render_tree_child(
++    buffer: &mut Buffer,
++    rect: Rect,
++    label: &str,
++    status: Option<crate::api::schema::AgentStatus>,
++    parent_last: Option<bool>,
++    last_child: bool,
++    focused: bool,
++    config: &ClientShellConfig,
++) {
++    let palette = &config.palette;
++    let connector = if last_child { '└' } else { '├' };
++    let prefix = match parent_last {
++        Some(true) => format!("    {connector}─ "),
++        Some(false) => format!(" │  {connector}─ "),
++        None => format!(" {connector}─ "),
++    };
++    let prefix_width = unicode_width::UnicodeWidthStr::width(prefix.as_str()) as u16;
++    let reserved = u16::from(status.is_some()) * 3;
++    put_text(
++        buffer,
++        rect.x,
++        rect.y,
++        prefix_width.min(rect.width),
++        &prefix,
++        Style::default().fg(palette.overlay0),
++    );
++    put_text(
++        buffer,
++        rect.x.saturating_add(prefix_width),
++        rect.y,
++        rect.width.saturating_sub(prefix_width + reserved),
++        label,
++        if focused {
++            Style::default()
++                .fg(palette.blue)
++                .add_modifier(Modifier::BOLD)
++        } else {
++            Style::default().fg(palette.text)
++        },
++    );
++    if let Some(status) = status {
++        put_text(
++            buffer,
++            rect.right().saturating_sub(2),
++            rect.y,
++            1,
++            status_icon(status, config.status_indicators),
++            Style::default().fg(status_color(status, palette)),
++        );
++    }
++}
++
 +fn focused_agent_style(palette: &Palette, stale: bool) -> Style {
 +    let background = if palette.selection_bg == ratatui::style::Color::Reset {
 +        palette.active_row_bg
@@ -3015,90 +3724,28 @@ index 00000000..b43058ca
 +fn render_footer(
 +    buffer: &mut Buffer,
 +    footer: Rect,
-+    active_snapshot: Option<&ClientShellSnapshot>,
-+    state: &super::render::ShellRenderState<'_>,
 +    config: &ClientShellConfig,
 +    hits: &mut ShellHitMap,
-+    include_endpoints: bool,
 +) {
-+    let controls = Rect::new(
++    if !config.mouse_capture {
++        return;
++    }
++    let label = " todo";
++    hits.todo_launcher = Rect::new(
 +        footer.x,
 +        footer.y,
-+        footer.width.saturating_sub(2),
-+        footer.height,
-+    );
-+    if config.mouse_capture {
-+        let endpoint_label = state
-+            .endpoints
-+            .iter()
-+            .find(|endpoint| &endpoint.endpoint_id == state.active_endpoint_id)
-+            .map_or("Local", |endpoint| endpoint.label.as_str());
-+        let label = if include_endpoints {
-+            format!(" new · {endpoint_label}")
-+        } else {
-+            " new".to_owned()
-+        };
-+        hits.new_workspace = Rect::new(
-+            controls.x,
-+            controls.y,
-+            super::render::display_width(&label).min(controls.width),
-+            1,
-+        );
-+        put_text(
-+            buffer,
-+            controls.x,
-+            controls.y,
-+            controls.width,
-+            &label,
-+            Style::default().fg(config.palette.overlay0),
-+        );
-+        let attention = active_snapshot.is_some_and(super::global_menu::global_menu_attention);
-+        let width = if attention { 8 } else { 6 }.min(controls.width);
-+        hits.global_launcher =
-+            Rect::new(controls.right().saturating_sub(width), controls.y, width, 1);
-+        if attention {
-+            let start_x = controls.right().saturating_sub(6);
-+            put_text(
-+                buffer,
-+                start_x,
-+                controls.y,
-+                2,
-+                "● ",
-+                Style::default()
-+                    .fg(config.palette.accent)
-+                    .add_modifier(Modifier::BOLD),
-+            );
-+            put_text(
-+                buffer,
-+                start_x.saturating_add(2),
-+                controls.y,
-+                4,
-+                "menu",
-+                Style::default().fg(config.palette.overlay0),
-+            );
-+        } else {
-+            put_right_text(
-+                buffer,
-+                controls,
-+                controls.y,
-+                "menu",
-+                Style::default().fg(config.palette.overlay0),
-+            );
-+        }
-+    }
-+    hits.sidebar_toggle = Rect::new(
-+        footer.right().saturating_sub(1),
-+        footer.y,
-+        u16::from(footer.width > 0),
++        super::render::display_width(label).min(footer.width),
 +        1,
 +    );
 +    put_text(
 +        buffer,
-+        hits.sidebar_toggle.x,
-+        hits.sidebar_toggle.y,
-+        hits.sidebar_toggle.width,
-+        "«",
-+        Style::default().fg(config.palette.overlay0),
++        footer.x,
++        footer.y,
++        footer.width,
++        label,
++        Style::default()
++            .fg(config.palette.accent)
++            .add_modifier(Modifier::BOLD),
 +    );
 +}
 +
@@ -3182,6 +3829,7 @@ index 00000000..b43058ca
 +        &HashSet::new(),
 +        &HashSet::new(),
 +        &HashMap::new(),
++        &HashMap::new(),
 +        config,
 +        false,
 +    )
@@ -3200,9 +3848,9 @@ index 00000000..b43058ca
 +    })
 +    .collect()
 +}
-diff --git c/src/client/shell/state.rs w/src/client/shell/state.rs
-index c170c9b0..92100f32 100644
---- c/src/client/shell/state.rs
+diff --git i/src/client/shell/state.rs w/src/client/shell/state.rs
+index c170c9b0..92b751b2 100644
+--- i/src/client/shell/state.rs
 +++ w/src/client/shell/state.rs
 @@ -2,7 +2,6 @@ use super::*;
  
@@ -3212,7 +3860,15 @@ index c170c9b0..92100f32 100644
  const ENDPOINT_ERROR_TIMEOUT_SECS: u64 = 5;
  
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-@@ -95,10 +94,6 @@ pub(super) struct ShellHitMap {
+@@ -84,6 +83,7 @@ pub(super) enum ClientMobileTarget {
+ #[derive(Default)]
+ pub(super) struct ShellHitMap {
+     pub(super) machines: Vec<MachineHit>,
++    pub(super) repositories: Vec<RepositoryHit>,
+     pub(super) workspaces: Vec<WorkspaceHit>,
+     pub(super) workspace_body: Rect,
+     pub(super) workspace_scrollbar: Rect,
+@@ -95,14 +95,11 @@ pub(super) struct ShellHitMap {
      pub(super) pane_splits: Vec<PaneSplitHit>,
      pub(super) agents: Vec<(Rect, String)>,
      pub(super) endpoint_agents: Vec<(Rect, ClientEndpointId, String)>,
@@ -3223,7 +3879,12 @@ index c170c9b0..92100f32 100644
      pub(super) agent_sort_toggle: Rect,
      pub(super) sidebar_divider: Rect,
      pub(super) sidebar_section_divider: Rect,
-@@ -192,9 +187,6 @@ pub(super) enum ClientChromeDrag {
+     pub(super) sidebar_toggle: Rect,
++    pub(super) todo_launcher: Rect,
+     pub(super) new_workspace: Rect,
+     pub(super) new_tab: Rect,
+     pub(super) tab_scroll_left: Rect,
+@@ -192,9 +189,6 @@ pub(super) enum ClientChromeDrag {
      WorkspaceScrollbar {
          grab_row_offset: u16,
      },
@@ -3233,23 +3894,46 @@ index c170c9b0..92100f32 100644
      HelpScrollbar {
          grab_row_offset: u16,
      },
-@@ -870,7 +862,6 @@ pub(crate) struct ClientShellState {
+@@ -231,12 +225,17 @@ pub(super) enum ClientChromeDrag {
+     },
+ }
+ 
++pub(super) struct RepositoryHit {
++    pub(super) rect: Rect,
++    pub(super) endpoint_id: ClientEndpointId,
++    pub(super) key: String,
++}
++
+ pub(super) struct WorkspaceHit {
+     pub(super) rect: Rect,
+     pub(super) endpoint_id: ClientEndpointId,
+     pub(super) workspace_id: String,
+     pub(super) indented: bool,
+-    pub(super) group_toggle: Option<(Rect, String)>,
+ }
+ 
+ #[derive(Debug)]
+@@ -869,8 +868,8 @@ pub(crate) struct ClientShellState {
+     pub(super) tab_press: Option<ClientTabPress>,
      pub(super) collapsed_groups: HashSet<String>,
      pub(super) remote_collapsed_groups: HashMap<ClientEndpointId, HashSet<String>>,
++    pub(super) last_project_workspaces: HashMap<(ClientEndpointId, String), String>,
      pub(super) workspace_scroll: usize,
 -    pub(super) agent_scroll: usize,
      pub(super) pending_agent_reveal: Option<(ClientEndpointId, String)>,
      pub(super) tab_scroll: usize,
      pub(super) mobile_switcher_scroll: usize,
-@@ -1035,7 +1026,6 @@ impl ClientShellState {
+@@ -1034,8 +1033,8 @@ impl ClientShellState {
+             tab_press: None,
              collapsed_groups: preferences.collapsed_groups.into_iter().collect(),
              remote_collapsed_groups,
++            last_project_workspaces: HashMap::new(),
              workspace_scroll: 0,
 -            agent_scroll: 0,
              pending_agent_reveal: None,
              tab_scroll: 0,
              mobile_switcher_scroll: 0,
-@@ -1221,7 +1211,6 @@ impl ClientShellState {
+@@ -1221,7 +1220,6 @@ impl ClientShellState {
          self.workspace_press = None;
          self.tab_press = None;
          self.workspace_scroll = 0;
@@ -3257,9 +3941,9 @@ index c170c9b0..92100f32 100644
          self.tab_scroll = 0;
          self.mobile_switcher_scroll = 0;
          self.reveal_focused_workspace = true;
-diff --git c/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b1224..2accf8d9 100644
---- c/src/client/shell/tests/agents_worktrees_notifications.rs
+diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
+index 5b8b1224..91dc4a3b 100644
+--- i/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
      state.set_snapshot(Box::new(snapshot()));
@@ -3299,19 +3983,73 @@ index 5b8b1224..2accf8d9 100644
          modifiers: KeyModifiers::empty(),
      })]);
      assert!(pane.requests.is_empty());
-@@ -131,7 +133,8 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -117,6 +119,22 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+         focused: false,
+         agent_status: AgentStatus::Idle,
+     });
++    snapshot.agents.push(ClientShellAgent {
++        pane_id: "pane_ws2".into(),
++        workspace_id: "ws_2".into(),
++        tab_id: "tab_ws2".into(),
++        name: Some("feature agent".into()),
++        display_agent: None,
++        agent: Some("pi".into()),
++        title: None,
++        terminal_title: None,
++        terminal_title_stripped: None,
++        agent_status: AgentStatus::Blocked,
++        state_change_seq: 1,
++        state_labels: Vec::new(),
++        tokens: Vec::new(),
++        focused: false,
++    });
+     state.set_snapshot(Box::new(snapshot));
+     state.set_pane_surface(surface());
+     let frame = state.compose(106, 20).expect("composed frame");
+@@ -130,9 +148,34 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+         })
          .collect::<Vec<_>>()
          .join("\n");
++    assert!(
++        text.lines()
++            .any(|line| line.trim_start().starts_with("repo ")),
++        "project header missing: {text}"
++    );
      assert!(text.contains("main"));
 -    assert!(text.contains("└─"));
-+    assert!(!text.contains("└─"));
-+    assert!(!text.contains("├─"));
++    assert!(text.contains("├─ main"), "frame: {text}");
++    assert!(text.contains("└─ feature"), "frame: {text}");
      assert!(text.contains("feature"));
++    let repository = state.hits.repositories[0].rect;
++    let buffer = frame.to_ratatui_buffer().expect("sidebar buffer");
++    assert_eq!(
++        buffer[(repository.right().saturating_sub(1), repository.y)].symbol(),
++        "▾"
++    );
++    let parent = state.hits.workspaces[0].rect;
++    let parent_text = (parent.x..parent.right())
++        .map(|x| buffer[(x, parent.y)].symbol())
++        .collect::<String>();
++    assert!(!parent_text.contains(['▸', '▾']), "row: {parent_text}");
++    assert_eq!(
++        state.hits.workspaces[0].rect.y,
++        state.hits.workspace_body.y + 1
++    );
++    assert_eq!(
++        state.hits.workspaces[1].rect.y,
++        state.hits.workspaces[0].rect.bottom()
++    );
  
      let mut replacement = (**state.snapshot.as_ref().expect("snapshot")).clone();
-@@ -147,12 +150,13 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+     replacement.revision = 2;
+@@ -146,13 +189,29 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+     state.set_snapshot(Box::new(replacement));
      state.set_pane_surface(replacement_surface);
      let collapsed = state.compose(106, 20).expect("collapsed worktree group");
++    assert_eq!(state.hits.workspaces.len(), 1);
++    assert_eq!(state.hits.workspaces[0].workspace_id, "ws_2");
++    assert_eq!(state.hits.agents.len(), 1);
++    assert_eq!(state.hits.agents[0].1, "pane_ws2");
      let parent = state.hits.workspaces[0].rect;
 -    let status_cell = usize::from(parent.y) * usize::from(collapsed.width)
 -        + usize::from(parent.x.saturating_add(1));
@@ -3325,11 +4063,63 @@ index 5b8b1224..2accf8d9 100644
 +        .iter()
 +        .map(|cell| cell.symbol.as_str())
 +        .collect::<String>();
-+    assert!(!parent_text.contains('×'), "row: {parent_text}");
++    let blocked = status_icon(AgentStatus::Blocked, state.config.status_indicators);
++    assert!(!parent_text.contains(blocked), "row: {parent_text}");
++    let repository = state.hits.repositories[0].rect;
++    let repository_text = collapsed.cells[usize::from(repository.y) * usize::from(collapsed.width)
++        + usize::from(repository.x)
++        ..usize::from(repository.y) * usize::from(collapsed.width)
++            + usize::from(repository.right())]
++        .iter()
++        .map(|cell| cell.symbol.as_str())
++        .collect::<String>();
++    assert!(repository_text.contains(blocked), "row: {repository_text}");
++    assert!(repository_text.contains('▸'), "row: {repository_text}");
  
      let mut next = ClientShellInput::default();
      state.record_binding(
-@@ -430,7 +434,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
+@@ -168,6 +227,40 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+                     if target.workspace_id == "ws_1"
+             )
+     ));
++
++    let mut background = (**state.snapshot.as_ref().expect("snapshot")).clone();
++    background.revision = 3;
++    background.focused_workspace_id = Some("ws_3".into());
++    for workspace in &mut background.workspaces {
++        workspace.focused = false;
++    }
++    let mut outside = background.workspaces[0].clone();
++    outside.workspace_id = "ws_3".into();
++    outside.active_tab_id = "tab_ws3".into();
++    outside.label = "outside".into();
++    outside.branch = None;
++    outside.worktree = None;
++    outside.focused = true;
++    background.workspaces.push(outside);
++    state.set_snapshot(Box::new(background));
++    state.set_pane_surface(PaneSurfaceFrame {
++        projection_revision: 3,
++        ..surface()
++    });
++    state.compose(106, 20).expect("background repository");
++    let retained = state
++        .hits
++        .workspaces
++        .iter()
++        .filter(|hit| matches!(hit.workspace_id.as_str(), "ws_1" | "ws_2"))
++        .map(|hit| hit.workspace_id.as_str())
++        .collect::<Vec<_>>();
++    assert_eq!(retained, ["ws_2"]);
++    assert!(state
++        .hits
++        .agents
++        .iter()
++        .any(|(_, pane_id)| pane_id == "pane_ws2"));
+ }
+ 
+ #[test]
+@@ -430,7 +523,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
  }
  
  #[test]
@@ -3338,7 +4128,7 @@ index 5b8b1224..2accf8d9 100644
      let mut projected = snapshot();
      let mut second_pane = projected.panes[0].clone();
      second_pane.pane_id = "pane_2".into();
-@@ -502,9 +506,26 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -502,9 +595,26 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -3368,7 +4158,7 @@ index 5b8b1224..2accf8d9 100644
      assert_eq!(
          state
              .hits
-@@ -538,23 +559,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +648,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -3396,7 +4186,7 @@ index 5b8b1224..2accf8d9 100644
      );
  
      state.sidebar_collapsed = true;
-@@ -569,13 +581,304 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,13 +670,309 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -3464,7 +4254,7 @@ index 5b8b1224..2accf8d9 100644
 +}
 +
 +#[test]
-+fn unified_sidebar_tree_groups_only_detected_agents_under_workspaces() {
++fn unified_sidebar_tree_groups_agents_and_recognized_tools_under_workspaces() {
 +    let mut projected = snapshot();
 +    let mut empty_workspace = projected.workspaces[0].clone();
 +    empty_workspace.workspace_id = "ws_2".into();
@@ -3477,6 +4267,21 @@ index 5b8b1224..2accf8d9 100644
 +    ordinary_pane.workspace_id = "ws_2".into();
 +    ordinary_pane.focused = false;
 +    projected.panes.push(ordinary_pane);
++    for (pane_id, tab_id, label) in [
++        ("nvim-pane", "nvim-tab", "nvim"),
++        ("tuicr-pane", "tuicr-tab", "tuicr"),
++    ] {
++        let mut tab = projected.tabs[0].clone();
++        tab.tab_id = tab_id.into();
++        tab.label = label.into();
++        tab.focused = false;
++        projected.tabs.push(tab);
++        let mut pane = projected.panes[0].clone();
++        pane.pane_id = pane_id.into();
++        pane.tab_id = tab_id.into();
++        pane.focused = false;
++        projected.panes.push(pane);
++    }
 +    projected.agents = vec![ClientShellAgent {
 +        pane_id: "pane_1".into(),
 +        workspace_id: "ws_1".into(),
@@ -3514,7 +4319,7 @@ index 5b8b1224..2accf8d9 100644
 +            .iter()
 +            .map(|(_, pane_id)| pane_id.as_str())
 +            .collect::<Vec<_>>(),
-+        ["pane_1"]
++        ["pane_1", "nvim-pane", "tuicr-pane"]
 +    );
 +    assert!(state.hits.sidebar_section_divider.is_empty());
 +    assert_eq!(
@@ -3522,58 +4327,45 @@ index 5b8b1224..2accf8d9 100644
 +        state.hits.agents[0].0.y
 +    );
 +    assert_eq!(
-+        state.hits.agents[0].0.bottom() + 2,
++        state.hits.agents[2].0.bottom() + 2,
 +        state.hits.workspaces[1].rect.y
 +    );
 +    let buffer = frame.to_ratatui_buffer().expect("unified sidebar buffer");
 +    let active = state.hits.workspaces[0].rect;
-+    assert_eq!(active.height, 2);
-+    let accent_bold = (active.x..active.right())
-+        .filter(|x| {
-+            let cell = &buffer[(*x, active.y)];
-+            cell.fg == state.config.palette.accent && cell.modifier.contains(Modifier::BOLD)
-+        })
-+        .count();
-+    assert!(accent_bold > 1);
-+    let (workspace_x, workspace_y) = cell_symbol_position(&frame, active, "client-shell");
-+    let workspace_cell = &buffer[(workspace_x, workspace_y)];
-+    assert_eq!(workspace_cell.fg, state.config.palette.accent);
-+    assert!(workspace_cell.modifier.contains(Modifier::BOLD));
-+    let active_text = (active.x..active.right())
-+        .map(|x| buffer[(x, active.y)].symbol())
-+        .collect::<String>();
-+    assert!(active_text.trim_start().starts_with("client-shell"));
-+    assert!((active.y..active.bottom()).all(|y| {
-+        (active.x..active.right()).all(|x| buffer[(x, y)].bg == state.config.palette.active_row_bg)
-+    }));
-+    for padding_y in [active.y - 1, state.hits.agents[0].0.bottom()] {
-+        assert!((active.x..active.right())
-+            .all(|x| buffer[(x, padding_y)].bg == state.config.palette.active_row_bg));
-+    }
-+    let (branch_x, branch_y) = cell_symbol_position(&frame, active, "(main)");
-+    assert_eq!(branch_x, workspace_x);
-+    assert_eq!(branch_y, workspace_y + 1);
++    assert_eq!(active.height, 1);
++    let project = Rect::new(active.x, active.y - 1, active.width, 1);
++    let (project_x, project_y) = cell_symbol_position(&frame, project, "client-shell");
++    let project_cell = &buffer[(project_x, project_y)];
++    assert_eq!(project_cell.fg, state.config.palette.accent);
++    assert!(project_cell.modifier.contains(Modifier::BOLD));
++    let (branch_x, branch_y) = cell_symbol_position(&frame, active, "main");
++    let branch_cell = &buffer[(branch_x, branch_y)];
++    assert_eq!(branch_cell.fg, state.config.palette.blue);
++    assert!(branch_cell.modifier.contains(Modifier::BOLD));
++    assert_eq!(project_y + 1, branch_y);
++    assert!((active.x..active.right())
++        .all(|x| buffer[(x, active.y)].bg == state.config.palette.active_row_bg));
++    assert!((project.x..project.right())
++        .all(|x| buffer[(x, project.y)].bg != state.config.palette.active_row_bg));
 +    let inactive = state.hits.workspaces[1].rect;
 +    assert!((inactive.x..inactive.right())
 +        .all(|x| buffer[(x, inactive.y)].bg != state.config.palette.active_row_bg));
 +    let agent = state.hits.agents[0].0;
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
 +    let (icon_x, icon_y) = cell_symbol_position(&frame, agent, icon);
-+    assert_eq!(icon_x, workspace_x);
++    assert_eq!(icon_x, agent.right() - 2);
 +    let icon_cell = &buffer[(icon_x, icon_y)];
-+    assert_eq!(icon_cell.fg, state.config.palette.panel_bg);
-+    assert!(icon_cell.modifier.contains(Modifier::BOLD));
++    assert_eq!(icon_cell.fg, state.config.palette.yellow);
 +    let (tab_x, tab_y) = cell_symbol_position(&frame, agent, "1");
 +    let tab_cell = &buffer[(tab_x, tab_y)];
-+    assert_eq!(tab_cell.fg, state.config.palette.panel_bg);
++    assert_eq!(tab_cell.fg, state.config.palette.blue);
 +    assert!(tab_cell.modifier.contains(Modifier::BOLD));
 +    assert!((agent.x..agent.right())
 +        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.selection_bg));
 +    let agent_text = (agent.x..agent.right())
 +        .map(|x| buffer[(x, agent.y)].symbol())
 +        .collect::<String>();
-+    assert!(!agent_text.contains("└─"), "agent row: {agent_text}");
-+    assert!(!agent_text.contains("├─"), "agent row: {agent_text}");
++    assert!(agent_text.contains("├─"), "agent row: {agent_text}");
 +    let text = frame
 +        .cells
 +        .chunks(frame.width as usize)
@@ -3589,10 +4381,13 @@ index 5b8b1224..2accf8d9 100644
 +    assert!(!text.contains("working"), "frame: {text}");
 +    assert!(!text.contains("empty-space · main"), "frame: {text}");
 +    assert!(!text.contains("spaces · agents"), "frame: {text}");
++    assert!(text.contains("├─ nvim"), "frame: {text}");
++    assert!(text.contains("└─ tuicr"), "frame: {text}");
++    assert!(!text.contains("ordinary-pane"), "frame: {text}");
 +}
 +
 +#[test]
-+fn workspace_subtree_spacing_does_not_scroll_an_exact_fit() {
++fn compact_workspace_tree_does_not_scroll_an_exact_fit() {
 +    let mut projected = snapshot();
 +    let mut second = projected.workspaces[0].clone();
 +    second.workspace_id = "ws_2".into();
@@ -3603,9 +4398,9 @@ index 5b8b1224..2accf8d9 100644
 +    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
 +    state.set_snapshot(Box::new(projected));
 +    state.set_pane_surface(surface());
-+    state.compose(106, 9).expect("exact-fit sidebar");
++    state.compose(106, 6).expect("exact-fit sidebar");
 +
-+    assert_eq!(state.hits.workspace_body.height, 8);
++    assert_eq!(state.hits.workspace_body.height, 5);
 +    assert_eq!(state.hits.workspace_max_scroll, 0);
 +    assert!(state.hits.workspace_scrollbar.is_empty());
 +    assert_eq!(
@@ -3698,12 +4493,12 @@ index 5b8b1224..2accf8d9 100644
 +}
 +
 +#[test]
-+fn workspace_branch_renders_below_name_before_child_agent() {
++fn repository_branch_and_agent_render_as_compact_hierarchy() {
 +    let mut projected = snapshot();
      projected.agents = vec![ClientShellAgent {
          pane_id: "pane_1".into(),
          workspace_id: "ws_1".into(),
-@@ -595,18 +898,15 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+@@ -595,22 +992,23 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
      let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
      state.set_snapshot(Box::new(projected));
      state.set_pane_surface(surface());
@@ -3711,10 +4506,11 @@ index 5b8b1224..2accf8d9 100644
 -    let row = state.hits.agents.first().expect("agent row hit").0;
 -    let buffer = frame.to_ratatui_buffer().expect("agent sidebar buffer");
 +    let frame = state.compose(106, 30).expect("workspace tree frame");
-+    let workspace = state.hits.workspaces.first().expect("workspace hit").rect;
++    let branch = state.hits.workspaces.first().expect("workspace hit").rect;
 +    let agent = state.hits.agents.first().expect("agent hit").0;
-+    let (workspace_x, workspace_y) = cell_symbol_position(&frame, workspace, "client-shell");
-+    let (branch_x, branch_y) = cell_symbol_position(&frame, workspace, "(main)");
++    let project = Rect::new(branch.x, branch.y - 1, branch.width, 1);
++    let (project_x, project_y) = cell_symbol_position(&frame, project, "client-shell");
++    let (branch_x, branch_y) = cell_symbol_position(&frame, branch, "main");
  
 -    for (label, needle) in [("tab", "second"), ("agent", "reviewer"), ("separator", "·")] {
 -        let (x, y) = cell_symbol_position(&frame, row, needle);
@@ -3724,13 +4520,88 @@ index 5b8b1224..2accf8d9 100644
 -            "{label} cell at ({x},{y}) should not stack terminal faint: {cell:?}"
 -        );
 -    }
-+    assert_eq!(branch_x, workspace_x);
-+    assert_eq!(branch_y, workspace_y + 1);
++    assert_eq!(branch_x, project_x + 3);
++    assert_eq!(branch_y, project_y + 1);
 +    assert_eq!(agent.y, branch_y + 1);
++    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
++    let (agent_x, _) = cell_symbol_position(&frame, agent, icon);
++    assert_eq!(agent_x, agent.right() - 2);
  }
  
  #[test]
-@@ -739,61 +1039,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+-fn workspace_state_text_does_not_stack_terminal_faint() {
++fn compact_workspace_row_ignores_secondary_tokens() {
+     use crate::config::SpaceSidebarToken;
+ 
+     let mut config = Config::default();
+@@ -623,13 +1021,59 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
+     state.set_pane_surface(surface());
+     let frame = state.compose(106, 30).expect("workspace sidebar frame");
+     let rect = state.hits.workspaces.first().expect("workspace hit").rect;
+-    let buffer = frame.to_ratatui_buffer().expect("workspace sidebar buffer");
+-    let (x, y) = cell_symbol_position(&frame, rect, "idle");
+-    let cell = buffer.cell((x, y)).expect("workspace state text cell");
+-    assert!(
+-        !cell.modifier.contains(Modifier::DIM),
+-        "workspace state text at ({x},{y}) should not stack terminal faint: {cell:?}"
+-    );
++    assert_eq!(rect.height, 1);
++    cell_symbol_position(&frame, rect, "main");
++    let row = frame.cells[usize::from(rect.y) * usize::from(frame.width) + usize::from(rect.x)
++        ..usize::from(rect.y) * usize::from(frame.width) + usize::from(rect.right())]
++        .iter()
++        .map(|cell| cell.symbol.as_str())
++        .collect::<String>();
++    assert!(!row.contains("idle"), "row: {row}");
++    assert!(!row.contains("client-shell"), "row: {row}");
++}
++
++#[test]
++fn standalone_workspace_renders_without_a_fallback_heading() {
++    let mut projected = snapshot();
++    projected.workspaces[0].label = "meet_me".into();
++    projected.workspaces[0].branch = None;
++    projected.agents = vec![ClientShellAgent {
++        pane_id: "pane_1".into(),
++        workspace_id: "ws_1".into(),
++        tab_id: "tab_1".into(),
++        name: Some("pi".into()),
++        display_agent: None,
++        agent: Some("pi".into()),
++        title: None,
++        terminal_title: None,
++        terminal_title_stripped: None,
++        agent_status: AgentStatus::Idle,
++        state_change_seq: 1,
++        state_labels: Vec::new(),
++        tokens: Vec::new(),
++        focused: true,
++    }];
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 20).expect("standalone workspace frame");
++    let workspace = state.hits.workspaces[0].rect;
++    let agent = state.hits.agents[0].0;
++
++    assert_eq!(workspace.y, state.hits.workspace_body.y);
++    assert_eq!(agent.y, workspace.bottom());
++    cell_symbol_position(&frame, workspace, "meet_me");
++    let text = frame
++        .cells
++        .chunks(frame.width as usize)
++        .map(|row| {
++            row.iter()
++                .map(|cell| cell.symbol.as_str())
++                .collect::<String>()
++        })
++        .collect::<Vec<_>>()
++        .join("\n");
++    assert!(!text.contains("Other workspace"), "frame: {text}");
+ }
+ 
+ #[test]
+@@ -739,61 +1183,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -3853,9 +4724,9 @@ index 5b8b1224..2accf8d9 100644
  }
  
  #[test]
-diff --git c/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
-index ed21bc8a..b496e4de 100644
---- c/src/client/shell/tests/chrome_context.rs
+diff --git i/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
+index ed21bc8a..28bcffd9 100644
+--- i/src/client/shell/tests/chrome_context.rs
 +++ w/src/client/shell/tests/chrome_context.rs
 @@ -148,7 +148,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
  fn focused_workspace_change_reveals_new_workspace_in_full_sidebar() {
@@ -3941,9 +4812,34 @@ index ed21bc8a..b496e4de 100644
  }
  
  #[test]
-diff --git c/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1..078d7795 100644
---- c/src/client/shell/tests/endpoints.rs
+@@ -378,21 +363,14 @@ fn context_menus_capture_stable_targets_and_route_actions() {
+ }
+ 
+ #[test]
+-fn global_menu_opens_from_sidebar_and_routes_client_actions() {
++fn global_menu_routes_client_actions_without_a_footer_launcher() {
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+     state.set_snapshot(Box::new(snapshot()));
+     state.set_pane_surface(surface());
+     state.compose(106, 30).expect("shell frame");
+-    let launcher = state.hits.global_launcher;
+-    assert_ne!(launcher, Rect::default());
++    assert!(state.hits.global_launcher.is_empty());
+ 
+-    let open = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+-        kind: MouseEventKind::Down(MouseButton::Left),
+-        column: launcher.x,
+-        row: launcher.y,
+-        modifiers: KeyModifiers::empty(),
+-    })]);
+-    assert!(open.repaint);
++    state.toggle_global_menu();
+     let menu = state.compose(106, 30).expect("global menu");
+     let text = menu
+         .cells
+diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
+index f327f8c1..9521de89 100644
+--- i/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
 @@ -112,6 +112,9 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
      ));
@@ -4159,10 +5055,44 @@ index f327f8c1..078d7795 100644
      let local = state
          .hits
          .machines
-@@ -674,8 +685,19 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
-     assert_eq!(key, "repo");
-     let buffer = frame.to_ratatui_buffer().expect("frame should reconstruct");
-     assert_eq!(buffer[(local_toggle.x, local_toggle.y)].symbol(), "▸");
+@@ -661,21 +672,46 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
+         .workspaces
+         .iter()
+         .any(|hit| hit.endpoint_id == remote_id && hit.workspace_id == "remote_ws_2"));
++    let local_repository = state
++        .hits
++        .repositories
++        .iter()
++        .find(|hit| hit.endpoint_id == ClientEndpointId::Local)
++        .expect("local repository heading");
++    assert_eq!(local_repository.key, "repo");
++    let local_toggle = Rect::new(
++        local_repository.rect.right().saturating_sub(1),
++        local_repository.rect.y,
++        1,
++        1,
++    );
++    let buffer = frame.to_ratatui_buffer().expect("frame should reconstruct");
++    assert_eq!(buffer[(local_toggle.x, local_toggle.y)].symbol(), "▸");
++    let blocked = status_icon(AgentStatus::Blocked, state.config.status_indicators);
++    let (status_x, status_y) = cell_symbol_position(&frame, local_repository.rect, blocked);
++    assert_eq!(
++        buffer[(status_x, status_y)].fg,
++        status_color(AgentStatus::Blocked, &state.config.palette)
++    );
+     let local_parent = state
+         .hits
+         .workspaces
+         .iter()
+         .find(|hit| hit.endpoint_id == ClientEndpointId::Local && hit.workspace_id == "ws_1")
+         .expect("local parent workspace");
+-    let (local_toggle, key) = local_parent
+-        .group_toggle
+-        .as_ref()
+-        .expect("local worktree group marker");
+-    assert_eq!(key, "repo");
+-    let buffer = frame.to_ratatui_buffer().expect("frame should reconstruct");
+-    assert_eq!(buffer[(local_toggle.x, local_toggle.y)].symbol(), "▸");
 -    assert!((local_parent.rect.x..local_parent.rect.right())
 -        .any(|x| buffer[(x, local_parent.rect.y)].fg == state.config.palette.red));
 +    assert!(
@@ -4181,7 +5111,59 @@ index f327f8c1..078d7795 100644
  
      assert!(state.activate_endpoint_projection(&remote_id));
      let mut remote_surface = surface();
-@@ -826,7 +848,7 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
+@@ -734,18 +770,17 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
+     state.chrome_drag = None;
+     state.workspace_press = None;
+ 
+-    let remote_toggle = state
++    let remote_repository = state
+         .hits
+-        .workspaces
++        .repositories
+         .iter()
+-        .find(|hit| hit.endpoint_id == remote_id && hit.workspace_id == "remote_ws_1")
+-        .and_then(|hit| hit.group_toggle.as_ref())
+-        .expect("remote worktree group marker")
+-        .0;
++        .find(|hit| hit.endpoint_id == remote_id)
++        .expect("remote repository heading")
++        .rect;
+     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+         kind: MouseEventKind::Down(MouseButton::Left),
+-        column: remote_toggle.x,
+-        row: remote_toggle.y,
++        column: remote_repository.x + 1,
++        row: remote_repository.y,
+         modifiers: KeyModifiers::empty(),
+     })]);
+     state.compose(100, 28).expect("both groups collapsed");
+@@ -755,18 +790,17 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
+         .iter()
+         .any(|hit| { hit.endpoint_id == remote_id && hit.workspace_id == "remote_ws_2" }));
+ 
+-    let local_toggle = state
++    let local_repository = state
+         .hits
+-        .workspaces
++        .repositories
+         .iter()
+-        .find(|hit| hit.endpoint_id == ClientEndpointId::Local && hit.workspace_id == "ws_1")
+-        .and_then(|hit| hit.group_toggle.as_ref())
+-        .expect("collapsed local group marker")
+-        .0;
++        .find(|hit| hit.endpoint_id == ClientEndpointId::Local)
++        .expect("collapsed local repository heading")
++        .rect;
+     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+         kind: MouseEventKind::Down(MouseButton::Left),
+-        column: local_toggle.x,
+-        row: local_toggle.y,
++        column: local_repository.x + 1,
++        row: local_repository.y,
+         modifiers: KeyModifiers::empty(),
+     })]);
+     state.compose(100, 28).expect("only remote group collapsed");
+@@ -826,7 +860,7 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
      let mut updated_surface = surface();
      updated_surface.projection_revision = 2;
      state.set_pane_surface(updated_surface);
@@ -4190,7 +5172,16 @@ index f327f8c1..078d7795 100644
      assert!(state.reveal_focused_workspace);
      state.compose(106, 20).expect("new workspace revealed");
      assert!(state
-@@ -899,7 +921,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+@@ -852,7 +886,7 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
+ }
+ 
+ #[test]
+-fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
++fn expanded_machine_sidebar_keeps_repository_tree_compact() {
+     let (mut state, remote_id) = state_with_remote();
+     state.config.spaces.row_gap = 1;
+ 
+@@ -899,7 +933,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
      assert_eq!(local_workspaces.len(), 2);
      assert_eq!(
          local_workspaces[1].rect.y,
@@ -4199,18 +5190,16 @@ index f327f8c1..078d7795 100644
      );
  
      let local_machine = state
-@@ -914,8 +936,8 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+@@ -914,7 +948,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
          .iter()
          .find(|hit| hit.endpoint_id == remote_id)
          .expect("remote machine");
 -    assert_eq!(local_workspaces[0].rect.y, local_machine.rect.bottom());
--    assert_eq!(remote_machine.rect.y, local_workspaces[1].rect.bottom());
 +    assert_eq!(local_workspaces[0].rect.y, local_machine.rect.bottom() + 1);
-+    assert_eq!(remote_machine.rect.y, local_workspaces[1].rect.bottom() + 1);
+     assert_eq!(remote_machine.rect.y, local_workspaces[1].rect.bottom());
  
      let remote_workspaces = state
-         .hits
-@@ -924,18 +946,21 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+@@ -924,25 +958,28 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
          .filter(|hit| hit.endpoint_id == remote_id)
          .collect::<Vec<_>>();
      assert_eq!(remote_workspaces.len(), 3);
@@ -4221,8 +5210,7 @@ index f327f8c1..078d7795 100644
 +    );
      assert_eq!(
          remote_workspaces[1].rect.y,
--        remote_workspaces[0].rect.bottom()
-+        remote_workspaces[0].rect.bottom() + 2
+         remote_workspaces[0].rect.bottom()
      );
      assert_eq!(
          remote_workspaces[2].rect.y,
@@ -4232,11 +5220,20 @@ index f327f8c1..078d7795 100644
  
      state.workspace_scroll = usize::MAX;
 -    state.compose(100, 18).expect("scrolled endpoint frame");
-+    state.compose(100, 12).expect("scrolled endpoint frame");
++    state.compose(100, 14).expect("exact-fit endpoint frame");
      let metrics = state
          .hits
          .workspace_scroll_metrics
-@@ -951,7 +976,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
+         .expect("workspace scroll metrics");
+-    assert!(metrics.max_offset_from_bottom > 0);
++    assert_eq!(metrics.max_offset_from_bottom, 0);
+     assert_eq!(metrics.offset_from_bottom, 0);
+-    assert_eq!(state.workspace_scroll, metrics.max_offset_from_bottom);
++    assert_eq!(state.workspace_scroll, 0);
+     let visible_remote = state
+         .hits
+         .workspaces
+@@ -951,7 +988,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
          .collect::<Vec<_>>();
      assert_eq!(visible_remote.len(), 3);
      let gap_y = visible_remote[1].rect.bottom();
@@ -4245,7 +5242,7 @@ index f327f8c1..078d7795 100644
      assert!(visible_remote[2].rect.bottom() <= state.hits.workspace_body.bottom());
      assert!(state
          .hits
-@@ -992,6 +1017,10 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
+@@ -992,6 +1029,10 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
          buffer[(workspace.x + 2, workspace.y)].bg,
          state.config.palette.active_row_bg
      );
@@ -4256,7 +5253,7 @@ index f327f8c1..078d7795 100644
  
      state.collapsed_endpoints.insert(endpoint_id.clone());
      let frame = state.compose(100, 28).expect("collapsed endpoint frame");
-@@ -1010,7 +1039,7 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
+@@ -1010,7 +1051,7 @@ fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
  }
  
  #[test]
@@ -4265,7 +5262,7 @@ index f327f8c1..078d7795 100644
      use crate::api::schema::AgentStatus;
      use crate::config::{AgentSidebarToken, StatusIndicatorStyle};
  
-@@ -1047,22 +1076,18 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
+@@ -1047,22 +1088,18 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -4287,8 +5284,8 @@ index f327f8c1..078d7795 100644
 -    assert!(click.actions.is_empty());
 +    assert!(text.contains(" ○"), "frame: {text}");
 +    assert!(text.contains(" ×"), "frame: {text}");
-+    assert!(!text.contains("└─"), "frame: {text}");
-+    assert!(!text.contains("├─"), "frame: {text}");
++    assert!(text.contains("└─ main"), "frame: {text}");
++    assert!(text.contains("└─ 1"), "frame: {text}");
 +    assert!(!text.contains("idle"), "frame: {text}");
 +    assert!(!text.contains("blocked"), "frame: {text}");
 +    assert!(!text.contains("local agent"), "frame: {text}");
@@ -4300,7 +5297,7 @@ index f327f8c1..078d7795 100644
  
      let buffer = frame
          .to_ratatui_buffer()
-@@ -1104,37 +1129,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
+@@ -1104,37 +1141,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view.clone()));
      state.set_test_endpoint_agent_view(&endpoint_id, Some(view));
  
@@ -4358,7 +5355,7 @@ index f327f8c1..078d7795 100644
  }
  
  #[test]
-@@ -1191,20 +1210,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
+@@ -1191,20 +1222,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
      });
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4389,7 +5386,7 @@ index f327f8c1..078d7795 100644
  }
  
  #[test]
-@@ -1247,20 +1262,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
+@@ -1247,20 +1274,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
          }),
      );
  
@@ -4421,7 +5418,7 @@ index f327f8c1..078d7795 100644
  }
  
  #[test]
-@@ -1333,19 +1345,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
+@@ -1333,19 +1357,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
      remote.agents = vec![agent("remote agent", AgentStatus::Idle, 1)];
      state.set_endpoint_snapshot(&endpoint_id, Box::new(remote));
  
@@ -4451,7 +5448,7 @@ index f327f8c1..078d7795 100644
  }
  
  #[test]
-@@ -1385,21 +1394,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1385,21 +1406,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
      }];
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -4485,7 +5482,7 @@ index f327f8c1..078d7795 100644
      );
  
      let mut outcome = ClientShellInput::default();
-@@ -1411,7 +1417,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1411,7 +1429,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: selected,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4494,7 +5491,7 @@ index f327f8c1..078d7795 100644
      ));
  }
  
-@@ -1509,39 +1515,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1509,39 +1527,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
      let mut local = snapshot();
      local.agents = vec![agent("local agent", AgentStatus::Idle, 2)];
      state.set_snapshot(Box::new(local));
@@ -4550,7 +5547,7 @@ index f327f8c1..078d7795 100644
      );
      let mut outcome = ClientShellInput::default();
      assert!(
-@@ -1552,7 +1551,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1552,7 +1563,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: activated,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -4559,7 +5556,7 @@ index f327f8c1..078d7795 100644
      ));
  }
  
-@@ -1895,7 +1894,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1895,7 +1906,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          previous_surface.projection_revision += 1;
          state.set_pane_surface(previous_surface);
          assert!(state.pending_pane_surface.is_some());
@@ -4568,7 +5565,7 @@ index f327f8c1..078d7795 100644
  
          state.mark_endpoint_disconnected(&endpoint_id);
          let mut reconnected = snapshot();
-@@ -1922,7 +1921,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1922,7 +1933,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          assert_eq!(state.pane_surface.as_ref().unwrap().projection_revision, 1);
          assert_eq!(state.pane_surface.as_ref().unwrap().surface_revision, 1);
          assert!(state.pending_pane_surface.is_none());
@@ -4577,7 +5574,7 @@ index f327f8c1..078d7795 100644
          assert!(state.compose(106, 20).is_some());
      }
  }
-@@ -1991,7 +1990,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
+@@ -1991,7 +2002,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
          Some(ClientEndpointStatus::Reconnecting)
      );
      assert!(text.contains("◐ reconnecting"), "frame: {text}");
@@ -4587,9 +5584,106 @@ index f327f8c1..078d7795 100644
      assert!(
          text.contains("LIVE"),
          "frozen surface should remain: {text}"
-diff --git c/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
+diff --git i/src/client/shell/tests/keybindings_settings.rs w/src/client/shell/tests/keybindings_settings.rs
+index dd60fe11..9e9099cb 100644
+--- i/src/client/shell/tests/keybindings_settings.rs
++++ w/src/client/shell/tests/keybindings_settings.rs
+@@ -1,31 +1,74 @@
+ use super::*;
+ 
+ #[test]
+-fn shell_new_controls_use_the_same_client_action_routes_as_keybinds() {
++fn sidebar_footer_only_opens_the_configured_todo_workspace() {
++    let binding = crate::config::CustomCommandKeybind {
++        bindings: crate::config::ActionKeybinds::direct("ctrl+n"),
++        label: "ctrl+n".into(),
++        command: "~/.config/herdr/scripts/tuxedo-workspace.sh".into(),
++        action: crate::config::CustomCommandAction::Shell,
++        description: Some("Open Todo workspace".into()),
++        width: None,
++        height: None,
++    };
++    let mut config = ClientShellConfig::from_config(&Config::default());
++    config
++        .keybinds
++        .keybinds
++        .custom_commands
++        .push(binding.clone());
++    let mut projected = snapshot();
++    projected
++        .commands
++        .push(crate::protocol::ClientShellCommand {
++            command_id: "cmd_todo".into(),
++            binding_label: binding.label.clone(),
++            binding_labels: binding.bindings.labels(),
++            action: crate::protocol::ClientShellCommandAction::Shell,
++            description: binding.description.clone(),
++        });
++    let mut state = ClientShellState::new(config);
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 20).expect("composed frame");
++
++    assert!(!state.hits.todo_launcher.is_empty());
++    assert!(state.hits.new_workspace.is_empty());
++    assert!(state.hits.global_launcher.is_empty());
++    assert!(state.hits.sidebar_toggle.is_empty());
++    let buffer = frame.to_ratatui_buffer().expect("sidebar footer buffer");
++    let footer = state.hits.todo_launcher;
++    let text = (footer.x..state.hits.sidebar_divider.x)
++        .map(|x| buffer[(x, footer.y)].symbol())
++        .collect::<String>();
++    assert_eq!(text.trim(), "todo");
++
++    let outcome =
++        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
++            kind: MouseEventKind::Down(MouseButton::Left),
++            column: footer.x + 1,
++            row: footer.y,
++            modifiers: KeyModifiers::empty(),
++        })]);
++    assert!(!state.popup_pending);
++    let [ClientShellAction::Endpoint { request, .. }] = &outcome.actions[..] else {
++        panic!("todo click should invoke the workspace command");
++    };
++    let crate::api::schema::Method::CommandInvoke(params) = &request.method else {
++        panic!("todo click should use command.invoke");
++    };
++    assert_eq!(params.command_id, "cmd_todo");
++}
++
++#[test]
++fn shell_new_tab_control_uses_the_same_client_action_route_as_keybinds() {
+     let mut config = Config::default();
+-    config.ui.prompt_new_workspace_name = false;
+     config.ui.prompt_new_tab_name = true;
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+     state.set_snapshot(Box::new(snapshot()));
+     state.set_pane_surface(surface());
+     state.compose(106, 20).expect("composed frame");
+ 
+-    let new_workspace = state.hits.new_workspace;
+-    let create_workspace =
+-        state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+-            kind: MouseEventKind::Down(MouseButton::Left),
+-            column: new_workspace.x + 1,
+-            row: new_workspace.y,
+-            modifiers: KeyModifiers::empty(),
+-        })]);
+-    let [ClientShellAction::Endpoint { request, .. }] = &create_workspace.actions[..] else {
+-        panic!("new workspace click should use the endpoint API");
+-    };
+-    assert!(matches!(
+-        request.method,
+-        crate::api::schema::Method::WorkspaceCreate(_)
+-    ));
+-
+     let new_tab = state.hits.new_tab;
+     let open_new_tab =
+         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
+diff --git i/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
 index c9f02278..0ec9d82f 100644
---- c/src/client/shell/tests/popup_focus_projection.rs
+--- i/src/client/shell/tests/popup_focus_projection.rs
 +++ w/src/client/shell/tests/popup_focus_projection.rs
 @@ -165,7 +165,7 @@ fn desktop_composition_keeps_shell_outside_origin_relative_surface() {
          })
@@ -4675,9 +5769,86 @@ index c9f02278..0ec9d82f 100644
  }
  
  #[test]
-diff --git c/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
+diff --git i/src/client/shell/tests/startup_overlays.rs w/src/client/shell/tests/startup_overlays.rs
+index 7107aa71..2e88ee92 100644
+--- i/src/client/shell/tests/startup_overlays.rs
++++ w/src/client/shell/tests/startup_overlays.rs
+@@ -656,18 +656,12 @@ fn update_ready_menu_opens_client_owned_release_notes_and_dismisses_by_version()
+     state.set_snapshot(Box::new(endpoint_snapshot.clone()));
+     state.set_pane_surface(surface());
+     let shell = state.compose(106, 30).expect("shell frame");
+-    assert_eq!(state.hits.global_launcher.width, 8);
+-    let launcher = state.hits.global_launcher;
++    assert!(state.hits.global_launcher.is_empty());
+     let shell_buffer = shell.to_ratatui_buffer().expect("shell buffer");
+-    let badge_x = launcher.right().saturating_sub(6);
+     assert_eq!(
+-        shell_buffer[(badge_x, launcher.y)].fg,
++        shell_buffer[(state.hits.todo_launcher.x + 1, state.hits.todo_launcher.y)].fg,
+         state.config.palette.accent
+     );
+-    assert_eq!(
+-        shell_buffer[(badge_x + 2, launcher.y)].fg,
+-        state.config.palette.overlay0
+-    );
+ 
+     state.sidebar_collapsed = true;
+     let collapsed = state.compose(106, 30).expect("collapsed update shell");
+@@ -871,7 +865,7 @@ fn update_ready_menu_opens_client_owned_release_notes_and_dismisses_by_version()
+     installed_surface.projection_revision = 2;
+     state.set_pane_surface(installed_surface);
+     state.compose(106, 30).expect("installed shell");
+-    assert_eq!(state.hits.global_launcher.width, 6);
++    assert!(state.hits.global_launcher.is_empty());
+     state.toggle_global_menu();
+     let installed = state.compose(106, 30).expect("installed menu");
+     let installed_text = installed
+@@ -1017,20 +1011,21 @@ fn coalesced_release_notes_open_and_mouse_uses_current_geometry() {
+ }
+ 
+ #[test]
+-fn outdated_integration_badges_launcher_settings_and_settings_tab() {
++fn outdated_integration_badges_settings_and_settings_tab() {
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+     let mut endpoint_snapshot = snapshot();
+     endpoint_snapshot.integration_updates_available = true;
+     state.set_snapshot(Box::new(endpoint_snapshot));
+     state.set_pane_surface(surface());
+     let shell = state.compose(106, 30).expect("integration attention shell");
+-    assert_eq!(state.hits.global_launcher.width, 8);
++    assert!(state.hits.global_launcher.is_empty());
+     let shell_text = shell
+         .cells
+         .iter()
+         .map(|cell| cell.symbol.as_str())
+         .collect::<String>();
+-    assert!(shell_text.contains("● menu"));
++    assert!(!shell_text.contains("● menu"));
++    assert!(shell_text.contains("todo"));
+ 
+     state.toggle_global_menu();
+     let menu = state.compose(106, 30).expect("integration attention menu");
+@@ -1083,7 +1078,7 @@ fn combined_update_and_integration_attention_preserves_both_badges() {
+     state.set_snapshot(Box::new(endpoint_snapshot));
+     state.set_pane_surface(surface());
+     state.compose(106, 30).expect("combined attention shell");
+-    assert_eq!(state.hits.global_launcher.width, 8);
++    assert!(state.hits.global_launcher.is_empty());
+ 
+     state.toggle_global_menu();
+     let menu = state.compose(106, 30).expect("combined attention menu");
+@@ -1120,7 +1115,7 @@ fn current_release_notes_use_whats_new_without_attention_badge() {
+     state.set_snapshot(Box::new(endpoint_snapshot));
+     state.set_pane_surface(surface());
+     state.compose(106, 30).expect("shell frame");
+-    assert_eq!(state.hits.global_launcher.width, 6);
++    assert!(state.hits.global_launcher.is_empty());
+     state.toggle_global_menu();
+     let menu = state.compose(106, 30).expect("what's new menu");
+     let text = menu
+diff --git i/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
 index c117a319..bf151e84 100644
---- c/src/client/shell/tests/workspace_navigation.rs
+--- i/src/client/shell/tests/workspace_navigation.rs
 +++ w/src/client/shell/tests/workspace_navigation.rs
 @@ -71,6 +71,15 @@ fn workspace_rect(state: &ClientShellState, endpoint: &ClientEndpointId, workspa
          .expect("visible workspace")
@@ -4836,9 +6007,9 @@ index c117a319..bf151e84 100644
      }
  }
  
-diff --git c/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
+diff --git i/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
 index 19fa1a39..b5c8de24 100644
---- c/src/client/shell/workspace_navigation.rs
+--- i/src/client/shell/workspace_navigation.rs
 +++ w/src/client/shell/workspace_navigation.rs
 @@ -108,26 +108,13 @@ impl ClientShellState {
              let Some(snapshot) = endpoint.snapshot.as_deref() else {
@@ -4872,9 +6043,9 @@ index 19fa1a39..b5c8de24 100644
              for entry in entries {
                  targets.push(WorkspaceNavigationTarget {
                      endpoint_id: endpoint.endpoint_id.clone(),
-diff --git c/src/ui.rs w/src/ui.rs
+diff --git i/src/ui.rs w/src/ui.rs
 index 141e09d3..a4f38096 100644
---- c/src/ui.rs
+--- i/src/ui.rs
 +++ w/src/ui.rs
 @@ -32,9 +32,8 @@ pub(crate) use self::scrollbar::{
      scrollbar_thumb_grab_offset,
@@ -4888,9 +6059,9 @@ index 141e09d3..a4f38096 100644
  };
  use self::status::copy_feedback_rect;
  pub(crate) use self::status::{render_config_diagnostic_buffer, render_copy_feedback_buffer};
-diff --git c/src/ui/sidebar.rs w/src/ui/sidebar.rs
+diff --git i/src/ui/sidebar.rs w/src/ui/sidebar.rs
 index cbf6f1a9..86ca750f 100644
---- c/src/ui/sidebar.rs
+--- i/src/ui/sidebar.rs
 +++ w/src/ui/sidebar.rs
 @@ -1,7 +1,6 @@
  mod tokens;

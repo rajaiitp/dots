@@ -88,14 +88,12 @@ toggle_sidebar = "prefix+b"
 [keys.indexed]
 tabs = "ctrl"
 
-# Ctrl-N opens Tuxedo in a modal popup; pressing Ctrl-N again closes it.
+# Ctrl-N focuses or creates the dedicated Todo workspace.
 [[keys.command]]
 key = "ctrl+n"
-type = "popup"
-command = "~/.config/herdr/scripts/tuxedo-popup.py"
-width = "80%"
-height = "80%"
-description = "Toggle Tuxedo notes popup"
+type = "shell"
+command = "~/.config/herdr/scripts/tuxedo-workspace.sh"
+description = "Open Todo workspace"
 
 # Herdr Sesh workspace picker and previous-workspace action.
 [[keys.command]]

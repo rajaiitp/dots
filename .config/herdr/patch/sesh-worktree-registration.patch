@@ -1,0 +1,553 @@
+diff --git i/internal/connect/connect.go w/internal/connect/connect.go
+index 24de32e..757b2aa 100644
+--- i/internal/connect/connect.go
++++ w/internal/connect/connect.go
+@@ -3,8 +3,10 @@ package connect
+ import (
+ 	"context"
+ 	"errors"
++	"fmt"
+ 	"os"
+ 
++	"github.com/fullerzz/herdr-plugin-sesh/internal/gitcheckout"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/herdr"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/model"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/sources"
+@@ -12,9 +14,10 @@ import (
+ )
+ 
+ type Options struct {
+-	NoFocus bool
+-	Namer   func(context.Context, string) string
+-	Warnf   func(string, ...any)
++	NoFocus         bool
++	Namer           func(context.Context, string) string
++	Warnf           func(string, ...any)
++	ResolveCheckout func(context.Context, string) (gitcheckout.Checkout, bool, error)
+ }
+ 
+ type Result struct {
+@@ -40,7 +43,38 @@ func Connect(ctx context.Context, client herdr.Client, candidates []model.Sessio
+ 	if !ok {
+ 		return Result{}, errors.New("no matching session")
+ 	}
++	var checkout gitcheckout.Checkout
++	isCheckout := false
++	if match.Path != "" {
++		resolver := opts.ResolveCheckout
++		if resolver == nil {
++			resolver = gitcheckout.Resolve
++		}
++		var err error
++		checkout, isCheckout, err = resolver(ctx, match.Path)
++		if err != nil {
++			return Result{}, fmt.Errorf("resolve Git checkout: %w", err)
++		}
++		if isCheckout {
++			match.Path = checkout.Path
++		}
++	}
+ 	if match.WorkspaceID != "" {
++		if isCheckout {
++			opened, err := client.WorktreeOpen(ctx, herdr.WorktreeOpenRequest{
++				CWD: checkout.RepoRoot, Path: checkout.Path, Label: match.Name,
++			})
++			if err != nil {
++				return Result{}, fmt.Errorf("register existing worktree workspace: %w", err)
++			}
++			if opened.Workspace.ID != match.WorkspaceID {
++				return Result{}, fmt.Errorf(
++					"worktree workspace mismatch: selected %s, registered %s",
++					match.WorkspaceID,
++					opened.Workspace.ID,
++				)
++			}
++		}
+ 		if !opts.NoFocus {
+ 			if err := client.WorkspaceFocus(ctx, match.WorkspaceID); err != nil {
+ 				return Result{}, err
+@@ -49,11 +83,37 @@ func Connect(ctx context.Context, client herdr.Client, candidates []model.Sessio
+ 		return Result{Session: match}, nil
+ 	}
+ 	initialTab := startup.PlanInitialTab(match)
+-	req := herdr.WorkspaceCreateRequest{CWD: match.Path, Label: match.Name, Focus: !opts.NoFocus, Env: initialTab.Env}
++	req := herdr.WorkspaceCreateRequest{
++		CWD: match.Path, Label: match.Name, Focus: !opts.NoFocus && !isCheckout, Env: initialTab.Env,
++	}
+ 	w, err := client.WorkspaceCreate(ctx, req)
+ 	if err != nil {
+ 		return Result{}, err
+ 	}
++	if isCheckout {
++		opened, openErr := client.WorktreeOpen(ctx, herdr.WorktreeOpenRequest{
++			CWD: checkout.RepoRoot, Path: checkout.Path, Label: match.Name,
++		})
++		if openErr != nil {
++			return Result{}, rollbackWorkspace(ctx, client, w.ID, fmt.Errorf("register worktree workspace: %w", openErr))
++		}
++		if opened.Workspace.ID != w.ID {
++			if closeErr := client.WorkspaceClose(ctx, w.ID); closeErr != nil {
++				return Result{}, errors.Join(
++					fmt.Errorf("worktree workspace mismatch: created %s, registered %s", w.ID, opened.Workspace.ID),
++					fmt.Errorf("close duplicate workspace %s: %w", w.ID, closeErr),
++				)
++			}
++			match.WorkspaceID = opened.Workspace.ID
++			if !opts.NoFocus {
++				if err := client.WorkspaceFocus(ctx, opened.Workspace.ID); err != nil {
++					return Result{}, err
++				}
++			}
++			sources.AddPath(ctx, match.Path)
++			return Result{Session: match}, nil
++		}
++	}
+ 	match.WorkspaceID = w.ID
+ 	sources.AddPath(ctx, match.Path)
+ 	if err := startup.Apply(ctx, client, startup.Plan{WorkspaceID: w.ID, Session: match, Focus: !opts.NoFocus, InitialTab: initialTab, Warnf: opts.Warnf}); err != nil {
+@@ -62,6 +122,13 @@ func Connect(ctx context.Context, client herdr.Client, candidates []model.Sessio
+ 	return Result{Session: match, Created: true}, nil
+ }
+ 
++func rollbackWorkspace(ctx context.Context, client herdr.Client, workspaceID string, cause error) error {
++	if err := client.WorkspaceClose(ctx, workspaceID); err != nil {
++		return errors.Join(cause, fmt.Errorf("close workspace %s after registration failure: %w", workspaceID, err))
++	}
++	return cause
++}
++
+ func Resolve(candidates []model.Session, target string) (model.Session, bool) {
+ 	for _, s := range candidates {
+ 		if s.WorkspaceID == target || s.Name == target || s.Path == target {
+diff --git i/internal/connect/connect_test.go w/internal/connect/connect_test.go
+index 63cb2ae..fd1aebe 100644
+--- i/internal/connect/connect_test.go
++++ w/internal/connect/connect_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"testing"
+ 
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/config"
++	"github.com/fullerzz/herdr-plugin-sesh/internal/gitcheckout"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/herdr"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/model"
+ 	"github.com/fullerzz/herdr-plugin-sesh/internal/sources"
+@@ -17,6 +18,12 @@ import (
+ 
+ type failingPaneFocusClient struct{ herdr.FakeClient }
+ 
++func checkoutResolver(repoRoot, checkoutPath string) func(context.Context, string) (gitcheckout.Checkout, bool, error) {
++	return func(context.Context, string) (gitcheckout.Checkout, bool, error) {
++		return gitcheckout.Checkout{RepoRoot: repoRoot, Path: checkoutPath}, true, nil
++	}
++}
++
+ func (f *failingPaneFocusClient) PaneFocus(ctx context.Context, id string) error {
+ 	_ = f.FakeClient.PaneFocus(ctx, id)
+ 	return errors.New("focus socket unavailable")
+@@ -96,6 +103,57 @@ func TestConnectFocusesExistingWorkspace(t *testing.T) {
+ 	assert.Empty(t, f.CreatedWorkspaces)
+ }
+ 
++func TestConnectRegistersExistingGitCheckoutBeforeFocus(t *testing.T) {
++	const checkout = "/worktrees/project/mac"
++	f := &herdr.FakeClient{Workspaces: []herdr.Workspace{{ID: "ws1", CWD: checkout}}}
++	session := model.Session{Name: "mac", Path: checkout, WorkspaceID: "ws1"}
++	result, err := Connect(context.Background(), f, []model.Session{session}, "mac", Options{
++		ResolveCheckout: checkoutResolver("/repos/project", checkout),
++	})
++	require.NoError(t, err)
++	assert.False(t, result.Created)
++	assert.Equal(t, []herdr.WorktreeOpenRequest{{
++		CWD: "/repos/project", Path: checkout, Label: "mac",
++	}}, f.OpenedWorktrees)
++	assert.Equal(t, []string{"ws1"}, f.FocusedWorkspaces)
++	require.NotNil(t, f.Workspaces[0].Worktree)
++	assert.Equal(t, checkout, f.Workspaces[0].Worktree.CheckoutPath)
++}
++
++func TestConnectRegistersNewGitCheckoutAndAppliesLayout(t *testing.T) {
++	const checkout = "/worktrees/project/mac"
++	f := &herdr.FakeClient{}
++	session := model.Session{
++		Name: "mac", Path: checkout, StartupCommand: "pi",
++		WindowConfigs: []model.WindowConfig{{Name: "tuicr", StartupScript: "tuicr"}},
++	}
++	result, err := Connect(context.Background(), f, []model.Session{session}, "mac", Options{
++		ResolveCheckout: checkoutResolver("/repos/project", checkout),
++	})
++	require.NoError(t, err)
++	assert.True(t, result.Created)
++	require.Len(t, f.CreatedWorkspaces, 1)
++	assert.False(t, f.CreatedWorkspaces[0].Focus)
++	assert.Equal(t, []herdr.WorktreeOpenRequest{{
++		CWD: "/repos/project", Path: checkout, Label: "mac",
++	}}, f.OpenedWorktrees)
++	assert.Contains(t, f.PaneRuns, "initial-pane:pi")
++	require.Len(t, f.CreatedTabs, 1)
++	assert.Equal(t, "tuicr", f.CreatedTabs[0].Label)
++	assert.Equal(t, checkout, f.CreatedTabs[0].CWD)
++}
++
++func TestConnectRollsBackWorkspaceWhenWorktreeRegistrationFails(t *testing.T) {
++	const checkout = "/worktrees/project/mac"
++	f := &herdr.FakeClient{WorktreeOpenErr: errors.New("registration failed")}
++	_, err := Connect(context.Background(), f, []model.Session{{Name: "mac", Path: checkout}}, "mac", Options{
++		ResolveCheckout: checkoutResolver("/repos/project", checkout),
++	})
++	require.ErrorContains(t, err, "register worktree workspace")
++	assert.Equal(t, []string{"new-workspace"}, f.ClosedWorkspaces)
++	assert.Empty(t, f.Workspaces)
++}
++
+ func TestConnectCreatesWorkspaceForConfigSession(t *testing.T) {
+ 	f := &herdr.FakeClient{}
+ 	res, err := Connect(context.Background(), f, []model.Session{{Source: "config", Name: "api", Path: "/tmp/api"}}, "api", Options{})
+diff --git i/internal/gitcheckout/checkout.go w/internal/gitcheckout/checkout.go
+new file mode 100644
+index 0000000..b7d40a7
+--- /dev/null
++++ w/internal/gitcheckout/checkout.go
+@@ -0,0 +1,80 @@
++package gitcheckout
++
++import (
++	"bufio"
++	"context"
++	"errors"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++)
++
++type Checkout struct {
++	RepoRoot string
++	Path     string
++}
++
++func Resolve(ctx context.Context, path string) (Checkout, bool, error) {
++	selected, err := canonicalPath(path)
++	if err != nil {
++		return Checkout{}, false, nil
++	}
++	rootOutput, err := exec.CommandContext(ctx, "git", "-C", selected, "rev-parse", "--show-toplevel").Output()
++	if err != nil {
++		if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
++			return Checkout{}, false, ctx.Err()
++		}
++		return Checkout{}, false, nil
++	}
++	checkoutRoot, err := canonicalPath(strings.TrimSpace(string(rootOutput)))
++	if err != nil || checkoutRoot != selected {
++		return Checkout{}, false, nil
++	}
++	worktrees, err := exec.CommandContext(ctx, "git", "-C", checkoutRoot, "worktree", "list", "--porcelain").Output()
++	if err != nil {
++		if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
++			return Checkout{}, false, ctx.Err()
++		}
++		return Checkout{}, false, nil
++	}
++	repoRoot := firstWorktreePath(string(worktrees))
++	if repoRoot == "" {
++		return Checkout{}, false, nil
++	}
++	repoRoot, err = canonicalPath(repoRoot)
++	if err != nil {
++		return Checkout{}, false, nil
++	}
++	return Checkout{RepoRoot: repoRoot, Path: checkoutRoot}, true, nil
++}
++
++func canonicalPath(path string) (string, error) {
++	absolute, err := filepath.Abs(path)
++	if err != nil {
++		return "", err
++	}
++	resolved, err := filepath.EvalSymlinks(absolute)
++	if err != nil {
++		return "", err
++	}
++	info, err := os.Stat(resolved)
++	if err != nil {
++		return "", err
++	}
++	if !info.IsDir() {
++		return "", errors.New("path is not a directory")
++	}
++	return filepath.Clean(resolved), nil
++}
++
++func firstWorktreePath(output string) string {
++	scanner := bufio.NewScanner(strings.NewReader(output))
++	for scanner.Scan() {
++		line := scanner.Text()
++		if strings.HasPrefix(line, "worktree ") {
++			return strings.TrimPrefix(line, "worktree ")
++		}
++	}
++	return ""
++}
+diff --git i/internal/gitcheckout/checkout_test.go w/internal/gitcheckout/checkout_test.go
+new file mode 100644
+index 0000000..e561560
+--- /dev/null
++++ w/internal/gitcheckout/checkout_test.go
+@@ -0,0 +1,59 @@
++package gitcheckout
++
++import (
++	"context"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestResolveMainAndLinkedWorktree(t *testing.T) {
++	repo := filepath.Join(t.TempDir(), "repo")
++	require.NoError(t, os.Mkdir(repo, 0o755))
++	runGit(t, repo, "init", "-b", "main")
++	require.NoError(t, os.WriteFile(filepath.Join(repo, "tracked"), []byte("one\n"), 0o600))
++	runGit(t, repo, "add", "tracked")
++	runGit(t, repo, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "initial")
++	linked := filepath.Join(t.TempDir(), "linked")
++	runGit(t, repo, "worktree", "add", "-b", "feature/test", linked)
++
++	mainCheckout, ok, err := Resolve(context.Background(), repo)
++	require.NoError(t, err)
++	require.True(t, ok)
++	assert.Equal(t, repo, mainCheckout.RepoRoot)
++	assert.Equal(t, repo, mainCheckout.Path)
++
++	linkedCheckout, ok, err := Resolve(context.Background(), linked)
++	require.NoError(t, err)
++	require.True(t, ok)
++	assert.Equal(t, repo, linkedCheckout.RepoRoot)
++	assert.Equal(t, linked, linkedCheckout.Path)
++}
++
++func TestResolveRejectsNestedAndNonGitDirectories(t *testing.T) {
++	repo := filepath.Join(t.TempDir(), "repo")
++	require.NoError(t, os.Mkdir(repo, 0o755))
++	runGit(t, repo, "init", "-b", "main")
++	nested := filepath.Join(repo, "nested")
++	require.NoError(t, os.Mkdir(nested, 0o755))
++
++	_, ok, err := Resolve(context.Background(), nested)
++	require.NoError(t, err)
++	assert.False(t, ok)
++
++	plain := t.TempDir()
++	_, ok, err = Resolve(context.Background(), plain)
++	require.NoError(t, err)
++	assert.False(t, ok)
++}
++
++func runGit(t *testing.T, dir string, args ...string) {
++	t.Helper()
++	command := exec.Command("git", append([]string{"-C", dir}, args...)...)
++	output, err := command.CombinedOutput()
++	require.NoError(t, err, "%s", output)
++}
+diff --git i/internal/herdr/client.go w/internal/herdr/client.go
+index 0428f1d..7d44384 100644
+--- i/internal/herdr/client.go
++++ w/internal/herdr/client.go
+@@ -116,6 +116,15 @@ type TabCreateRequest struct {
+ 	Env                     map[string]string
+ 	Focus                   bool
+ }
++type WorktreeOpenRequest struct {
++	CWD, Path, Label string
++	Focus            bool
++}
++type WorktreeOpenResult struct {
++	Workspace   Workspace
++	RootPane    Pane
++	AlreadyOpen bool
++}
+ 
+ // PaneSplitRequest never focuses the new pane. Ratio uses Herdr's semantics:
+ // the split pane's (first child's) share; zero leaves Herdr's default.
+@@ -128,7 +137,9 @@ type PaneSplitRequest struct {
+ type Client interface {
+ 	WorkspaceList(context.Context) ([]Workspace, error)
+ 	WorkspaceCreate(context.Context, WorkspaceCreateRequest) (Workspace, error)
++	WorkspaceClose(context.Context, string) error
+ 	WorkspaceFocus(context.Context, string) error
++	WorktreeOpen(context.Context, WorktreeOpenRequest) (WorktreeOpenResult, error)
+ 	TabList(context.Context, string) ([]Tab, error)
+ 	TabCreate(context.Context, TabCreateRequest) (Tab, error)
+ 	TabFocus(context.Context, string) error
+@@ -308,6 +319,36 @@ func (c *CLIClient) WorkspaceClose(ctx context.Context, id string) error {
+ 	_, err := c.run(ctx, "workspace", "close", id)
+ 	return err
+ }
++func (c *CLIClient) WorktreeOpen(ctx context.Context, r WorktreeOpenRequest) (WorktreeOpenResult, error) {
++	args := []string{"worktree", "open", "--cwd", r.CWD, "--path", r.Path, "--label", r.Label}
++	if !r.Focus {
++		args = append(args, "--no-focus")
++	}
++	out, err := c.run(ctx, args...)
++	if err != nil {
++		return WorktreeOpenResult{}, err
++	}
++	raw, _, err := responseJSON(out, "worktree open")
++	if err != nil {
++		return WorktreeOpenResult{}, err
++	}
++	var result struct {
++		Workspace   Workspace `json:"workspace"`
++		RootPane    Pane      `json:"root_pane"`
++		AlreadyOpen bool      `json:"already_open"`
++	}
++	if err := json.Unmarshal(raw, &result); err != nil {
++		return WorktreeOpenResult{}, fmt.Errorf("decode herdr worktree open JSON: %w", err)
++	}
++	if result.Workspace.ID == "" {
++		return WorktreeOpenResult{}, errors.New("herdr worktree open returned no workspace")
++	}
++	return WorktreeOpenResult{
++		Workspace:   result.Workspace,
++		RootPane:    result.RootPane,
++		AlreadyOpen: result.AlreadyOpen,
++	}, nil
++}
+ func (c *CLIClient) TabList(ctx context.Context, wid string) ([]Tab, error) {
+ 	args := []string{"tab", "list"}
+ 	if wid != "" {
+diff --git i/internal/herdr/client_test.go w/internal/herdr/client_test.go
+index a20f69a..395587a 100644
+--- i/internal/herdr/client_test.go
++++ w/internal/herdr/client_test.go
+@@ -17,6 +17,9 @@ type recRunner struct{ calls [][]string }
+ 
+ func (r *recRunner) Run(_ context.Context, bin string, args ...string) ([]byte, []byte, error) {
+ 	r.calls = append(r.calls, append([]string{bin}, args...))
++	if len(args) >= 2 && args[0] == "worktree" && args[1] == "open" {
++		return []byte(`{"result":{"already_open":true,"root_pane":{"pane_id":"p1"},"workspace":{"workspace_id":"ws1","label":"api"}}}`), nil, nil
++	}
+ 	return []byte(`{"id":"ws1","label":"api","cwd":"/tmp/api"}`), nil, nil
+ }
+ func TestCLIClientConstructsWorkspaceCreate(t *testing.T) {
+@@ -48,6 +51,33 @@ func TestCLIClientConstructsWorkspaceClose(t *testing.T) {
+ 	assert.Equal(t, want, rr.calls)
+ }
+ 
++func TestCLIClientConstructsWorktreeOpenWithoutFocus(t *testing.T) {
++	rr := &recRunner{}
++	c := &CLIClient{Bin: "/bin/herdr", Runner: rr}
++	result, err := c.WorktreeOpen(context.Background(), WorktreeOpenRequest{
++		CWD: "/repo", Path: "/worktrees/api", Label: "api",
++	})
++	require.NoError(t, err)
++	assert.True(t, result.AlreadyOpen)
++	assert.Equal(t, "ws1", result.Workspace.ID)
++	assert.Equal(t, "p1", result.RootPane.ID)
++	assert.Equal(t, [][]string{{
++		"/bin/herdr", "worktree", "open", "--cwd", "/repo", "--path", "/worktrees/api", "--label", "api", "--no-focus",
++	}}, rr.calls)
++}
++
++func TestCLIClientConstructsFocusedWorktreeOpen(t *testing.T) {
++	rr := &recRunner{}
++	c := &CLIClient{Bin: "/bin/herdr", Runner: rr}
++	_, err := c.WorktreeOpen(context.Background(), WorktreeOpenRequest{
++		CWD: "/repo", Path: "/worktrees/api", Label: "api", Focus: true,
++	})
++	require.NoError(t, err)
++	assert.Equal(t, [][]string{{
++		"/bin/herdr", "worktree", "open", "--cwd", "/repo", "--path", "/worktrees/api", "--label", "api",
++	}}, rr.calls)
++}
++
+ func TestCLIClientDecodesWorkspaceListEnvelope(t *testing.T) {
+ 	c := &CLIClient{Bin: "/bin/herdr", Runner: fixedRunner{stdout: []byte(`{"result":{"workspaces":[{"workspace_id":"w1","label":"api","agent_status":"working"}]}}`)}}
+ 	got, err := c.WorkspaceList(context.Background())
+diff --git i/internal/herdr/fake_client.go w/internal/herdr/fake_client.go
+index 5e10f82..0680665 100644
+--- i/internal/herdr/fake_client.go
++++ w/internal/herdr/fake_client.go
+@@ -12,6 +12,8 @@ type FakeClient struct {
+ 	Panes             []Pane
+ 	CreatedWorkspaces []WorkspaceCreateRequest
+ 	CreatedTabs       []TabCreateRequest
++	OpenedWorktrees   []WorktreeOpenRequest
++	ClosedWorkspaces  []string
+ 	FocusedWorkspaces []string
+ 	FocusedTabs       []string
+ 	FocusedPanes      []string
+@@ -23,8 +25,9 @@ type FakeClient struct {
+ 	SplitErrAt    int
+ 	OpenedPlugins []string
+ 	// Waits records "pane:match"; WaitErr fails every wait.
+-	Waits   []string
+-	WaitErr error
++	Waits           []string
++	WaitErr         error
++	WorktreeOpenErr error
+ 	// Ops records tab creation, runs, splits, waits, and pane focus in call order.
+ 	Ops []string
+ }
+@@ -38,10 +41,57 @@ func (f *FakeClient) WorkspaceCreate(_ context.Context, r WorkspaceCreateRequest
+ 	f.Panes = append(f.Panes, Pane{ID: "initial-pane", WorkspaceID: w.ID, TabID: w.ActiveTabID, CWD: r.CWD})
+ 	return w, nil
+ }
++func (f *FakeClient) WorkspaceClose(_ context.Context, id string) error {
++	f.ClosedWorkspaces = append(f.ClosedWorkspaces, id)
++	for index, workspace := range f.Workspaces {
++		if workspace.ID == id {
++			f.Workspaces = append(f.Workspaces[:index], f.Workspaces[index+1:]...)
++			break
++		}
++	}
++	return nil
++}
+ func (f *FakeClient) WorkspaceFocus(_ context.Context, id string) error {
+ 	f.FocusedWorkspaces = append(f.FocusedWorkspaces, id)
+ 	return nil
+ }
++func (f *FakeClient) WorktreeOpen(_ context.Context, r WorktreeOpenRequest) (WorktreeOpenResult, error) {
++	f.OpenedWorktrees = append(f.OpenedWorktrees, r)
++	if f.WorktreeOpenErr != nil {
++		return WorktreeOpenResult{}, f.WorktreeOpenErr
++	}
++	for index := range f.Workspaces {
++		workspace := &f.Workspaces[index]
++		if workspace.CWD != r.Path && workspace.ForegroundCWD != r.Path {
++			continue
++		}
++		workspace.Worktree = &Worktree{
++			CheckoutPath:     r.Path,
++			IsLinkedWorktree: r.CWD != r.Path,
++			RepoKey:          r.CWD + "/.git",
++			RepoName:         r.Label,
++			RepoRoot:         r.CWD,
++		}
++		return WorktreeOpenResult{Workspace: *workspace, AlreadyOpen: true}, nil
++	}
++	workspace := Workspace{
++		ID:          "worktree-workspace",
++		Label:       r.Label,
++		CWD:         r.Path,
++		ActiveTabID: "worktree-tab",
++		Worktree: &Worktree{
++			CheckoutPath:     r.Path,
++			IsLinkedWorktree: r.CWD != r.Path,
++			RepoKey:          r.CWD + "/.git",
++			RepoName:         r.Label,
++			RepoRoot:         r.CWD,
++		},
++	}
++	pane := Pane{ID: "worktree-pane", WorkspaceID: workspace.ID, TabID: workspace.ActiveTabID, CWD: r.Path}
++	f.Workspaces = append(f.Workspaces, workspace)
++	f.Panes = append(f.Panes, pane)
++	return WorktreeOpenResult{Workspace: workspace, RootPane: pane}, nil
++}
+ func (f *FakeClient) TabList(context.Context, string) ([]Tab, error) { return f.Tabs, nil }
+ func (f *FakeClient) TabCreate(_ context.Context, r TabCreateRequest) (Tab, error) {
+ 	f.CreatedTabs = append(f.CreatedTabs, r)
