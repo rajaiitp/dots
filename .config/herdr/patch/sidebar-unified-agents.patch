@@ -1,3 +1,1425 @@
+diff --git i/src/api/event_hub.rs w/src/api/event_hub.rs
+index 29843313..962b7ad7 100644
+--- i/src/api/event_hub.rs
++++ w/src/api/event_hub.rs
+@@ -1,14 +1,27 @@
+ #[derive(Clone, Default)]
+ pub struct EventHub {
+-    inner: std::sync::Arc<std::sync::Mutex<EventHubState>>,
++    inner: std::sync::Arc<EventHubInner>,
++}
++
++#[derive(Default)]
++struct EventHubInner {
++    state: std::sync::Mutex<EventHubState>,
++    changed: std::sync::Condvar,
+ }
+ 
+ #[derive(Default)]
+ struct EventHubState {
+     next_sequence: u64,
++    wake_generation: u64,
+     events: Vec<(u64, crate::api::schema::EventEnvelope)>,
+ }
+ 
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub(super) enum EventWaitOutcome {
++    Changed(u64),
++    TimedOut,
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub(super) enum EventHistoryError {
+     Lost,
+@@ -19,20 +32,76 @@ impl EventHub {
+     const MAX_EVENTS: usize = 512;
+ 
+     pub fn push(&self, event: crate::api::schema::EventEnvelope) {
+-        let Ok(mut state) = self.inner.lock() else {
++        let Ok(mut state) = self.inner.state.lock() else {
+             return;
+         };
+         state.next_sequence += 1;
++        state.wake_generation += 1;
+         let sequence = state.next_sequence;
+         state.events.push((sequence, event));
+         let overflow = state.events.len().saturating_sub(Self::MAX_EVENTS);
+         if overflow > 0 {
+             state.events.drain(0..overflow);
+         }
++        drop(state);
++        self.inner.changed.notify_all();
++    }
++
++    pub(super) fn wake_all(&self) {
++        let Ok(mut state) = self.inner.state.lock() else {
++            return;
++        };
++        state.wake_generation += 1;
++        drop(state);
++        self.inner.changed.notify_all();
++    }
++
++    pub(super) fn wake_generation(&self) -> u64 {
++        self.inner
++            .state
++            .lock()
++            .map(|state| state.wake_generation)
++            .unwrap_or_default()
++    }
++
++    pub(super) fn wait_for_change(
++        &self,
++        wake_generation: u64,
++        deadline: Option<std::time::Instant>,
++    ) -> Result<EventWaitOutcome, EventHistoryError> {
++        let mut state = self
++            .inner
++            .state
++            .lock()
++            .map_err(|_| EventHistoryError::Unavailable)?;
++        while state.wake_generation == wake_generation {
++            if let Some(deadline) = deadline {
++                let Some(remaining) = deadline.checked_duration_since(std::time::Instant::now())
++                else {
++                    return Ok(EventWaitOutcome::TimedOut);
++                };
++                let (next, timeout) = self
++                    .inner
++                    .changed
++                    .wait_timeout(state, remaining)
++                    .map_err(|_| EventHistoryError::Unavailable)?;
++                state = next;
++                if timeout.timed_out() && state.wake_generation == wake_generation {
++                    return Ok(EventWaitOutcome::TimedOut);
++                }
++            } else {
++                state = self
++                    .inner
++                    .changed
++                    .wait(state)
++                    .map_err(|_| EventHistoryError::Unavailable)?;
++            }
++        }
++        Ok(EventWaitOutcome::Changed(state.wake_generation))
+     }
+ 
+     pub fn events_after(&self, sequence: u64) -> Vec<(u64, crate::api::schema::EventEnvelope)> {
+-        let Ok(state) = self.inner.lock() else {
++        let Ok(state) = self.inner.state.lock() else {
+             return Vec::new();
+         };
+         state
+@@ -49,6 +118,7 @@ impl EventHub {
+     ) -> Result<Vec<(u64, crate::api::schema::EventEnvelope)>, EventHistoryError> {
+         let state = self
+             .inner
++            .state
+             .lock()
+             .map_err(|_| EventHistoryError::Unavailable)?;
+         if state
+@@ -67,7 +137,7 @@ impl EventHub {
+     }
+ 
+     pub fn current_sequence(&self) -> u64 {
+-        let Ok(state) = self.inner.lock() else {
++        let Ok(state) = self.inner.state.lock() else {
+             return 0;
+         };
+         state.next_sequence
+@@ -111,11 +181,41 @@ mod tests {
+             .is_empty());
+     }
+ 
++    #[test]
++    fn wait_for_change_wakes_for_events_and_explicit_cancellation() {
++        let hub = EventHub::default();
++        let initial = hub.wake_generation();
++        hub.push(event());
++        assert_eq!(
++            hub.wait_for_change(initial, None).unwrap(),
++            EventWaitOutcome::Changed(initial + 1)
++        );
++
++        let after_event = hub.wake_generation();
++        hub.wake_all();
++        assert_eq!(
++            hub.wait_for_change(after_event, None).unwrap(),
++            EventWaitOutcome::Changed(after_event + 1)
++        );
++    }
++
++    #[test]
++    fn wait_for_change_uses_deadline_without_polling() {
++        let hub = EventHub::default();
++        let outcome = hub
++            .wait_for_change(
++                hub.wake_generation(),
++                Some(std::time::Instant::now() + std::time::Duration::from_millis(1)),
++            )
++            .unwrap();
++        assert_eq!(outcome, EventWaitOutcome::TimedOut);
++    }
++
+     #[test]
+     fn checked_history_reports_unavailable_instead_of_empty_after_poison() {
+         let hub = EventHub::default();
+         assert!(std::panic::catch_unwind(|| {
+-            let _guard = hub.inner.lock().unwrap();
++            let _guard = hub.inner.state.lock().unwrap();
+             panic!("poison the test event history");
+         })
+         .is_err());
+diff --git i/src/api/schema.rs w/src/api/schema.rs
+index 439ed331..70e23fa2 100644
+--- i/src/api/schema.rs
++++ w/src/api/schema.rs
+@@ -199,6 +199,12 @@ pub enum Method {
+     PaneSendKeys(PaneSendKeysParams),
+     #[serde(rename = "pane.send_input")]
+     PaneSendInput(PaneSendInputParams),
++    #[serde(rename = "pane.run_command")]
++    PaneRunCommand(PaneRunCommandParams),
++    #[serde(rename = "pane.run_command.start")]
++    PaneRunCommandStart(PaneRunCommandParams),
++    #[serde(rename = "pane.command_capture")]
++    PaneCommandCapture(PaneCommandCaptureParams),
+     #[serde(rename = "pane.read")]
+     PaneRead(PaneReadParams),
+     #[serde(rename = "pane.report_agent")]
+diff --git i/src/api/schema/events.rs w/src/api/schema/events.rs
+index 52ac6c96..62adc0f2 100644
+--- i/src/api/schema/events.rs
++++ w/src/api/schema/events.rs
+@@ -214,6 +214,7 @@ pub enum EventKind {
+     PaneFocused,
+     PaneMoved,
+     PaneOutputChanged,
++    PaneCommandFinished,
+     PaneExited,
+     PaneAgentDetected,
+     PaneAgentStatusChanged,
+@@ -245,6 +246,7 @@ impl EventKind {
+             EventKind::PaneFocused => "pane.focused",
+             EventKind::PaneMoved => "pane.moved",
+             EventKind::PaneOutputChanged => "pane.output_changed",
++            EventKind::PaneCommandFinished => "pane.command_finished",
+             EventKind::PaneExited => "pane.exited",
+             EventKind::PaneAgentDetected => "pane.agent_detected",
+             EventKind::PaneAgentStatusChanged => "pane.agent_status_changed",
+@@ -277,6 +279,7 @@ pub const KNOWN_EVENT_KINDS: &[EventKind] = &[
+     EventKind::PaneFocused,
+     EventKind::PaneMoved,
+     EventKind::PaneOutputChanged,
++    EventKind::PaneCommandFinished,
+     EventKind::PaneExited,
+     EventKind::PaneAgentDetected,
+     EventKind::PaneAgentStatusChanged,
+@@ -523,6 +526,14 @@ pub enum EventData {
+         workspace_id: String,
+         revision: u64,
+     },
++    PaneCommandFinished {
++        pane_id: String,
++        workspace_id: String,
++        sequence: u64,
++        exit_code: i32,
++        revision: u64,
++        managed: bool,
++    },
+     PaneExited {
+         pane_id: String,
+         workspace_id: String,
+diff --git i/src/api/schema/panes.rs w/src/api/schema/panes.rs
+index 9dbe0221..ae99e4bc 100644
+--- i/src/api/schema/panes.rs
++++ w/src/api/schema/panes.rs
+@@ -343,6 +343,20 @@ pub struct PaneSendInputParams {
+     pub keys: Vec<String>,
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneRunCommandParams {
++    pub pane_id: String,
++    pub command: String,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub timeout_ms: Option<u64>,
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneCommandCaptureParams {
++    pub pane_id: String,
++    pub sequence: u64,
++}
++
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+ pub struct PaneReadParams {
+     pub pane_id: String,
+diff --git i/src/api/schema/response.rs w/src/api/schema/response.rs
+index e92e4952..463a0e38 100644
+--- i/src/api/schema/response.rs
++++ w/src/api/schema/response.rs
+@@ -162,6 +162,17 @@ pub enum ResponseResult {
+     PaneRead {
+         read: PaneReadResult,
+     },
++    PaneCommandStarted {
++        pane_id: String,
++        after_sequence: u64,
++    },
++    PaneCommandCompleted {
++        pane_id: String,
++        sequence: u64,
++        exit_code: i32,
++        output: String,
++        truncated: bool,
++    },
+     PaneSelection {
+         pane_id: String,
+         text: String,
+diff --git i/src/api/server.rs w/src/api/server.rs
+index dbd7d3b6..b8eb0854 100644
+--- i/src/api/server.rs
++++ w/src/api/server.rs
+@@ -14,7 +14,9 @@ use crate::api::schema::{
+     ErrorBody, ErrorResponse, Method, Request, ResponseResult, ServerCapabilities, SuccessResponse,
+ };
+ use crate::api::subscriptions::ActiveSubscription;
+-use crate::api::wait::{prompt_agent, wait_for_agent, wait_for_event, wait_for_output};
++use crate::api::wait::{
++    prompt_agent, run_command, wait_for_agent, wait_for_event, wait_for_output,
++};
+ use crate::api::{request_changes_ui, socket_path, ApiRequestMessage, ApiRequestSender, EventHub};
+ use crate::ipc::{
+     bind_local_listener, is_connection_closed_error, local_stream_peer_closed,
+@@ -38,11 +40,13 @@ pub struct ServerHandle {
+     path: PathBuf,
+     identity: SocketFileIdentity,
+     running: Arc<AtomicBool>,
++    event_hub: EventHub,
+ }
+ 
+ impl Drop for ServerHandle {
+     fn drop(&mut self) {
+         self.running.store(false, Ordering::Relaxed);
++        self.event_hub.wake_all();
+ 
+         if let Err(err) = self.remove_socket_file_if_owned() {
+             if err.kind() != std::io::ErrorKind::NotFound {
+@@ -118,6 +122,7 @@ fn start_server_inner(
+ 
+     let running = Arc::new(AtomicBool::new(true));
+     let listener_running = Arc::clone(&running);
++    let shutdown_event_hub = event_hub.clone();
+     let thread = std::thread::spawn(move || {
+         run_accept_loop(
+             listener.incoming(),
+@@ -155,6 +160,7 @@ fn start_server_inner(
+         path,
+         identity,
+         running,
++        event_hub: shutdown_event_hub,
+     })
+ }
+ 
+@@ -449,8 +455,25 @@ fn handle_connection_with_stop(
+             finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
+         }
+         Method::PaneWaitForOutput(params) => {
+-            let response =
+-                wait_for_output(request_id.clone(), params, &mut stream, api_tx, running)?;
++            let response = wait_for_output(
++                request_id.clone(),
++                params,
++                &mut stream,
++                api_tx,
++                event_hub,
++                running,
++            )?;
++            finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
++        }
++        Method::PaneRunCommand(params) => {
++            let response = run_command(
++                request_id.clone(),
++                params,
++                &mut stream,
++                api_tx,
++                event_hub,
++                running,
++            )?;
+             finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
+         }
+         method_body => {
+@@ -641,6 +664,9 @@ pub(crate) fn api_method_name(method: &Method) -> &'static str {
+         Method::PaneSendText(_) => "pane.send_text",
+         Method::PaneSendKeys(_) => "pane.send_keys",
+         Method::PaneSendInput(_) => "pane.send_input",
++        Method::PaneRunCommand(_) => "pane.run_command",
++        Method::PaneRunCommandStart(_) => "pane.run_command.start",
++        Method::PaneCommandCapture(_) => "pane.command_capture",
+         Method::PaneRead(_) => "pane.read",
+         Method::PaneReportAgent(_) => "pane.report_agent",
+         Method::PaneReportAgentSession(_) => "pane.report_agent_session",
+@@ -1730,6 +1756,185 @@ mod tests {
+         responder.join().unwrap();
+     }
+ 
++    #[test]
++    fn wait_for_output_reads_only_after_target_output_events() {
++        let (api_tx, mut api_rx) = mpsc::unbounded_channel::<ApiRequestMessage>();
++        let (read_tx, read_rx) = std::sync::mpsc::channel();
++        let responder = std::thread::spawn(move || {
++            let mut reads = 0;
++            while let Some(msg) = api_rx.blocking_recv() {
++                assert!(matches!(msg.request.method, Method::PaneRead(_)));
++                reads += 1;
++                read_tx.send(reads).unwrap();
++                msg.respond_to
++                    .send(
++                        serde_json::to_string(&SuccessResponse {
++                            id: msg.request.id,
++                            result: ResponseResult::PaneRead {
++                                read: crate::api::schema::PaneReadResult {
++                                    pane_id: "pane_1".into(),
++                                    workspace_id: "ws_1".into(),
++                                    tab_id: "tab_1".into(),
++                                    source: crate::api::schema::ReadSource::RecentUnwrapped,
++                                    format: crate::api::schema::ReadFormat::Text,
++                                    text: if reads == 1 {
++                                        String::new()
++                                    } else {
++                                        "command complete".into()
++                                    },
++                                    revision: reads,
++                                    truncated: false,
++                                },
++                            },
++                        })
++                        .unwrap(),
++                    )
++                    .unwrap();
++            }
++        });
++
++        let (mut client, server, _path) = local_stream_pair("api-wait-output-event");
++        client
++            .write_all(br#"{"id":"req_wait","method":"pane.wait_for_output","params":{"pane_id":"pane_1","source":"recent","match":{"type":"substring","value":"complete"},"timeout_ms":1000}}"#)
++            .unwrap();
++        client.write_all(b"\n").unwrap();
++        client.flush().unwrap();
++
++        let running = Arc::new(AtomicBool::new(true));
++        let event_hub = EventHub::default();
++        let server_event_hub = event_hub.clone();
++        let server_thread = std::thread::spawn(move || {
++            handle_connection(server, &api_tx, &server_event_hub, &running, None)
++        });
++
++        assert_eq!(read_rx.recv_timeout(Duration::from_secs(1)).unwrap(), 1);
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::WorkspaceFocused,
++            data: crate::api::schema::EventData::WorkspaceFocused {
++                workspace_id: "ws_1".into(),
++            },
++        });
++        assert!(read_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneOutputChanged,
++            data: crate::api::schema::EventData::PaneOutputChanged {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                revision: 2,
++            },
++        });
++        assert_eq!(read_rx.recv_timeout(Duration::from_secs(1)).unwrap(), 2);
++
++        let response: serde_json::Value = serde_json::from_str(&read_line(&mut client)).unwrap();
++        assert_eq!(response["result"]["matched_line"], "command complete");
++        server_thread.join().unwrap().unwrap();
++        drop(client);
++        responder.join().unwrap();
++    }
++
++    #[test]
++    fn run_command_sends_raw_input_and_waits_for_semantic_completion() {
++        let (api_tx, mut api_rx) = mpsc::unbounded_channel::<ApiRequestMessage>();
++        let (send_tx, send_rx) = std::sync::mpsc::channel();
++        let (capture_tx, capture_rx) = std::sync::mpsc::channel();
++        let responder = std::thread::spawn(move || {
++            while let Some(msg) = api_rx.blocking_recv() {
++                let result = match msg.request.method {
++                    Method::PaneRunCommandStart(params) => {
++                        assert_eq!(params.pane_id, "1-1");
++                        assert_eq!(params.command, "printf clean");
++                        assert_eq!(params.timeout_ms, Some(1000));
++                        send_tx.send(()).unwrap();
++                        ResponseResult::PaneCommandStarted {
++                            pane_id: "pane_1".into(),
++                            after_sequence: 3,
++                        }
++                    }
++                    Method::PaneCommandCapture(params) => {
++                        assert_eq!(params.pane_id, "pane_1");
++                        assert_eq!(params.sequence, 5);
++                        capture_tx.send(()).unwrap();
++                        ResponseResult::PaneCommandCompleted {
++                            pane_id: params.pane_id,
++                            sequence: params.sequence,
++                            exit_code: 7,
++                            output: "clean output\r\n".into(),
++                            truncated: false,
++                        }
++                    }
++                    method => panic!("unexpected app request: {method:?}"),
++                };
++                msg.respond_to
++                    .send(
++                        serde_json::to_string(&SuccessResponse {
++                            id: msg.request.id,
++                            result,
++                        })
++                        .unwrap(),
++                    )
++                    .unwrap();
++            }
++        });
++
++        let (mut client, server, _path) = local_stream_pair("api-run-command-event");
++        client
++            .write_all(br#"{"id":"req_run","method":"pane.run_command","params":{"pane_id":"1-1","command":"printf clean","timeout_ms":1000}}"#)
++            .unwrap();
++        client.write_all(b"\n").unwrap();
++        client.flush().unwrap();
++
++        let running = Arc::new(AtomicBool::new(true));
++        let event_hub = EventHub::default();
++        let server_event_hub = event_hub.clone();
++        let server_thread = std::thread::spawn(move || {
++            handle_connection(server, &api_tx, &server_event_hub, &running, None)
++        });
++
++        send_rx.recv_timeout(Duration::from_secs(1)).unwrap();
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::WorkspaceFocused,
++            data: crate::api::schema::EventData::WorkspaceFocused {
++                workspace_id: "ws_1".into(),
++            },
++        });
++        assert!(capture_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneCommandFinished,
++            data: crate::api::schema::EventData::PaneCommandFinished {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                sequence: 4,
++                exit_code: 0,
++                revision: 11,
++                managed: false,
++            },
++        });
++        assert!(capture_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneCommandFinished,
++            data: crate::api::schema::EventData::PaneCommandFinished {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                sequence: 5,
++                exit_code: 7,
++                revision: 12,
++                managed: true,
++            },
++        });
++        capture_rx.recv_timeout(Duration::from_secs(1)).unwrap();
++
++        let response: serde_json::Value = serde_json::from_str(&read_line(&mut client)).unwrap();
++        assert_eq!(response["id"], "req_run");
++        assert_eq!(response["result"]["exit_code"], 7);
++        assert_eq!(response["result"]["output"], "clean output\r\n");
++        server_thread.join().unwrap().unwrap();
++        drop(client);
++        responder.join().unwrap();
++    }
++
+     #[test]
+     fn invalid_requests_preserve_only_unambiguous_string_ids() {
+         let cases = [
+diff --git i/src/api/wait.rs w/src/api/wait.rs
+index 541779f8..246e62ef 100644
+--- i/src/api/wait.rs
++++ w/src/api/wait.rs
+@@ -1,8 +1,12 @@
+-use std::sync::atomic::AtomicBool;
++use std::io::Read as _;
++use std::sync::atomic::{AtomicBool, Ordering};
+ use std::sync::Arc;
+ 
++use interprocess::TryClone as _;
+ use regex::Regex;
+ 
++use crate::api::event_hub::{EventHistoryError, EventWaitOutcome};
++
+ use crate::api::schema::{
+     ErrorBody, ErrorResponse, EventData, EventEnvelope, EventKind, EventMatch, EventsWaitParams,
+     Method, Request, ResponseResult, Subscription, SubscriptionEventData,
+@@ -18,117 +22,401 @@ use crate::api::{ApiRequestSender, EventHub};
+ use crate::ipc::LocalStream;
+ 
+ const AGENT_PROMPT_EFFECT_TIMEOUT_MS: u64 = 5_000;
++const DEFAULT_PANE_RUN_COMMAND_TIMEOUT_MS: u64 = 120_000;
+ 
+ pub(super) fn wait_for_output(
+     request_id: String,
+     params: crate::api::schema::PaneWaitForOutputParams,
+     stream: &mut LocalStream,
+     api_tx: &ApiRequestSender,
++    event_hub: &EventHub,
+     running: &Arc<AtomicBool>,
+ ) -> std::io::Result<Option<String>> {
+     crate::logging::api_wait_started(&request_id, &params.pane_id, params.timeout_ms);
+     let deadline = params
+         .timeout_ms
+         .map(|ms| std::time::Instant::now() + std::time::Duration::from_millis(ms));
++    let client_disconnected = watch_for_connection_close(stream, event_hub.clone())?;
+ 
+     let regex = match &params.r#match {
+         crate::api::schema::OutputMatch::Regex { value } => match Regex::new(value) {
+             Ok(regex) => Some(regex),
+             Err(err) => {
+-                return Ok(Some(
+-                    serde_json::to_string(&ErrorResponse {
+-                        id: request_id,
+-                        error: ErrorBody {
+-                            code: "invalid_regex".into(),
+-                            message: err.to_string(),
+-                        },
+-                    })
+-                    .unwrap(),
+-                ));
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "invalid_regex",
++                    err.to_string(),
++                )))
+             }
+         },
+         crate::api::schema::OutputMatch::Substring { .. } => None,
+     };
+ 
++    let mut last_event_sequence = event_hub.current_sequence();
++    let mut wake_generation = event_hub.wake_generation();
++    let mut should_read = true;
++
+     loop {
+-        if should_stop_connection(stream, running)? {
++        if client_disconnected.load(Ordering::Acquire) || !running.load(Ordering::Relaxed) {
+             crate::logging::api_wait_completed(&request_id, &params.pane_id, "client_disconnected");
+             return Ok(None);
+         }
+ 
+-        let read_request = Request {
+-            id: format!("{request_id}:read"),
+-            method: Method::PaneRead(crate::api::schema::PaneReadParams {
+-                pane_id: params.pane_id.clone(),
+-                source: output_match_read_source(&params.source),
+-                lines: params.lines,
+-                format: crate::api::schema::ReadFormat::Text,
+-                strip_ansi: params.strip_ansi,
+-                intent: crate::api::schema::ReadIntent::Passive,
+-            }),
+-        };
+-        let response =
+-            dispatch_to_app_with_timeout(read_request, api_tx, Some(APP_RESPONSE_TIMEOUT));
+-        let Ok(value) = serde_json::from_str::<serde_json::Value>(&response) else {
+-            return Ok(Some(response));
+-        };
+-        if value.get("error").is_some() {
+-            let mut value = value;
+-            value["id"] = serde_json::Value::String(request_id.clone());
+-            return Ok(Some(serde_json::to_string(&value).unwrap()));
++        if should_read {
++            let read = match read_output_wait_snapshot(&request_id, &params, api_tx) {
++                Ok(read) => read,
++                Err(response) => return Ok(Some(response)),
++            };
++            let matched_line = match_output(&read.text, &params.r#match, regex.as_ref());
++            if matched_line.is_some() {
++                let revision = read.revision;
++                crate::logging::api_wait_completed(&request_id, &params.pane_id, "matched");
++                return Ok(Some(
++                    serde_json::to_string(&SuccessResponse {
++                        id: request_id,
++                        result: ResponseResult::OutputMatched {
++                            pane_id: read.pane_id.clone(),
++                            revision,
++                            matched_line,
++                            read,
++                        },
++                    })
++                    .unwrap(),
++                ));
++            }
++            should_read = false;
+         }
+ 
+-        let read_value = value["result"]["read"].clone();
+-        let Ok(read) = serde_json::from_value::<crate::api::schema::PaneReadResult>(read_value)
+-        else {
+-            return Ok(Some(
+-                serde_json::to_string(&ErrorResponse {
+-                    id: request_id,
+-                    error: ErrorBody {
+-                        code: "internal_error".into(),
+-                        message: "failed to decode pane read result".into(),
+-                    },
+-                })
+-                .unwrap(),
+-            ));
+-        };
+-
+-        let matched_line = match_output(&read.text, &params.r#match, regex.as_ref());
+-        if matched_line.is_some() {
+-            let revision = read.revision;
+-            crate::logging::api_wait_completed(&request_id, &params.pane_id, "matched");
+-            return Ok(Some(
+-                serde_json::to_string(&SuccessResponse {
+-                    id: request_id,
+-                    result: ResponseResult::OutputMatched {
+-                        pane_id: read.pane_id.clone(),
+-                        revision,
+-                        matched_line,
+-                        read,
+-                    },
+-                })
+-                .unwrap(),
+-            ));
++        match event_hub.events_after_checked(last_event_sequence) {
++            Ok(events) => {
++                for (sequence, event) in events {
++                    last_event_sequence = sequence;
++                    match event.data {
++                        EventData::PaneOutputChanged { pane_id, .. }
++                            if pane_id == params.pane_id =>
++                        {
++                            should_read = true;
++                        }
++                        EventData::PaneClosed { pane_id, .. }
++                        | EventData::PaneExited { pane_id, .. }
++                            if pane_id == params.pane_id =>
++                        {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_not_found",
++                                format!("pane {} is no longer running", params.pane_id),
++                            )));
++                        }
++                        EventData::PaneMoved {
++                            previous_pane_id, ..
++                        } if previous_pane_id == params.pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_moved",
++                                format!("pane {} moved while waiting for output", params.pane_id),
++                            )));
++                        }
++                        _ => {}
++                    }
++                }
++            }
++            Err(EventHistoryError::Lost) => {
++                last_event_sequence = event_hub.current_sequence();
++                should_read = true;
++            }
++            Err(EventHistoryError::Unavailable) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event history is unavailable",
++                )));
++            }
++        }
++        if should_read {
++            continue;
+         }
+ 
+-        if deadline.is_some_and(|deadline| std::time::Instant::now() >= deadline) {
+-            crate::logging::api_wait_timed_out(&request_id, &params.pane_id);
+-            return Ok(Some(
+-                serde_json::to_string(&ErrorResponse {
+-                    id: request_id,
+-                    error: ErrorBody {
+-                        code: "timeout".into(),
+-                        message: "timed out waiting for output match".into(),
+-                    },
+-                })
+-                .unwrap(),
+-            ));
++        match event_hub.wait_for_change(wake_generation, deadline) {
++            Ok(EventWaitOutcome::Changed(generation)) => wake_generation = generation,
++            Ok(EventWaitOutcome::TimedOut) => {
++                crate::logging::api_wait_timed_out(&request_id, &params.pane_id);
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "timeout",
++                    "timed out waiting for output match",
++                )));
++            }
++            Err(_) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event wait is unavailable",
++                )));
++            }
+         }
+-
+-        std::thread::sleep(CONNECTION_POLL_INTERVAL);
+     }
+ }
+ 
++pub(super) fn run_command(
++    request_id: String,
++    params: crate::api::schema::PaneRunCommandParams,
++    stream: &mut LocalStream,
++    api_tx: &ApiRequestSender,
++    event_hub: &EventHub,
++    running: &Arc<AtomicBool>,
++) -> std::io::Result<Option<String>> {
++    let timeout_ms = params
++        .timeout_ms
++        .unwrap_or(DEFAULT_PANE_RUN_COMMAND_TIMEOUT_MS);
++    let deadline = Some(std::time::Instant::now() + std::time::Duration::from_millis(timeout_ms));
++    let client_disconnected = watch_for_connection_close(stream, event_hub.clone())?;
++    let mut last_event_sequence = event_hub.current_sequence();
++    let mut wake_generation = event_hub.wake_generation();
++    let (pane_id, after_sequence) = match start_command(
++        &request_id,
++        crate::api::schema::PaneRunCommandParams {
++            pane_id: params.pane_id,
++            command: params.command,
++            timeout_ms: Some(timeout_ms),
++        },
++        api_tx,
++    ) {
++        Ok(started) => started,
++        Err(response) => return Ok(Some(response)),
++    };
++
++    loop {
++        if client_disconnected.load(Ordering::Acquire) || !running.load(Ordering::Relaxed) {
++            return Ok(None);
++        }
++
++        match event_hub.events_after_checked(last_event_sequence) {
++            Ok(events) => {
++                for (sequence, event) in events {
++                    last_event_sequence = sequence;
++                    match event.data {
++                        EventData::PaneCommandFinished {
++                            pane_id: completed_pane_id,
++                            sequence,
++                            exit_code,
++                            managed: true,
++                            ..
++                        } if completed_pane_id == pane_id && sequence > after_sequence => {
++                            return Ok(Some(read_command_capture(
++                                &request_id,
++                                &pane_id,
++                                sequence,
++                                exit_code,
++                                api_tx,
++                            )));
++                        }
++                        EventData::PaneClosed {
++                            pane_id: closed_pane_id,
++                            ..
++                        }
++                        | EventData::PaneExited {
++                            pane_id: closed_pane_id,
++                            ..
++                        } if closed_pane_id == pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_not_found",
++                                format!("pane {pane_id} is no longer running"),
++                            )));
++                        }
++                        EventData::PaneMoved {
++                            previous_pane_id, ..
++                        } if previous_pane_id == pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_moved",
++                                format!("pane {pane_id} moved while running a command"),
++                            )));
++                        }
++                        _ => {}
++                    }
++                }
++            }
++            Err(EventHistoryError::Lost) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "event_history_lost",
++                    "command completion history was lost before it could be observed",
++                )));
++            }
++            Err(EventHistoryError::Unavailable) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event history is unavailable",
++                )));
++            }
++        }
++
++        match event_hub.wait_for_change(wake_generation, deadline) {
++            Ok(EventWaitOutcome::Changed(generation)) => wake_generation = generation,
++            Ok(EventWaitOutcome::TimedOut) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "timeout",
++                    "timed out waiting for OSC 133 shell command completion",
++                )));
++            }
++            Err(_) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event wait is unavailable",
++                )));
++            }
++        }
++    }
++}
++
++fn start_command(
++    request_id: &str,
++    params: crate::api::schema::PaneRunCommandParams,
++    api_tx: &ApiRequestSender,
++) -> Result<(String, u64), String> {
++    let response = dispatch_to_app_with_timeout(
++        Request {
++            id: format!("{request_id}:start"),
++            method: Method::PaneRunCommandStart(params),
++        },
++        api_tx,
++        Some(APP_RESPONSE_TIMEOUT),
++    );
++    if let Some(error) = reidentify_error_response(request_id, &response) {
++        return Err(error);
++    }
++    let value = serde_json::from_str::<serde_json::Value>(&response).map_err(|_| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "failed to decode shell command start response",
++        )
++    })?;
++    let pane_id = value["result"]["pane_id"].as_str().map(str::to_owned);
++    let after_sequence = value["result"]["after_sequence"].as_u64();
++    pane_id.zip(after_sequence).ok_or_else(|| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "shell command start response was incomplete",
++        )
++    })
++}
++
++fn read_command_capture(
++    request_id: &str,
++    pane_id: &str,
++    sequence: u64,
++    exit_code: i32,
++    api_tx: &ApiRequestSender,
++) -> String {
++    let response = dispatch_to_app_with_timeout(
++        Request {
++            id: format!("{request_id}:capture"),
++            method: Method::PaneCommandCapture(crate::api::schema::PaneCommandCaptureParams {
++                pane_id: pane_id.to_string(),
++                sequence,
++            }),
++        },
++        api_tx,
++        Some(APP_RESPONSE_TIMEOUT),
++    );
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&response) else {
++        return response;
++    };
++    if value.get("error").is_some() {
++        value["id"] = serde_json::Value::String(request_id.to_string());
++        return serde_json::to_string(&value).unwrap();
++    }
++    if value["result"]["exit_code"].as_i64() != Some(i64::from(exit_code)) {
++        return wait_error(
++            request_id,
++            "command_capture_mismatch",
++            "shell completion status did not match its captured output",
++        );
++    }
++    value["id"] = serde_json::Value::String(request_id.to_string());
++    serde_json::to_string(&value).unwrap()
++}
++
++fn reidentify_error_response(request_id: &str, response: &str) -> Option<String> {
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(response) else {
++        return Some(response.to_string());
++    };
++    value.get("error")?;
++    value["id"] = serde_json::Value::String(request_id.to_string());
++    Some(serde_json::to_string(&value).unwrap())
++}
++
++fn watch_for_connection_close(
++    stream: &LocalStream,
++    event_hub: EventHub,
++) -> std::io::Result<Arc<AtomicBool>> {
++    let mut reader = stream.try_clone()?;
++    let disconnected = Arc::new(AtomicBool::new(false));
++    let disconnected_for_reader = Arc::clone(&disconnected);
++    std::thread::spawn(move || {
++        let mut byte = [0u8; 1];
++        loop {
++            match reader.read(&mut byte) {
++                Ok(0) | Err(_) => break,
++                Ok(_) => {}
++            }
++        }
++        disconnected_for_reader.store(true, Ordering::Release);
++        event_hub.wake_all();
++    });
++    Ok(disconnected)
++}
++
++fn read_output_wait_snapshot(
++    request_id: &str,
++    params: &crate::api::schema::PaneWaitForOutputParams,
++    api_tx: &ApiRequestSender,
++) -> Result<crate::api::schema::PaneReadResult, String> {
++    let read_request = Request {
++        id: format!("{request_id}:read"),
++        method: Method::PaneRead(crate::api::schema::PaneReadParams {
++            pane_id: params.pane_id.clone(),
++            source: output_match_read_source(&params.source),
++            lines: params.lines,
++            format: crate::api::schema::ReadFormat::Text,
++            strip_ansi: params.strip_ansi,
++            intent: crate::api::schema::ReadIntent::Passive,
++        }),
++    };
++    let response = dispatch_to_app_with_timeout(read_request, api_tx, Some(APP_RESPONSE_TIMEOUT));
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&response) else {
++        return Err(response);
++    };
++    if value.get("error").is_some() {
++        value["id"] = serde_json::Value::String(request_id.to_string());
++        return Err(serde_json::to_string(&value).unwrap());
++    }
++    serde_json::from_value(value["result"]["read"].clone()).map_err(|_| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "failed to decode pane read result",
++        )
++    })
++}
++
++fn wait_error(request_id: &str, code: &str, message: impl Into<String>) -> String {
++    serde_json::to_string(&ErrorResponse {
++        id: request_id.into(),
++        error: ErrorBody {
++            code: code.into(),
++            message: message.into(),
++        },
++    })
++    .unwrap()
++}
++
+ pub(super) fn wait_for_agent(
+     request_id: String,
+     params: crate::api::schema::AgentWaitParams,
+diff --git i/src/app/actions.rs w/src/app/actions.rs
+index e1ae2ffc..ecc15622 100644
+--- i/src/app/actions.rs
++++ w/src/app/actions.rs
+@@ -1602,6 +1602,7 @@ impl AppState {
+             // Host-local effects are intercepted by HeadlessServer and forwarded to the
+             // foreground client; they never touch AppState. Kept for AppEvent exhaustiveness.
+             AppEvent::TerminalBell { .. } => Vec::new(),
++            AppEvent::ShellCommandFinished { .. } => Vec::new(),
+             AppEvent::ClipboardWrite { .. } => Vec::new(),
+             AppEvent::TerminalCwdReported { pane_id, cwd } => {
+                 if !cwd.is_absolute() || !cwd.is_dir() {
+diff --git i/src/app/api.rs w/src/app/api.rs
+index 20ca9d0f..7d6324ca 100644
+--- i/src/app/api.rs
++++ w/src/app/api.rs
+@@ -46,7 +46,7 @@ impl App {
+                 self.handle_api_worktree_read_finished(*result);
+                 changes_workspace
+             }
+-            ev @ AppEvent::TerminalBell { .. } => {
++            ev @ (AppEvent::TerminalBell { .. } | AppEvent::ShellCommandFinished { .. }) => {
+                 self.handle_internal_event(ev);
+                 false
+             }
+@@ -114,6 +114,40 @@ impl App {
+             return Vec::new();
+         }
+ 
++        if let AppEvent::ShellCommandFinished {
++            pane_id,
++            sequence,
++            exit_code,
++            content_revision,
++            managed,
++        } = ev
++        {
++            let Some((ws_idx, _)) = self
++                .state
++                .workspaces
++                .iter()
++                .enumerate()
++                .find(|(_, workspace)| workspace.find_tab_index_for_pane(pane_id).is_some())
++            else {
++                return Vec::new();
++            };
++            let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++                return Vec::new();
++            };
++            self.event_hub.push(crate::api::schema::EventEnvelope {
++                event: crate::api::schema::EventKind::PaneCommandFinished,
++                data: crate::api::schema::EventData::PaneCommandFinished {
++                    pane_id: public_pane_id,
++                    workspace_id: self.public_workspace_id(ws_idx),
++                    sequence,
++                    exit_code,
++                    revision: content_revision,
++                    managed,
++                },
++            });
++            return Vec::new();
++        }
++
+         if let AppEvent::GitStatusRefreshed {
+             results,
+             cache_updates,
+@@ -772,6 +806,31 @@ impl App {
+         }
+     }
+ 
++    pub(crate) fn emit_pane_output_changed(&mut self, pane_id: crate::layout::PaneId) {
++        let Some((ws_idx, _)) = self.find_pane(pane_id) else {
++            return;
++        };
++        let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++            return;
++        };
++        let Some(runtime) =
++            self.state
++                .runtime_for_pane_in_workspace(&self.terminal_runtimes, ws_idx, pane_id)
++        else {
++            return;
++        };
++        let revision = runtime.content_seq();
++        let workspace_id = self.public_workspace_id(ws_idx);
++        self.event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneOutputChanged,
++            data: crate::api::schema::EventData::PaneOutputChanged {
++                pane_id: public_pane_id,
++                workspace_id,
++                revision,
++            },
++        });
++    }
++
+     pub(crate) fn emit_workspace_token_updated(&mut self, ws_idx: usize) {
+         // Token updates bypass plugin hooks so a hook cannot refresh its own
+         // token and recursively trigger workspace.updated.
+@@ -1171,6 +1230,12 @@ impl App {
+             Method::PaneSendInput(params) => {
+                 return self.handle_pane_send_input(request.id, params);
+             }
++            Method::PaneRunCommandStart(params) => {
++                return self.handle_pane_run_command_start(request.id, params);
++            }
++            Method::PaneCommandCapture(params) => {
++                return self.handle_pane_command_capture(request.id, params);
++            }
+             Method::PaneClose(target) => return self.handle_pane_close(request.id, target),
+             Method::PopupClose(_) => {
+                 return if self.close_popup_pane() {
+diff --git i/src/app/api/panes.rs w/src/app/api/panes.rs
+index e4e03e71..4ab371bd 100644
+--- i/src/app/api/panes.rs
++++ w/src/app/api/panes.rs
+@@ -1,9 +1,9 @@
+ use bytes::Bytes;
+ 
+ use crate::api::schema::{
+-    EventData, EventEnvelope, EventKind, PaneClearAgentAuthorityParams, PaneCopyMotion,
+-    PaneCopyMotionParams, PaneCopySearchDirection, PaneCopySearchParams, PaneCurrentParams,
+-    PaneDirection, PaneEdgesParams, PaneEdgesResult, PaneFocusDirectionParams,
++    EventData, EventEnvelope, EventKind, PaneClearAgentAuthorityParams, PaneCommandCaptureParams,
++    PaneCopyMotion, PaneCopyMotionParams, PaneCopySearchDirection, PaneCopySearchParams,
++    PaneCurrentParams, PaneDirection, PaneEdgesParams, PaneEdgesResult, PaneFocusDirectionParams,
+     PaneFocusDirectionReason, PaneFocusDirectionResult, PaneInfo, PaneInputSetParams,
+     PaneLayoutPane, PaneLayoutParams, PaneLayoutRect, PaneLayoutSnapshot, PaneLayoutSplit,
+     PaneListParams, PaneMoveDestination, PaneMoveParams, PaneMoveReason, PaneMoveResult,
+@@ -11,10 +11,10 @@ use crate::api::schema::{
+     PaneProcessInfoProcess, PaneReadParams, PaneReadResult, PaneReleaseAgentParams,
+     PaneRenameParams, PaneReportAgentParams, PaneReportAgentSessionParams,
+     PaneReportMetadataParams, PaneResizeParams, PaneResizeReason, PaneResizeResult,
+-    PaneScrollParams, PaneSelectionReadParams, PaneSendInputParams, PaneSendKeysParams,
+-    PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneSwapReason, PaneSwapResult,
+-    PaneTarget, PaneTextPoint, PaneTextRange, PaneZoomMode, PaneZoomParams, PaneZoomReason,
+-    PaneZoomResult, ResponseResult,
++    PaneRunCommandParams, PaneScrollParams, PaneSelectionReadParams, PaneSendInputParams,
++    PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneSwapReason,
++    PaneSwapResult, PaneTarget, PaneTextPoint, PaneTextRange, PaneZoomMode, PaneZoomParams,
++    PaneZoomReason, PaneZoomResult, ResponseResult,
+ };
+ use crate::app::actions::{PaneZoomCommand, PaneZoomNoopReason};
+ use crate::app::App;
+@@ -30,6 +30,8 @@ use super::super::api_helpers::{
+ use super::super::api_helpers::{METADATA_SOURCE_MAX_CHARS, METADATA_TTL_MAX_MS};
+ use super::responses::{encode_error, encode_success};
+ 
++const DEFAULT_PANE_RUN_COMMAND_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
++
+ impl App {
+     pub(super) fn handle_pane_split(&mut self, id: String, params: PaneSplitParams) -> String {
+         let target = if let Some(target_pane_id) = params.target_pane_id.as_deref() {
+@@ -1526,6 +1528,7 @@ impl App {
+             params.format,
+             params.lines,
+         );
++        let revision = pane.content_seq();
+ 
+         encode_success(
+             id,
+@@ -1537,13 +1540,94 @@ impl App {
+                     source: params.source,
+                     format: params.format,
+                     text: snapshot.text,
+-                    revision: 0,
++                    revision,
+                     truncated: snapshot.truncated,
+                 },
+             },
+         )
+     }
+ 
++    pub(super) fn handle_pane_run_command_start(
++        &mut self,
++        id: String,
++        params: PaneRunCommandParams,
++    ) -> String {
++        let Some((ws_idx, pane_id)) = self.parse_pane_id(&params.pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some(runtime) = self.lookup_runtime_sender(ws_idx, pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let bytes = match super::super::api_helpers::encode_api_input(
++            runtime,
++            &params.command,
++            &["Enter".into()],
++        ) {
++            Ok(bytes) => bytes,
++            Err(key) => return encode_error(id, "invalid_key", format!("unsupported key {key}")),
++        };
++        let timeout = params
++            .timeout_ms
++            .map(std::time::Duration::from_millis)
++            .unwrap_or(DEFAULT_PANE_RUN_COMMAND_TIMEOUT);
++        let Ok(after_sequence) = runtime.reserve_shell_command(timeout) else {
++            return encode_error(
++                id,
++                "pane_busy",
++                "pane already has a shell command in progress",
++            );
++        };
++        if let Err(err) = runtime.try_send_bytes(Bytes::from(bytes)) {
++            runtime.cancel_shell_command_reservation();
++            return encode_error(id, "pane_send_failed", err.to_string());
++        }
++        let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++            runtime.cancel_shell_command_reservation();
++            return pane_not_found(id, &params.pane_id);
++        };
++
++        encode_success(
++            id,
++            ResponseResult::PaneCommandStarted {
++                pane_id: public_pane_id,
++                after_sequence,
++            },
++        )
++    }
++
++    pub(super) fn handle_pane_command_capture(
++        &mut self,
++        id: String,
++        params: PaneCommandCaptureParams,
++    ) -> String {
++        let Some((ws_idx, pane_id)) = self.parse_pane_id(&params.pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some((runtime, _)) = self.lookup_runtime(ws_idx, pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some(capture) = runtime.shell_command_capture(params.sequence) else {
++            return encode_error(
++                id,
++                "command_capture_not_found",
++                format!(
++                    "command capture {} is unavailable for pane {}",
++                    params.sequence, params.pane_id
++                ),
++            );
++        };
++        encode_success(
++            id,
++            ResponseResult::PaneCommandCompleted {
++                pane_id: params.pane_id,
++                sequence: capture.sequence,
++                exit_code: capture.exit_code,
++                output: String::from_utf8_lossy(&capture.output).into_owned(),
++                truncated: capture.truncated,
++            },
++        )
++    }
++
+     pub(super) fn handle_pane_report_agent(
+         &mut self,
+         id: String,
+diff --git i/src/app/api/plugins/context.rs w/src/app/api/plugins/context.rs
+index 8aee1c31..f8f698ac 100644
+--- i/src/app/api/plugins/context.rs
++++ w/src/app/api/plugins/context.rs
+@@ -163,6 +163,11 @@ impl App {
+                 workspace_id,
+                 ..
+             }
++            | EventData::PaneCommandFinished {
++                pane_id,
++                workspace_id,
++                ..
++            }
+             | EventData::PaneExited {
+                 pane_id,
+                 workspace_id,
+diff --git i/src/cli/pane.rs w/src/cli/pane.rs
+index 33583ee4..abcef4c1 100644
+--- i/src/cli/pane.rs
++++ w/src/cli/pane.rs
+@@ -3,10 +3,10 @@ use crate::api::schema::{
+     PaneFocusDirectionParams, PaneInputSetParams, PaneLayoutParams, PaneListParams,
+     PaneMoveDestination, PaneMoveParams, PaneNeighborParams, PaneProcessInfoParams, PaneReadParams,
+     PaneReleaseAgentParams, PaneRenameParams, PaneReportAgentParams, PaneReportAgentSessionParams,
+-    PaneReportMetadataParams, PaneResizeParams, PaneRightClickTarget, PaneSendInputParams,
+-    PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneTarget,
+-    PaneWaitForOutputParams, PaneZoomMode, PaneZoomParams, ReadFormat, ReadSource, Request,
+-    SplitDirection,
++    PaneReportMetadataParams, PaneResizeParams, PaneRightClickTarget, PaneRunCommandParams,
++    PaneSendInputParams, PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams,
++    PaneTarget, PaneWaitForOutputParams, PaneZoomMode, PaneZoomParams, ReadFormat, ReadSource,
++    Request, SplitDirection,
+ };
+ 
+ pub(super) fn run_pane_command(args: &[String]) -> std::io::Result<i32> {
+@@ -41,6 +41,7 @@ pub(super) fn run_pane_command(args: &[String]) -> std::io::Result<i32> {
+         "release-agent" => pane_release_agent(&args[1..]),
+         "report-metadata" => pane_report_metadata(&args[1..]),
+         "run" => pane_run(&args[1..]),
++        "run-command" => pane_run_command(&args[1..]),
+         "help" | "--help" | "-h" => {
+             print_pane_help();
+             Ok(0)
+@@ -1051,6 +1052,52 @@ fn pane_run(args: &[String]) -> std::io::Result<i32> {
+     }))
+ }
+ 
++fn pane_run_command(args: &[String]) -> std::io::Result<i32> {
++    const USAGE: &str = "usage: herdr pane run-command <pane_id> [--timeout MS] -- <command>";
++    let Some(pane_id) = args.first() else {
++        eprintln!("{USAGE}");
++        return Ok(2);
++    };
++    let mut timeout_ms = None;
++    let mut command_start = None;
++    let mut index = 1;
++    while index < args.len() {
++        match args[index].as_str() {
++            "--timeout" if index + 1 < args.len() => {
++                timeout_ms = match args[index + 1].parse::<u64>() {
++                    Ok(value) => Some(value),
++                    Err(_) => {
++                        eprintln!("invalid --timeout value: {}", args[index + 1]);
++                        return Ok(2);
++                    }
++                };
++                index += 2;
++            }
++            "--" => {
++                command_start = Some(index + 1);
++                break;
++            }
++            _ => {
++                eprintln!("{USAGE}");
++                return Ok(2);
++            }
++        }
++    }
++    let Some(command_start) = command_start.filter(|start| *start < args.len()) else {
++        eprintln!("{USAGE}");
++        return Ok(2);
++    };
++    let params = PaneRunCommandParams {
++        pane_id: super::normalize_pane_id(pane_id),
++        command: args[command_start..].join(" "),
++        timeout_ms,
++    };
++    super::print_response(&super::send_request(&Request {
++        id: "cli:pane:run-command".into(),
++        method: Method::PaneRunCommand(params),
++    })?)
++}
++
+ fn pane_wait_output(args: &[String]) -> std::io::Result<i32> {
+     let params = match parse_pane_wait_output_args(args) {
+         Ok(params) => params,
+@@ -1698,6 +1745,7 @@ fn print_pane_help() {
+     eprintln!("  herdr pane send-text <pane_id> <text>");
+     eprintln!("  herdr pane send-keys <pane_id> <key> [key ...]");
+     eprintln!("  herdr pane wait-output <pane_id> (--match TEXT | --regex PATTERN) [--source visible|recent|recent-unwrapped] [--lines N] [--timeout MS] [--raw]");
++    eprintln!("  herdr pane run-command <pane_id> [--timeout MS] -- <command>");
+     eprintln!("  herdr pane report-agent <pane_id> --source ID --agent LABEL --state idle|working|blocked|unknown [--message TEXT] [--seq N] [--agent-session-id ID] [--agent-session-path PATH]");
+     eprintln!("  herdr pane report-agent-session <pane_id> --source ID --agent LABEL [--seq N] [--agent-session-id ID] [--agent-session-path PATH]");
+     eprintln!("  herdr pane release-agent <pane_id> --source ID --agent LABEL [--seq N]");
+diff --git i/src/cli/spec.rs w/src/cli/spec.rs
+index 1cfc2e7f..cd6c5e66 100644
+--- i/src/cli/spec.rs
++++ w/src/cli/spec.rs
+@@ -629,6 +629,13 @@ fn pane_command() -> Command {
+                 .arg(required("pane_id", "PANE_ID"))
+                 .arg(required("command", "COMMAND").num_args(1..)),
+         )
++        .subcommand(
++            Command::new("run-command")
++                .about("Run a command and wait for semantic shell completion")
++                .arg(required("pane_id", "PANE_ID"))
++                .arg(option("timeout", "MS"))
++                .arg(required("command", "COMMAND").num_args(1..).last(true)),
++        )
+         .subcommand(report_agent_command())
+         .subcommand(report_agent_session_command())
+         .subcommand(release_agent_command())
 diff --git i/src/client/mod.rs w/src/client/mod.rs
 index d55e4c48..5915c02b 100644
 --- i/src/client/mod.rs
@@ -7178,6 +8600,551 @@ index 5e1da58c..68739390 100644
          let graphics_cleanup = shell.take_pending_graphics_cleanup();
          let next_size = shell.surface_size(state.reported_size.0, state.reported_size.1);
          (
+diff --git i/src/events.rs w/src/events.rs
+index c87a50a3..e22d845a 100644
+--- i/src/events.rs
++++ w/src/events.rs
+@@ -185,6 +185,14 @@ pub enum AppEvent {
+         pane_id: PaneId,
+         cwd: std::path::PathBuf,
+     },
++    /// OSC 133 shell integration reported a completed command.
++    ShellCommandFinished {
++        pane_id: PaneId,
++        sequence: u64,
++        exit_code: i32,
++        content_revision: u64,
++        managed: bool,
++    },
+     /// Background git status refresh completed for workspaces.
+     GitStatusRefreshed {
+         results: Vec<WorkspaceGitStatus>,
+diff --git i/src/pane.rs w/src/pane.rs
+index 8fd8e396..182bed2b 100644
+--- i/src/pane.rs
++++ w/src/pane.rs
+@@ -42,6 +42,7 @@ use self::agent_detection::{
+ };
+ #[cfg(unix)]
+ pub use self::terminal::InputState;
++pub(crate) use self::terminal::ShellCommandCapture;
+ use self::terminal::{GhosttyPaneTerminal, PaneTerminal};
+ pub(crate) use self::terminal::{
+     TerminalCompressionStep, TerminalDirtyPatch, TerminalDirtyPatchOutcome, TerminalReadSnapshot,
+@@ -2062,6 +2063,30 @@ fn publish_terminal_bells(pane_id: PaneId, count: u16, events: &mpsc::Sender<App
+     }
+ }
+ 
++fn publish_shell_command_completions(
++    pane_id: PaneId,
++    completions: Vec<terminal::ShellCommandCompletion>,
++    content_revision: u64,
++    events: &mpsc::Sender<AppEvent>,
++) {
++    for completion in completions {
++        if let Err(err) = events.try_send(AppEvent::ShellCommandFinished {
++            pane_id,
++            sequence: completion.sequence,
++            exit_code: completion.exit_code,
++            content_revision,
++            managed: completion.managed,
++        }) {
++            warn!(
++                pane = pane_id.raw(),
++                sequence = completion.sequence,
++                err = %err,
++                "failed to queue shell command completion"
++            );
++        }
++    }
++}
++
+ fn publish_reported_cwd(
+     pane_id: PaneId,
+     cwd: std::path::PathBuf,
+@@ -2444,9 +2469,16 @@ impl PaneRuntime {
+                 let result =
+                     terminal.process_pty_bytes(pane_id, shell_pid, bytes, &response_writer);
+                 content_seq.fetch_add(1, Ordering::Release);
++                let content_revision = content_seq.load(Ordering::Acquire);
+                 drop(_content_write_guard);
+                 compression_wake.wake();
+                 publish_terminal_bells(pane_id, result.terminal_bells, &read_events);
++                publish_shell_command_completions(
++                    pane_id,
++                    result.shell_command_completions,
++                    content_revision,
++                    &read_events,
++                );
+                 observe_detection_content_change(bytes, &detection_content_seq);
+                 let title_requested =
+                     result.terminal_title_changed && render_dirty.request_terminal_title(pane_id);
+@@ -2646,9 +2678,16 @@ impl PaneRuntime {
+                 let result =
+                     terminal.process_pty_bytes(pane_id, shell_pid, bytes, &response_writer);
+                 content_seq.fetch_add(1, Ordering::Release);
++                let content_revision = content_seq.load(Ordering::Acquire);
+                 drop(_content_write_guard);
+                 compression_wake.wake();
+                 publish_terminal_bells(pane_id, result.terminal_bells, &events);
++                publish_shell_command_completions(
++                    pane_id,
++                    result.shell_command_completions,
++                    content_revision,
++                    &events,
++                );
+                 if agent_detection == AgentDetection::Enabled {
+                     observe_detection_content_change(bytes, &detection_content_seq);
+                 }
+@@ -3387,6 +3426,21 @@ impl PaneRuntime {
+         self.terminal.agent_osc_progress()
+     }
+ 
++    pub(crate) fn shell_command_capture(
++        &self,
++        sequence: u64,
++    ) -> Option<crate::pane::terminal::ShellCommandCapture> {
++        self.terminal.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: std::time::Duration) -> Result<u64, ()> {
++        self.terminal.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.terminal.cancel_shell_command_reservation();
++    }
++
+     pub(crate) fn recent_text_snapshot(&self, lines: usize) -> TerminalReadSnapshot {
+         let result = self.terminal.recent_text_snapshot(lines);
+         self.compression.wake();
+diff --git i/src/pane/terminal.rs w/src/pane/terminal.rs
+index 24379d22..abd7ea3b 100644
+--- i/src/pane/terminal.rs
++++ w/src/pane/terminal.rs
+@@ -1,4 +1,4 @@
+-use std::collections::hash_map::DefaultHasher;
++use std::collections::{hash_map::DefaultHasher, VecDeque};
+ use std::hash::{Hash, Hasher};
+ use std::sync::{Arc, Mutex};
+ use std::time::{Duration, Instant};
+@@ -42,6 +42,10 @@ use super::{
+ 
+ const DEFAULT_DETECTION_ROWS: usize = 24;
+ const KITTY_GRAPHICS_REDRAW_SETTLE: Duration = Duration::from_millis(20);
++const SHELL_COMMAND_CAPTURE_LIMIT_BYTES: usize = 8 * 1024 * 1024;
++const SHELL_COMMAND_CAPTURE_HISTORY: usize = 4;
++const SHELL_SEMANTIC_OSC_PREFIX: &[u8] = b"\x1b]133;";
++const SHELL_SEMANTIC_OSC_LIMIT_BYTES: usize = 4096;
+ const CURSOR_POSITION_SETTLE_ENABLED: bool = cfg!(windows);
+ const MODE_MOUSE_X10: u16 = 9;
+ const MODE_MOUSE_PRESS_RELEASE: u16 = 1000;
+@@ -161,6 +165,193 @@ impl InputState {
+     }
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq)]
++pub(crate) struct ShellCommandCapture {
++    pub sequence: u64,
++    pub exit_code: i32,
++    pub output: Vec<u8>,
++    pub truncated: bool,
++}
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub(crate) struct ShellCommandCompletion {
++    pub sequence: u64,
++    pub exit_code: i32,
++    pub managed: bool,
++}
++
++#[derive(Debug, Default)]
++struct ShellCommandTracker {
++    scan_buffer: Vec<u8>,
++    active_output: Option<Vec<u8>>,
++    active_truncated: bool,
++    active_managed: bool,
++    managed_pending_deadline: Option<Instant>,
++    next_sequence: u64,
++    captures: VecDeque<ShellCommandCapture>,
++    pending: Vec<ShellCommandCompletion>,
++}
++
++impl ShellCommandTracker {
++    fn reserve_managed(&mut self, timeout: Duration) -> Result<u64, ()> {
++        if self
++            .managed_pending_deadline
++            .is_some_and(|deadline| Instant::now() >= deadline)
++        {
++            self.managed_pending_deadline = None;
++        }
++        if self.managed_pending_deadline.is_some() || self.active_output.is_some() {
++            return Err(());
++        }
++        self.managed_pending_deadline = Some(Instant::now() + timeout);
++        Ok(self.next_sequence)
++    }
++
++    fn cancel_managed_reservation(&mut self) {
++        self.managed_pending_deadline = None;
++    }
++
++    fn observe(&mut self, bytes: &[u8]) {
++        self.scan_buffer.extend_from_slice(bytes);
++        loop {
++            let Some(start) = find_subslice(&self.scan_buffer, SHELL_SEMANTIC_OSC_PREFIX) else {
++                let keep = semantic_prefix_suffix_len(&self.scan_buffer);
++                let emit_len = self.scan_buffer.len().saturating_sub(keep);
++                if emit_len > 0 {
++                    let text = self.scan_buffer.drain(..emit_len).collect::<Vec<_>>();
++                    self.capture_text(&text);
++                }
++                break;
++            };
++            if start > 0 {
++                let text = self.scan_buffer.drain(..start).collect::<Vec<_>>();
++                self.capture_text(&text);
++                continue;
++            }
++
++            let payload_start = SHELL_SEMANTIC_OSC_PREFIX.len();
++            let Some((payload_end, sequence_end)) =
++                semantic_osc_terminator(&self.scan_buffer, payload_start)
++            else {
++                if self.scan_buffer.len() > SHELL_SEMANTIC_OSC_LIMIT_BYTES {
++                    let byte = self.scan_buffer.remove(0);
++                    self.capture_text(&[byte]);
++                    continue;
++                }
++                break;
++            };
++            let payload = self.scan_buffer[payload_start..payload_end].to_vec();
++            self.scan_buffer.drain(..sequence_end);
++            self.handle_semantic_payload(&payload);
++        }
++    }
++
++    fn capture_text(&mut self, bytes: &[u8]) {
++        let Some(output) = self.active_output.as_mut() else {
++            return;
++        };
++        if output.len().saturating_add(bytes.len()) <= SHELL_COMMAND_CAPTURE_LIMIT_BYTES {
++            output.extend_from_slice(bytes);
++            return;
++        }
++
++        self.active_truncated = true;
++        if bytes.len() >= SHELL_COMMAND_CAPTURE_LIMIT_BYTES {
++            output.clear();
++            output.extend_from_slice(&bytes[bytes.len() - SHELL_COMMAND_CAPTURE_LIMIT_BYTES..]);
++            return;
++        }
++        let overflow = output
++            .len()
++            .saturating_add(bytes.len())
++            .saturating_sub(SHELL_COMMAND_CAPTURE_LIMIT_BYTES);
++        output.drain(..overflow.min(output.len()));
++        output.extend_from_slice(bytes);
++    }
++
++    fn handle_semantic_payload(&mut self, payload: &[u8]) {
++        let mut fields = payload.split(|byte| *byte == b';');
++        match fields.next() {
++            Some(b"C") => {
++                self.active_output = Some(Vec::new());
++                self.active_truncated = false;
++                self.active_managed = self
++                    .managed_pending_deadline
++                    .take()
++                    .is_some_and(|deadline| Instant::now() < deadline);
++            }
++            Some(b"D") => {
++                let Some(output) = self.active_output.take() else {
++                    return;
++                };
++                let Some(exit_code) = fields
++                    .next()
++                    .and_then(|field| std::str::from_utf8(field).ok())
++                    .and_then(|field| field.parse::<i32>().ok())
++                else {
++                    self.active_output = Some(output);
++                    return;
++                };
++                self.next_sequence = self.next_sequence.wrapping_add(1).max(1);
++                let sequence = self.next_sequence;
++                self.captures.push_back(ShellCommandCapture {
++                    sequence,
++                    exit_code,
++                    output,
++                    truncated: self.active_truncated,
++                });
++                while self.captures.len() > SHELL_COMMAND_CAPTURE_HISTORY {
++                    self.captures.pop_front();
++                }
++                self.pending.push(ShellCommandCompletion {
++                    sequence,
++                    exit_code,
++                    managed: self.active_managed,
++                });
++                self.active_truncated = false;
++                self.active_managed = false;
++            }
++            _ => {}
++        }
++    }
++
++    fn drain_pending(&mut self) -> Vec<ShellCommandCompletion> {
++        std::mem::take(&mut self.pending)
++    }
++
++    fn capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.captures
++            .iter()
++            .find(|capture| capture.sequence == sequence)
++            .cloned()
++    }
++}
++
++fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
++    haystack
++        .windows(needle.len())
++        .position(|window| window == needle)
++}
++
++fn semantic_prefix_suffix_len(bytes: &[u8]) -> usize {
++    (1..SHELL_SEMANTIC_OSC_PREFIX.len())
++        .rev()
++        .find(|len| bytes.ends_with(&SHELL_SEMANTIC_OSC_PREFIX[..*len]))
++        .unwrap_or(0)
++}
++
++fn semantic_osc_terminator(bytes: &[u8], payload_start: usize) -> Option<(usize, usize)> {
++    for index in payload_start..bytes.len() {
++        if bytes[index] == b'\x07' {
++            return Some((index, index + 1));
++        }
++        if bytes[index] == b'\x1b' && bytes.get(index + 1) == Some(&b'\\') {
++            return Some((index, index + 2));
++        }
++    }
++    None
++}
++
+ #[derive(Debug, Clone, PartialEq, Eq)]
+ pub(crate) struct ProcessBytesResult {
+     pub request_render: bool,
+@@ -169,6 +360,7 @@ pub(crate) struct ProcessBytesResult {
+     pub terminal_bells: u16,
+     pub clipboard_writes: Vec<Vec<u8>>,
+     pub reported_cwd: Option<std::path::PathBuf>,
++    pub shell_command_completions: Vec<ShellCommandCompletion>,
+     pub terminal_responses: Vec<Bytes>,
+ }
+ 
+@@ -211,6 +403,7 @@ pub(crate) struct GhosttyPaneCore {
+     pub child_default_background_changed: bool,
+     pub osc_debug_tracker: OscDebugTracker,
+     pub agent_osc_state: AgentOscStateTracker,
++    shell_command_tracker: ShellCommandTracker,
+     decscusr_tracker: DecscusrTracker,
+     cursor_settle_state: CursorPositionSettleState,
+     windows_powershell_prompt_cwd_reporting: bool,
+@@ -236,6 +429,18 @@ impl PaneTerminal {
+             .process_pty_bytes(pane_id, shell_pid, bytes, response_writer)
+     }
+ 
++    pub(crate) fn shell_command_capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.ghostty.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: Duration) -> Result<u64, ()> {
++        self.ghostty.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.ghostty.cancel_shell_command_reservation();
++    }
++
+     pub fn resize(
+         &self,
+         rows: u16,
+@@ -1192,6 +1397,7 @@ impl GhosttyPaneTerminal {
+                 child_default_background_changed: false,
+                 osc_debug_tracker: OscDebugTracker::default(),
+                 agent_osc_state: AgentOscStateTracker::default(),
++                shell_command_tracker: ShellCommandTracker::default(),
+                 decscusr_tracker: DecscusrTracker::default(),
+                 cursor_settle_state: CursorPositionSettleState::default(),
+                 windows_powershell_prompt_cwd_reporting: false,
+@@ -1341,6 +1547,27 @@ impl GhosttyPaneTerminal {
+         }
+     }
+ 
++    pub(crate) fn shell_command_capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.core
++            .lock()
++            .ok()
++            .and_then(|core| core.shell_command_tracker.capture(sequence))
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: Duration) -> Result<u64, ()> {
++        self.core
++            .lock()
++            .map_err(|_| ())?
++            .shell_command_tracker
++            .reserve_managed(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        if let Ok(mut core) = self.core.lock() {
++            core.shell_command_tracker.cancel_managed_reservation();
++        }
++    }
++
+     pub fn process_pty_bytes(
+         &self,
+         pane_id: PaneId,
+@@ -1358,6 +1585,7 @@ impl GhosttyPaneTerminal {
+                 terminal_bells: 0,
+                 clipboard_writes: Vec::new(),
+                 reported_cwd: None,
++                shell_command_completions: Vec::new(),
+                 terminal_responses: Vec::new(),
+             };
+         };
+@@ -1388,6 +1616,7 @@ impl GhosttyPaneTerminal {
+             );
+         }
+         let terminal_title_changed = core.agent_osc_state.observe(bytes);
++        core.shell_command_tracker.observe(bytes);
+ 
+         core.kitty_keyboard.observe(bytes);
+         let mut terminal_responses = Vec::new();
+@@ -1412,6 +1641,7 @@ impl GhosttyPaneTerminal {
+         );
+         let terminal_bells = core.terminal.take_bell_count();
+         let clipboard_writes = core.terminal.take_clipboard_writes();
++        let shell_command_completions = core.shell_command_tracker.drain_pending();
+         let reported_cwd = core
+             .terminal
+             .take_pwd_changes()
+@@ -1475,6 +1705,7 @@ impl GhosttyPaneTerminal {
+             terminal_bells,
+             clipboard_writes,
+             reported_cwd,
++            shell_command_completions,
+             terminal_responses,
+         }
+     }
+@@ -3632,6 +3863,68 @@ fn should_probe_host_terminal_theme_restore(core: &GhosttyPaneCore) -> bool {
+ mod tests {
+     use super::*;
+     use ratatui::{layout::Rect, style::Color};
++
++    #[test]
++    fn shell_command_tracker_captures_split_semantic_command_output() {
++        let mut tracker = ShellCommandTracker::default();
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(0));
++        tracker.observe(b"noise\x1b]13");
++        tracker.observe(b"3;C\x07hello\r\n");
++        tracker.observe(b"world\x1b]133;D;7\x1b\\prompt");
++
++        assert_eq!(
++            tracker.drain_pending(),
++            vec![ShellCommandCompletion {
++                sequence: 1,
++                exit_code: 7,
++                managed: true,
++            }]
++        );
++        assert_eq!(
++            tracker.capture(1),
++            Some(ShellCommandCapture {
++                sequence: 1,
++                exit_code: 7,
++                output: b"hello\r\nworld".to_vec(),
++                truncated: false,
++            })
++        );
++    }
++
++    #[test]
++    fn shell_command_tracker_ignores_statusless_end_markers() {
++        let mut tracker = ShellCommandTracker::default();
++        tracker.observe(b"\x1b]133;C\x07first\x1b]133;D\x07second");
++        assert!(tracker.drain_pending().is_empty());
++        tracker.observe(b"\x1b]133;D;0\x07");
++
++        assert_eq!(tracker.capture(1).unwrap().output, b"firstsecond");
++    }
++
++    #[test]
++    fn shell_command_tracker_serializes_managed_commands() {
++        let mut tracker = ShellCommandTracker::default();
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(0));
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Err(()));
++        tracker.observe(b"\x1b]133;C\x07");
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Err(()));
++        tracker.observe(b"\x1b]133;D;0\x07");
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(1));
++    }
++
++    #[test]
++    fn shell_command_tracker_bounds_retained_output() {
++        let mut tracker = ShellCommandTracker::default();
++        tracker.observe(b"\x1b]133;C\x07discarded-prefix");
++        tracker.observe(&vec![b'x'; SHELL_COMMAND_CAPTURE_LIMIT_BYTES + 17]);
++        tracker.observe(b"\x1b]133;D;0\x07");
++
++        let capture = tracker.capture(1).unwrap();
++        assert!(capture.truncated);
++        assert_eq!(capture.output.len(), SHELL_COMMAND_CAPTURE_LIMIT_BYTES);
++        assert!(capture.output.iter().all(|byte| *byte == b'x'));
++    }
++
+     use tokio::sync::mpsc;
+ 
+     #[test]
+diff --git i/src/server/headless.rs w/src/server/headless.rs
+index 18869e09..6d0f2b1a 100644
+--- i/src/server/headless.rs
++++ w/src/server/headless.rs
+@@ -528,6 +528,9 @@ impl HeadlessServer {
+             {
+                 crate::render_prof::event("render.attempt");
+                 let render_request = self.app.render_dirty.take();
++                for pane_id in render_request.pty_sources.iter().copied() {
++                    self.app.emit_pane_output_changed(pane_id);
++                }
+                 let pty_dirty = !render_request.pty_sources.is_empty();
+                 if pty_dirty {
+                     crate::render_prof::event("render.attempt.pty_dirty");
+diff --git i/src/terminal/runtime.rs w/src/terminal/runtime.rs
+index 91713409..c57cc7ae 100644
+--- i/src/terminal/runtime.rs
++++ w/src/terminal/runtime.rs
+@@ -384,6 +384,21 @@ impl TerminalRuntime {
+         self.0.agent_osc_progress()
+     }
+ 
++    pub(crate) fn shell_command_capture(
++        &self,
++        sequence: u64,
++    ) -> Option<crate::pane::ShellCommandCapture> {
++        self.0.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: std::time::Duration) -> Result<u64, ()> {
++        self.0.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.0.cancel_shell_command_reservation();
++    }
++
+     pub(crate) fn recent_text_snapshot(&self, lines: usize) -> crate::pane::TerminalReadSnapshot {
+         self.0.recent_text_snapshot(lines)
+     }
 diff --git i/src/ui.rs w/src/ui.rs
 index 141e09d3..a4f38096 100644
 --- i/src/ui.rs
@@ -7261,3 +9228,126 @@ index cbf6f1a9..86ca750f 100644
  pub(crate) fn agent_panel_entries_from(
      app: &AppState,
      _terminal_runtimes: &TerminalRuntimeRegistry,
+diff --git i/tests/cli/panes.rs w/tests/cli/panes.rs
+index 90b2bf79..3d8951b0 100644
+--- i/tests/cli/panes.rs
++++ w/tests/cli/panes.rs
+@@ -167,6 +167,118 @@ fn pane_run_read_and_wait_commands_work() {
+     cleanup_spawned_herdr(herdr, base);
+ }
+ 
++#[test]
++fn pane_run_command_waits_without_visible_protocol_text() {
++    let base = unique_test_dir();
++    let config_home = base.join("config");
++    let runtime_dir = base.join("runtime");
++    let socket_path = runtime_dir.join("herdr.sock");
++    let shell = base.join("semantic-shell");
++    std::fs::create_dir_all(&base).unwrap();
++    std::fs::write(
++        &shell,
++        "#!/bin/sh\nprintf '\\033]133;A\\a$ \\033]133;B\\a'\nwhile IFS= read -r command; do\n  printf '\\033]133;C\\a'\n  eval \"$command\"\n  status=$?\n  printf '\\033]133;D;%s\\a\\033]133;A\\a$ \\033]133;B\\a' \"$status\"\ndone\n",
++    )
++    .unwrap();
++    #[cfg(unix)]
++    {
++        use std::os::unix::fs::PermissionsExt;
++        let mut permissions = std::fs::metadata(&shell).unwrap().permissions();
++        permissions.set_mode(0o755);
++        std::fs::set_permissions(&shell, permissions).unwrap();
++    }
++    let config = format!(
++        "onboarding = false\n[terminal]\ndefault_shell = {:?}\nshell_mode = \"non_login\"\n",
++        shell.to_str().unwrap()
++    );
++    let herdr = spawn_herdr_with_config(&config_home, &runtime_dir, &socket_path, None, &config);
++    wait_for_socket(&socket_path, Duration::from_secs(5));
++
++    let created = run_cli(
++        &socket_path,
++        &["workspace", "create", "--cwd", base.to_str().unwrap()],
++    );
++    assert!(created.status.success());
++    let setup = run_cli(
++        &socket_path,
++        &["pane", "run", "1-1", "printf 'setup complete\\n'"],
++    );
++    assert!(setup.status.success());
++    let setup_wait = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "wait-output",
++            "1-1",
++            "--regex",
++            "^setup complete$",
++            "--source",
++            "recent-unwrapped",
++            "--lines",
++            "40",
++            "--timeout",
++            "5000",
++        ],
++    );
++    assert!(setup_wait.status.success());
++
++    let run = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "run-command",
++            "1-1",
++            "--timeout",
++            "5000",
++            "--",
++            "printf 'clean output\\n'; false",
++        ],
++    );
++    if !run.status.success() {
++        let debug_read = run_cli(
++            &socket_path,
++            &[
++                "pane",
++                "read",
++                "1-1",
++                "--source",
++                "recent-unwrapped",
++                "--lines",
++                "40",
++            ],
++        );
++        panic!(
++            "stderr: {} stdout: {} pane: {}",
++            String::from_utf8_lossy(&run.stderr),
++            String::from_utf8_lossy(&run.stdout),
++            String::from_utf8_lossy(&debug_read.stdout)
++        );
++    }
++    let run_json: serde_json::Value = serde_json::from_slice(&run.stdout).unwrap();
++    assert_eq!(run_json["result"]["exit_code"], 1);
++    assert_eq!(run_json["result"]["output"], "clean output\r\n");
++
++    let read = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "read",
++            "1-1",
++            "--source",
++            "recent-unwrapped",
++            "--lines",
++            "40",
++        ],
++    );
++    assert!(read.status.success());
++    let pane_text = String::from_utf8(read.stdout).unwrap();
++    assert!(pane_text.contains("printf 'clean output\\n'; false"));
++    assert!(!pane_text.contains("__PI_HERDR_"));
++    assert!(!pane_text.contains("__pi_herdr_"));
++
++    cleanup_spawned_herdr(herdr, base);
++}
++
+ #[test]
+ fn wait_output_matches_recent_unwrapped_text() {
+     let base = unique_test_dir();

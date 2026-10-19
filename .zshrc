@@ -61,6 +61,11 @@ git_prompt_info() {
 setopt prompt_subst
 PROMPT='%(?..%F{red}[%?] %f)%F{cyan}$(short_pwd)%f$(git_prompt_info) '
 
+if [[ -n ${HERDR_PANE_ID:-} && -r ${GHOSTTY_RESOURCES_DIR:-}/shell-integration/zsh/ghostty-integration ]]; then
+  unsetopt prompt_sp
+  source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
+fi
+
 # Homebrew (Linux).
 if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
