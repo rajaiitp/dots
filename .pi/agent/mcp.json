@@ -6,9 +6,7 @@
   "mcpServers": {
     "atlassian": {
       "url": "https://mcp.atlassian.com/v2/mcp",
-      "headers": {
-        "Authorization": "!~/.pi/agent/bin/atlassian-mcp-auth header"
-      },
+      "auth": "oauth",
       "includeTools": [
         "atlassianUserInfo",
         "getAccessibleAtlassianResources",

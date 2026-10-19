@@ -180,7 +180,11 @@ apply_pi_herdr_run_protocol_overlay() {
         echo "ERROR: cannot find Pi's jiti runtime at $jiti_module" >&2
         return 1
     fi
-    PI_HERDR_PACKAGE_DIR="$package_dir" PI_JITI_MODULE="$jiti_module" node "$test_file"
+    NODE_PATH="$agent_package_dir/node_modules${NODE_PATH:+:$NODE_PATH}" \
+        PI_CODING_AGENT_PACKAGE_DIR="$agent_package_dir" \
+        PI_HERDR_PACKAGE_DIR="$package_dir" \
+        PI_JITI_MODULE="$jiti_module" \
+        node "$test_file"
 }
 
 apply_pi_herdr_run_protocol_overlay

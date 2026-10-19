@@ -6,12 +6,8 @@ onboarding = false
 name = "gruvbox"
 
 [theme.custom]
-# Muted blue separates sidebar structure from pane highlights.
-surface_dim = "#458588"
-# Dark Gruvbox green highlights the active workspace.
-active_row_bg = "#3f4f32"
-# Bright Gruvbox green distinguishes the actually focused agent row.
-selection_bg = "#98971a"
+# Subtle Gruvbox contrast separates the sidebar without overriding row highlights.
+sidebar_bg = "#3c3836"
 
 [terminal]
 new_cwd = "follow"
@@ -58,8 +54,8 @@ close_workspace = "prefix+shift+d"
 previous_workspace = ""
 next_workspace = "prefix+shift+right"
 new_tab = "prefix+c"
-# The Sesh picker uses prefix+shift+t; rename tabs with prefix+shift+comma.
-rename_tab = "prefix+shift+,"
+# The Sesh picker uses prefix+shift+s; keep Herdr's default tab rename binding.
+rename_tab = "prefix+shift+t"
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
 # Cycle directly between Pi/agent panes without using the workspace tabs.
@@ -97,7 +93,7 @@ description = "Open Todo workspace"
 
 # Herdr Sesh workspace picker and previous-workspace action.
 [[keys.command]]
-key = "prefix+shift+t"
+key = "prefix+shift+s"
 type = "plugin_action"
 command = "fullerzz.sesh.open-picker"
 description = "Open Sesh workspace picker"

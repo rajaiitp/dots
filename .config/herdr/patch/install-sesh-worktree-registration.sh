@@ -15,6 +15,17 @@ usage() {
   exit 2
 }
 
+sha256_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    printf 'sha256sum or shasum is required\n' >&2
+    exit 1
+  fi
+}
+
 plugin_target() {
   local root
   root=$(jq -er '.[] | select(.plugin_id == "fullerzz.sesh" and .enabled == true) | .plugin_root' "$PLUGIN_STATE")
@@ -33,17 +44,29 @@ validate_binary() {
 
 atomic_copy() {
   local source=$1 destination=$2 directory temporary
-  directory=$(dirname -- "$destination")
-  mkdir -p -- "$directory"
-  temporary=$(mktemp --tmpdir="$directory" .herdr-sesh-install.XXXXXX)
-  install -m 0755 -- "$source" "$temporary"
-  mv -fT -- "$temporary" "$destination"
+  directory=$(dirname "$destination")
+  [[ ! -d $destination ]] || { printf 'Destination is a directory: %s\n' "$destination" >&2; return 1; }
+  mkdir -p "$directory"
+  temporary=$(mktemp "$directory/.herdr-sesh-install.XXXXXX")
+  if ! install -m 0755 "$source" "$temporary"; then
+    rm -f "$temporary"
+    return 1
+  fi
+  if ! mv -f "$temporary" "$destination"; then
+    rm -f "$temporary"
+    return 1
+  fi
 }
 
 stage() (
   local destination=$1 workdir source
+  if [[ $(uname) == Darwin ]]; then
+    # Go's filepath.EvalSymlinks canonicalizes /var to /private/var on macOS.
+    # Keep test-created paths canonical so worktree resolution assertions agree.
+    export TMPDIR=/private/tmp
+  fi
   [[ -f $PATCH_PATH ]] || { printf 'Missing patch: %s\n' "$PATCH_PATH" >&2; exit 1; }
-  [[ $(sha256sum "$PATCH_PATH" | awk '{print $1}') == "$PATCH_SHA256" ]] || {
+  [[ $(sha256_file "$PATCH_PATH") == "$PATCH_SHA256" ]] || {
     printf 'Patch hash mismatch: %s\n' "$PATCH_PATH" >&2
     exit 1
   }
@@ -61,7 +84,7 @@ stage() (
   (cd "$source" && go test ./...)
   (cd "$source" && go build -ldflags="-X=github.com/fullerzz/herdr-plugin-sesh/internal/app.Version=$VERSION" -o "$destination" ./cmd/herdr-sesh)
   validate_binary "$destination"
-  printf 'Staged %s (%s)\n' "$destination" "$(sha256sum "$destination" | awk '{print $1}')"
+  printf 'Staged %s (%s)\n' "$destination" "$(sha256_file "$destination")"
 )
 
 activate() {
@@ -77,7 +100,7 @@ activate() {
   {
     printf 'source_commit=%s\n' "$SOURCE_COMMIT"
     printf 'patch_sha256=%s\n' "$PATCH_SHA256"
-    printf 'candidate_sha256=%s\n' "$(sha256sum "$candidate" | awk '{print $1}')"
+    printf 'candidate_sha256=%s\n' "$(sha256_file "$candidate")"
     printf 'target=%s\n' "$target"
     printf 'installed_at=%s\n' "$timestamp"
   } >"$backup_dir/metadata.txt"

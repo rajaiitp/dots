@@ -17,7 +17,7 @@
     "npm:pi-mcp-adapter@2.36.0"
   ],
   "theme": "dark",
-  "tuiMode": "fullscreen",
+  "tuiMode": "regular",
   "defaultThinkingLevel": "high",
   "lastChangelogVersion": "0.84.4",
   "hideThinkingBlock": false,

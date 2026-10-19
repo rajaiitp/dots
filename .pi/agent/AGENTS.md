@@ -26,6 +26,10 @@ Preserve source compatibility for exported APIs unless the user explicitly appro
 
 Do not convert durability or persistence failures into successful outcomes. Propagate or retry them so externally reported success reflects durable state.
 
+## Formatting and linting
+
+After modifying code, run the repository's canonical formatter and linter before reporting completion. Inspect formatter changes and verify lint passes. Do not weaken, bypass, or re-scope lint configuration merely to hide a failure. If the required tooling cannot run, state exactly what remains unverified.
+
 ## Markdown documents
 
 NEVER add or modify Markdown documents in a repository unless explicitly requested by the user.

@@ -6,10 +6,36 @@ const { join, resolve } = require("node:path");
 
 const packageDir = process.env.PI_HERDR_PACKAGE_DIR || resolve(__dirname, "../../agent/npm/node_modules/@weshipwork/pi-herdr");
 const jitiModule = process.env.PI_JITI_MODULE;
+const agentPackageDir = process.env.PI_CODING_AGENT_PACKAGE_DIR;
 if (!jitiModule || !existsSync(jitiModule)) {
   throw new Error("PI_JITI_MODULE must point to Pi's jiti package for this test harness.");
 }
-const jiti = require(jitiModule)(join(packageDir, "tests", "jiti-entry.cjs"), { interopDefault: true });
+if (!agentPackageDir || !existsSync(agentPackageDir)) {
+  throw new Error("PI_CODING_AGENT_PACKAGE_DIR must point to Pi's package directory.");
+}
+const piCodingAgentTools = join(agentPackageDir, "dist", "core", "tools", "truncate.js");
+const piAiStringEnum = join(
+  agentPackageDir,
+  "node_modules",
+  "@earendil-works",
+  "pi-ai",
+  "dist",
+  "utils",
+  "typebox-helpers.js",
+);
+const typeboxEntry = require.resolve("typebox", { paths: [agentPackageDir] });
+const typeboxCompileEntry = require.resolve("typebox/compile", { paths: [agentPackageDir] });
+const typeboxValueEntry = require.resolve("typebox/value", { paths: [agentPackageDir] });
+const jiti = require(jitiModule)(join(packageDir, "tests", "jiti-entry.cjs"), {
+  interopDefault: true,
+  alias: {
+    "@earendil-works/pi-coding-agent": piCodingAgentTools,
+    "@earendil-works/pi-ai": piAiStringEnum,
+    "typebox/compile": typeboxCompileEntry,
+    "typebox/value": typeboxValueEntry,
+    typebox: typeboxEntry,
+  },
+});
 const protocol = jiti(join(packageDir, "extensions", "herdr-run-protocol.ts"));
 const { handlePaneAction } = jiti(join(packageDir, "extensions", "herdr-pane-actions.ts"));
 
