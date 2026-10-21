@@ -1,3 +1,5 @@
+local M = {}
+
 -- Disable netrw to prevent conflicts
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
@@ -171,6 +173,20 @@ local function neo_tree_is_open()
     return false
 end
 
+-- Auto-session calls this only after it has finished deciding whether to
+-- restore a session, so its cleanup cannot race and close the newly opened tree.
+function M.schedule_startup_open()
+    vim.defer_fn(function()
+        if #vim.api.nvim_list_uis() == 0 or vim.o.columns < min_width or neo_tree_is_open() then return end
+
+        local editor_win = vim.api.nvim_get_current_win()
+        local opened = pcall(vim.cmd, "silent Neotree filesystem show left")
+        if opened and vim.api.nvim_win_is_valid(editor_win) then
+            pcall(vim.api.nvim_set_current_win, editor_win)
+        end
+    end, 100)
+end
+
 local function refresh_git()
     if not package.loaded["neo-tree.sources.manager"] then return end
     local manager = require("neo-tree.sources.manager")
@@ -225,3 +241,5 @@ vim.api.nvim_create_autocmd("VimResized", {
         end
     end,
 })
+
+return M

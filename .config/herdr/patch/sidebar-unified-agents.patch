@@ -1637,10 +1637,10 @@ index 9d0a3bd5dc9c49911f248a3e5a6071baa6679be5..1a856e8167ac01152bfe2958d25a8bc2
              }
              KeybindAction::SwitchWorkspace(index) => {
 diff --git i/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
-index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5fc03a4cf 100644
+index e43ab8ccbd0c922154b745a595b0ad7b641907bc..88cec1c9c3ff05334ab34b2d28b8dfb10c483b84 100644
 --- i/src/client/shell/agent_sidebar.rs
 +++ w/src/client/shell/agent_sidebar.rs
-@@ -1,17 +1,11 @@
+@@ -1,19 +1,12 @@
  use std::collections::HashMap;
  
 -use ratatui::{
@@ -1658,9 +1658,11 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5
      pub(super) pane_id: String,
 +    pub(super) label: String,
      pub(super) status: crate::api::schema::AgentStatus,
-     pub(super) focused: bool,
+-    pub(super) focused: bool,
      pub(super) rows: Vec<Vec<crate::ui::ResolvedToken>>,
-@@ -49,202 +43,6 @@ pub(super) fn ordered_agent_pane_ids(
+ }
+ 
+@@ -49,202 +42,6 @@ pub(super) fn ordered_agent_pane_ids(
          .collect()
  }
  
@@ -1863,7 +1865,7 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5
  pub(super) fn agent_row(
      snapshot: &ClientShellSnapshot,
      pane_id: &str,
-@@ -264,14 +62,7 @@ pub(super) fn agent_row(
+@@ -264,14 +61,7 @@ pub(super) fn agent_row(
          .panes
          .iter()
          .find(|pane| pane.pane_id == agent.pane_id);
@@ -1879,7 +1881,7 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5
      let agent_label = agent
          .display_agent
          .as_deref()
-@@ -292,12 +83,12 @@ pub(super) fn agent_row(
+@@ -292,12 +82,12 @@ pub(super) fn agent_row(
          .agent
          .as_deref()
          .and_then(crate::detect::parse_agent_label);
@@ -1894,7 +1896,7 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5
              pane: agent
                  .title
                  .as_deref()
-@@ -310,79 +101,70 @@ pub(super) fn agent_row(
+@@ -310,79 +100,69 @@ pub(super) fn agent_row(
          },
          state_text,
      );
@@ -1928,7 +1930,7 @@ index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5
          pane_id: agent.pane_id.clone(),
 +        label: pane_label,
          status: agent.agent_status,
-         focused: agent.focused,
+-        focused: agent.focused,
 -        rows,
 +        rows: vec![row],
      })
@@ -4114,15 +4116,15 @@ index f94f6bdcfa25deaf735bba0d44e4967bf1b11bbe..45df60f05c4f83244d5f5f81ce72dd6a
      };
 diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f1880ef66585
+index 0000000000000000000000000000000000000000..3d6b77254625a0563acd874ee7e4bbd982e4b4cb
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,1426 @@
+@@ -0,0 +1,1399 @@
 +use super::*;
 +
 +const WORKSPACE_INDENT: usize = 1;
-+const TREE_LEVEL_INDENT: usize = 2;
-+const BRANCH_INDENT: usize = TREE_LEVEL_INDENT;
++const BRANCH_INDENT: usize = 1;
++const TREE_LEVEL_INDENT: usize = BRANCH_INDENT;
 +const WORKSPACE_SPACER_ROWS: usize = 1;
 +const REPOSITORY_SPACER_ROWS: usize = 2;
 +
@@ -4153,22 +4155,21 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +        endpoint_index: usize,
 +        row: super::agent_sidebar::AgentRow,
 +        active_pane: bool,
++        in_view_pane: bool,
 +        parent_last: Option<bool>,
 +        last_child: bool,
 +        stale: bool,
-+        active_workspace: bool,
 +    },
 +    Tool {
 +        endpoint_index: usize,
 +        pane_id: String,
 +        label: String,
-+        focused: bool,
 +        active_pane: bool,
++        in_view_pane: bool,
 +        interactive: bool,
 +        parent_last: Option<bool>,
 +        last_child: bool,
 +        stale: bool,
-+        active_workspace: bool,
 +    },
 +}
 +
@@ -4250,19 +4251,18 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +            .collect();
 +        let (projects, ungrouped_entries) = project_groups(snapshot, entries);
 +        let mut has_context = false;
-+        let mut previous_was_repository = false;
 +        for project in projects {
 +            if repository_drilldown.is_some_and(|drilldown| drilldown.key != project.key) {
 +                continue;
 +            }
-+            let spacer_rows = if !has_context {
-+                0
-+            } else if previous_was_repository && project.repository_backed {
-+                REPOSITORY_SPACER_ROWS
-+            } else {
-+                WORKSPACE_SPACER_ROWS
-+            };
-+            append_spacers(&mut result, spacer_rows);
++            append_spacers(
++                &mut result,
++                if has_context {
++                    REPOSITORY_SPACER_ROWS
++                } else {
++                    0
++                },
++            );
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Project {
 +                    endpoint_index,
@@ -4283,7 +4283,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                true,
 +            );
 +            has_context = true;
-+            previous_was_repository = project.repository_backed;
 +        }
 +        if repository_drilldown.is_some() {
 +            continue;
@@ -4325,7 +4324,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +    key: String,
 +    label: String,
 +    entries: Vec<WorkspaceEntry>,
-+    repository_backed: bool,
 +}
 +
 +fn project_groups(
@@ -4338,14 +4336,10 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
 +            continue;
 +        };
-+        let (key, label, repository_backed) = if let Some(worktree) = &workspace.worktree {
-+            (worktree.key.clone(), worktree.label.clone(), true)
++        let (key, label) = if let Some(worktree) = &workspace.worktree {
++            (worktree.key.clone(), worktree.label.clone())
 +        } else if workspace.branch.is_some() {
-+            (
-+                workspace.workspace_id.clone(),
-+                workspace.label.clone(),
-+                false,
-+            )
++            (workspace.workspace_id.clone(), workspace.label.clone())
 +        } else {
 +            ungrouped_entries.push(entry);
 +            continue;
@@ -4357,7 +4351,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                key,
 +                label,
 +                entries: vec![entry],
-+                repository_backed,
 +            });
 +        }
 +    }
@@ -4403,26 +4396,37 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +        let pane_ids = agents_by_workspace
 +            .remove(&(endpoint_index, workspace.workspace_id.clone()))
 +            .unwrap_or_default();
-+        let active_pane_id = snapshot
-+            .panes
-+            .iter()
-+            .find(|pane| {
-+                pane.workspace_id == workspace.workspace_id
-+                    && pane.tab_id == workspace.active_tab_id
-+            })
-+            .map(|pane| pane.pane_id.as_str());
++        let focused_pane_id = active_workspace
++            .then_some(snapshot.focused_pane_id.as_deref())
++            .flatten()
++            .filter(|pane_id| {
++                snapshot.panes.iter().any(|pane| {
++                    pane.pane_id == *pane_id && pane.workspace_id == workspace.workspace_id
++                })
++            });
++        let in_view_pane_id = focused_pane_id;
++        let active_pane_id = focused_pane_id.or_else(|| {
++            snapshot
++                .panes
++                .iter()
++                .find(|pane| {
++                    pane.workspace_id == workspace.workspace_id
++                        && pane.tab_id == workspace.active_tab_id
++                })
++                .map(|pane| pane.pane_id.as_str())
++        });
 +        let mut agent_rows = pane_ids
 +            .into_iter()
 +            .filter_map(|pane_id| {
-+                let mut row = super::agent_sidebar::agent_row(
++                let row = super::agent_sidebar::agent_row(
 +                    snapshot,
 +                    &pane_id,
 +                    config,
 +                    include_endpoints.then_some(endpoint.label.as_str()),
 +                )?;
-+                row.focused &= &endpoint.endpoint_id == active_endpoint_id;
 +                let active_pane = active_pane_id == Some(pane_id.as_str());
-+                Some((row, active_pane))
++                let in_view_pane = in_view_pane_id == Some(pane_id.as_str());
++                Some((row, active_pane, in_view_pane))
 +            })
 +            .collect::<Vec<_>>();
 +        let known_agent_pane_ids = snapshot
@@ -4449,14 +4453,14 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                Some((
 +                    pane.pane_id.clone(),
 +                    label,
-+                    pane.focused && &endpoint.endpoint_id == active_endpoint_id,
 +                    active_pane_id == Some(pane.pane_id.as_str()),
++                    in_view_pane_id == Some(pane.pane_id.as_str()),
 +                    true,
 +                ))
 +            })
 +            .collect::<Vec<_>>();
-+        let active_pane_represented = agent_rows.iter().any(|(_, active)| *active)
-+            || tools.iter().any(|(_, _, _, active, _)| *active)
++        let active_pane_represented = agent_rows.iter().any(|(_, active, _)| *active)
++            || tools.iter().any(|(_, _, active, _, _)| *active)
 +            || active_pane_id.is_some_and(|pane_id| known_agent_pane_ids.contains(pane_id));
 +        if !active_pane_represented {
 +            let active_pane = active_pane_id
@@ -4465,8 +4469,8 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                tools.push((
 +                    pane.pane_id.clone(),
 +                    super::agent_sidebar::pane_display_label(&pane.pane_id, Some(pane), None),
-+                    pane.focused && &endpoint.endpoint_id == active_endpoint_id,
 +                    true,
++                    in_view_pane_id == Some(pane.pane_id.as_str()),
 +                    true,
 +                ));
 +            }
@@ -4487,21 +4491,21 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                repository_child: nested,
 +            },
 +        });
-+        for (index, (row, active_pane)) in agent_rows.drain(..).enumerate() {
++        for (index, (row, active_pane, in_view_pane)) in agent_rows.drain(..).enumerate() {
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Agent {
 +                    endpoint_index,
 +                    row,
 +                    active_pane,
++                    in_view_pane,
 +                    parent_last,
 +                    last_child: index + 1 == child_count,
 +                    stale: endpoint.status != ClientEndpointStatus::Online,
-+                    active_workspace,
 +                },
 +            });
 +        }
 +        let agent_count = child_count - tools.len();
-+        for (index, (pane_id, label, focused, active_pane, interactive)) in
++        for (index, (pane_id, label, active_pane, in_view_pane, interactive)) in
 +            tools.into_iter().enumerate()
 +        {
 +            result.push(SidebarTreeRow {
@@ -4509,13 +4513,12 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                    endpoint_index,
 +                    pane_id,
 +                    label,
-+                    focused,
 +                    active_pane,
++                    in_view_pane,
 +                    interactive,
 +                    parent_last,
 +                    last_child: agent_count + index + 1 == child_count,
 +                    stale: endpoint.status != ClientEndpointStatus::Online,
-+                    active_workspace,
 +                },
 +            });
 +        }
@@ -4729,12 +4732,17 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                label,
 +            } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
++                let label_width =
++                    (unicode_width::UnicodeWidthStr::width(label.as_str()) as u16).min(rect.width);
++                let label_x = rect
++                    .x
++                    .saturating_add(rect.width.saturating_sub(label_width) / 2);
 +                put_text(
 +                    buffer,
-+                    rect.x,
++                    label_x,
 +                    rect.y,
-+                    rect.width,
-+                    &format!(" {label}"),
++                    label_width,
++                    label,
 +                    Style::default()
 +                        .fg(palette.accent)
 +                        .add_modifier(Modifier::BOLD),
@@ -4859,10 +4867,10 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                endpoint_index,
 +                row,
 +                active_pane,
++                in_view_pane,
 +                parent_last,
 +                last_child,
 +                stale,
-+                active_workspace,
 +            } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let nested = if include_endpoints {
@@ -4875,13 +4883,7 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                } else {
 +                    rect
 +                };
-+                let row_style = if row.focused {
-+                    Some(focused_agent_style(palette, *stale))
-+                } else if *active_workspace {
-+                    Some(Style::default().bg(palette.active_row_bg))
-+                } else {
-+                    None
-+                };
++                let row_style = in_view_pane.then(|| focused_agent_style(palette, *stale));
 +                if let Some(row_style) = row_style {
 +                    buffer.set_style(rect, row_style);
 +                }
@@ -4892,7 +4894,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                    Some(row.status),
 +                    *parent_last,
 +                    *last_child,
-+                    row.focused,
 +                    *active_pane,
 +                    config,
 +                );
@@ -4918,13 +4919,12 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                endpoint_index,
 +                pane_id,
 +                label,
-+                focused,
 +                active_pane,
++                in_view_pane,
 +                interactive,
 +                parent_last,
 +                last_child,
 +                stale,
-+                active_workspace,
 +            } => {
 +                let endpoint = &state.endpoints[*endpoint_index];
 +                let nested = if include_endpoints {
@@ -4937,13 +4937,7 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                } else {
 +                    rect
 +                };
-+                let row_style = if *focused {
-+                    Some(focused_agent_style(palette, *stale))
-+                } else if *active_workspace {
-+                    Some(Style::default().bg(palette.active_row_bg))
-+                } else {
-+                    None
-+                };
++                let row_style = in_view_pane.then(|| focused_agent_style(palette, *stale));
 +                if let Some(row_style) = row_style {
 +                    buffer.set_style(rect, row_style);
 +                }
@@ -4954,7 +4948,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                    None,
 +                    *parent_last,
 +                    *last_child,
-+                    *focused,
 +                    *active_pane,
 +                    config,
 +                );
@@ -5223,8 +5216,8 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                endpoint_index,
 +                row,
 +                active_pane,
++                in_view_pane,
 +                stale,
-+                active_workspace,
 +                ..
 +            } => {
 +                let endpoint = &state.endpoints[endpoint_index];
@@ -5248,13 +5241,7 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                            Modifier::empty()
 +                        }),
 +                );
-+                let row_style = if row.focused {
-+                    Some(focused_agent_style(palette, stale))
-+                } else if active_workspace {
-+                    Some(Style::default().bg(palette.active_row_bg))
-+                } else {
-+                    None
-+                };
++                let row_style = in_view_pane.then(|| focused_agent_style(palette, stale));
 +                if let Some(row_style) = row_style {
 +                    buffer.set_style(rect, row_style);
 +                }
@@ -5269,11 +5256,10 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                endpoint_index,
 +                pane_id,
 +                label,
-+                focused,
 +                active_pane,
++                in_view_pane,
 +                interactive,
 +                stale,
-+                active_workspace,
 +                ..
 +            } => {
 +                let endpoint = &state.endpoints[endpoint_index];
@@ -5297,13 +5283,7 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +                            Modifier::empty()
 +                        }),
 +                );
-+                let row_style = if focused {
-+                    Some(focused_agent_style(palette, stale))
-+                } else if active_workspace {
-+                    Some(Style::default().bg(palette.active_row_bg))
-+                } else {
-+                    None
-+                };
++                let row_style = in_view_pane.then(|| focused_agent_style(palette, stale));
 +                if let Some(row_style) = row_style {
 +                    buffer.set_style(rect, row_style);
 +                }
@@ -5358,7 +5338,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +    status: Option<crate::api::schema::AgentStatus>,
 +    _parent_last: Option<bool>,
 +    last_child: bool,
-+    focused: bool,
 +    active_pane: bool,
 +    config: &ClientShellConfig,
 +) {
@@ -5384,10 +5363,6 @@ index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f188
 +        if active_pane {
 +            Style::default()
 +                .fg(palette.mauve)
-+                .add_modifier(Modifier::BOLD)
-+        } else if focused {
-+            Style::default()
-+                .fg(palette.blue)
 +                .add_modifier(Modifier::BOLD)
 +        } else {
 +            Style::default().fg(palette.text)
@@ -5890,7 +5865,7 @@ index c170c9b085d1438ab3ed716b602afb70c657a0a6..b501df12e81ba0563f5273a139fc3b78
          let pending_surface = self.pending_pane_surface.take();
          if let Some(surface) = pending_surface {
 diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783d8f1999d 100644
+index 5b8b12243ca1b3c9921390994a1c875d292445d0..be1a9beedb0a6929c388c4fde7c73125e7712bff 100644
 --- i/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
@@ -5931,7 +5906,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
          modifiers: KeyModifiers::empty(),
      })]);
      assert!(pane.requests.is_empty());
-@@ -89,6 +91,462 @@ fn collapsed_workspace_jitter_remains_a_click() {
+@@ -89,6 +91,475 @@ fn collapsed_workspace_jitter_remains_a_click() {
      ));
  }
  
@@ -6010,16 +5985,22 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +        .take(sidebar_width)
 +        .collect::<String>();
 +
-+    assert!(workspace_text.starts_with("  main"), "{workspace_text:?}");
++    assert!(workspace_text.starts_with(" main"), "{workspace_text:?}");
 +    assert!(!workspace_text.contains("├─"), "{workspace_text:?}");
 +    assert!(!workspace_text.contains("└─"), "{workspace_text:?}");
-+    assert!(child_text.starts_with("  └─ nvim"), "{child_text:?}");
++    assert!(child_text.starts_with(" └─ nvim"), "{child_text:?}");
 +    assert!(!child_text.starts_with(" │"), "{child_text:?}");
++    let repository = state.hits.repositories[0].rect;
++    let (repository_x, _) = cell_symbol_position(&frame, repository, "repo");
++    assert_eq!(
++        repository_x,
++        repository.x + (repository.width - "repo".len() as u16) / 2
++    );
 +}
 +
 +#[test]
 +fn expanded_sidebar_spaces_workspace_siblings_and_repository_groups() {
-+    let mut projected = repository_drilldown_snapshot(4, false);
++    let mut projected = repository_drilldown_snapshot(6, false);
 +    let second_repository = ClientShellWorktree {
 +        key: "other-repo".into(),
 +        label: "other-repo".into(),
@@ -6032,11 +6013,13 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +        is_linked_worktree: true,
 +        ..second_repository
 +    });
++    projected.workspaces[4].branch = Some("main".into());
++    projected.workspaces[5].branch = Some("main".into());
 +
 +    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
 +    state.set_snapshot(Box::new(projected));
 +    state.set_pane_surface(surface());
-+    let frame = state.compose(106, 30).expect("spaced repository hierarchy");
++    let frame = state.compose(106, 40).expect("spaced repository hierarchy");
 +    let rows = frame_rows(&frame);
 +    let sidebar_width = state.hits.sidebar_divider.x as usize;
 +    let sidebar_row = |y: u16| {
@@ -6066,7 +6049,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +            .y
 +    };
 +
-+    for workspace_id in ["ws_2", "outside_1", "outside_3"] {
++    for workspace_id in ["ws_2", "outside_1", "outside_5"] {
 +        let y = workspace_y(workspace_id);
 +        assert!(
 +            sidebar_row(y - 1).trim().is_empty(),
@@ -6077,10 +6060,15 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +            "extra gap before {workspace_id}"
 +        );
 +    }
-+    let second_repository_y = repository_y("other-repo");
-+    assert!(sidebar_row(second_repository_y - 1).trim().is_empty());
-+    assert!(sidebar_row(second_repository_y - 2).trim().is_empty());
-+    assert!(!sidebar_row(second_repository_y - 3).trim().is_empty());
++    for repository_key in ["other-repo", "outside_2", "outside_3"] {
++        let y = repository_y(repository_key);
++        assert!(sidebar_row(y - 1).trim().is_empty());
++        assert!(sidebar_row(y - 2).trim().is_empty());
++        assert!(!sidebar_row(y - 3).trim().is_empty());
++    }
++    let first_standalone_y = workspace_y("outside_4");
++    assert!(sidebar_row(first_standalone_y - 1).trim().is_empty());
++    assert!(!sidebar_row(first_standalone_y - 2).trim().is_empty());
 +}
 +
 +#[test]
@@ -6394,7 +6382,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
  #[test]
  fn grouped_worktrees_render_parent_branch_and_indented_child() {
      let config = ClientShellConfig::from_config(&Config::default());
-@@ -117,6 +575,22 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -117,6 +588,22 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
          focused: false,
          agent_status: AgentStatus::Idle,
      });
@@ -6417,7 +6405,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      state.set_snapshot(Box::new(snapshot));
      state.set_pane_surface(surface());
      let frame = state.compose(106, 20).expect("composed frame");
-@@ -130,9 +604,57 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -130,9 +617,57 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -6429,19 +6417,19 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +            .any(|line| line.trim_start().starts_with("repo ")),
 +        "project header missing: {text}"
 +    );
-+    assert!(text.lines().any(|line| line.starts_with("  main")));
-+    assert!(text.lines().any(|line| line.starts_with("  feature")));
++    assert!(text.lines().any(|line| line.starts_with(" main")));
++    assert!(text.lines().any(|line| line.starts_with(" feature")));
 +    assert!(
-+        !text.lines().any(|line| line.starts_with("  ├─ main")),
++        !text.lines().any(|line| line.starts_with("├─ main")),
 +        "frame: {text}"
 +    );
 +    assert!(
 +        !text.lines().any(|line| {
-+            line.split('│').next().unwrap_or_default().trim_end() == "  └─ feature"
++            line.split('│').next().unwrap_or_default().trim_end() == " └─ feature"
 +        }),
 +        "frame: {text}"
 +    );
-+    assert!(text.contains("  └─ feature agent"), "frame: {text}");
++    assert!(text.contains(" └─ feature agent"), "frame: {text}");
 +    let repository = state.hits.repositories[0].rect;
 +    let buffer = frame.to_ratatui_buffer().expect("sidebar buffer");
 +    let repository_text = (repository.x..repository.right())
@@ -6478,7 +6466,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
  
      let mut replacement = (**state.snapshot.as_ref().expect("snapshot")).clone();
      replacement.revision = 2;
-@@ -145,13 +667,36 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -145,13 +680,36 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
      state.collapsed_groups.insert("repo".into());
      state.set_snapshot(Box::new(replacement));
      state.set_pane_surface(replacement_surface);
@@ -6521,7 +6509,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      );
  
      let mut next = ClientShellInput::default();
-@@ -168,6 +713,40 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -168,6 +726,40 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
                      if target.workspace_id == "ws_1"
              )
      ));
@@ -6562,7 +6550,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
  }
  
  #[test]
-@@ -430,7 +1009,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
+@@ -430,7 +1022,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
  }
  
  #[test]
@@ -6571,7 +6559,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      let mut projected = snapshot();
      let mut second_pane = projected.panes[0].clone();
      second_pane.pane_id = "pane_2".into();
-@@ -502,9 +1081,31 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -502,9 +1094,34 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -6596,17 +6584,20 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +        .to_ratatui_buffer()
 +        .expect("expanded agent sidebar buffer");
 +    for (rect, pane_id) in &state.hits.agents {
-+        let expected = if pane_id == "pane_1" {
-+            state.config.palette.selection_bg
++        if pane_id == "pane_1" {
++            assert!((rect.x..rect.right())
++                .all(|x| expanded_buffer[(x, rect.y)].bg == state.config.palette.selection_bg));
 +        } else {
-+            state.config.palette.active_row_bg
-+        };
-+        assert!((rect.x..rect.right()).all(|x| expanded_buffer[(x, rect.y)].bg == expected));
++            assert!((rect.x..rect.right()).all(|x| {
++                let bg = expanded_buffer[(x, rect.y)].bg;
++                bg != state.config.palette.selection_bg && bg != state.config.palette.active_row_bg
++            }));
++        }
 +    }
      assert_eq!(
          state
              .hits
-@@ -538,23 +1139,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +1155,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -6634,7 +6625,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      );
  
      state.sidebar_collapsed = true;
-@@ -569,13 +1161,361 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,13 +1177,451 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -6652,12 +6643,15 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +    assert_eq!(icon_cell.fg, state.config.palette.panel_bg);
 +    assert!(icon_cell.modifier.contains(Modifier::BOLD));
 +    for (rect, pane_id) in &state.hits.agents {
-+        let expected = if pane_id == "pane_1" {
-+            state.config.palette.selection_bg
++        if pane_id == "pane_1" {
++            assert!((rect.x..rect.right())
++                .all(|x| compact_buffer[(x, rect.y)].bg == state.config.palette.selection_bg));
 +        } else {
-+            state.config.palette.active_row_bg
-+        };
-+        assert!((rect.x..rect.right()).all(|x| compact_buffer[(x, rect.y)].bg == expected));
++            assert!((rect.x..rect.right()).all(|x| {
++                let bg = compact_buffer[(x, rect.y)].bg;
++                bg != state.config.palette.selection_bg && bg != state.config.palette.active_row_bg
++            }));
++        }
 +    }
  }
  
@@ -6783,7 +6777,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +        state.hits.agents[0].0.y
 +    );
 +    assert_eq!(
-+        state.hits.agents[2].0.bottom() + 2,
++        state.hits.agents[2].0.bottom() + 3,
 +        state.hits.workspaces[1].rect.y
 +    );
 +    let buffer = frame.to_ratatui_buffer().expect("unified sidebar buffer");
@@ -6882,6 +6876,93 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +    let pane_cell = &buffer[(pane_x, pane_y)];
 +    assert_eq!(pane_cell.fg, state.config.palette.mauve);
 +    assert!(pane_cell.modifier.contains(Modifier::BOLD));
++    assert!((pane_row.x..pane_row.right()).all(|x| {
++        let bg = buffer[(x, pane_row.y)].bg;
++        bg != state.config.palette.selection_bg && bg != state.config.palette.active_row_bg
++    }));
++}
++
++#[test]
++fn unified_sidebar_highlights_only_the_focused_pane_in_a_shared_tab() {
++    let mut projected = snapshot();
++    projected.panes[0].label = Some("primary-pi".into());
++    let mut secondary_pane = projected.panes[0].clone();
++    secondary_pane.pane_id = "pane_2".into();
++    secondary_pane.label = Some("secondary-pi".into());
++    secondary_pane.focused = false;
++    projected.panes.push(secondary_pane);
++    projected.focused_pane_id = Some("pane_1".into());
++    projected.agents = vec![
++        ClientShellAgent {
++            pane_id: "pane_1".into(),
++            workspace_id: "ws_1".into(),
++            tab_id: "tab_1".into(),
++            name: None,
++            display_agent: None,
++            agent: Some("pi".into()),
++            title: None,
++            terminal_title: None,
++            terminal_title_stripped: None,
++            agent_status: AgentStatus::Idle,
++            state_change_seq: 1,
++            state_labels: Vec::new(),
++            tokens: Vec::new(),
++            focused: true,
++        },
++        ClientShellAgent {
++            pane_id: "pane_2".into(),
++            workspace_id: "ws_1".into(),
++            tab_id: "tab_1".into(),
++            name: None,
++            display_agent: None,
++            agent: Some("pi".into()),
++            title: None,
++            terminal_title: None,
++            terminal_title_stripped: None,
++            agent_status: AgentStatus::Idle,
++            state_change_seq: 2,
++            state_labels: Vec::new(),
++            tokens: Vec::new(),
++            focused: false,
++        },
++    ];
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 30).expect("shared-tab sidebar");
++    let buffer = frame
++        .to_ratatui_buffer()
++        .expect("shared-tab sidebar buffer");
++    let primary = state
++        .hits
++        .agents
++        .iter()
++        .find(|(_, pane_id)| pane_id == "pane_1")
++        .expect("primary pane row")
++        .0;
++    let secondary = state
++        .hits
++        .agents
++        .iter()
++        .find(|(_, pane_id)| pane_id == "pane_2")
++        .expect("secondary pane row")
++        .0;
++
++    let (primary_x, primary_y) = cell_symbol_position(&frame, primary, "primary-pi");
++    let primary_cell = &buffer[(primary_x, primary_y)];
++    assert_eq!(primary_cell.fg, state.config.palette.mauve);
++    assert!(primary_cell.modifier.contains(Modifier::BOLD));
++    assert!((primary.x..primary.right())
++        .all(|x| buffer[(x, primary.y)].bg == state.config.palette.selection_bg));
++
++    let (secondary_x, secondary_y) = cell_symbol_position(&frame, secondary, "secondary-pi");
++    let secondary_cell = &buffer[(secondary_x, secondary_y)];
++    assert_eq!(secondary_cell.fg, state.config.palette.text);
++    assert!(!secondary_cell.modifier.contains(Modifier::BOLD));
++    assert!((secondary.x..secondary.right()).all(|x| {
++        let bg = buffer[(x, secondary.y)].bg;
++        bg != state.config.palette.selection_bg && bg != state.config.palette.active_row_bg
++    }));
 +}
 +
 +#[test]
@@ -6896,13 +6977,13 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 +    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
 +    state.set_snapshot(Box::new(projected));
 +    state.set_pane_surface(surface());
-+    state.compose(106, 7).expect("exact-fit sidebar");
++    state.compose(106, 8).expect("exact-fit sidebar");
 +
-+    assert_eq!(state.hits.workspace_body.height, 6);
++    assert_eq!(state.hits.workspace_body.height, 7);
 +    assert_eq!(state.hits.workspace_max_scroll, 0);
 +    assert!(state.hits.workspace_scrollbar.is_empty());
 +    assert_eq!(
-+        state.hits.workspaces[0].rect.bottom() + 3,
++        state.hits.workspaces[0].rect.bottom() + 4,
 +        state.hits.workspaces[1].rect.y
 +    );
 +    let scroll =
@@ -6998,7 +7079,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      projected.agents = vec![ClientShellAgent {
          pane_id: "pane_1".into(),
          workspace_id: "ws_1".into(),
-@@ -595,22 +1535,23 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+@@ -595,22 +1641,27 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
      let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
      state.set_snapshot(Box::new(projected));
      state.set_pane_surface(surface());
@@ -7020,7 +7101,11 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
 -            "{label} cell at ({x},{y}) should not stack terminal faint: {cell:?}"
 -        );
 -    }
-+    assert_eq!(branch_x, project_x + 1);
++    assert_eq!(branch_x, branch.x + 1);
++    assert_eq!(
++        project_x,
++        project.x + (project.width - "client-shell".len() as u16) / 2
++    );
 +    assert_eq!(branch_y, project_y + 1);
 +    assert_eq!(agent.y, branch_y + 1);
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
@@ -7034,7 +7119,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
      use crate::config::SpaceSidebarToken;
  
      let mut config = Config::default();
-@@ -623,13 +1564,59 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
+@@ -623,13 +1674,59 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
      state.set_pane_surface(surface());
      let frame = state.compose(106, 30).expect("workspace sidebar frame");
      let rect = state.hits.workspaces.first().expect("workspace hit").rect;
@@ -7101,7 +7186,7 @@ index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783
  }
  
  #[test]
-@@ -739,61 +1726,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+@@ -739,61 +1836,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -7338,7 +7423,7 @@ index ed21bc8a7456325a808b56f1654776b5fbd89e40..28bcffd97f8ff3d75b938e1a81765591
      let text = menu
          .cells
 diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c5654e27b 100644
+index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..e9ccdbd0206b2d963787ce80272983ee4a5e667c 100644
 --- i/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
 @@ -73,6 +73,67 @@ fn state_with_remote() -> (ClientShellState, ClientEndpointId) {
@@ -7835,7 +7920,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c
      assert_eq!(
          local_workspaces[1].rect.y,
 -        local_workspaces[0].rect.bottom() + 1
-+        local_workspaces[0].rect.bottom() + 3
++        local_workspaces[0].rect.bottom() + 4
      );
  
      let local_machine = state
@@ -7865,12 +7950,12 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c
      assert_eq!(
          remote_workspaces[2].rect.y,
 -        remote_workspaces[1].rect.bottom() + 1
-+        remote_workspaces[1].rect.bottom() + 2
++        remote_workspaces[1].rect.bottom() + 3
      );
  
      state.workspace_scroll = usize::MAX;
 -    state.compose(100, 18).expect("scrolled endpoint frame");
-+    state.compose(100, 17).expect("exact-fit endpoint frame");
++    state.compose(100, 19).expect("exact-fit endpoint frame");
      let metrics = state
          .hits
          .workspace_scroll_metrics
@@ -7888,7 +7973,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c
      assert_eq!(visible_remote.len(), 3);
      let gap_y = visible_remote[1].rect.bottom();
 -    assert_eq!(visible_remote[2].rect.y, gap_y + 1);
-+    assert_eq!(visible_remote[2].rect.y, gap_y + 2);
++    assert_eq!(visible_remote[2].rect.y, gap_y + 3);
      assert!(visible_remote[2].rect.bottom() <= state.hits.workspace_body.bottom());
      assert!(state
          .hits
@@ -7932,7 +8017,7 @@ index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c
 -        crate::config::AgentPanelSortConfig::Priority
 +    assert!(text.contains(" ○"), "frame: {text}");
 +    assert!(text.contains(" ×"), "frame: {text}");
-+    assert!(text.lines().any(|line| line.starts_with("    main")));
++    assert!(text.lines().any(|line| line.starts_with("   main")));
 +    assert!(!text.contains("└─ main"), "frame: {text}");
 +    assert!(
 +        !text.contains("└─ 1"),
