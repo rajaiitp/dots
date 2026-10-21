@@ -113,6 +113,30 @@ else
     echo "WARNING: npm is unavailable; skipped Pi extension installation" >&2
 fi
 
+pi_herdr_previous_overlay_sha256() {
+    local state="$1"
+    local file="$2"
+
+    case "$state:$file" in
+        v4:herdr-action-context.ts) printf '%s\n' 614b6ace2bdfdcf2a54a5d15af5c2f4b2aa48a7eae4f3c56ddd789f30b9cf800 ;;
+        v4:herdr-client.ts) printf '%s\n' 6387104cf59213354b68a30070301dd0f6071289e1eb9db021036bb18fcc7bf6 ;;
+        v4:herdr-pane-actions.ts) printf '%s\n' d4480cfb440a676fe1bd871988135d281c1fe8643783532999087d650fceaa8a ;;
+        v4:herdr-render.ts) printf '%s\n' ca5077ef617baf3044b708b0c8e7b09c0ef71db036711997d2cab88cf09527e1 ;;
+        v4:herdr-run-protocol.ts) printf '%s\n' e54b1ca384e8112484d6c48b98eeff8cc51a32126050bf2a12da3196969aa446 ;;
+        v4:herdr-types.ts) printf '%s\n' 005bb686a79761a1049c3d0c40813a69f90b04a84e5d7e4c91244a6e6585b0cf ;;
+        v4:herdr.ts) printf '%s\n' 4c014d9930a1f553e1396e935ae4accce6b01a8ea84c86b2ece06a548bd572fd ;;
+        v2:herdr-pane-actions.ts) printf '%s\n' 47e6b827c13c8a3c4bb0cc6c3c03cb5db0e3dffbd5f8a15ed3adb33b35c842f2 ;;
+        v2:herdr-action-context.ts|v3:herdr-action-context.ts) printf '%s\n' 614b6ace2bdfdcf2a54a5d15af5c2f4b2aa48a7eae4f3c56ddd789f30b9cf800 ;;
+        v2:herdr-client.ts|v3:herdr-client.ts) printf '%s\n' fc0d148fb75081e76d1a369c40eba2f3dc9856b4a2b153a5c8c6e7837aef57ea ;;
+        v3:herdr-pane-actions.ts) printf '%s\n' 7e38989fdbc5c71617d6e92f174ff6e5be7e09fd3b943170f862d270fc57df6f ;;
+        v2:herdr-render.ts|v3:herdr-render.ts) printf '%s\n' ca5077ef617baf3044b708b0c8e7b09c0ef71db036711997d2cab88cf09527e1 ;;
+        v2:herdr-run-protocol.ts|v3:herdr-run-protocol.ts) printf '%s\n' d62468385e9b66d2be4d5d01c9795bf1bcd4b5fdfbcba196f97b47cfc92eced2 ;;
+        v2:herdr-types.ts|v3:herdr-types.ts) printf '%s\n' 714c427fdb4aaa82264794b6e864be80c2c4e713a4730447c3d5701abc9e2ead ;;
+        v2:herdr.ts|v3:herdr.ts) printf '%s\n' 4c014d9930a1f553e1396e935ae4accce6b01a8ea84c86b2ece06a548bd572fd ;;
+        *) return 1 ;;
+    esac
+}
+
 apply_pi_herdr_run_protocol_overlay() {
     local package_dir="$AGENT_DIR/npm/node_modules/@weshipwork/pi-herdr"
     local overlay_dir="$DOT_DIR/patches/pi-herdr/overlay/extensions"
@@ -131,7 +155,7 @@ apply_pi_herdr_run_protocol_overlay() {
         return 1
     }
     overlay_version="$(<"$overlay_version_file")"
-    if [[ $overlay_version != 2 ]]; then
+    if [[ $overlay_version != 4 ]]; then
         echo "ERROR: unsupported Pi-Herdr overlay version '$overlay_version'" >&2
         return 1
     fi
@@ -141,28 +165,52 @@ apply_pi_herdr_run_protocol_overlay() {
         echo "ERROR: Pi-Herdr overlay supports @weshipwork/pi-herdr@0.1.0, found '${package_version:-unknown}'" >&2
         return 1
     fi
-    if ! herdr pane wait-output --help >/dev/null 2>&1; then
-        echo "ERROR: Herdr runtime lacks 'pane wait-output'; update Herdr before installing the Pi-Herdr overlay" >&2
+    if ! herdr pane run-command --help >/dev/null 2>&1; then
+        echo "ERROR: Herdr runtime lacks 'pane run-command'; update Herdr before installing the Pi-Herdr overlay" >&2
         return 1
     fi
 
-    if grep -q 'createCommandProtocol' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
-        state="installed"
-    elif grep -q 'CommandCompletionRegistry\|completion: "follow_up"\|await sleep(800' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
-        state="legacy"
-    elif grep -q 'case HERDR_ACTION.RUN' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
-        state="pristine"
-    else
+    state="installed"
+    for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do
+        if ! cmp -s "$overlay_dir/$file" "$package_dir/extensions/$file"; then
+            state="unknown"
+            break
+        fi
+    done
+
+    if [[ $state == unknown ]]; then
+        local current_pane_actions_sha256
+        local expected_sha256
+        current_pane_actions_sha256="$(sha256sum "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null | awk '{print $1}')"
+        if [[ $current_pane_actions_sha256 == "$(pi_herdr_previous_overlay_sha256 v4 herdr-pane-actions.ts)" ]]; then
+            state="v4"
+        elif [[ $current_pane_actions_sha256 == "$(pi_herdr_previous_overlay_sha256 v3 herdr-pane-actions.ts)" ]]; then
+            state="v3"
+        elif [[ $current_pane_actions_sha256 == "$(pi_herdr_previous_overlay_sha256 v2 herdr-pane-actions.ts)" ]]; then
+            state="v2"
+        fi
+        if [[ $state == v2 || $state == v3 || $state == v4 ]]; then
+            for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do
+                if ! expected_sha256="$(pi_herdr_previous_overlay_sha256 "$state" "$file")"; then
+                    state="unknown"
+                    break
+                fi
+                if [[ $(sha256sum "$package_dir/extensions/$file" 2>/dev/null | awk '{print $1}') != "$expected_sha256" ]]; then
+                    state="unknown"
+                    break
+                fi
+            done
+        elif grep -q 'CommandCompletionRegistry\|completion: "follow_up"' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
+            state="legacy"
+        elif grep -q 'await sleep(800' "$package_dir/extensions/herdr-pane-actions.ts" 2>/dev/null; then
+            state="pristine"
+        fi
+    fi
+
+    if [[ $state == unknown ]]; then
         echo "ERROR: unknown Pi-Herdr source state; refusing to overwrite local changes" >&2
         return 1
     fi
-
-    for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do
-        if [[ $state == installed ]] && ! cmp -s "$overlay_dir/$file" "$package_dir/extensions/$file"; then
-            echo "ERROR: Pi-Herdr run-protocol source drift in $file; refusing to overwrite local changes" >&2
-            return 1
-        fi
-    done
 
     if [[ $state != installed ]]; then
         for file in herdr-action-context.ts herdr-client.ts herdr-pane-actions.ts herdr-render.ts herdr-run-protocol.ts herdr-types.ts herdr.ts; do

@@ -20,13 +20,12 @@ import {
 import type { HerdrActionRuntime, HerdrToolResult } from "./herdr-action-context.js";
 import { isAbortError } from "./herdr-client.js";
 import {
-	createCommandProtocol,
+	createRunToken,
 	DEFAULT_CAPTURE_LINES,
 	DEFAULT_RUN_TIMEOUT_MS,
-	extractCommandOutput,
 	getIdleSupportedShell,
-	parseCompletion,
 	shouldAutoCompress,
+	stripTerminalControlSequences,
 } from "./herdr-run-protocol.js";
 
 export async function handlePaneAction(
@@ -118,87 +117,52 @@ export async function handlePaneAction(
 				};
 			}
 
-			const protocol = createCommandProtocol(command, shell.name);
-			runtime.runRegistry.reserveWaiting(paneId, protocol.token);
+			const runToken = createRunToken();
+			runtime.runRegistry.reserveWaiting(paneId, runToken);
 			const timeout = params.timeout ?? DEFAULT_RUN_TIMEOUT_MS;
 			const lines = params.lines ?? DEFAULT_CAPTURE_LINES;
 			const startedAt = Date.now();
-			const publishProgress = () => runtime.onUpdate?.({
-				content: [{ type: "text", text: `Waiting for '${command}' in ${paneLabel}...` }],
+			runtime.onUpdate?.({
+				content: [{ type: "text", text: `Running '${command}' in ${paneLabel}; waiting for completion...` }],
 				details: runtime.withSnapshot({
 					action: HERDR_ACTION.RUN,
 					pane: paneLabel,
 					paneId,
 					command,
-					elapsed: Math.floor((Date.now() - startedAt) / 1000),
 					state: "waiting",
 				}),
 			});
-			publishProgress();
-			const updateTimer = runtime.onUpdate ? setInterval(publishProgress, 1_000) : undefined;
 			let completionObserved = false;
 
 			try {
-				await runtime.client.exec(["pane", "run", paneId, protocol.wrappedCommand], runtime.signal);
-				const waited = await runtime.client.waitForPaneOutput(
+				const completion = await runtime.client.runPaneCommand(
 					paneId,
-					protocol.donePrefix,
-					{ source: READ_SOURCE.RECENT_UNWRAPPED, lines, timeout, raw: params.raw },
+					command,
+					timeout,
 					runtime.signal,
 				);
-
-				let captured = waited.read?.text ?? "";
-				let completion = parseCompletion(captured, protocol.token) ?? parseCompletion(waited.matched_line ?? "", protocol.token);
-				const captureTruncated = waited.read?.truncated === true;
-				let usedFallbackRead = false;
-				if (!completion) {
-					captured = await runtime.client.readPane(
-						paneId,
-						{ source: READ_SOURCE.RECENT_UNWRAPPED, lines, raw: params.raw },
-						runtime.signal,
-					);
-					completion = parseCompletion(captured, protocol.token);
-					usedFallbackRead = true;
-				}
-				if (!completion) {
-					throw new Error(`Herdr reported a completion match for pane '${paneLabel}', but the completion marker could not be parsed.`);
-				}
-
 				completionObserved = true;
 				runtime.runRegistry.clear(paneId);
-				if (!extractCommandOutput(captured, protocol.token).doneFound && !usedFallbackRead) {
-					captured = await runtime.client.readPane(
-						paneId,
-						{ source: READ_SOURCE.RECENT_UNWRAPPED, lines, raw: params.raw },
-						runtime.signal,
-					);
-					usedFallbackRead = true;
-				}
-				const extracted = extractCommandOutput(captured, protocol.token);
-				const output = extracted.doneFound
-					? extracted.text
-					: `[Completion marker was outside retained pane scrollback; showing available output.]\n${captured}`;
-				const rendered = await reduceRunOutput(output, params, runtime);
+				const captured = prepareCapturedOutput(completion.output, lines, params.raw === true);
+				const rendered = await reduceRunOutput(captured.text, params, runtime);
 				const elapsed = Math.floor((Date.now() - startedAt) / 1000);
 				const resultText = rendered.text || "[Command produced no output.]";
 
 				return {
 					content: [{
 						type: "text",
-						text: `Command exited with code ${completion.exitCode} in pane '${paneLabel}' (${elapsed}s).\n\n${resultText}`,
+						text: `Command exited with code ${completion.exit_code} in pane '${paneLabel}' (${elapsed}s).\n\n${resultText}`,
 					}],
 					details: runtime.withSnapshot({
 						action: HERDR_ACTION.RUN,
 						pane: paneLabel,
 						paneId,
 						command,
-						exitCode: completion.exitCode,
+						exitCode: completion.exit_code,
 						elapsed,
 						outputCompressed: rendered.compressed,
 						compressionFallback: rendered.fallback,
-						captureTruncated,
-						captureFallbackRead: usedFallbackRead,
-						beginMarkerFound: extracted.beginFound,
+						captureTruncated: completion.truncated || captured.truncated,
 						workspaceId: runtime.currentWorkspaceId,
 					}),
 				};
@@ -209,14 +173,12 @@ export async function handlePaneAction(
 						: /timed? out/i.test(error instanceof Error ? error.message : String(error))
 							? "timed_out"
 							: "wait_failed";
-					runtime.runRegistry.markPossiblyRunning(paneId, protocol.token, reason);
+					runtime.runRegistry.markPossiblyRunning(paneId, runToken, reason);
 					if (reason === "timed_out") {
 						throw new Error(`Timed out waiting for '${command}' in pane '${paneLabel}'. The command may still be running; use read, send C-c, or stop before another run.`);
 					}
 				}
 				throw error;
-			} finally {
-				if (updateTimer) clearInterval(updateTimer);
 			}
 		}
 
@@ -455,6 +417,22 @@ function validateRunParams(params: HerdrToolInput): void {
 	if (incompatible.length) {
 		throw new Error(`detached run does not capture output; remove ${incompatible.join(", ")}.`);
 	}
+}
+
+function prepareCapturedOutput(
+	output: string,
+	lines: number,
+	raw: boolean,
+): { text: string; truncated: boolean } {
+	const normalized = raw
+		? output
+		: stripTerminalControlSequences(output).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+	const capturedLines = normalized.split("\n");
+	if (capturedLines.length <= lines) return { text: normalized, truncated: false };
+	return {
+		text: `[Earlier command output omitted; showing the last ${lines} lines.]\n${capturedLines.slice(-lines).join("\n")}`,
+		truncated: true,
+	};
 }
 
 async function reduceRunOutput(

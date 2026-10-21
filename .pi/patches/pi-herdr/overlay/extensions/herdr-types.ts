@@ -129,6 +129,14 @@ export interface PaneWaitForOutputResult {
 	read: PaneReadResult;
 }
 
+export interface PaneRunCommandResult {
+	pane_id: string;
+	sequence: number;
+	exit_code: number;
+	output: string;
+	truncated: boolean;
+}
+
 export interface ManagedPane {
 	paneId: string;
 	workspaceId: string;

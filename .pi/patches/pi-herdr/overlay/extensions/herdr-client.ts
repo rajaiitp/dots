@@ -6,6 +6,7 @@ import type {
 	HerdrJsonEnvelope,
 	PaneInfo,
 	PaneProcessInfo,
+	PaneRunCommandResult,
 	PaneWaitForOutputResult,
 	ReadSource,
 	TabInfo,
@@ -116,6 +117,24 @@ export class HerdrClient {
 			paneId,
 		], signal);
 		return response.result.process_info;
+	}
+
+	async runPaneCommand(
+		paneId: string,
+		command: string,
+		timeout: number,
+		signal?: AbortSignal,
+	): Promise<PaneRunCommandResult> {
+		const response = await this.json<{ result: PaneRunCommandResult }>([
+			"pane",
+			"run-command",
+			paneId,
+			"--timeout",
+			String(timeout),
+			"--",
+			command,
+		], signal);
+		return response.result;
 	}
 
 	async waitForPaneOutput(

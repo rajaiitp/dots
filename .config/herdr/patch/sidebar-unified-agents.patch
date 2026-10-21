@@ -1,5 +1,1427 @@
+diff --git i/src/api/event_hub.rs w/src/api/event_hub.rs
+index 29843313d5e1545eca92879cf6343236835b32f4..962b7ad76c86cafc3727b7b7c48258ea52fb76a3 100644
+--- i/src/api/event_hub.rs
++++ w/src/api/event_hub.rs
+@@ -1,14 +1,27 @@
+ #[derive(Clone, Default)]
+ pub struct EventHub {
+-    inner: std::sync::Arc<std::sync::Mutex<EventHubState>>,
++    inner: std::sync::Arc<EventHubInner>,
++}
++
++#[derive(Default)]
++struct EventHubInner {
++    state: std::sync::Mutex<EventHubState>,
++    changed: std::sync::Condvar,
+ }
+ 
+ #[derive(Default)]
+ struct EventHubState {
+     next_sequence: u64,
++    wake_generation: u64,
+     events: Vec<(u64, crate::api::schema::EventEnvelope)>,
+ }
+ 
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub(super) enum EventWaitOutcome {
++    Changed(u64),
++    TimedOut,
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub(super) enum EventHistoryError {
+     Lost,
+@@ -19,20 +32,76 @@ impl EventHub {
+     const MAX_EVENTS: usize = 512;
+ 
+     pub fn push(&self, event: crate::api::schema::EventEnvelope) {
+-        let Ok(mut state) = self.inner.lock() else {
++        let Ok(mut state) = self.inner.state.lock() else {
+             return;
+         };
+         state.next_sequence += 1;
++        state.wake_generation += 1;
+         let sequence = state.next_sequence;
+         state.events.push((sequence, event));
+         let overflow = state.events.len().saturating_sub(Self::MAX_EVENTS);
+         if overflow > 0 {
+             state.events.drain(0..overflow);
+         }
++        drop(state);
++        self.inner.changed.notify_all();
++    }
++
++    pub(super) fn wake_all(&self) {
++        let Ok(mut state) = self.inner.state.lock() else {
++            return;
++        };
++        state.wake_generation += 1;
++        drop(state);
++        self.inner.changed.notify_all();
++    }
++
++    pub(super) fn wake_generation(&self) -> u64 {
++        self.inner
++            .state
++            .lock()
++            .map(|state| state.wake_generation)
++            .unwrap_or_default()
++    }
++
++    pub(super) fn wait_for_change(
++        &self,
++        wake_generation: u64,
++        deadline: Option<std::time::Instant>,
++    ) -> Result<EventWaitOutcome, EventHistoryError> {
++        let mut state = self
++            .inner
++            .state
++            .lock()
++            .map_err(|_| EventHistoryError::Unavailable)?;
++        while state.wake_generation == wake_generation {
++            if let Some(deadline) = deadline {
++                let Some(remaining) = deadline.checked_duration_since(std::time::Instant::now())
++                else {
++                    return Ok(EventWaitOutcome::TimedOut);
++                };
++                let (next, timeout) = self
++                    .inner
++                    .changed
++                    .wait_timeout(state, remaining)
++                    .map_err(|_| EventHistoryError::Unavailable)?;
++                state = next;
++                if timeout.timed_out() && state.wake_generation == wake_generation {
++                    return Ok(EventWaitOutcome::TimedOut);
++                }
++            } else {
++                state = self
++                    .inner
++                    .changed
++                    .wait(state)
++                    .map_err(|_| EventHistoryError::Unavailable)?;
++            }
++        }
++        Ok(EventWaitOutcome::Changed(state.wake_generation))
+     }
+ 
+     pub fn events_after(&self, sequence: u64) -> Vec<(u64, crate::api::schema::EventEnvelope)> {
+-        let Ok(state) = self.inner.lock() else {
++        let Ok(state) = self.inner.state.lock() else {
+             return Vec::new();
+         };
+         state
+@@ -49,6 +118,7 @@ impl EventHub {
+     ) -> Result<Vec<(u64, crate::api::schema::EventEnvelope)>, EventHistoryError> {
+         let state = self
+             .inner
++            .state
+             .lock()
+             .map_err(|_| EventHistoryError::Unavailable)?;
+         if state
+@@ -67,7 +137,7 @@ impl EventHub {
+     }
+ 
+     pub fn current_sequence(&self) -> u64 {
+-        let Ok(state) = self.inner.lock() else {
++        let Ok(state) = self.inner.state.lock() else {
+             return 0;
+         };
+         state.next_sequence
+@@ -111,11 +181,41 @@ mod tests {
+             .is_empty());
+     }
+ 
++    #[test]
++    fn wait_for_change_wakes_for_events_and_explicit_cancellation() {
++        let hub = EventHub::default();
++        let initial = hub.wake_generation();
++        hub.push(event());
++        assert_eq!(
++            hub.wait_for_change(initial, None).unwrap(),
++            EventWaitOutcome::Changed(initial + 1)
++        );
++
++        let after_event = hub.wake_generation();
++        hub.wake_all();
++        assert_eq!(
++            hub.wait_for_change(after_event, None).unwrap(),
++            EventWaitOutcome::Changed(after_event + 1)
++        );
++    }
++
++    #[test]
++    fn wait_for_change_uses_deadline_without_polling() {
++        let hub = EventHub::default();
++        let outcome = hub
++            .wait_for_change(
++                hub.wake_generation(),
++                Some(std::time::Instant::now() + std::time::Duration::from_millis(1)),
++            )
++            .unwrap();
++        assert_eq!(outcome, EventWaitOutcome::TimedOut);
++    }
++
+     #[test]
+     fn checked_history_reports_unavailable_instead_of_empty_after_poison() {
+         let hub = EventHub::default();
+         assert!(std::panic::catch_unwind(|| {
+-            let _guard = hub.inner.lock().unwrap();
++            let _guard = hub.inner.state.lock().unwrap();
+             panic!("poison the test event history");
+         })
+         .is_err());
+diff --git i/src/api/schema.rs w/src/api/schema.rs
+index 439ed3315e612467ad033bb24f678896c9ef2cd4..70e23fa2a104beb7439acc98e3fa811d8932e7e6 100644
+--- i/src/api/schema.rs
++++ w/src/api/schema.rs
+@@ -199,6 +199,12 @@ pub enum Method {
+     PaneSendKeys(PaneSendKeysParams),
+     #[serde(rename = "pane.send_input")]
+     PaneSendInput(PaneSendInputParams),
++    #[serde(rename = "pane.run_command")]
++    PaneRunCommand(PaneRunCommandParams),
++    #[serde(rename = "pane.run_command.start")]
++    PaneRunCommandStart(PaneRunCommandParams),
++    #[serde(rename = "pane.command_capture")]
++    PaneCommandCapture(PaneCommandCaptureParams),
+     #[serde(rename = "pane.read")]
+     PaneRead(PaneReadParams),
+     #[serde(rename = "pane.report_agent")]
+diff --git i/src/api/schema/events.rs w/src/api/schema/events.rs
+index 52ac6c96a5ebbfa4dcf04170225d778cc5050273..62adc0f2e2055b8a68a18aa4b5604442da1c0766 100644
+--- i/src/api/schema/events.rs
++++ w/src/api/schema/events.rs
+@@ -214,6 +214,7 @@ pub enum EventKind {
+     PaneFocused,
+     PaneMoved,
+     PaneOutputChanged,
++    PaneCommandFinished,
+     PaneExited,
+     PaneAgentDetected,
+     PaneAgentStatusChanged,
+@@ -245,6 +246,7 @@ impl EventKind {
+             EventKind::PaneFocused => "pane.focused",
+             EventKind::PaneMoved => "pane.moved",
+             EventKind::PaneOutputChanged => "pane.output_changed",
++            EventKind::PaneCommandFinished => "pane.command_finished",
+             EventKind::PaneExited => "pane.exited",
+             EventKind::PaneAgentDetected => "pane.agent_detected",
+             EventKind::PaneAgentStatusChanged => "pane.agent_status_changed",
+@@ -277,6 +279,7 @@ pub const KNOWN_EVENT_KINDS: &[EventKind] = &[
+     EventKind::PaneFocused,
+     EventKind::PaneMoved,
+     EventKind::PaneOutputChanged,
++    EventKind::PaneCommandFinished,
+     EventKind::PaneExited,
+     EventKind::PaneAgentDetected,
+     EventKind::PaneAgentStatusChanged,
+@@ -523,6 +526,14 @@ pub enum EventData {
+         workspace_id: String,
+         revision: u64,
+     },
++    PaneCommandFinished {
++        pane_id: String,
++        workspace_id: String,
++        sequence: u64,
++        exit_code: i32,
++        revision: u64,
++        managed: bool,
++    },
+     PaneExited {
+         pane_id: String,
+         workspace_id: String,
+diff --git i/src/api/schema/panes.rs w/src/api/schema/panes.rs
+index 9dbe0221dbbb8fb92fc6506bea7ed2efeaf728ea..ae99e4bcf9036d7aa6f7ab98b54cacce8cf32e4e 100644
+--- i/src/api/schema/panes.rs
++++ w/src/api/schema/panes.rs
+@@ -343,6 +343,20 @@ pub struct PaneSendInputParams {
+     pub keys: Vec<String>,
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneRunCommandParams {
++    pub pane_id: String,
++    pub command: String,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub timeout_ms: Option<u64>,
++}
++
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
++pub struct PaneCommandCaptureParams {
++    pub pane_id: String,
++    pub sequence: u64,
++}
++
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+ pub struct PaneReadParams {
+     pub pane_id: String,
+diff --git i/src/api/schema/response.rs w/src/api/schema/response.rs
+index e92e49524757b5c80d59700ff3fc9d22754ff625..463a0e385d7cfe86f2f1dc5abc51c248665f2d80 100644
+--- i/src/api/schema/response.rs
++++ w/src/api/schema/response.rs
+@@ -162,6 +162,17 @@ pub enum ResponseResult {
+     PaneRead {
+         read: PaneReadResult,
+     },
++    PaneCommandStarted {
++        pane_id: String,
++        after_sequence: u64,
++    },
++    PaneCommandCompleted {
++        pane_id: String,
++        sequence: u64,
++        exit_code: i32,
++        output: String,
++        truncated: bool,
++    },
+     PaneSelection {
+         pane_id: String,
+         text: String,
+diff --git i/src/api/server.rs w/src/api/server.rs
+index dbd7d3b6b165b6e94b4f7d906a6820d2eb8ba940..b8eb0854301841c45ebc50fb012e164112ba5fa2 100644
+--- i/src/api/server.rs
++++ w/src/api/server.rs
+@@ -14,7 +14,9 @@ use crate::api::schema::{
+     ErrorBody, ErrorResponse, Method, Request, ResponseResult, ServerCapabilities, SuccessResponse,
+ };
+ use crate::api::subscriptions::ActiveSubscription;
+-use crate::api::wait::{prompt_agent, wait_for_agent, wait_for_event, wait_for_output};
++use crate::api::wait::{
++    prompt_agent, run_command, wait_for_agent, wait_for_event, wait_for_output,
++};
+ use crate::api::{request_changes_ui, socket_path, ApiRequestMessage, ApiRequestSender, EventHub};
+ use crate::ipc::{
+     bind_local_listener, is_connection_closed_error, local_stream_peer_closed,
+@@ -38,11 +40,13 @@ pub struct ServerHandle {
+     path: PathBuf,
+     identity: SocketFileIdentity,
+     running: Arc<AtomicBool>,
++    event_hub: EventHub,
+ }
+ 
+ impl Drop for ServerHandle {
+     fn drop(&mut self) {
+         self.running.store(false, Ordering::Relaxed);
++        self.event_hub.wake_all();
+ 
+         if let Err(err) = self.remove_socket_file_if_owned() {
+             if err.kind() != std::io::ErrorKind::NotFound {
+@@ -118,6 +122,7 @@ fn start_server_inner(
+ 
+     let running = Arc::new(AtomicBool::new(true));
+     let listener_running = Arc::clone(&running);
++    let shutdown_event_hub = event_hub.clone();
+     let thread = std::thread::spawn(move || {
+         run_accept_loop(
+             listener.incoming(),
+@@ -155,6 +160,7 @@ fn start_server_inner(
+         path,
+         identity,
+         running,
++        event_hub: shutdown_event_hub,
+     })
+ }
+ 
+@@ -449,8 +455,25 @@ fn handle_connection_with_stop(
+             finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
+         }
+         Method::PaneWaitForOutput(params) => {
+-            let response =
+-                wait_for_output(request_id.clone(), params, &mut stream, api_tx, running)?;
++            let response = wait_for_output(
++                request_id.clone(),
++                params,
++                &mut stream,
++                api_tx,
++                event_hub,
++                running,
++            )?;
++            finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
++        }
++        Method::PaneRunCommand(params) => {
++            let response = run_command(
++                request_id.clone(),
++                params,
++                &mut stream,
++                api_tx,
++                event_hub,
++                running,
++            )?;
+             finish_wait_response(&mut stream, response, &request_id, method, changes_ui)
+         }
+         method_body => {
+@@ -641,6 +664,9 @@ pub(crate) fn api_method_name(method: &Method) -> &'static str {
+         Method::PaneSendText(_) => "pane.send_text",
+         Method::PaneSendKeys(_) => "pane.send_keys",
+         Method::PaneSendInput(_) => "pane.send_input",
++        Method::PaneRunCommand(_) => "pane.run_command",
++        Method::PaneRunCommandStart(_) => "pane.run_command.start",
++        Method::PaneCommandCapture(_) => "pane.command_capture",
+         Method::PaneRead(_) => "pane.read",
+         Method::PaneReportAgent(_) => "pane.report_agent",
+         Method::PaneReportAgentSession(_) => "pane.report_agent_session",
+@@ -1730,6 +1756,185 @@ mod tests {
+         responder.join().unwrap();
+     }
+ 
++    #[test]
++    fn wait_for_output_reads_only_after_target_output_events() {
++        let (api_tx, mut api_rx) = mpsc::unbounded_channel::<ApiRequestMessage>();
++        let (read_tx, read_rx) = std::sync::mpsc::channel();
++        let responder = std::thread::spawn(move || {
++            let mut reads = 0;
++            while let Some(msg) = api_rx.blocking_recv() {
++                assert!(matches!(msg.request.method, Method::PaneRead(_)));
++                reads += 1;
++                read_tx.send(reads).unwrap();
++                msg.respond_to
++                    .send(
++                        serde_json::to_string(&SuccessResponse {
++                            id: msg.request.id,
++                            result: ResponseResult::PaneRead {
++                                read: crate::api::schema::PaneReadResult {
++                                    pane_id: "pane_1".into(),
++                                    workspace_id: "ws_1".into(),
++                                    tab_id: "tab_1".into(),
++                                    source: crate::api::schema::ReadSource::RecentUnwrapped,
++                                    format: crate::api::schema::ReadFormat::Text,
++                                    text: if reads == 1 {
++                                        String::new()
++                                    } else {
++                                        "command complete".into()
++                                    },
++                                    revision: reads,
++                                    truncated: false,
++                                },
++                            },
++                        })
++                        .unwrap(),
++                    )
++                    .unwrap();
++            }
++        });
++
++        let (mut client, server, _path) = local_stream_pair("api-wait-output-event");
++        client
++            .write_all(br#"{"id":"req_wait","method":"pane.wait_for_output","params":{"pane_id":"pane_1","source":"recent","match":{"type":"substring","value":"complete"},"timeout_ms":1000}}"#)
++            .unwrap();
++        client.write_all(b"\n").unwrap();
++        client.flush().unwrap();
++
++        let running = Arc::new(AtomicBool::new(true));
++        let event_hub = EventHub::default();
++        let server_event_hub = event_hub.clone();
++        let server_thread = std::thread::spawn(move || {
++            handle_connection(server, &api_tx, &server_event_hub, &running, None)
++        });
++
++        assert_eq!(read_rx.recv_timeout(Duration::from_secs(1)).unwrap(), 1);
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::WorkspaceFocused,
++            data: crate::api::schema::EventData::WorkspaceFocused {
++                workspace_id: "ws_1".into(),
++            },
++        });
++        assert!(read_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneOutputChanged,
++            data: crate::api::schema::EventData::PaneOutputChanged {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                revision: 2,
++            },
++        });
++        assert_eq!(read_rx.recv_timeout(Duration::from_secs(1)).unwrap(), 2);
++
++        let response: serde_json::Value = serde_json::from_str(&read_line(&mut client)).unwrap();
++        assert_eq!(response["result"]["matched_line"], "command complete");
++        server_thread.join().unwrap().unwrap();
++        drop(client);
++        responder.join().unwrap();
++    }
++
++    #[test]
++    fn run_command_sends_raw_input_and_waits_for_semantic_completion() {
++        let (api_tx, mut api_rx) = mpsc::unbounded_channel::<ApiRequestMessage>();
++        let (send_tx, send_rx) = std::sync::mpsc::channel();
++        let (capture_tx, capture_rx) = std::sync::mpsc::channel();
++        let responder = std::thread::spawn(move || {
++            while let Some(msg) = api_rx.blocking_recv() {
++                let result = match msg.request.method {
++                    Method::PaneRunCommandStart(params) => {
++                        assert_eq!(params.pane_id, "1-1");
++                        assert_eq!(params.command, "printf clean");
++                        assert_eq!(params.timeout_ms, Some(1000));
++                        send_tx.send(()).unwrap();
++                        ResponseResult::PaneCommandStarted {
++                            pane_id: "pane_1".into(),
++                            after_sequence: 3,
++                        }
++                    }
++                    Method::PaneCommandCapture(params) => {
++                        assert_eq!(params.pane_id, "pane_1");
++                        assert_eq!(params.sequence, 5);
++                        capture_tx.send(()).unwrap();
++                        ResponseResult::PaneCommandCompleted {
++                            pane_id: params.pane_id,
++                            sequence: params.sequence,
++                            exit_code: 7,
++                            output: "clean output\r\n".into(),
++                            truncated: false,
++                        }
++                    }
++                    method => panic!("unexpected app request: {method:?}"),
++                };
++                msg.respond_to
++                    .send(
++                        serde_json::to_string(&SuccessResponse {
++                            id: msg.request.id,
++                            result,
++                        })
++                        .unwrap(),
++                    )
++                    .unwrap();
++            }
++        });
++
++        let (mut client, server, _path) = local_stream_pair("api-run-command-event");
++        client
++            .write_all(br#"{"id":"req_run","method":"pane.run_command","params":{"pane_id":"1-1","command":"printf clean","timeout_ms":1000}}"#)
++            .unwrap();
++        client.write_all(b"\n").unwrap();
++        client.flush().unwrap();
++
++        let running = Arc::new(AtomicBool::new(true));
++        let event_hub = EventHub::default();
++        let server_event_hub = event_hub.clone();
++        let server_thread = std::thread::spawn(move || {
++            handle_connection(server, &api_tx, &server_event_hub, &running, None)
++        });
++
++        send_rx.recv_timeout(Duration::from_secs(1)).unwrap();
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::WorkspaceFocused,
++            data: crate::api::schema::EventData::WorkspaceFocused {
++                workspace_id: "ws_1".into(),
++            },
++        });
++        assert!(capture_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneCommandFinished,
++            data: crate::api::schema::EventData::PaneCommandFinished {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                sequence: 4,
++                exit_code: 0,
++                revision: 11,
++                managed: false,
++            },
++        });
++        assert!(capture_rx.recv_timeout(Duration::from_millis(50)).is_err());
++
++        event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneCommandFinished,
++            data: crate::api::schema::EventData::PaneCommandFinished {
++                pane_id: "pane_1".into(),
++                workspace_id: "ws_1".into(),
++                sequence: 5,
++                exit_code: 7,
++                revision: 12,
++                managed: true,
++            },
++        });
++        capture_rx.recv_timeout(Duration::from_secs(1)).unwrap();
++
++        let response: serde_json::Value = serde_json::from_str(&read_line(&mut client)).unwrap();
++        assert_eq!(response["id"], "req_run");
++        assert_eq!(response["result"]["exit_code"], 7);
++        assert_eq!(response["result"]["output"], "clean output\r\n");
++        server_thread.join().unwrap().unwrap();
++        drop(client);
++        responder.join().unwrap();
++    }
++
+     #[test]
+     fn invalid_requests_preserve_only_unambiguous_string_ids() {
+         let cases = [
+diff --git i/src/api/wait.rs w/src/api/wait.rs
+index 541779f8329ec7f88735ee66b74d9207ec75e641..246e62ef1e83ffe9191d5dfc4696b456c48b6faf 100644
+--- i/src/api/wait.rs
++++ w/src/api/wait.rs
+@@ -1,8 +1,12 @@
+-use std::sync::atomic::AtomicBool;
++use std::io::Read as _;
++use std::sync::atomic::{AtomicBool, Ordering};
+ use std::sync::Arc;
+ 
++use interprocess::TryClone as _;
+ use regex::Regex;
+ 
++use crate::api::event_hub::{EventHistoryError, EventWaitOutcome};
++
+ use crate::api::schema::{
+     ErrorBody, ErrorResponse, EventData, EventEnvelope, EventKind, EventMatch, EventsWaitParams,
+     Method, Request, ResponseResult, Subscription, SubscriptionEventData,
+@@ -18,117 +22,401 @@ use crate::api::{ApiRequestSender, EventHub};
+ use crate::ipc::LocalStream;
+ 
+ const AGENT_PROMPT_EFFECT_TIMEOUT_MS: u64 = 5_000;
++const DEFAULT_PANE_RUN_COMMAND_TIMEOUT_MS: u64 = 120_000;
+ 
+ pub(super) fn wait_for_output(
+     request_id: String,
+     params: crate::api::schema::PaneWaitForOutputParams,
+     stream: &mut LocalStream,
+     api_tx: &ApiRequestSender,
++    event_hub: &EventHub,
+     running: &Arc<AtomicBool>,
+ ) -> std::io::Result<Option<String>> {
+     crate::logging::api_wait_started(&request_id, &params.pane_id, params.timeout_ms);
+     let deadline = params
+         .timeout_ms
+         .map(|ms| std::time::Instant::now() + std::time::Duration::from_millis(ms));
++    let client_disconnected = watch_for_connection_close(stream, event_hub.clone())?;
+ 
+     let regex = match &params.r#match {
+         crate::api::schema::OutputMatch::Regex { value } => match Regex::new(value) {
+             Ok(regex) => Some(regex),
+             Err(err) => {
+-                return Ok(Some(
+-                    serde_json::to_string(&ErrorResponse {
+-                        id: request_id,
+-                        error: ErrorBody {
+-                            code: "invalid_regex".into(),
+-                            message: err.to_string(),
+-                        },
+-                    })
+-                    .unwrap(),
+-                ));
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "invalid_regex",
++                    err.to_string(),
++                )))
+             }
+         },
+         crate::api::schema::OutputMatch::Substring { .. } => None,
+     };
+ 
++    let mut last_event_sequence = event_hub.current_sequence();
++    let mut wake_generation = event_hub.wake_generation();
++    let mut should_read = true;
++
+     loop {
+-        if should_stop_connection(stream, running)? {
++        if client_disconnected.load(Ordering::Acquire) || !running.load(Ordering::Relaxed) {
+             crate::logging::api_wait_completed(&request_id, &params.pane_id, "client_disconnected");
+             return Ok(None);
+         }
+ 
+-        let read_request = Request {
+-            id: format!("{request_id}:read"),
+-            method: Method::PaneRead(crate::api::schema::PaneReadParams {
+-                pane_id: params.pane_id.clone(),
+-                source: output_match_read_source(&params.source),
+-                lines: params.lines,
+-                format: crate::api::schema::ReadFormat::Text,
+-                strip_ansi: params.strip_ansi,
+-                intent: crate::api::schema::ReadIntent::Passive,
+-            }),
+-        };
+-        let response =
+-            dispatch_to_app_with_timeout(read_request, api_tx, Some(APP_RESPONSE_TIMEOUT));
+-        let Ok(value) = serde_json::from_str::<serde_json::Value>(&response) else {
+-            return Ok(Some(response));
+-        };
+-        if value.get("error").is_some() {
+-            let mut value = value;
+-            value["id"] = serde_json::Value::String(request_id.clone());
+-            return Ok(Some(serde_json::to_string(&value).unwrap()));
++        if should_read {
++            let read = match read_output_wait_snapshot(&request_id, &params, api_tx) {
++                Ok(read) => read,
++                Err(response) => return Ok(Some(response)),
++            };
++            let matched_line = match_output(&read.text, &params.r#match, regex.as_ref());
++            if matched_line.is_some() {
++                let revision = read.revision;
++                crate::logging::api_wait_completed(&request_id, &params.pane_id, "matched");
++                return Ok(Some(
++                    serde_json::to_string(&SuccessResponse {
++                        id: request_id,
++                        result: ResponseResult::OutputMatched {
++                            pane_id: read.pane_id.clone(),
++                            revision,
++                            matched_line,
++                            read,
++                        },
++                    })
++                    .unwrap(),
++                ));
++            }
++            should_read = false;
+         }
+ 
+-        let read_value = value["result"]["read"].clone();
+-        let Ok(read) = serde_json::from_value::<crate::api::schema::PaneReadResult>(read_value)
+-        else {
+-            return Ok(Some(
+-                serde_json::to_string(&ErrorResponse {
+-                    id: request_id,
+-                    error: ErrorBody {
+-                        code: "internal_error".into(),
+-                        message: "failed to decode pane read result".into(),
+-                    },
+-                })
+-                .unwrap(),
+-            ));
+-        };
+-
+-        let matched_line = match_output(&read.text, &params.r#match, regex.as_ref());
+-        if matched_line.is_some() {
+-            let revision = read.revision;
+-            crate::logging::api_wait_completed(&request_id, &params.pane_id, "matched");
+-            return Ok(Some(
+-                serde_json::to_string(&SuccessResponse {
+-                    id: request_id,
+-                    result: ResponseResult::OutputMatched {
+-                        pane_id: read.pane_id.clone(),
+-                        revision,
+-                        matched_line,
+-                        read,
+-                    },
+-                })
+-                .unwrap(),
+-            ));
++        match event_hub.events_after_checked(last_event_sequence) {
++            Ok(events) => {
++                for (sequence, event) in events {
++                    last_event_sequence = sequence;
++                    match event.data {
++                        EventData::PaneOutputChanged { pane_id, .. }
++                            if pane_id == params.pane_id =>
++                        {
++                            should_read = true;
++                        }
++                        EventData::PaneClosed { pane_id, .. }
++                        | EventData::PaneExited { pane_id, .. }
++                            if pane_id == params.pane_id =>
++                        {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_not_found",
++                                format!("pane {} is no longer running", params.pane_id),
++                            )));
++                        }
++                        EventData::PaneMoved {
++                            previous_pane_id, ..
++                        } if previous_pane_id == params.pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_moved",
++                                format!("pane {} moved while waiting for output", params.pane_id),
++                            )));
++                        }
++                        _ => {}
++                    }
++                }
++            }
++            Err(EventHistoryError::Lost) => {
++                last_event_sequence = event_hub.current_sequence();
++                should_read = true;
++            }
++            Err(EventHistoryError::Unavailable) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event history is unavailable",
++                )));
++            }
++        }
++        if should_read {
++            continue;
+         }
+ 
+-        if deadline.is_some_and(|deadline| std::time::Instant::now() >= deadline) {
+-            crate::logging::api_wait_timed_out(&request_id, &params.pane_id);
+-            return Ok(Some(
+-                serde_json::to_string(&ErrorResponse {
+-                    id: request_id,
+-                    error: ErrorBody {
+-                        code: "timeout".into(),
+-                        message: "timed out waiting for output match".into(),
+-                    },
+-                })
+-                .unwrap(),
+-            ));
++        match event_hub.wait_for_change(wake_generation, deadline) {
++            Ok(EventWaitOutcome::Changed(generation)) => wake_generation = generation,
++            Ok(EventWaitOutcome::TimedOut) => {
++                crate::logging::api_wait_timed_out(&request_id, &params.pane_id);
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "timeout",
++                    "timed out waiting for output match",
++                )));
++            }
++            Err(_) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event wait is unavailable",
++                )));
++            }
+         }
+-
+-        std::thread::sleep(CONNECTION_POLL_INTERVAL);
+     }
+ }
+ 
++pub(super) fn run_command(
++    request_id: String,
++    params: crate::api::schema::PaneRunCommandParams,
++    stream: &mut LocalStream,
++    api_tx: &ApiRequestSender,
++    event_hub: &EventHub,
++    running: &Arc<AtomicBool>,
++) -> std::io::Result<Option<String>> {
++    let timeout_ms = params
++        .timeout_ms
++        .unwrap_or(DEFAULT_PANE_RUN_COMMAND_TIMEOUT_MS);
++    let deadline = Some(std::time::Instant::now() + std::time::Duration::from_millis(timeout_ms));
++    let client_disconnected = watch_for_connection_close(stream, event_hub.clone())?;
++    let mut last_event_sequence = event_hub.current_sequence();
++    let mut wake_generation = event_hub.wake_generation();
++    let (pane_id, after_sequence) = match start_command(
++        &request_id,
++        crate::api::schema::PaneRunCommandParams {
++            pane_id: params.pane_id,
++            command: params.command,
++            timeout_ms: Some(timeout_ms),
++        },
++        api_tx,
++    ) {
++        Ok(started) => started,
++        Err(response) => return Ok(Some(response)),
++    };
++
++    loop {
++        if client_disconnected.load(Ordering::Acquire) || !running.load(Ordering::Relaxed) {
++            return Ok(None);
++        }
++
++        match event_hub.events_after_checked(last_event_sequence) {
++            Ok(events) => {
++                for (sequence, event) in events {
++                    last_event_sequence = sequence;
++                    match event.data {
++                        EventData::PaneCommandFinished {
++                            pane_id: completed_pane_id,
++                            sequence,
++                            exit_code,
++                            managed: true,
++                            ..
++                        } if completed_pane_id == pane_id && sequence > after_sequence => {
++                            return Ok(Some(read_command_capture(
++                                &request_id,
++                                &pane_id,
++                                sequence,
++                                exit_code,
++                                api_tx,
++                            )));
++                        }
++                        EventData::PaneClosed {
++                            pane_id: closed_pane_id,
++                            ..
++                        }
++                        | EventData::PaneExited {
++                            pane_id: closed_pane_id,
++                            ..
++                        } if closed_pane_id == pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_not_found",
++                                format!("pane {pane_id} is no longer running"),
++                            )));
++                        }
++                        EventData::PaneMoved {
++                            previous_pane_id, ..
++                        } if previous_pane_id == pane_id => {
++                            return Ok(Some(wait_error(
++                                &request_id,
++                                "pane_moved",
++                                format!("pane {pane_id} moved while running a command"),
++                            )));
++                        }
++                        _ => {}
++                    }
++                }
++            }
++            Err(EventHistoryError::Lost) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "event_history_lost",
++                    "command completion history was lost before it could be observed",
++                )));
++            }
++            Err(EventHistoryError::Unavailable) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event history is unavailable",
++                )));
++            }
++        }
++
++        match event_hub.wait_for_change(wake_generation, deadline) {
++            Ok(EventWaitOutcome::Changed(generation)) => wake_generation = generation,
++            Ok(EventWaitOutcome::TimedOut) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "timeout",
++                    "timed out waiting for OSC 133 shell command completion",
++                )));
++            }
++            Err(_) => {
++                return Ok(Some(wait_error(
++                    &request_id,
++                    "server_unavailable",
++                    "event wait is unavailable",
++                )));
++            }
++        }
++    }
++}
++
++fn start_command(
++    request_id: &str,
++    params: crate::api::schema::PaneRunCommandParams,
++    api_tx: &ApiRequestSender,
++) -> Result<(String, u64), String> {
++    let response = dispatch_to_app_with_timeout(
++        Request {
++            id: format!("{request_id}:start"),
++            method: Method::PaneRunCommandStart(params),
++        },
++        api_tx,
++        Some(APP_RESPONSE_TIMEOUT),
++    );
++    if let Some(error) = reidentify_error_response(request_id, &response) {
++        return Err(error);
++    }
++    let value = serde_json::from_str::<serde_json::Value>(&response).map_err(|_| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "failed to decode shell command start response",
++        )
++    })?;
++    let pane_id = value["result"]["pane_id"].as_str().map(str::to_owned);
++    let after_sequence = value["result"]["after_sequence"].as_u64();
++    pane_id.zip(after_sequence).ok_or_else(|| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "shell command start response was incomplete",
++        )
++    })
++}
++
++fn read_command_capture(
++    request_id: &str,
++    pane_id: &str,
++    sequence: u64,
++    exit_code: i32,
++    api_tx: &ApiRequestSender,
++) -> String {
++    let response = dispatch_to_app_with_timeout(
++        Request {
++            id: format!("{request_id}:capture"),
++            method: Method::PaneCommandCapture(crate::api::schema::PaneCommandCaptureParams {
++                pane_id: pane_id.to_string(),
++                sequence,
++            }),
++        },
++        api_tx,
++        Some(APP_RESPONSE_TIMEOUT),
++    );
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&response) else {
++        return response;
++    };
++    if value.get("error").is_some() {
++        value["id"] = serde_json::Value::String(request_id.to_string());
++        return serde_json::to_string(&value).unwrap();
++    }
++    if value["result"]["exit_code"].as_i64() != Some(i64::from(exit_code)) {
++        return wait_error(
++            request_id,
++            "command_capture_mismatch",
++            "shell completion status did not match its captured output",
++        );
++    }
++    value["id"] = serde_json::Value::String(request_id.to_string());
++    serde_json::to_string(&value).unwrap()
++}
++
++fn reidentify_error_response(request_id: &str, response: &str) -> Option<String> {
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(response) else {
++        return Some(response.to_string());
++    };
++    value.get("error")?;
++    value["id"] = serde_json::Value::String(request_id.to_string());
++    Some(serde_json::to_string(&value).unwrap())
++}
++
++fn watch_for_connection_close(
++    stream: &LocalStream,
++    event_hub: EventHub,
++) -> std::io::Result<Arc<AtomicBool>> {
++    let mut reader = stream.try_clone()?;
++    let disconnected = Arc::new(AtomicBool::new(false));
++    let disconnected_for_reader = Arc::clone(&disconnected);
++    std::thread::spawn(move || {
++        let mut byte = [0u8; 1];
++        loop {
++            match reader.read(&mut byte) {
++                Ok(0) | Err(_) => break,
++                Ok(_) => {}
++            }
++        }
++        disconnected_for_reader.store(true, Ordering::Release);
++        event_hub.wake_all();
++    });
++    Ok(disconnected)
++}
++
++fn read_output_wait_snapshot(
++    request_id: &str,
++    params: &crate::api::schema::PaneWaitForOutputParams,
++    api_tx: &ApiRequestSender,
++) -> Result<crate::api::schema::PaneReadResult, String> {
++    let read_request = Request {
++        id: format!("{request_id}:read"),
++        method: Method::PaneRead(crate::api::schema::PaneReadParams {
++            pane_id: params.pane_id.clone(),
++            source: output_match_read_source(&params.source),
++            lines: params.lines,
++            format: crate::api::schema::ReadFormat::Text,
++            strip_ansi: params.strip_ansi,
++            intent: crate::api::schema::ReadIntent::Passive,
++        }),
++    };
++    let response = dispatch_to_app_with_timeout(read_request, api_tx, Some(APP_RESPONSE_TIMEOUT));
++    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&response) else {
++        return Err(response);
++    };
++    if value.get("error").is_some() {
++        value["id"] = serde_json::Value::String(request_id.to_string());
++        return Err(serde_json::to_string(&value).unwrap());
++    }
++    serde_json::from_value(value["result"]["read"].clone()).map_err(|_| {
++        wait_error(
++            request_id,
++            "internal_error",
++            "failed to decode pane read result",
++        )
++    })
++}
++
++fn wait_error(request_id: &str, code: &str, message: impl Into<String>) -> String {
++    serde_json::to_string(&ErrorResponse {
++        id: request_id.into(),
++        error: ErrorBody {
++            code: code.into(),
++            message: message.into(),
++        },
++    })
++    .unwrap()
++}
++
+ pub(super) fn wait_for_agent(
+     request_id: String,
+     params: crate::api::schema::AgentWaitParams,
+diff --git i/src/app/actions.rs w/src/app/actions.rs
+index e1ae2ffc967d0aa387319af854a56c04355ea600..ecc15622c86a5eb7662d21bd6f567247c8f11d45 100644
+--- i/src/app/actions.rs
++++ w/src/app/actions.rs
+@@ -1602,6 +1602,7 @@ impl AppState {
+             // Host-local effects are intercepted by HeadlessServer and forwarded to the
+             // foreground client; they never touch AppState. Kept for AppEvent exhaustiveness.
+             AppEvent::TerminalBell { .. } => Vec::new(),
++            AppEvent::ShellCommandFinished { .. } => Vec::new(),
+             AppEvent::ClipboardWrite { .. } => Vec::new(),
+             AppEvent::TerminalCwdReported { pane_id, cwd } => {
+                 if !cwd.is_absolute() || !cwd.is_dir() {
+diff --git i/src/app/api.rs w/src/app/api.rs
+index 20ca9d0f2f7755f3d554d79b7ba188bff37e60dd..7d6324ca27602b4abc1ae4a890934a5a2eb35cb8 100644
+--- i/src/app/api.rs
++++ w/src/app/api.rs
+@@ -46,7 +46,7 @@ impl App {
+                 self.handle_api_worktree_read_finished(*result);
+                 changes_workspace
+             }
+-            ev @ AppEvent::TerminalBell { .. } => {
++            ev @ (AppEvent::TerminalBell { .. } | AppEvent::ShellCommandFinished { .. }) => {
+                 self.handle_internal_event(ev);
+                 false
+             }
+@@ -114,6 +114,40 @@ impl App {
+             return Vec::new();
+         }
+ 
++        if let AppEvent::ShellCommandFinished {
++            pane_id,
++            sequence,
++            exit_code,
++            content_revision,
++            managed,
++        } = ev
++        {
++            let Some((ws_idx, _)) = self
++                .state
++                .workspaces
++                .iter()
++                .enumerate()
++                .find(|(_, workspace)| workspace.find_tab_index_for_pane(pane_id).is_some())
++            else {
++                return Vec::new();
++            };
++            let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++                return Vec::new();
++            };
++            self.event_hub.push(crate::api::schema::EventEnvelope {
++                event: crate::api::schema::EventKind::PaneCommandFinished,
++                data: crate::api::schema::EventData::PaneCommandFinished {
++                    pane_id: public_pane_id,
++                    workspace_id: self.public_workspace_id(ws_idx),
++                    sequence,
++                    exit_code,
++                    revision: content_revision,
++                    managed,
++                },
++            });
++            return Vec::new();
++        }
++
+         if let AppEvent::GitStatusRefreshed {
+             results,
+             cache_updates,
+@@ -772,6 +806,31 @@ impl App {
+         }
+     }
+ 
++    pub(crate) fn emit_pane_output_changed(&mut self, pane_id: crate::layout::PaneId) {
++        let Some((ws_idx, _)) = self.find_pane(pane_id) else {
++            return;
++        };
++        let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++            return;
++        };
++        let Some(runtime) =
++            self.state
++                .runtime_for_pane_in_workspace(&self.terminal_runtimes, ws_idx, pane_id)
++        else {
++            return;
++        };
++        let revision = runtime.content_seq();
++        let workspace_id = self.public_workspace_id(ws_idx);
++        self.event_hub.push(crate::api::schema::EventEnvelope {
++            event: crate::api::schema::EventKind::PaneOutputChanged,
++            data: crate::api::schema::EventData::PaneOutputChanged {
++                pane_id: public_pane_id,
++                workspace_id,
++                revision,
++            },
++        });
++    }
++
+     pub(crate) fn emit_workspace_token_updated(&mut self, ws_idx: usize) {
+         // Token updates bypass plugin hooks so a hook cannot refresh its own
+         // token and recursively trigger workspace.updated.
+@@ -1171,6 +1230,12 @@ impl App {
+             Method::PaneSendInput(params) => {
+                 return self.handle_pane_send_input(request.id, params);
+             }
++            Method::PaneRunCommandStart(params) => {
++                return self.handle_pane_run_command_start(request.id, params);
++            }
++            Method::PaneCommandCapture(params) => {
++                return self.handle_pane_command_capture(request.id, params);
++            }
+             Method::PaneClose(target) => return self.handle_pane_close(request.id, target),
+             Method::PopupClose(_) => {
+                 return if self.close_popup_pane() {
+diff --git i/src/app/api/panes.rs w/src/app/api/panes.rs
+index e4e03e71b48f96754bf0559b6e6ecf546437ab65..4ab371bd5ed70c885cb1e4ef0d1d42874b0079e5 100644
+--- i/src/app/api/panes.rs
++++ w/src/app/api/panes.rs
+@@ -1,9 +1,9 @@
+ use bytes::Bytes;
+ 
+ use crate::api::schema::{
+-    EventData, EventEnvelope, EventKind, PaneClearAgentAuthorityParams, PaneCopyMotion,
+-    PaneCopyMotionParams, PaneCopySearchDirection, PaneCopySearchParams, PaneCurrentParams,
+-    PaneDirection, PaneEdgesParams, PaneEdgesResult, PaneFocusDirectionParams,
++    EventData, EventEnvelope, EventKind, PaneClearAgentAuthorityParams, PaneCommandCaptureParams,
++    PaneCopyMotion, PaneCopyMotionParams, PaneCopySearchDirection, PaneCopySearchParams,
++    PaneCurrentParams, PaneDirection, PaneEdgesParams, PaneEdgesResult, PaneFocusDirectionParams,
+     PaneFocusDirectionReason, PaneFocusDirectionResult, PaneInfo, PaneInputSetParams,
+     PaneLayoutPane, PaneLayoutParams, PaneLayoutRect, PaneLayoutSnapshot, PaneLayoutSplit,
+     PaneListParams, PaneMoveDestination, PaneMoveParams, PaneMoveReason, PaneMoveResult,
+@@ -11,10 +11,10 @@ use crate::api::schema::{
+     PaneProcessInfoProcess, PaneReadParams, PaneReadResult, PaneReleaseAgentParams,
+     PaneRenameParams, PaneReportAgentParams, PaneReportAgentSessionParams,
+     PaneReportMetadataParams, PaneResizeParams, PaneResizeReason, PaneResizeResult,
+-    PaneScrollParams, PaneSelectionReadParams, PaneSendInputParams, PaneSendKeysParams,
+-    PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneSwapReason, PaneSwapResult,
+-    PaneTarget, PaneTextPoint, PaneTextRange, PaneZoomMode, PaneZoomParams, PaneZoomReason,
+-    PaneZoomResult, ResponseResult,
++    PaneRunCommandParams, PaneScrollParams, PaneSelectionReadParams, PaneSendInputParams,
++    PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneSwapReason,
++    PaneSwapResult, PaneTarget, PaneTextPoint, PaneTextRange, PaneZoomMode, PaneZoomParams,
++    PaneZoomReason, PaneZoomResult, ResponseResult,
+ };
+ use crate::app::actions::{PaneZoomCommand, PaneZoomNoopReason};
+ use crate::app::App;
+@@ -30,6 +30,8 @@ use super::super::api_helpers::{
+ use super::super::api_helpers::{METADATA_SOURCE_MAX_CHARS, METADATA_TTL_MAX_MS};
+ use super::responses::{encode_error, encode_success};
+ 
++const DEFAULT_PANE_RUN_COMMAND_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
++
+ impl App {
+     pub(super) fn handle_pane_split(&mut self, id: String, params: PaneSplitParams) -> String {
+         let target = if let Some(target_pane_id) = params.target_pane_id.as_deref() {
+@@ -1526,6 +1528,7 @@ impl App {
+             params.format,
+             params.lines,
+         );
++        let revision = pane.content_seq();
+ 
+         encode_success(
+             id,
+@@ -1537,13 +1540,94 @@ impl App {
+                     source: params.source,
+                     format: params.format,
+                     text: snapshot.text,
+-                    revision: 0,
++                    revision,
+                     truncated: snapshot.truncated,
+                 },
+             },
+         )
+     }
+ 
++    pub(super) fn handle_pane_run_command_start(
++        &mut self,
++        id: String,
++        params: PaneRunCommandParams,
++    ) -> String {
++        let Some((ws_idx, pane_id)) = self.parse_pane_id(&params.pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some(runtime) = self.lookup_runtime_sender(ws_idx, pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let bytes = match super::super::api_helpers::encode_api_input(
++            runtime,
++            &params.command,
++            &["Enter".into()],
++        ) {
++            Ok(bytes) => bytes,
++            Err(key) => return encode_error(id, "invalid_key", format!("unsupported key {key}")),
++        };
++        let timeout = params
++            .timeout_ms
++            .map(std::time::Duration::from_millis)
++            .unwrap_or(DEFAULT_PANE_RUN_COMMAND_TIMEOUT);
++        let Ok(after_sequence) = runtime.reserve_shell_command(timeout) else {
++            return encode_error(
++                id,
++                "pane_busy",
++                "pane already has a shell command in progress",
++            );
++        };
++        if let Err(err) = runtime.try_send_bytes(Bytes::from(bytes)) {
++            runtime.cancel_shell_command_reservation();
++            return encode_error(id, "pane_send_failed", err.to_string());
++        }
++        let Some(public_pane_id) = self.public_pane_id(ws_idx, pane_id) else {
++            runtime.cancel_shell_command_reservation();
++            return pane_not_found(id, &params.pane_id);
++        };
++
++        encode_success(
++            id,
++            ResponseResult::PaneCommandStarted {
++                pane_id: public_pane_id,
++                after_sequence,
++            },
++        )
++    }
++
++    pub(super) fn handle_pane_command_capture(
++        &mut self,
++        id: String,
++        params: PaneCommandCaptureParams,
++    ) -> String {
++        let Some((ws_idx, pane_id)) = self.parse_pane_id(&params.pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some((runtime, _)) = self.lookup_runtime(ws_idx, pane_id) else {
++            return pane_not_found(id, &params.pane_id);
++        };
++        let Some(capture) = runtime.shell_command_capture(params.sequence) else {
++            return encode_error(
++                id,
++                "command_capture_not_found",
++                format!(
++                    "command capture {} is unavailable for pane {}",
++                    params.sequence, params.pane_id
++                ),
++            );
++        };
++        encode_success(
++            id,
++            ResponseResult::PaneCommandCompleted {
++                pane_id: params.pane_id,
++                sequence: capture.sequence,
++                exit_code: capture.exit_code,
++                output: String::from_utf8_lossy(&capture.output).into_owned(),
++                truncated: capture.truncated,
++            },
++        )
++    }
++
+     pub(super) fn handle_pane_report_agent(
+         &mut self,
+         id: String,
+diff --git i/src/app/api/plugins/context.rs w/src/app/api/plugins/context.rs
+index 8aee1c31bdd6e21d36a12abb7fa0313c9d65a8e5..f8f698aca6f90deebd1fd381260ba2040611c47e 100644
+--- i/src/app/api/plugins/context.rs
++++ w/src/app/api/plugins/context.rs
+@@ -163,6 +163,11 @@ impl App {
+                 workspace_id,
+                 ..
+             }
++            | EventData::PaneCommandFinished {
++                pane_id,
++                workspace_id,
++                ..
++            }
+             | EventData::PaneExited {
+                 pane_id,
+                 workspace_id,
+diff --git i/src/cli/pane.rs w/src/cli/pane.rs
+index 33583ee48690330df7a56f6e4b313d58ccf772e8..abcef4c173dd7c607b430662db3bf91697dd8b16 100644
+--- i/src/cli/pane.rs
++++ w/src/cli/pane.rs
+@@ -3,10 +3,10 @@ use crate::api::schema::{
+     PaneFocusDirectionParams, PaneInputSetParams, PaneLayoutParams, PaneListParams,
+     PaneMoveDestination, PaneMoveParams, PaneNeighborParams, PaneProcessInfoParams, PaneReadParams,
+     PaneReleaseAgentParams, PaneRenameParams, PaneReportAgentParams, PaneReportAgentSessionParams,
+-    PaneReportMetadataParams, PaneResizeParams, PaneRightClickTarget, PaneSendInputParams,
+-    PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams, PaneTarget,
+-    PaneWaitForOutputParams, PaneZoomMode, PaneZoomParams, ReadFormat, ReadSource, Request,
+-    SplitDirection,
++    PaneReportMetadataParams, PaneResizeParams, PaneRightClickTarget, PaneRunCommandParams,
++    PaneSendInputParams, PaneSendKeysParams, PaneSendTextParams, PaneSplitParams, PaneSwapParams,
++    PaneTarget, PaneWaitForOutputParams, PaneZoomMode, PaneZoomParams, ReadFormat, ReadSource,
++    Request, SplitDirection,
+ };
+ 
+ pub(super) fn run_pane_command(args: &[String]) -> std::io::Result<i32> {
+@@ -41,6 +41,7 @@ pub(super) fn run_pane_command(args: &[String]) -> std::io::Result<i32> {
+         "release-agent" => pane_release_agent(&args[1..]),
+         "report-metadata" => pane_report_metadata(&args[1..]),
+         "run" => pane_run(&args[1..]),
++        "run-command" => pane_run_command(&args[1..]),
+         "help" | "--help" | "-h" => {
+             print_pane_help();
+             Ok(0)
+@@ -1051,6 +1052,52 @@ fn pane_run(args: &[String]) -> std::io::Result<i32> {
+     }))
+ }
+ 
++fn pane_run_command(args: &[String]) -> std::io::Result<i32> {
++    const USAGE: &str = "usage: herdr pane run-command <pane_id> [--timeout MS] -- <command>";
++    let Some(pane_id) = args.first() else {
++        eprintln!("{USAGE}");
++        return Ok(2);
++    };
++    let mut timeout_ms = None;
++    let mut command_start = None;
++    let mut index = 1;
++    while index < args.len() {
++        match args[index].as_str() {
++            "--timeout" if index + 1 < args.len() => {
++                timeout_ms = match args[index + 1].parse::<u64>() {
++                    Ok(value) => Some(value),
++                    Err(_) => {
++                        eprintln!("invalid --timeout value: {}", args[index + 1]);
++                        return Ok(2);
++                    }
++                };
++                index += 2;
++            }
++            "--" => {
++                command_start = Some(index + 1);
++                break;
++            }
++            _ => {
++                eprintln!("{USAGE}");
++                return Ok(2);
++            }
++        }
++    }
++    let Some(command_start) = command_start.filter(|start| *start < args.len()) else {
++        eprintln!("{USAGE}");
++        return Ok(2);
++    };
++    let params = PaneRunCommandParams {
++        pane_id: super::normalize_pane_id(pane_id),
++        command: args[command_start..].join(" "),
++        timeout_ms,
++    };
++    super::print_response(&super::send_request(&Request {
++        id: "cli:pane:run-command".into(),
++        method: Method::PaneRunCommand(params),
++    })?)
++}
++
+ fn pane_wait_output(args: &[String]) -> std::io::Result<i32> {
+     let params = match parse_pane_wait_output_args(args) {
+         Ok(params) => params,
+@@ -1698,6 +1745,7 @@ fn print_pane_help() {
+     eprintln!("  herdr pane send-text <pane_id> <text>");
+     eprintln!("  herdr pane send-keys <pane_id> <key> [key ...]");
+     eprintln!("  herdr pane wait-output <pane_id> (--match TEXT | --regex PATTERN) [--source visible|recent|recent-unwrapped] [--lines N] [--timeout MS] [--raw]");
++    eprintln!("  herdr pane run-command <pane_id> [--timeout MS] -- <command>");
+     eprintln!("  herdr pane report-agent <pane_id> --source ID --agent LABEL --state idle|working|blocked|unknown [--message TEXT] [--seq N] [--agent-session-id ID] [--agent-session-path PATH]");
+     eprintln!("  herdr pane report-agent-session <pane_id> --source ID --agent LABEL [--seq N] [--agent-session-id ID] [--agent-session-path PATH]");
+     eprintln!("  herdr pane release-agent <pane_id> --source ID --agent LABEL [--seq N]");
+diff --git i/src/cli/spec.rs w/src/cli/spec.rs
+index 1cfc2e7f71465e28a7a3256489f9374421bac9a1..cd6c5e660ef8846ca4b609635244692531e7dc57 100644
+--- i/src/cli/spec.rs
++++ w/src/cli/spec.rs
+@@ -629,6 +629,13 @@ fn pane_command() -> Command {
+                 .arg(required("pane_id", "PANE_ID"))
+                 .arg(required("command", "COMMAND").num_args(1..)),
+         )
++        .subcommand(
++            Command::new("run-command")
++                .about("Run a command and wait for semantic shell completion")
++                .arg(required("pane_id", "PANE_ID"))
++                .arg(option("timeout", "MS"))
++                .arg(required("command", "COMMAND").num_args(1..).last(true)),
++        )
+         .subcommand(report_agent_command())
+         .subcommand(report_agent_session_command())
+         .subcommand(release_agent_command())
 diff --git i/src/client/mod.rs w/src/client/mod.rs
-index d55e4c48..5915c02b 100644
+index d55e4c487fe9d9cd44698ab8990ff010292b3622..5915c02b86297deae3bf84f5f8f99acf68b96158 100644
 --- i/src/client/mod.rs
 +++ w/src/client/mod.rs
 @@ -496,6 +496,8 @@ async fn run_client_loop(
@@ -12,7 +1434,7 @@ index d55e4c48..5915c02b 100644
      }
      let host_mouse_capture_active = Arc::new(AtomicBool::new(state.mouse_capture_active));
 diff --git i/src/client/shell.rs w/src/client/shell.rs
-index 2d180443..9cec3a49 100644
+index 2d180443b43390cbdcd75a696159453282fa4938..9cec3a49f70812d121d707c9e345e4a54c991fd4 100644
 --- i/src/client/shell.rs
 +++ w/src/client/shell.rs
 @@ -14,7 +14,6 @@ mod endpoint_agent_state;
@@ -40,7 +1462,7 @@ index 2d180443..9cec3a49 100644
  #[cfg(test)]
  pub(super) use surface_patch::apply_composed_surface_patch;
 diff --git i/src/client/shell/actions.rs w/src/client/shell/actions.rs
-index 9d0a3bd5..1a856e81 100644
+index 9d0a3bd5dc9c49911f248a3e5a6071baa6679be5..1a856e8167ac01152bfe2958d25a8bc277594238 100644
 --- i/src/client/shell/actions.rs
 +++ w/src/client/shell/actions.rs
 @@ -1,6 +1,104 @@
@@ -215,10 +1637,10 @@ index 9d0a3bd5..1a856e81 100644
              }
              KeybindAction::SwitchWorkspace(index) => {
 diff --git i/src/client/shell/agent_sidebar.rs w/src/client/shell/agent_sidebar.rs
-index e43ab8cc..b022cdbe 100644
+index e43ab8ccbd0c922154b745a595b0ad7b641907bc..82badd7ff8b4e846fc983ce252c6a7a5fc03a4cf 100644
 --- i/src/client/shell/agent_sidebar.rs
 +++ w/src/client/shell/agent_sidebar.rs
-@@ -1,17 +1,10 @@
+@@ -1,17 +1,11 @@
  use std::collections::HashMap;
  
 -use ratatui::{
@@ -230,6 +1652,7 @@ index e43ab8cc..b022cdbe 100644
 -};
 -
  use super::*;
++use crate::protocol::{ClientShellAgent, ClientShellPane};
  
  pub(super) struct AgentRow {
      pub(super) pane_id: String,
@@ -237,7 +1660,7 @@ index e43ab8cc..b022cdbe 100644
      pub(super) status: crate::api::schema::AgentStatus,
      pub(super) focused: bool,
      pub(super) rows: Vec<Vec<crate::ui::ResolvedToken>>,
-@@ -49,202 +42,6 @@ pub(super) fn ordered_agent_pane_ids(
+@@ -49,202 +43,6 @@ pub(super) fn ordered_agent_pane_ids(
          .collect()
  }
  
@@ -440,7 +1863,7 @@ index e43ab8cc..b022cdbe 100644
  pub(super) fn agent_row(
      snapshot: &ClientShellSnapshot,
      pane_id: &str,
-@@ -264,14 +61,6 @@ pub(super) fn agent_row(
+@@ -264,14 +62,7 @@ pub(super) fn agent_row(
          .panes
          .iter()
          .find(|pane| pane.pane_id == agent.pane_id);
@@ -452,10 +1875,11 @@ index e43ab8cc..b022cdbe 100644
 -    let tab_label = tab
 -        .filter(|tab| tab_count > 1 || tab.custom_label)
 -        .map(|tab| tab.label.as_str());
++    let pane_label = pane_display_label(&agent.pane_id, pane, Some(agent));
      let agent_label = agent
          .display_agent
          .as_deref()
-@@ -292,12 +81,12 @@ pub(super) fn agent_row(
+@@ -292,12 +83,12 @@ pub(super) fn agent_row(
          .agent
          .as_deref()
          .and_then(crate::detect::parse_agent_label);
@@ -470,7 +1894,7 @@ index e43ab8cc..b022cdbe 100644
              pane: agent
                  .title
                  .as_deref()
-@@ -310,81 +99,36 @@ pub(super) fn agent_row(
+@@ -310,79 +101,70 @@ pub(super) fn agent_row(
          },
          state_text,
      );
@@ -486,18 +1910,23 @@ index e43ab8cc..b022cdbe 100644
 +        kind: crate::ui::ResolvedTokenKind::StateIcon,
 +        style: style_for(|kind| matches!(kind, crate::ui::ResolvedTokenKind::StateIcon)),
 +    }];
-+    if let Some(tab) = tab {
-+        row.push(crate::ui::ResolvedToken {
-+            kind: crate::ui::ResolvedTokenKind::Tab(tab.label.clone()),
-+            style: style_for(|kind| matches!(kind, crate::ui::ResolvedTokenKind::Tab(_))),
-+        });
-+    }
++    let pane_style = configured_tokens
++        .iter()
++        .find(|token| matches!(&token.kind, crate::ui::ResolvedTokenKind::Pane(_)))
++        .or_else(|| {
++            configured_tokens
++                .iter()
++                .find(|token| matches!(&token.kind, crate::ui::ResolvedTokenKind::Tab(_)))
++        })
++        .map(|token| token.style)
++        .unwrap_or_default();
++    row.push(crate::ui::ResolvedToken {
++        kind: crate::ui::ResolvedTokenKind::Pane(pane_label.clone()),
++        style: pane_style,
++    });
      Some(AgentRow {
          pane_id: agent.pane_id.clone(),
-+        label: tab
-+            .map(|tab| tab.label.clone())
-+            .or_else(|| agent_label.map(str::to_owned))
-+            .unwrap_or_else(|| "agent".to_owned()),
++        label: pane_label,
          status: agent.agent_status,
          focused: agent.focused,
 -        rows,
@@ -558,8 +1987,26 @@ index e43ab8cc..b022cdbe 100644
 -            buffer,
 -        );
 -    }
--}
--
++pub(super) fn pane_identity_label(
++    pane: Option<&ClientShellPane>,
++    agent: Option<&ClientShellAgent>,
++) -> Option<String> {
++    [
++        pane.and_then(|pane| pane.label.as_deref()),
++        agent.and_then(|agent| agent.display_agent.as_deref()),
++        agent.and_then(|agent| agent.name.as_deref()),
++        agent.and_then(|agent| agent.agent.as_deref()),
++        agent.and_then(|agent| agent.title.as_deref()),
++        agent.and_then(|agent| agent.terminal_title_stripped.as_deref()),
++        agent.and_then(|agent| agent.terminal_title.as_deref()),
++    ]
++    .into_iter()
++    .flatten()
++    .map(str::trim)
++    .find(|label| !label.is_empty())
++    .map(str::to_owned)
+ }
+ 
 -fn put_text(buffer: &mut Buffer, x: u16, y: u16, width: u16, text: &str, style: Style) {
 -    for (offset, character) in text.chars().take(width as usize).enumerate() {
 -        if let Some(cell) = buffer.cell_mut((x + offset as u16, y)) {
@@ -570,13 +2017,20 @@ index e43ab8cc..b022cdbe 100644
 -
 -fn display_width(text: &str) -> usize {
 -    unicode_width::UnicodeWidthStr::width(text)
--}
--
++pub(super) fn pane_display_label(
++    pane_id: &str,
++    pane: Option<&ClientShellPane>,
++    agent: Option<&ClientShellAgent>,
++) -> String {
++    pane_identity_label(pane, agent).unwrap_or_else(|| {
++        let short_id = pane_id.rsplit(':').next().unwrap_or(pane_id);
++        format!("pane {short_id}")
++    })
+ }
+ 
  fn sidebar_status_text(status: crate::api::schema::AgentStatus) -> &'static str {
-     use crate::api::schema::AgentStatus;
-     match status {
 diff --git i/src/client/shell/composition.rs w/src/client/shell/composition.rs
-index b7ab4a96..fc823bd6 100644
+index b7ab4a96792a077f78c0059fae974abc5a4d76d0..fc823bd6cdb11d9261c5d84efaacce58b9624363 100644
 --- i/src/client/shell/composition.rs
 +++ w/src/client/shell/composition.rs
 @@ -59,15 +59,13 @@ impl ClientShellState {
@@ -651,7 +2105,7 @@ index b7ab4a96..fc823bd6 100644
                  selected_workspace_id: self
                      .navigate_workspace_id
 diff --git i/src/client/shell/context_menu.rs w/src/client/shell/context_menu.rs
-index b57bc843..4488eae1 100644
+index b57bc8436d04e193deabe596738aca1d0e04a185..4488eae180f12d74afe0125ad43cf10d51fe7c42 100644
 --- i/src/client/shell/context_menu.rs
 +++ w/src/client/shell/context_menu.rs
 @@ -29,17 +29,12 @@ impl ClientContextMenuOverlay {
@@ -712,7 +2166,7 @@ index b57bc843..4488eae1 100644
          }
      }
 diff --git i/src/client/shell/endpoint_agents.rs w/src/client/shell/endpoint_agents.rs
-index b56b41fa..8d69724d 100644
+index b56b41fa1446c40f47dc01573d27cbd22ecf6999..8d69724ddb8b13413cd886dd73dbb10024446548 100644
 --- i/src/client/shell/endpoint_agents.rs
 +++ w/src/client/shell/endpoint_agents.rs
 @@ -1,177 +1,38 @@
@@ -920,7 +2374,7 @@ index b56b41fa..8d69724d 100644
 +    }
  }
 diff --git i/src/client/shell/endpoint_navigation.rs w/src/client/shell/endpoint_navigation.rs
-index a1f7ac2c..7d6a29f7 100644
+index a1f7ac2cc2a9f6950acc64be306ef776d6f55f73..7d6a29f7fd7b4894992bd9384499685f9b624243 100644
 --- i/src/client/shell/endpoint_navigation.rs
 +++ w/src/client/shell/endpoint_navigation.rs
 @@ -167,10 +167,10 @@ impl ClientShellState {
@@ -960,7 +2414,7 @@ index a1f7ac2c..7d6a29f7 100644
              return true;
 diff --git i/src/client/shell/endpoint_sidebar.rs w/src/client/shell/endpoint_sidebar.rs
 deleted file mode 100644
-index 96982487..00000000
+index 96982487c8d6b0a69d2a9509d3bad3e85927102c..0000000000000000000000000000000000000000
 --- i/src/client/shell/endpoint_sidebar.rs
 +++ /dev/null
 @@ -1,649 +0,0 @@
@@ -1614,7 +3068,7 @@ index 96982487..00000000
 -    )
 -}
 diff --git i/src/client/shell/endpoints.rs w/src/client/shell/endpoints.rs
-index fff28b71..d5136ba7 100644
+index fff28b71d913a0003aa6b5913c5ad61a7f2efe68..d5136ba756e3333a787deb5313613426c4d30341 100644
 --- i/src/client/shell/endpoints.rs
 +++ w/src/client/shell/endpoints.rs
 @@ -209,10 +209,6 @@ impl ClientShellState {
@@ -1706,7 +3160,7 @@ index fff28b71..d5136ba7 100644
  
      pub(crate) fn acknowledge_active_surface_agents(&mut self, surface: &PaneSurfaceFrame) -> bool {
 diff --git i/src/client/shell/input.rs w/src/client/shell/input.rs
-index 413e29f5..f2b92d75 100644
+index 413e29f529bb7d55edb0207d5c0b007d8cee571d..f2b92d7543aed8090b31cbda78be2177c3f5bf35 100644
 --- i/src/client/shell/input.rs
 +++ w/src/client/shell/input.rs
 @@ -560,6 +560,14 @@ impl ClientShellState {
@@ -1725,7 +3179,7 @@ index 413e29f5..f2b92d75 100644
          match self.mode {
              ClientShellMode::Terminal => {
 diff --git i/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
-index f2df2941..2f3084a3 100644
+index f2df294103dcb6d61abcee024325c9c4d1333a62..2f3084a3f5e455eb1e423f5b9f192743f6e3dea5 100644
 --- i/src/client/shell/mouse.rs
 +++ w/src/client/shell/mouse.rs
 @@ -509,9 +509,10 @@ impl ClientShellState {
@@ -1949,7 +3403,7 @@ index f2df2941..2f3084a3 100644
                      .hits
                      .workspaces
 diff --git i/src/client/shell/render.rs w/src/client/shell/render.rs
-index 248216c1..3fc1e162 100644
+index 248216c1e5c6fe115ff29cd27513dda46fa8c272..3fc1e162b2db2155449b4349657ca882cb94f815 100644
 --- i/src/client/shell/render.rs
 +++ w/src/client/shell/render.rs
 @@ -7,10 +7,9 @@ pub(in crate::client::shell) mod sidebar;
@@ -2050,7 +3504,7 @@ index 248216c1..3fc1e162 100644
          hits.new_workspace = Rect::default();
          hits.machines.clear();
 diff --git i/src/client/shell/sidebar.rs w/src/client/shell/sidebar.rs
-index f94f6bdc..45df60f0 100644
+index f94f6bdcfa25deaf735bba0d44e4967bf1b11bbe..45df60f05c4f83244d5f5f81ce72dd6a83add6c3 100644
 --- i/src/client/shell/sidebar.rs
 +++ w/src/client/shell/sidebar.rs
 @@ -12,449 +12,6 @@ fn workspace_selection_background(palette: &Palette) -> ratatui::style::Color {
@@ -2660,15 +4114,17 @@ index f94f6bdc..45df60f0 100644
      };
 diff --git i/src/client/shell/sidebar_tree.rs w/src/client/shell/sidebar_tree.rs
 new file mode 100644
-index 00000000..3600f85c
+index 0000000000000000000000000000000000000000..7338b71379a1f65e497c2bb9ad37f1880ef66585
 --- /dev/null
 +++ w/src/client/shell/sidebar_tree.rs
-@@ -0,0 +1,1386 @@
+@@ -0,0 +1,1426 @@
 +use super::*;
 +
 +const WORKSPACE_INDENT: usize = 1;
 +const TREE_LEVEL_INDENT: usize = 2;
 +const BRANCH_INDENT: usize = TREE_LEVEL_INDENT;
++const WORKSPACE_SPACER_ROWS: usize = 1;
++const REPOSITORY_SPACER_ROWS: usize = 2;
 +
 +pub(super) struct SidebarTreeRow {
 +    pub(super) kind: SidebarTreeRowKind,
@@ -2696,7 +4152,7 @@ index 00000000..3600f85c
 +    Agent {
 +        endpoint_index: usize,
 +        row: super::agent_sidebar::AgentRow,
-+        active_tab: bool,
++        active_pane: bool,
 +        parent_last: Option<bool>,
 +        last_child: bool,
 +        stale: bool,
@@ -2707,7 +4163,7 @@ index 00000000..3600f85c
 +        pane_id: String,
 +        label: String,
 +        focused: bool,
-+        active_tab: bool,
++        active_pane: bool,
 +        interactive: bool,
 +        parent_last: Option<bool>,
 +        last_child: bool,
@@ -2794,11 +4250,19 @@ index 00000000..3600f85c
 +            .collect();
 +        let (projects, ungrouped_entries) = project_groups(snapshot, entries);
 +        let mut has_context = false;
++        let mut previous_was_repository = false;
 +        for project in projects {
 +            if repository_drilldown.is_some_and(|drilldown| drilldown.key != project.key) {
 +                continue;
 +            }
-+            append_context_spacer(&mut result, has_context);
++            let spacer_rows = if !has_context {
++                0
++            } else if previous_was_repository && project.repository_backed {
++                REPOSITORY_SPACER_ROWS
++            } else {
++                WORKSPACE_SPACER_ROWS
++            };
++            append_spacers(&mut result, spacer_rows);
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Project {
 +                    endpoint_index,
@@ -2819,12 +4283,20 @@ index 00000000..3600f85c
 +                true,
 +            );
 +            has_context = true;
++            previous_was_repository = project.repository_backed;
 +        }
 +        if repository_drilldown.is_some() {
 +            continue;
 +        }
 +        for entry in ungrouped_entries {
-+            append_context_spacer(&mut result, has_context);
++            append_spacers(
++                &mut result,
++                if has_context {
++                    WORKSPACE_SPACER_ROWS
++                } else {
++                    0
++                },
++            );
 +            append_workspace_rows(
 +                &mut result,
 +                &mut agents_by_workspace,
@@ -2843,18 +4315,17 @@ index 00000000..3600f85c
 +    result
 +}
 +
-+fn append_context_spacer(result: &mut Vec<SidebarTreeRow>, needed: bool) {
-+    if needed {
-+        result.push(SidebarTreeRow {
-+            kind: SidebarTreeRowKind::Spacer,
-+        });
-+    }
++fn append_spacers(result: &mut Vec<SidebarTreeRow>, count: usize) {
++    result.extend((0..count).map(|_| SidebarTreeRow {
++        kind: SidebarTreeRowKind::Spacer,
++    }));
 +}
 +
 +struct ProjectGroup {
 +    key: String,
 +    label: String,
 +    entries: Vec<WorkspaceEntry>,
++    repository_backed: bool,
 +}
 +
 +fn project_groups(
@@ -2867,10 +4338,14 @@ index 00000000..3600f85c
 +        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
 +            continue;
 +        };
-+        let (key, label) = if let Some(worktree) = &workspace.worktree {
-+            (worktree.key.clone(), worktree.label.clone())
++        let (key, label, repository_backed) = if let Some(worktree) = &workspace.worktree {
++            (worktree.key.clone(), worktree.label.clone(), true)
 +        } else if workspace.branch.is_some() {
-+            (workspace.workspace_id.clone(), workspace.label.clone())
++            (
++                workspace.workspace_id.clone(),
++                workspace.label.clone(),
++                false,
++            )
 +        } else {
 +            ungrouped_entries.push(entry);
 +            continue;
@@ -2882,6 +4357,7 @@ index 00000000..3600f85c
 +                key,
 +                label,
 +                entries: vec![entry],
++                repository_backed,
 +            });
 +        }
 +    }
@@ -2907,16 +4383,34 @@ index 00000000..3600f85c
 +    entries: Vec<WorkspaceEntry>,
 +    nested: bool,
 +) {
++    let mut has_workspace = false;
 +    for entry in entries {
 +        let Some(workspace) = snapshot.workspaces.get(entry.index) else {
 +            continue;
 +        };
++        append_spacers(
++            result,
++            if has_workspace {
++                WORKSPACE_SPACER_ROWS
++            } else {
++                0
++            },
++        );
++        has_workspace = true;
 +        let status = workspace.agent_status;
 +        let workspace_rows = compact_workspace_rows(workspace, status, nested, &config.spaces);
 +        let active_workspace = &endpoint.endpoint_id == active_endpoint_id && workspace.focused;
 +        let pane_ids = agents_by_workspace
 +            .remove(&(endpoint_index, workspace.workspace_id.clone()))
 +            .unwrap_or_default();
++        let active_pane_id = snapshot
++            .panes
++            .iter()
++            .find(|pane| {
++                pane.workspace_id == workspace.workspace_id
++                    && pane.tab_id == workspace.active_tab_id
++            })
++            .map(|pane| pane.pane_id.as_str());
 +        let mut agent_rows = pane_ids
 +            .into_iter()
 +            .filter_map(|pane_id| {
@@ -2927,53 +4421,53 @@ index 00000000..3600f85c
 +                    include_endpoints.then_some(endpoint.label.as_str()),
 +                )?;
 +                row.focused &= &endpoint.endpoint_id == active_endpoint_id;
-+                let active_tab = snapshot
-+                    .panes
-+                    .iter()
-+                    .find(|pane| pane.pane_id == pane_id)
-+                    .is_some_and(|pane| pane.tab_id == workspace.active_tab_id);
-+                Some((row, active_tab))
++                let active_pane = active_pane_id == Some(pane_id.as_str());
++                Some((row, active_pane))
 +            })
 +            .collect::<Vec<_>>();
-+        let agent_pane_ids = agent_rows
++        let known_agent_pane_ids = snapshot
++            .agents
 +            .iter()
-+            .map(|(row, _)| row.pane_id.as_str())
++            .filter(|agent| agent.workspace_id == workspace.workspace_id)
++            .map(|agent| agent.pane_id.as_str())
 +            .collect::<HashSet<_>>();
++        let mut fallback_tool_tabs = HashSet::new();
 +        let mut tools = snapshot
 +            .panes
 +            .iter()
 +            .filter(|pane| pane.workspace_id == workspace.workspace_id)
-+            .filter(|pane| !agent_pane_ids.contains(pane.pane_id.as_str()))
++            .filter(|pane| !known_agent_pane_ids.contains(pane.pane_id.as_str()))
 +            .filter_map(|pane| {
 +                let tab = snapshot.tabs.iter().find(|tab| tab.tab_id == pane.tab_id)?;
-+                recognized_tool_label(&tab.label).map(|label| {
-+                    (
-+                        pane.pane_id.clone(),
-+                        label.to_owned(),
-+                        pane.focused && &endpoint.endpoint_id == active_endpoint_id,
-+                        pane.tab_id == workspace.active_tab_id,
-+                        true,
-+                    )
-+                })
++                let explicit_tool = pane.label.as_deref().and_then(recognized_tool_label);
++                let recognized = explicit_tool.or_else(|| recognized_tool_label(&tab.label))?;
++                if explicit_tool.is_none() && !fallback_tool_tabs.insert(pane.tab_id.as_str()) {
++                    return None;
++                }
++                let label = super::agent_sidebar::pane_identity_label(Some(pane), None)
++                    .unwrap_or_else(|| recognized.to_owned());
++                Some((
++                    pane.pane_id.clone(),
++                    label,
++                    pane.focused && &endpoint.endpoint_id == active_endpoint_id,
++                    active_pane_id == Some(pane.pane_id.as_str()),
++                    true,
++                ))
 +            })
 +            .collect::<Vec<_>>();
-+        let active_tab_represented = agent_rows.iter().any(|(_, active)| *active)
-+            || tools.iter().any(|(_, _, _, active, _)| *active);
-+        if !active_tab_represented {
-+            let active_tab = snapshot.tabs.iter().find(|tab| {
-+                tab.workspace_id == workspace.workspace_id && tab.tab_id == workspace.active_tab_id
-+            });
-+            let active_pane = snapshot.panes.iter().find(|pane| {
-+                pane.workspace_id == workspace.workspace_id
-+                    && pane.tab_id == workspace.active_tab_id
-+            });
-+            if let (Some(tab), Some(pane)) = (active_tab, active_pane) {
++        let active_pane_represented = agent_rows.iter().any(|(_, active)| *active)
++            || tools.iter().any(|(_, _, _, active, _)| *active)
++            || active_pane_id.is_some_and(|pane_id| known_agent_pane_ids.contains(pane_id));
++        if !active_pane_represented {
++            let active_pane = active_pane_id
++                .and_then(|pane_id| snapshot.panes.iter().find(|pane| pane.pane_id == pane_id));
++            if let Some(pane) = active_pane {
 +                tools.push((
 +                    pane.pane_id.clone(),
-+                    tab.label.clone(),
++                    super::agent_sidebar::pane_display_label(&pane.pane_id, Some(pane), None),
 +                    pane.focused && &endpoint.endpoint_id == active_endpoint_id,
 +                    true,
-+                    false,
++                    true,
 +                ));
 +            }
 +        }
@@ -2993,12 +4487,12 @@ index 00000000..3600f85c
 +                repository_child: nested,
 +            },
 +        });
-+        for (index, (row, active_tab)) in agent_rows.drain(..).enumerate() {
++        for (index, (row, active_pane)) in agent_rows.drain(..).enumerate() {
 +            result.push(SidebarTreeRow {
 +                kind: SidebarTreeRowKind::Agent {
 +                    endpoint_index,
 +                    row,
-+                    active_tab,
++                    active_pane,
 +                    parent_last,
 +                    last_child: index + 1 == child_count,
 +                    stale: endpoint.status != ClientEndpointStatus::Online,
@@ -3007,7 +4501,7 @@ index 00000000..3600f85c
 +            });
 +        }
 +        let agent_count = child_count - tools.len();
-+        for (index, (pane_id, label, focused, active_tab, interactive)) in
++        for (index, (pane_id, label, focused, active_pane, interactive)) in
 +            tools.into_iter().enumerate()
 +        {
 +            result.push(SidebarTreeRow {
@@ -3016,7 +4510,7 @@ index 00000000..3600f85c
 +                    pane_id,
 +                    label,
 +                    focused,
-+                    active_tab,
++                    active_pane,
 +                    interactive,
 +                    parent_last,
 +                    last_child: agent_count + index + 1 == child_count,
@@ -3364,7 +4858,7 @@ index 00000000..3600f85c
 +            SidebarTreeRowKind::Agent {
 +                endpoint_index,
 +                row,
-+                active_tab,
++                active_pane,
 +                parent_last,
 +                last_child,
 +                stale,
@@ -3399,7 +4893,7 @@ index 00000000..3600f85c
 +                    *parent_last,
 +                    *last_child,
 +                    row.focused,
-+                    *active_tab,
++                    *active_pane,
 +                    config,
 +                );
 +                if *stale {
@@ -3425,7 +4919,7 @@ index 00000000..3600f85c
 +                pane_id,
 +                label,
 +                focused,
-+                active_tab,
++                active_pane,
 +                interactive,
 +                parent_last,
 +                last_child,
@@ -3461,7 +4955,7 @@ index 00000000..3600f85c
 +                    *parent_last,
 +                    *last_child,
 +                    *focused,
-+                    *active_tab,
++                    *active_pane,
 +                    config,
 +                );
 +                if *stale {
@@ -3728,7 +5222,7 @@ index 00000000..3600f85c
 +            SidebarTreeRowKind::Agent {
 +                endpoint_index,
 +                row,
-+                active_tab,
++                active_pane,
 +                stale,
 +                active_workspace,
 +                ..
@@ -3743,7 +5237,7 @@ index 00000000..3600f85c
 +                    Style::default()
 +                        .fg(if stale {
 +                            palette.overlay0
-+                        } else if active_tab {
++                        } else if active_pane {
 +                            palette.mauve
 +                        } else {
 +                            status_color(row.status, palette)
@@ -3776,7 +5270,7 @@ index 00000000..3600f85c
 +                pane_id,
 +                label,
 +                focused,
-+                active_tab,
++                active_pane,
 +                interactive,
 +                stale,
 +                active_workspace,
@@ -3792,12 +5286,12 @@ index 00000000..3600f85c
 +                    Style::default()
 +                        .fg(if stale {
 +                            palette.overlay0
-+                        } else if active_tab {
++                        } else if active_pane {
 +                            palette.mauve
 +                        } else {
 +                            palette.blue
 +                        })
-+                        .add_modifier(if active_tab && !stale {
++                        .add_modifier(if active_pane && !stale {
 +                            Modifier::BOLD
 +                        } else {
 +                            Modifier::empty()
@@ -3865,7 +5359,7 @@ index 00000000..3600f85c
 +    _parent_last: Option<bool>,
 +    last_child: bool,
 +    focused: bool,
-+    active_tab: bool,
++    active_pane: bool,
 +    config: &ClientShellConfig,
 +) {
 +    let palette = &config.palette;
@@ -3887,7 +5381,7 @@ index 00000000..3600f85c
 +        rect.y,
 +        rect.width.saturating_sub(prefix_width + reserved),
 +        label,
-+        if active_tab {
++        if active_pane {
 +            Style::default()
 +                .fg(palette.mauve)
 +                .add_modifier(Modifier::BOLD)
@@ -4051,7 +5545,7 @@ index 00000000..3600f85c
 +    .collect()
 +}
 diff --git i/src/client/shell/state.rs w/src/client/shell/state.rs
-index c170c9b0..b501df12 100644
+index c170c9b085d1438ab3ed716b602afb70c657a0a6..b501df12e81ba0563f5273a139fc3b78c1662cb1 100644
 --- i/src/client/shell/state.rs
 +++ w/src/client/shell/state.rs
 @@ -2,7 +2,6 @@ use super::*;
@@ -4396,7 +5890,7 @@ index c170c9b0..b501df12 100644
          let pending_surface = self.pending_pane_surface.take();
          if let Some(surface) = pending_surface {
 diff --git i/src/client/shell/tests/agents_worktrees_notifications.rs w/src/client/shell/tests/agents_worktrees_notifications.rs
-index 5b8b1224..7ad56dcd 100644
+index 5b8b12243ca1b3c9921390994a1c875d292445d0..2ce246647820397fc7f0ccf13ef70783d8f1999d 100644
 --- i/src/client/shell/tests/agents_worktrees_notifications.rs
 +++ w/src/client/shell/tests/agents_worktrees_notifications.rs
 @@ -7,20 +7,22 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
@@ -4437,7 +5931,7 @@ index 5b8b1224..7ad56dcd 100644
          modifiers: KeyModifiers::empty(),
      })]);
      assert!(pane.requests.is_empty());
-@@ -89,6 +91,396 @@ fn collapsed_workspace_jitter_remains_a_click() {
+@@ -89,6 +91,462 @@ fn collapsed_workspace_jitter_remains_a_click() {
      ));
  }
  
@@ -4524,6 +6018,72 @@ index 5b8b1224..7ad56dcd 100644
 +}
 +
 +#[test]
++fn expanded_sidebar_spaces_workspace_siblings_and_repository_groups() {
++    let mut projected = repository_drilldown_snapshot(4, false);
++    let second_repository = ClientShellWorktree {
++        key: "other-repo".into(),
++        label: "other-repo".into(),
++        is_linked_worktree: false,
++    };
++    projected.workspaces[2].branch = Some("main".into());
++    projected.workspaces[2].worktree = Some(second_repository.clone());
++    projected.workspaces[3].branch = Some("feature".into());
++    projected.workspaces[3].worktree = Some(ClientShellWorktree {
++        is_linked_worktree: true,
++        ..second_repository
++    });
++
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(surface());
++    let frame = state.compose(106, 30).expect("spaced repository hierarchy");
++    let rows = frame_rows(&frame);
++    let sidebar_width = state.hits.sidebar_divider.x as usize;
++    let sidebar_row = |y: u16| {
++        rows[y as usize]
++            .chars()
++            .take(sidebar_width)
++            .collect::<String>()
++    };
++    let workspace_y = |workspace_id: &str| {
++        state
++            .hits
++            .workspaces
++            .iter()
++            .find(|hit| hit.workspace_id == workspace_id)
++            .expect("workspace hit")
++            .rect
++            .y
++    };
++    let repository_y = |key: &str| {
++        state
++            .hits
++            .repositories
++            .iter()
++            .find(|hit| hit.key == key)
++            .expect("repository hit")
++            .rect
++            .y
++    };
++
++    for workspace_id in ["ws_2", "outside_1", "outside_3"] {
++        let y = workspace_y(workspace_id);
++        assert!(
++            sidebar_row(y - 1).trim().is_empty(),
++            "row before {workspace_id}"
++        );
++        assert!(
++            !sidebar_row(y - 2).trim().is_empty(),
++            "extra gap before {workspace_id}"
++        );
++    }
++    let second_repository_y = repository_y("other-repo");
++    assert!(sidebar_row(second_repository_y - 1).trim().is_empty());
++    assert!(sidebar_row(second_repository_y - 2).trim().is_empty());
++    assert!(!sidebar_row(second_repository_y - 3).trim().is_empty());
++}
++
++#[test]
 +fn repository_single_click_drills_down_and_back_restores_the_overview() {
 +    let root = std::env::temp_dir().join(format!(
 +        "herdr-repository-drilldown-{}-{}",
@@ -4575,7 +6135,7 @@ index 5b8b1224..7ad56dcd 100644
 +    assert!(state.collapsed_groups.is_empty());
 +    assert_eq!(state.workspace_scroll, 0);
 +
-+    let drilled = state.compose(106, 6).expect("drilled frame");
++    let drilled = state.compose(106, 7).expect("drilled frame");
 +    assert!(!state.hits.repository_back.is_empty());
 +    assert_eq!(
 +        state
@@ -4834,7 +6394,7 @@ index 5b8b1224..7ad56dcd 100644
  #[test]
  fn grouped_worktrees_render_parent_branch_and_indented_child() {
      let config = ClientShellConfig::from_config(&Config::default());
-@@ -117,6 +509,22 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -117,6 +575,22 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
          focused: false,
          agent_status: AgentStatus::Idle,
      });
@@ -4857,7 +6417,7 @@ index 5b8b1224..7ad56dcd 100644
      state.set_snapshot(Box::new(snapshot));
      state.set_pane_surface(surface());
      let frame = state.compose(106, 20).expect("composed frame");
-@@ -130,9 +538,46 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -130,9 +604,57 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -4902,12 +6462,23 @@ index 5b8b1224..7ad56dcd 100644
 +    );
 +    assert_eq!(
 +        state.hits.workspaces[1].rect.y,
-+        state.hits.workspaces[0].rect.bottom() + 1
++        state.hits.workspaces[0].rect.bottom() + 2
++    );
++    let spacer_y = state.hits.workspaces[1].rect.y - 1;
++    let sidebar_width = state.hits.sidebar_divider.x as usize;
++    assert!(
++        text.lines()
++            .nth(spacer_y as usize)
++            .expect("workspace spacer row")
++            .chars()
++            .take(sidebar_width)
++            .all(|character| character == ' '),
++        "workspace spacer row was not empty: {text}"
 +    );
  
      let mut replacement = (**state.snapshot.as_ref().expect("snapshot")).clone();
      replacement.revision = 2;
-@@ -145,13 +590,29 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -145,13 +667,36 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
      state.collapsed_groups.insert("repo".into());
      state.set_snapshot(Box::new(replacement));
      state.set_pane_surface(replacement_surface);
@@ -4927,8 +6498,15 @@ index 5b8b1224..7ad56dcd 100644
 +            .collect::<Vec<_>>(),
 +        ["ws_1", "ws_2"]
 +    );
-+    assert_eq!(state.hits.agents.len(), 1);
-+    assert_eq!(state.hits.agents[0].1, "pane_ws2");
++    assert_eq!(
++        state
++            .hits
++            .agents
++            .iter()
++            .map(|(_, pane_id)| pane_id.as_str())
++            .collect::<Vec<_>>(),
++        ["pane_1", "pane_ws2"]
++    );
 +    let repository = state.hits.repositories[0].rect;
 +    let repository_text = expanded.cells[usize::from(repository.y) * usize::from(expanded.width)
 +        + usize::from(repository.x)
@@ -4943,7 +6521,7 @@ index 5b8b1224..7ad56dcd 100644
      );
  
      let mut next = ClientShellInput::default();
-@@ -168,6 +629,40 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
+@@ -168,6 +713,40 @@ fn grouped_worktrees_render_parent_branch_and_indented_child() {
                      if target.workspace_id == "ws_1"
              )
      ));
@@ -4984,30 +6562,35 @@ index 5b8b1224..7ad56dcd 100644
  }
  
  #[test]
-@@ -430,7 +925,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
+@@ -430,7 +1009,7 @@ fn pane_cycle_last_and_agent_actions_resolve_to_stable_pane_ids() {
  }
  
  #[test]
 -fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
-+fn agent_sidebar_honors_priority_symbols_tabs_and_stable_hits() {
++fn agent_sidebar_honors_priority_symbols_panes_and_stable_hits() {
      let mut projected = snapshot();
      let mut second_pane = projected.panes[0].clone();
      second_pane.pane_id = "pane_2".into();
-@@ -502,9 +997,26 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -502,9 +1081,31 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
          })
          .collect::<Vec<_>>()
          .join("\n");
 -    assert!(text.contains("× needs input"), "frame: {text}");
 -    assert!(text.contains("pi two"), "frame: {text}");
 -    assert!(text.contains("waiting for"), "frame: {text}");
-+    for hidden in ["needs i", "waiting", "review", "pi one", "pi two"] {
++    for hidden in ["needs i", "waiting", "review"] {
 +        assert!(
 +            !text.contains(hidden),
 +            "unexpected {hidden:?} in frame: {text}"
 +        );
 +    }
-+    for (rect, _) in &state.hits.agents {
-+        cell_symbol_position(&frame, *rect, "1");
++    for (rect, pane_id) in &state.hits.agents {
++        let expected = if pane_id == "pane_1" {
++            "pi one"
++        } else {
++            "pi two"
++        };
++        cell_symbol_position(&frame, *rect, expected);
 +    }
 +    let expanded_buffer = frame
 +        .to_ratatui_buffer()
@@ -5023,7 +6606,7 @@ index 5b8b1224..7ad56dcd 100644
      assert_eq!(
          state
              .hits
-@@ -538,23 +1050,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -538,23 +1139,14 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
              .map(|(_, pane_id)| pane_id.as_str()),
          Some("pane_2")
      );
@@ -5051,7 +6634,7 @@ index 5b8b1224..7ad56dcd 100644
      );
  
      state.sidebar_collapsed = true;
-@@ -569,13 +1072,332 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
+@@ -569,13 +1161,361 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
      let row_start = blocked.y as usize * compact.width as usize + blocked.x as usize;
      assert_ne!(compact.cells[row_start].fg, compact.cells[row_start + 2].fg);
      assert_eq!(compact.cells[row_start].bg, compact.cells[row_start + 2].bg);
@@ -5121,6 +6704,7 @@ index 5b8b1224..7ad56dcd 100644
 +#[test]
 +fn unified_sidebar_tree_groups_agents_and_recognized_tools_under_workspaces() {
 +    let mut projected = snapshot();
++    projected.tabs[0].label = "tuicr".into();
 +    let mut empty_workspace = projected.workspaces[0].clone();
 +    empty_workspace.workspace_id = "ws_2".into();
 +    empty_workspace.active_tab_id = "shell-tab".into();
@@ -5140,26 +6724,25 @@ index 5b8b1224..7ad56dcd 100644
 +    ordinary_pane.tab_id = "shell-tab".into();
 +    ordinary_pane.focused = false;
 +    projected.panes.push(ordinary_pane);
-+    for (pane_id, tab_id, label) in [
-+        ("nvim-pane", "nvim-tab", "nvim"),
-+        ("tuicr-pane", "tuicr-tab", "tuicr"),
-+    ] {
-+        let mut tab = projected.tabs[0].clone();
-+        tab.tab_id = tab_id.into();
-+        tab.label = label.into();
-+        tab.focused = false;
-+        projected.tabs.push(tab);
-+        let mut pane = projected.panes[0].clone();
-+        pane.pane_id = pane_id.into();
-+        pane.tab_id = tab_id.into();
-+        pane.focused = false;
-+        projected.panes.push(pane);
-+    }
++    let mut nvim_tab = projected.tabs[0].clone();
++    nvim_tab.tab_id = "nvim-tab".into();
++    nvim_tab.label = "nvim".into();
++    nvim_tab.focused = false;
++    projected.tabs.push(nvim_tab);
++    let mut nvim_pane = projected.panes[0].clone();
++    nvim_pane.pane_id = "nvim-pane".into();
++    nvim_pane.tab_id = "nvim-tab".into();
++    nvim_pane.focused = false;
++    projected.panes.push(nvim_pane);
++    let mut tuicr_pane = projected.panes[0].clone();
++    tuicr_pane.pane_id = "tuicr-pane".into();
++    tuicr_pane.focused = false;
++    projected.panes.push(tuicr_pane);
 +    projected.agents = vec![ClientShellAgent {
 +        pane_id: "pane_1".into(),
 +        workspace_id: "ws_1".into(),
 +        tab_id: "tab_1".into(),
-+        name: Some("tree agent".into()),
++        name: None,
 +        display_agent: None,
 +        agent: Some("pi".into()),
 +        title: None,
@@ -5192,7 +6775,7 @@ index 5b8b1224..7ad56dcd 100644
 +            .iter()
 +            .map(|(_, pane_id)| pane_id.as_str())
 +            .collect::<Vec<_>>(),
-+        ["pane_1", "nvim-pane", "tuicr-pane"]
++        ["pane_1", "nvim-pane", "tuicr-pane", "ordinary-pane"]
 +    );
 +    assert!(state.hits.sidebar_section_divider.is_empty());
 +    assert_eq!(
@@ -5229,10 +6812,10 @@ index 5b8b1224..7ad56dcd 100644
 +    assert_eq!(icon_x, agent.right() - 2);
 +    let icon_cell = &buffer[(icon_x, icon_y)];
 +    assert_eq!(icon_cell.fg, state.config.palette.yellow);
-+    let (tab_x, tab_y) = cell_symbol_position(&frame, agent, "1");
-+    let tab_cell = &buffer[(tab_x, tab_y)];
-+    assert_eq!(tab_cell.fg, state.config.palette.mauve);
-+    assert!(tab_cell.modifier.contains(Modifier::BOLD));
++    let (pane_x, pane_y) = cell_symbol_position(&frame, agent, "pi");
++    let pane_cell = &buffer[(pane_x, pane_y)];
++    assert_eq!(pane_cell.fg, state.config.palette.mauve);
++    assert!(pane_cell.modifier.contains(Modifier::BOLD));
 +    assert!((agent.x..agent.right())
 +        .all(|x| buffer[(x, agent.y)].bg == state.config.palette.selection_bg));
 +    let agent_text = (agent.x..agent.right())
@@ -5250,28 +6833,55 @@ index 5b8b1224..7ad56dcd 100644
 +        .collect::<Vec<_>>()
 +        .join("\n");
 +    assert!(!text.contains("client-shell · main"), "frame: {text}");
-+    assert!(!text.contains("tree agent"), "frame: {text}");
++    let child_texts = state
++        .hits
++        .agents
++        .iter()
++        .map(|(rect, _)| {
++            (rect.x..rect.right())
++                .map(|x| buffer[(x, rect.y)].symbol())
++                .collect::<String>()
++        })
++        .collect::<Vec<_>>();
++    assert!(
++        child_texts[0].contains("pi"),
++        "pane row: {}",
++        child_texts[0]
++    );
++    assert!(
++        !child_texts[0].contains("tuicr"),
++        "pane row: {}",
++        child_texts[0]
++    );
++    assert_eq!(
++        child_texts
++            .iter()
++            .filter(|row| row.contains("tuicr"))
++            .count(),
++        1,
++        "tuicr tab was repeated across pane rows: {child_texts:?}"
++    );
++    assert!(text.contains("├─ pi"), "frame: {text}");
 +    assert!(!text.contains("working"), "frame: {text}");
 +    assert!(!text.contains("empty-space · main"), "frame: {text}");
 +    assert!(!text.contains("spaces · agents"), "frame: {text}");
 +    assert!(text.contains("├─ nvim"), "frame: {text}");
 +    assert!(text.contains("└─ tuicr"), "frame: {text}");
-+    assert!(text.contains("└─ shell"), "frame: {text}");
-+    assert!(!text.contains("ordinary-pane"), "frame: {text}");
-+    let shell_y = frame_rows(&frame)
++    assert!(text.contains("└─ pane ordinary-pane"), "frame: {text}");
++    let pane_y = frame_rows(&frame)
 +        .iter()
-+        .position(|row| row.contains("└─ shell"))
-+        .expect("active shell row") as u16;
-+    let shell_row = Rect::new(
++        .position(|row| row.contains("└─ pane ordinary-pane"))
++        .expect("active ordinary pane row") as u16;
++    let pane_row = Rect::new(
 +        state.hits.workspace_body.x,
-+        shell_y,
++        pane_y,
 +        state.hits.workspace_body.width,
 +        1,
 +    );
-+    let (shell_x, shell_y) = cell_symbol_position(&frame, shell_row, "shell");
-+    let shell_cell = &buffer[(shell_x, shell_y)];
-+    assert_eq!(shell_cell.fg, state.config.palette.mauve);
-+    assert!(shell_cell.modifier.contains(Modifier::BOLD));
++    let (pane_x, pane_y) = cell_symbol_position(&frame, pane_row, "pane ordinary-pane");
++    let pane_cell = &buffer[(pane_x, pane_y)];
++    assert_eq!(pane_cell.fg, state.config.palette.mauve);
++    assert!(pane_cell.modifier.contains(Modifier::BOLD));
 +}
 +
 +#[test]
@@ -5307,13 +6917,14 @@ index 5b8b1224..7ad56dcd 100644
 +}
 +
 +#[test]
-+fn agent_sidebar_rows_show_only_status_and_tab_name() {
++fn agent_sidebar_rows_show_only_status_and_pane_name() {
 +    use crate::config::AgentSidebarToken;
 +
      let mut projected = snapshot();
      projected.tabs[0].label = "second".into();
 -    projected.tabs[0].custom_label = true;
 +    projected.tabs[0].custom_label = false;
++    projected.panes[0].label = Some("pane-label".into());
 +    projected.agents = vec![ClientShellAgent {
 +        pane_id: "pane_1".into(),
 +        workspace_id: "ws_1".into(),
@@ -5357,8 +6968,9 @@ index 5b8b1224..7ad56dcd 100644
 +    }
 +    let icon = status_icon(AgentStatus::Working, state.config.status_indicators);
 +    assert!(row_text.contains(icon), "row: {row_text}");
-+    assert!(row_text.contains("second"), "row: {row_text}");
++    assert!(row_text.contains("pane-label"), "row: {row_text}");
 +    for hidden in [
++        "second",
 +        "reviewer",
 +        "pi",
 +        "busy",
@@ -5372,11 +6984,11 @@ index 5b8b1224..7ad56dcd 100644
 +            "unexpected {hidden:?} in row: {row_text}"
 +        );
 +    }
-+    let (x, y) = cell_symbol_position(&frame, row, "second");
-+    let cell = buffer.cell((x, y)).expect("muted sidebar cell");
++    let (x, y) = cell_symbol_position(&frame, row, "pane-label");
++    let cell = buffer.cell((x, y)).expect("pane sidebar cell");
 +    assert!(
 +        !cell.modifier.contains(Modifier::DIM),
-+        "tab cell at ({x},{y}) should not stack terminal faint: {cell:?}"
++        "pane cell at ({x},{y}) should not stack terminal faint: {cell:?}"
 +    );
 +}
 +
@@ -5386,7 +6998,7 @@ index 5b8b1224..7ad56dcd 100644
      projected.agents = vec![ClientShellAgent {
          pane_id: "pane_1".into(),
          workspace_id: "ws_1".into(),
-@@ -595,22 +1417,23 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
+@@ -595,22 +1535,23 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
      let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
      state.set_snapshot(Box::new(projected));
      state.set_pane_surface(surface());
@@ -5422,7 +7034,7 @@ index 5b8b1224..7ad56dcd 100644
      use crate::config::SpaceSidebarToken;
  
      let mut config = Config::default();
-@@ -623,13 +1446,59 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
+@@ -623,13 +1564,59 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
      state.set_pane_surface(surface());
      let frame = state.compose(106, 30).expect("workspace sidebar frame");
      let rect = state.hits.workspaces.first().expect("workspace hit").rect;
@@ -5489,7 +7101,7 @@ index 5b8b1224..7ad56dcd 100644
  }
  
  #[test]
-@@ -739,61 +1608,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
+@@ -739,61 +1726,82 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
  }
  
  #[test]
@@ -5613,7 +7225,7 @@ index 5b8b1224..7ad56dcd 100644
  
  #[test]
 diff --git i/src/client/shell/tests/chrome_context.rs w/src/client/shell/tests/chrome_context.rs
-index ed21bc8a..28bcffd9 100644
+index ed21bc8a7456325a808b56f1654776b5fbd89e40..28bcffd97f8ff3d75b938e1a81765591e5ef187b 100644
 --- i/src/client/shell/tests/chrome_context.rs
 +++ w/src/client/shell/tests/chrome_context.rs
 @@ -148,7 +148,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
@@ -5726,7 +7338,7 @@ index ed21bc8a..28bcffd9 100644
      let text = menu
          .cells
 diff --git i/src/client/shell/tests/endpoints.rs w/src/client/shell/tests/endpoints.rs
-index f327f8c1..eff189bb 100644
+index f327f8c1668e99c56ef02d32be9b24ccc2ee16ed..71e826d53f582e048d92f2120a47de9c5654e27b 100644
 --- i/src/client/shell/tests/endpoints.rs
 +++ w/src/client/shell/tests/endpoints.rs
 @@ -73,6 +73,67 @@ fn state_with_remote() -> (ClientShellState, ClientEndpointId) {
@@ -6248,7 +7860,7 @@ index f327f8c1..eff189bb 100644
      assert_eq!(
          remote_workspaces[1].rect.y,
 -        remote_workspaces[0].rect.bottom()
-+        remote_workspaces[0].rect.bottom() + 1
++        remote_workspaces[0].rect.bottom() + 2
      );
      assert_eq!(
          remote_workspaces[2].rect.y,
@@ -6258,7 +7870,7 @@ index f327f8c1..eff189bb 100644
  
      state.workspace_scroll = usize::MAX;
 -    state.compose(100, 18).expect("scrolled endpoint frame");
-+    state.compose(100, 16).expect("exact-fit endpoint frame");
++    state.compose(100, 17).expect("exact-fit endpoint frame");
      let metrics = state
          .hits
          .workspace_scroll_metrics
@@ -6296,11 +7908,11 @@ index f327f8c1..eff189bb 100644
  
  #[test]
 -fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
-+fn aggregate_agents_show_only_status_and_tab_with_endpoint_colors() {
++fn aggregate_agents_show_only_status_and_pane_with_endpoint_colors() {
      use crate::api::schema::AgentStatus;
      use crate::config::{AgentSidebarToken, StatusIndicatorStyle};
  
-@@ -1047,22 +1009,19 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
+@@ -1047,22 +1009,22 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
          })
          .collect::<Vec<_>>()
          .join("\n");
@@ -6318,17 +7930,19 @@ index f327f8c1..eff189bb 100644
 -    assert_eq!(
 -        state.config.agent_panel_sort,
 -        crate::config::AgentPanelSortConfig::Priority
--    );
--    assert!(click.actions.is_empty());
 +    assert!(text.contains(" ○"), "frame: {text}");
 +    assert!(text.contains(" ×"), "frame: {text}");
 +    assert!(text.lines().any(|line| line.starts_with("    main")));
 +    assert!(!text.contains("└─ main"), "frame: {text}");
-+    assert!(text.contains("└─ 1"), "frame: {text}");
++    assert!(
++        !text.contains("└─ 1"),
++        "tab name leaked into pane rows: {text}"
+     );
+-    assert!(click.actions.is_empty());
 +    assert!(!text.contains("idle"), "frame: {text}");
 +    assert!(!text.contains("blocked"), "frame: {text}");
-+    assert!(!text.contains("local agent"), "frame: {text}");
-+    assert!(!text.contains("remote agent"), "frame: {text}");
++    assert!(text.contains("local agent"), "frame: {text}");
++    assert!(text.contains("remote agent"), "frame: {text}");
 +    assert!(!text.contains("Local local agent"), "frame: {text}");
 +    assert!(!text.contains("Build remote agent"), "frame: {text}");
 +    assert!(!text.contains("grouped"), "frame: {text}");
@@ -6336,7 +7950,7 @@ index f327f8c1..eff189bb 100644
  
      let buffer = frame
          .to_ratatui_buffer()
-@@ -1104,37 +1063,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
+@@ -1104,37 +1066,31 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view.clone()));
      state.set_test_endpoint_agent_view(&endpoint_id, Some(view));
  
@@ -6394,7 +8008,7 @@ index f327f8c1..eff189bb 100644
  }
  
  #[test]
-@@ -1191,20 +1144,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
+@@ -1191,20 +1147,16 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
      });
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -6425,7 +8039,7 @@ index f327f8c1..eff189bb 100644
  }
  
  #[test]
-@@ -1247,20 +1196,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
+@@ -1247,20 +1199,17 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
          }),
      );
  
@@ -6457,7 +8071,7 @@ index f327f8c1..eff189bb 100644
  }
  
  #[test]
-@@ -1333,19 +1279,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
+@@ -1333,19 +1282,16 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
      remote.agents = vec![agent("remote agent", AgentStatus::Idle, 1)];
      state.set_endpoint_snapshot(&endpoint_id, Box::new(remote));
  
@@ -6487,7 +8101,7 @@ index f327f8c1..eff189bb 100644
  }
  
  #[test]
-@@ -1385,21 +1328,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1385,21 +1331,18 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
      }];
      state.set_test_endpoint_agent_view(&ClientEndpointId::Local, Some(view));
  
@@ -6521,7 +8135,7 @@ index f327f8c1..eff189bb 100644
      );
  
      let mut outcome = ClientShellInput::default();
-@@ -1411,7 +1351,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
+@@ -1411,7 +1354,7 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: selected,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -6530,7 +8144,7 @@ index f327f8c1..eff189bb 100644
      ));
  }
  
-@@ -1509,39 +1449,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1509,39 +1452,32 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
      let mut local = snapshot();
      local.agents = vec![agent("local agent", AgentStatus::Idle, 2)];
      state.set_snapshot(Box::new(local));
@@ -6586,7 +8200,7 @@ index f327f8c1..eff189bb 100644
      );
      let mut outcome = ClientShellInput::default();
      assert!(
-@@ -1552,7 +1485,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
+@@ -1552,7 +1488,7 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
          [ClientShellAction::ActivateEndpoint {
              endpoint_id: activated,
              target: Some(ClientEndpointFocusTarget::Pane(pane_id)),
@@ -6595,7 +8209,7 @@ index f327f8c1..eff189bb 100644
      ));
  }
  
-@@ -1895,7 +1828,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1895,7 +1831,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          previous_surface.projection_revision += 1;
          state.set_pane_surface(previous_surface);
          assert!(state.pending_pane_surface.is_some());
@@ -6604,7 +8218,7 @@ index f327f8c1..eff189bb 100644
  
          state.mark_endpoint_disconnected(&endpoint_id);
          let mut reconnected = snapshot();
-@@ -1922,7 +1855,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
+@@ -1922,7 +1858,7 @@ fn reconnect_same_endpoint_accepts_new_generation_surface_revision() {
          assert_eq!(state.pane_surface.as_ref().unwrap().projection_revision, 1);
          assert_eq!(state.pane_surface.as_ref().unwrap().surface_revision, 1);
          assert!(state.pending_pane_surface.is_none());
@@ -6613,18 +8227,18 @@ index f327f8c1..eff189bb 100644
          assert!(state.compose(106, 20).is_some());
      }
  }
-@@ -1991,7 +1924,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
+@@ -1991,7 +1927,8 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
          Some(ClientEndpointStatus::Reconnecting)
      );
      assert!(text.contains("◐ reconnecting"), "frame: {text}");
 -    assert!(text.contains("Build · remote agent"), "frame: {text}");
 +    assert!(!text.contains("blocked"), "frame: {text}");
-+    assert!(!text.contains("remote agent"), "frame: {text}");
++    assert!(text.contains("remote agent"), "frame: {text}");
      assert!(
          text.contains("LIVE"),
          "frozen surface should remain: {text}"
 diff --git i/src/client/shell/tests/keybindings_settings.rs w/src/client/shell/tests/keybindings_settings.rs
-index dd60fe11..2e7357b4 100644
+index dd60fe118fca12e7e68150c46c6a9b1b0fba33c1..2e7357b48e7c5820e313d493191f54e4cb05846c 100644
 --- i/src/client/shell/tests/keybindings_settings.rs
 +++ w/src/client/shell/tests/keybindings_settings.rs
 @@ -1,31 +1,124 @@
@@ -6771,7 +8385,7 @@ index dd60fe11..2e7357b4 100644
      let open_new_tab =
          state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
 diff --git i/src/client/shell/tests/popup_focus_projection.rs w/src/client/shell/tests/popup_focus_projection.rs
-index c9f02278..0ec9d82f 100644
+index c9f022780644fc832b631a7b1c865da25a37f70b..0ec9d82f463c1300b258d298103181849db40478 100644
 --- i/src/client/shell/tests/popup_focus_projection.rs
 +++ w/src/client/shell/tests/popup_focus_projection.rs
 @@ -165,7 +165,7 @@ fn desktop_composition_keeps_shell_outside_origin_relative_surface() {
@@ -6859,7 +8473,7 @@ index c9f02278..0ec9d82f 100644
  
  #[test]
 diff --git i/src/client/shell/tests/startup_overlays.rs w/src/client/shell/tests/startup_overlays.rs
-index 7107aa71..2e88ee92 100644
+index 7107aa713db59876189d6b3195477ce5bdfdf235..2e88ee921b9da5e1141e5230669d7be369162f5b 100644
 --- i/src/client/shell/tests/startup_overlays.rs
 +++ w/src/client/shell/tests/startup_overlays.rs
 @@ -656,18 +656,12 @@ fn update_ready_menu_opens_client_owned_release_notes_and_dismisses_by_version()
@@ -6936,7 +8550,7 @@ index 7107aa71..2e88ee92 100644
      let menu = state.compose(106, 30).expect("what's new menu");
      let text = menu
 diff --git i/src/client/shell/tests/workspace_navigation.rs w/src/client/shell/tests/workspace_navigation.rs
-index c117a319..ea2d5e03 100644
+index c117a319446f652c7276cd67550eec4dc29aa0b5..ea2d5e0329be0583f482378566681fa9ed43624b 100644
 --- i/src/client/shell/tests/workspace_navigation.rs
 +++ w/src/client/shell/tests/workspace_navigation.rs
 @@ -71,6 +71,15 @@ fn workspace_rect(state: &ClientShellState, endpoint: &ClientEndpointId, workspa
@@ -7125,7 +8739,7 @@ index c117a319..ea2d5e03 100644
  }
  
 diff --git i/src/client/shell/workspace_navigation.rs w/src/client/shell/workspace_navigation.rs
-index 19fa1a39..e8152cfb 100644
+index 19fa1a39b49713b3f425c3643ac7bf28c3511105..e8152cfb8876c741c64907b8b35b008596f2d727 100644
 --- i/src/client/shell/workspace_navigation.rs
 +++ w/src/client/shell/workspace_navigation.rs
 @@ -98,7 +98,6 @@ impl ClientShellState {
@@ -7165,7 +8779,7 @@ index 19fa1a39..e8152cfb 100644
                  targets.push(WorkspaceNavigationTarget {
                      endpoint_id: endpoint.endpoint_id.clone(),
 diff --git i/src/client/shell_runtime.rs w/src/client/shell_runtime.rs
-index 5e1da58c..68739390 100644
+index 5e1da58c0521cd0c94b260d672dafcfa77d96c22..68739390b62f04f0b82fbfb988c09f420a13c533 100644
 --- i/src/client/shell_runtime.rs
 +++ w/src/client/shell_runtime.rs
 @@ -636,6 +636,9 @@ pub(super) fn install_client_shell_snapshot(
@@ -7178,8 +8792,553 @@ index 5e1da58c..68739390 100644
          let graphics_cleanup = shell.take_pending_graphics_cleanup();
          let next_size = shell.surface_size(state.reported_size.0, state.reported_size.1);
          (
+diff --git i/src/events.rs w/src/events.rs
+index c87a50a349ca75f00ed3ae88c87bde51058811e1..e22d845abff9dfa1e31be0c0716e51543dc8dd9a 100644
+--- i/src/events.rs
++++ w/src/events.rs
+@@ -185,6 +185,14 @@ pub enum AppEvent {
+         pane_id: PaneId,
+         cwd: std::path::PathBuf,
+     },
++    /// OSC 133 shell integration reported a completed command.
++    ShellCommandFinished {
++        pane_id: PaneId,
++        sequence: u64,
++        exit_code: i32,
++        content_revision: u64,
++        managed: bool,
++    },
+     /// Background git status refresh completed for workspaces.
+     GitStatusRefreshed {
+         results: Vec<WorkspaceGitStatus>,
+diff --git i/src/pane.rs w/src/pane.rs
+index 8fd8e3961c9fa4088c4d2bcf3bf01df0407c7c48..182bed2bd5879bd5a300a49c43ef39830d75fdef 100644
+--- i/src/pane.rs
++++ w/src/pane.rs
+@@ -42,6 +42,7 @@ use self::agent_detection::{
+ };
+ #[cfg(unix)]
+ pub use self::terminal::InputState;
++pub(crate) use self::terminal::ShellCommandCapture;
+ use self::terminal::{GhosttyPaneTerminal, PaneTerminal};
+ pub(crate) use self::terminal::{
+     TerminalCompressionStep, TerminalDirtyPatch, TerminalDirtyPatchOutcome, TerminalReadSnapshot,
+@@ -2062,6 +2063,30 @@ fn publish_terminal_bells(pane_id: PaneId, count: u16, events: &mpsc::Sender<App
+     }
+ }
+ 
++fn publish_shell_command_completions(
++    pane_id: PaneId,
++    completions: Vec<terminal::ShellCommandCompletion>,
++    content_revision: u64,
++    events: &mpsc::Sender<AppEvent>,
++) {
++    for completion in completions {
++        if let Err(err) = events.try_send(AppEvent::ShellCommandFinished {
++            pane_id,
++            sequence: completion.sequence,
++            exit_code: completion.exit_code,
++            content_revision,
++            managed: completion.managed,
++        }) {
++            warn!(
++                pane = pane_id.raw(),
++                sequence = completion.sequence,
++                err = %err,
++                "failed to queue shell command completion"
++            );
++        }
++    }
++}
++
+ fn publish_reported_cwd(
+     pane_id: PaneId,
+     cwd: std::path::PathBuf,
+@@ -2444,9 +2469,16 @@ impl PaneRuntime {
+                 let result =
+                     terminal.process_pty_bytes(pane_id, shell_pid, bytes, &response_writer);
+                 content_seq.fetch_add(1, Ordering::Release);
++                let content_revision = content_seq.load(Ordering::Acquire);
+                 drop(_content_write_guard);
+                 compression_wake.wake();
+                 publish_terminal_bells(pane_id, result.terminal_bells, &read_events);
++                publish_shell_command_completions(
++                    pane_id,
++                    result.shell_command_completions,
++                    content_revision,
++                    &read_events,
++                );
+                 observe_detection_content_change(bytes, &detection_content_seq);
+                 let title_requested =
+                     result.terminal_title_changed && render_dirty.request_terminal_title(pane_id);
+@@ -2646,9 +2678,16 @@ impl PaneRuntime {
+                 let result =
+                     terminal.process_pty_bytes(pane_id, shell_pid, bytes, &response_writer);
+                 content_seq.fetch_add(1, Ordering::Release);
++                let content_revision = content_seq.load(Ordering::Acquire);
+                 drop(_content_write_guard);
+                 compression_wake.wake();
+                 publish_terminal_bells(pane_id, result.terminal_bells, &events);
++                publish_shell_command_completions(
++                    pane_id,
++                    result.shell_command_completions,
++                    content_revision,
++                    &events,
++                );
+                 if agent_detection == AgentDetection::Enabled {
+                     observe_detection_content_change(bytes, &detection_content_seq);
+                 }
+@@ -3387,6 +3426,21 @@ impl PaneRuntime {
+         self.terminal.agent_osc_progress()
+     }
+ 
++    pub(crate) fn shell_command_capture(
++        &self,
++        sequence: u64,
++    ) -> Option<crate::pane::terminal::ShellCommandCapture> {
++        self.terminal.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: std::time::Duration) -> Result<u64, ()> {
++        self.terminal.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.terminal.cancel_shell_command_reservation();
++    }
++
+     pub(crate) fn recent_text_snapshot(&self, lines: usize) -> TerminalReadSnapshot {
+         let result = self.terminal.recent_text_snapshot(lines);
+         self.compression.wake();
+diff --git i/src/pane/terminal.rs w/src/pane/terminal.rs
+index 24379d222c3a73b9aa158d8ad5b883f6ef2757d2..abd7ea3bbd40f80550889ebb64b14445236baf01 100644
+--- i/src/pane/terminal.rs
++++ w/src/pane/terminal.rs
+@@ -1,4 +1,4 @@
+-use std::collections::hash_map::DefaultHasher;
++use std::collections::{hash_map::DefaultHasher, VecDeque};
+ use std::hash::{Hash, Hasher};
+ use std::sync::{Arc, Mutex};
+ use std::time::{Duration, Instant};
+@@ -42,6 +42,10 @@ use super::{
+ 
+ const DEFAULT_DETECTION_ROWS: usize = 24;
+ const KITTY_GRAPHICS_REDRAW_SETTLE: Duration = Duration::from_millis(20);
++const SHELL_COMMAND_CAPTURE_LIMIT_BYTES: usize = 8 * 1024 * 1024;
++const SHELL_COMMAND_CAPTURE_HISTORY: usize = 4;
++const SHELL_SEMANTIC_OSC_PREFIX: &[u8] = b"\x1b]133;";
++const SHELL_SEMANTIC_OSC_LIMIT_BYTES: usize = 4096;
+ const CURSOR_POSITION_SETTLE_ENABLED: bool = cfg!(windows);
+ const MODE_MOUSE_X10: u16 = 9;
+ const MODE_MOUSE_PRESS_RELEASE: u16 = 1000;
+@@ -161,6 +165,193 @@ impl InputState {
+     }
+ }
+ 
++#[derive(Debug, Clone, PartialEq, Eq)]
++pub(crate) struct ShellCommandCapture {
++    pub sequence: u64,
++    pub exit_code: i32,
++    pub output: Vec<u8>,
++    pub truncated: bool,
++}
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub(crate) struct ShellCommandCompletion {
++    pub sequence: u64,
++    pub exit_code: i32,
++    pub managed: bool,
++}
++
++#[derive(Debug, Default)]
++struct ShellCommandTracker {
++    scan_buffer: Vec<u8>,
++    active_output: Option<Vec<u8>>,
++    active_truncated: bool,
++    active_managed: bool,
++    managed_pending_deadline: Option<Instant>,
++    next_sequence: u64,
++    captures: VecDeque<ShellCommandCapture>,
++    pending: Vec<ShellCommandCompletion>,
++}
++
++impl ShellCommandTracker {
++    fn reserve_managed(&mut self, timeout: Duration) -> Result<u64, ()> {
++        if self
++            .managed_pending_deadline
++            .is_some_and(|deadline| Instant::now() >= deadline)
++        {
++            self.managed_pending_deadline = None;
++        }
++        if self.managed_pending_deadline.is_some() || self.active_output.is_some() {
++            return Err(());
++        }
++        self.managed_pending_deadline = Some(Instant::now() + timeout);
++        Ok(self.next_sequence)
++    }
++
++    fn cancel_managed_reservation(&mut self) {
++        self.managed_pending_deadline = None;
++    }
++
++    fn observe(&mut self, bytes: &[u8]) {
++        self.scan_buffer.extend_from_slice(bytes);
++        loop {
++            let Some(start) = find_subslice(&self.scan_buffer, SHELL_SEMANTIC_OSC_PREFIX) else {
++                let keep = semantic_prefix_suffix_len(&self.scan_buffer);
++                let emit_len = self.scan_buffer.len().saturating_sub(keep);
++                if emit_len > 0 {
++                    let text = self.scan_buffer.drain(..emit_len).collect::<Vec<_>>();
++                    self.capture_text(&text);
++                }
++                break;
++            };
++            if start > 0 {
++                let text = self.scan_buffer.drain(..start).collect::<Vec<_>>();
++                self.capture_text(&text);
++                continue;
++            }
++
++            let payload_start = SHELL_SEMANTIC_OSC_PREFIX.len();
++            let Some((payload_end, sequence_end)) =
++                semantic_osc_terminator(&self.scan_buffer, payload_start)
++            else {
++                if self.scan_buffer.len() > SHELL_SEMANTIC_OSC_LIMIT_BYTES {
++                    let byte = self.scan_buffer.remove(0);
++                    self.capture_text(&[byte]);
++                    continue;
++                }
++                break;
++            };
++            let payload = self.scan_buffer[payload_start..payload_end].to_vec();
++            self.scan_buffer.drain(..sequence_end);
++            self.handle_semantic_payload(&payload);
++        }
++    }
++
++    fn capture_text(&mut self, bytes: &[u8]) {
++        let Some(output) = self.active_output.as_mut() else {
++            return;
++        };
++        if output.len().saturating_add(bytes.len()) <= SHELL_COMMAND_CAPTURE_LIMIT_BYTES {
++            output.extend_from_slice(bytes);
++            return;
++        }
++
++        self.active_truncated = true;
++        if bytes.len() >= SHELL_COMMAND_CAPTURE_LIMIT_BYTES {
++            output.clear();
++            output.extend_from_slice(&bytes[bytes.len() - SHELL_COMMAND_CAPTURE_LIMIT_BYTES..]);
++            return;
++        }
++        let overflow = output
++            .len()
++            .saturating_add(bytes.len())
++            .saturating_sub(SHELL_COMMAND_CAPTURE_LIMIT_BYTES);
++        output.drain(..overflow.min(output.len()));
++        output.extend_from_slice(bytes);
++    }
++
++    fn handle_semantic_payload(&mut self, payload: &[u8]) {
++        let mut fields = payload.split(|byte| *byte == b';');
++        match fields.next() {
++            Some(b"C") => {
++                self.active_output = Some(Vec::new());
++                self.active_truncated = false;
++                self.active_managed = self
++                    .managed_pending_deadline
++                    .take()
++                    .is_some_and(|deadline| Instant::now() < deadline);
++            }
++            Some(b"D") => {
++                let Some(output) = self.active_output.take() else {
++                    return;
++                };
++                let Some(exit_code) = fields
++                    .next()
++                    .and_then(|field| std::str::from_utf8(field).ok())
++                    .and_then(|field| field.parse::<i32>().ok())
++                else {
++                    self.active_output = Some(output);
++                    return;
++                };
++                self.next_sequence = self.next_sequence.wrapping_add(1).max(1);
++                let sequence = self.next_sequence;
++                self.captures.push_back(ShellCommandCapture {
++                    sequence,
++                    exit_code,
++                    output,
++                    truncated: self.active_truncated,
++                });
++                while self.captures.len() > SHELL_COMMAND_CAPTURE_HISTORY {
++                    self.captures.pop_front();
++                }
++                self.pending.push(ShellCommandCompletion {
++                    sequence,
++                    exit_code,
++                    managed: self.active_managed,
++                });
++                self.active_truncated = false;
++                self.active_managed = false;
++            }
++            _ => {}
++        }
++    }
++
++    fn drain_pending(&mut self) -> Vec<ShellCommandCompletion> {
++        std::mem::take(&mut self.pending)
++    }
++
++    fn capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.captures
++            .iter()
++            .find(|capture| capture.sequence == sequence)
++            .cloned()
++    }
++}
++
++fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
++    haystack
++        .windows(needle.len())
++        .position(|window| window == needle)
++}
++
++fn semantic_prefix_suffix_len(bytes: &[u8]) -> usize {
++    (1..SHELL_SEMANTIC_OSC_PREFIX.len())
++        .rev()
++        .find(|len| bytes.ends_with(&SHELL_SEMANTIC_OSC_PREFIX[..*len]))
++        .unwrap_or(0)
++}
++
++fn semantic_osc_terminator(bytes: &[u8], payload_start: usize) -> Option<(usize, usize)> {
++    for index in payload_start..bytes.len() {
++        if bytes[index] == b'\x07' {
++            return Some((index, index + 1));
++        }
++        if bytes[index] == b'\x1b' && bytes.get(index + 1) == Some(&b'\\') {
++            return Some((index, index + 2));
++        }
++    }
++    None
++}
++
+ #[derive(Debug, Clone, PartialEq, Eq)]
+ pub(crate) struct ProcessBytesResult {
+     pub request_render: bool,
+@@ -169,6 +360,7 @@ pub(crate) struct ProcessBytesResult {
+     pub terminal_bells: u16,
+     pub clipboard_writes: Vec<Vec<u8>>,
+     pub reported_cwd: Option<std::path::PathBuf>,
++    pub shell_command_completions: Vec<ShellCommandCompletion>,
+     pub terminal_responses: Vec<Bytes>,
+ }
+ 
+@@ -211,6 +403,7 @@ pub(crate) struct GhosttyPaneCore {
+     pub child_default_background_changed: bool,
+     pub osc_debug_tracker: OscDebugTracker,
+     pub agent_osc_state: AgentOscStateTracker,
++    shell_command_tracker: ShellCommandTracker,
+     decscusr_tracker: DecscusrTracker,
+     cursor_settle_state: CursorPositionSettleState,
+     windows_powershell_prompt_cwd_reporting: bool,
+@@ -236,6 +429,18 @@ impl PaneTerminal {
+             .process_pty_bytes(pane_id, shell_pid, bytes, response_writer)
+     }
+ 
++    pub(crate) fn shell_command_capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.ghostty.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: Duration) -> Result<u64, ()> {
++        self.ghostty.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.ghostty.cancel_shell_command_reservation();
++    }
++
+     pub fn resize(
+         &self,
+         rows: u16,
+@@ -1192,6 +1397,7 @@ impl GhosttyPaneTerminal {
+                 child_default_background_changed: false,
+                 osc_debug_tracker: OscDebugTracker::default(),
+                 agent_osc_state: AgentOscStateTracker::default(),
++                shell_command_tracker: ShellCommandTracker::default(),
+                 decscusr_tracker: DecscusrTracker::default(),
+                 cursor_settle_state: CursorPositionSettleState::default(),
+                 windows_powershell_prompt_cwd_reporting: false,
+@@ -1341,6 +1547,27 @@ impl GhosttyPaneTerminal {
+         }
+     }
+ 
++    pub(crate) fn shell_command_capture(&self, sequence: u64) -> Option<ShellCommandCapture> {
++        self.core
++            .lock()
++            .ok()
++            .and_then(|core| core.shell_command_tracker.capture(sequence))
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: Duration) -> Result<u64, ()> {
++        self.core
++            .lock()
++            .map_err(|_| ())?
++            .shell_command_tracker
++            .reserve_managed(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        if let Ok(mut core) = self.core.lock() {
++            core.shell_command_tracker.cancel_managed_reservation();
++        }
++    }
++
+     pub fn process_pty_bytes(
+         &self,
+         pane_id: PaneId,
+@@ -1358,6 +1585,7 @@ impl GhosttyPaneTerminal {
+                 terminal_bells: 0,
+                 clipboard_writes: Vec::new(),
+                 reported_cwd: None,
++                shell_command_completions: Vec::new(),
+                 terminal_responses: Vec::new(),
+             };
+         };
+@@ -1388,6 +1616,7 @@ impl GhosttyPaneTerminal {
+             );
+         }
+         let terminal_title_changed = core.agent_osc_state.observe(bytes);
++        core.shell_command_tracker.observe(bytes);
+ 
+         core.kitty_keyboard.observe(bytes);
+         let mut terminal_responses = Vec::new();
+@@ -1412,6 +1641,7 @@ impl GhosttyPaneTerminal {
+         );
+         let terminal_bells = core.terminal.take_bell_count();
+         let clipboard_writes = core.terminal.take_clipboard_writes();
++        let shell_command_completions = core.shell_command_tracker.drain_pending();
+         let reported_cwd = core
+             .terminal
+             .take_pwd_changes()
+@@ -1475,6 +1705,7 @@ impl GhosttyPaneTerminal {
+             terminal_bells,
+             clipboard_writes,
+             reported_cwd,
++            shell_command_completions,
+             terminal_responses,
+         }
+     }
+@@ -3632,6 +3863,68 @@ fn should_probe_host_terminal_theme_restore(core: &GhosttyPaneCore) -> bool {
+ mod tests {
+     use super::*;
+     use ratatui::{layout::Rect, style::Color};
++
++    #[test]
++    fn shell_command_tracker_captures_split_semantic_command_output() {
++        let mut tracker = ShellCommandTracker::default();
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(0));
++        tracker.observe(b"noise\x1b]13");
++        tracker.observe(b"3;C\x07hello\r\n");
++        tracker.observe(b"world\x1b]133;D;7\x1b\\prompt");
++
++        assert_eq!(
++            tracker.drain_pending(),
++            vec![ShellCommandCompletion {
++                sequence: 1,
++                exit_code: 7,
++                managed: true,
++            }]
++        );
++        assert_eq!(
++            tracker.capture(1),
++            Some(ShellCommandCapture {
++                sequence: 1,
++                exit_code: 7,
++                output: b"hello\r\nworld".to_vec(),
++                truncated: false,
++            })
++        );
++    }
++
++    #[test]
++    fn shell_command_tracker_ignores_statusless_end_markers() {
++        let mut tracker = ShellCommandTracker::default();
++        tracker.observe(b"\x1b]133;C\x07first\x1b]133;D\x07second");
++        assert!(tracker.drain_pending().is_empty());
++        tracker.observe(b"\x1b]133;D;0\x07");
++
++        assert_eq!(tracker.capture(1).unwrap().output, b"firstsecond");
++    }
++
++    #[test]
++    fn shell_command_tracker_serializes_managed_commands() {
++        let mut tracker = ShellCommandTracker::default();
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(0));
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Err(()));
++        tracker.observe(b"\x1b]133;C\x07");
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Err(()));
++        tracker.observe(b"\x1b]133;D;0\x07");
++        assert_eq!(tracker.reserve_managed(Duration::from_secs(1)), Ok(1));
++    }
++
++    #[test]
++    fn shell_command_tracker_bounds_retained_output() {
++        let mut tracker = ShellCommandTracker::default();
++        tracker.observe(b"\x1b]133;C\x07discarded-prefix");
++        tracker.observe(&vec![b'x'; SHELL_COMMAND_CAPTURE_LIMIT_BYTES + 17]);
++        tracker.observe(b"\x1b]133;D;0\x07");
++
++        let capture = tracker.capture(1).unwrap();
++        assert!(capture.truncated);
++        assert_eq!(capture.output.len(), SHELL_COMMAND_CAPTURE_LIMIT_BYTES);
++        assert!(capture.output.iter().all(|byte| *byte == b'x'));
++    }
++
+     use tokio::sync::mpsc;
+ 
+     #[test]
+diff --git i/src/server/headless.rs w/src/server/headless.rs
+index 18869e095be9761aea2e48021b7fe77e813ca4bc..6d0f2b1a0b0479fd629ff5c74f0ffd7f3a7b8355 100644
+--- i/src/server/headless.rs
++++ w/src/server/headless.rs
+@@ -528,6 +528,9 @@ impl HeadlessServer {
+             {
+                 crate::render_prof::event("render.attempt");
+                 let render_request = self.app.render_dirty.take();
++                for pane_id in render_request.pty_sources.iter().copied() {
++                    self.app.emit_pane_output_changed(pane_id);
++                }
+                 let pty_dirty = !render_request.pty_sources.is_empty();
+                 if pty_dirty {
+                     crate::render_prof::event("render.attempt.pty_dirty");
+diff --git i/src/terminal/runtime.rs w/src/terminal/runtime.rs
+index 9171340906a6e964749d424653f860886d88b294..c57cc7ae739f203ad68d721ed95074ec3f3e4022 100644
+--- i/src/terminal/runtime.rs
++++ w/src/terminal/runtime.rs
+@@ -384,6 +384,21 @@ impl TerminalRuntime {
+         self.0.agent_osc_progress()
+     }
+ 
++    pub(crate) fn shell_command_capture(
++        &self,
++        sequence: u64,
++    ) -> Option<crate::pane::ShellCommandCapture> {
++        self.0.shell_command_capture(sequence)
++    }
++
++    pub(crate) fn reserve_shell_command(&self, timeout: std::time::Duration) -> Result<u64, ()> {
++        self.0.reserve_shell_command(timeout)
++    }
++
++    pub(crate) fn cancel_shell_command_reservation(&self) {
++        self.0.cancel_shell_command_reservation();
++    }
++
+     pub(crate) fn recent_text_snapshot(&self, lines: usize) -> crate::pane::TerminalReadSnapshot {
+         self.0.recent_text_snapshot(lines)
+     }
 diff --git i/src/ui.rs w/src/ui.rs
-index 141e09d3..a4f38096 100644
+index 141e09d3323674a2bdc5ab164bea5c8d4f94e960..a4f3809677b258c344ca6a58b62c99a6f2bfabb6 100644
 --- i/src/ui.rs
 +++ w/src/ui.rs
 @@ -32,9 +32,8 @@ pub(crate) use self::scrollbar::{
@@ -7195,7 +9354,7 @@ index 141e09d3..a4f38096 100644
  use self::status::copy_feedback_rect;
  pub(crate) use self::status::{render_config_diagnostic_buffer, render_copy_feedback_buffer};
 diff --git i/src/ui/sidebar.rs w/src/ui/sidebar.rs
-index cbf6f1a9..86ca750f 100644
+index cbf6f1a97b49aebd4a0acc61028031517d7f417b..86ca750f1a6c734c6d285904887c878f8e9906e9 100644
 --- i/src/ui/sidebar.rs
 +++ w/src/ui/sidebar.rs
 @@ -1,7 +1,6 @@
@@ -7261,3 +9420,126 @@ index cbf6f1a9..86ca750f 100644
  pub(crate) fn agent_panel_entries_from(
      app: &AppState,
      _terminal_runtimes: &TerminalRuntimeRegistry,
+diff --git i/tests/cli/panes.rs w/tests/cli/panes.rs
+index 90b2bf795d45f184a82f65bff76a0d98813c18dd..3d8951b0886d378dd793bb4f982f283db01c2b4e 100644
+--- i/tests/cli/panes.rs
++++ w/tests/cli/panes.rs
+@@ -167,6 +167,118 @@ fn pane_run_read_and_wait_commands_work() {
+     cleanup_spawned_herdr(herdr, base);
+ }
+ 
++#[test]
++fn pane_run_command_waits_without_visible_protocol_text() {
++    let base = unique_test_dir();
++    let config_home = base.join("config");
++    let runtime_dir = base.join("runtime");
++    let socket_path = runtime_dir.join("herdr.sock");
++    let shell = base.join("semantic-shell");
++    std::fs::create_dir_all(&base).unwrap();
++    std::fs::write(
++        &shell,
++        "#!/bin/sh\nprintf '\\033]133;A\\a$ \\033]133;B\\a'\nwhile IFS= read -r command; do\n  printf '\\033]133;C\\a'\n  eval \"$command\"\n  status=$?\n  printf '\\033]133;D;%s\\a\\033]133;A\\a$ \\033]133;B\\a' \"$status\"\ndone\n",
++    )
++    .unwrap();
++    #[cfg(unix)]
++    {
++        use std::os::unix::fs::PermissionsExt;
++        let mut permissions = std::fs::metadata(&shell).unwrap().permissions();
++        permissions.set_mode(0o755);
++        std::fs::set_permissions(&shell, permissions).unwrap();
++    }
++    let config = format!(
++        "onboarding = false\n[terminal]\ndefault_shell = {:?}\nshell_mode = \"non_login\"\n",
++        shell.to_str().unwrap()
++    );
++    let herdr = spawn_herdr_with_config(&config_home, &runtime_dir, &socket_path, None, &config);
++    wait_for_socket(&socket_path, Duration::from_secs(5));
++
++    let created = run_cli(
++        &socket_path,
++        &["workspace", "create", "--cwd", base.to_str().unwrap()],
++    );
++    assert!(created.status.success());
++    let setup = run_cli(
++        &socket_path,
++        &["pane", "run", "1-1", "printf 'setup complete\\n'"],
++    );
++    assert!(setup.status.success());
++    let setup_wait = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "wait-output",
++            "1-1",
++            "--regex",
++            "^setup complete$",
++            "--source",
++            "recent-unwrapped",
++            "--lines",
++            "40",
++            "--timeout",
++            "5000",
++        ],
++    );
++    assert!(setup_wait.status.success());
++
++    let run = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "run-command",
++            "1-1",
++            "--timeout",
++            "5000",
++            "--",
++            "printf 'clean output\\n'; false",
++        ],
++    );
++    if !run.status.success() {
++        let debug_read = run_cli(
++            &socket_path,
++            &[
++                "pane",
++                "read",
++                "1-1",
++                "--source",
++                "recent-unwrapped",
++                "--lines",
++                "40",
++            ],
++        );
++        panic!(
++            "stderr: {} stdout: {} pane: {}",
++            String::from_utf8_lossy(&run.stderr),
++            String::from_utf8_lossy(&run.stdout),
++            String::from_utf8_lossy(&debug_read.stdout)
++        );
++    }
++    let run_json: serde_json::Value = serde_json::from_slice(&run.stdout).unwrap();
++    assert_eq!(run_json["result"]["exit_code"], 1);
++    assert_eq!(run_json["result"]["output"], "clean output\r\n");
++
++    let read = run_cli(
++        &socket_path,
++        &[
++            "pane",
++            "read",
++            "1-1",
++            "--source",
++            "recent-unwrapped",
++            "--lines",
++            "40",
++        ],
++    );
++    assert!(read.status.success());
++    let pane_text = String::from_utf8(read.stdout).unwrap();
++    assert!(pane_text.contains("printf 'clean output\\n'; false"));
++    assert!(!pane_text.contains("__PI_HERDR_"));
++    assert!(!pane_text.contains("__pi_herdr_"));
++
++    cleanup_spawned_herdr(herdr, base);
++}
++
+ #[test]
+ fn wait_output_matches_recent_unwrapped_text() {
+     let base = unique_test_dir();

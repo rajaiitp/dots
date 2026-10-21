@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 const assert = require("node:assert/strict");
-const { execFileSync } = require("node:child_process");
-const { existsSync } = require("node:fs");
+const { existsSync, readFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 
 const packageDir = process.env.PI_HERDR_PACKAGE_DIR || resolve(__dirname, "../../agent/npm/node_modules/@weshipwork/pi-herdr");
@@ -37,7 +36,19 @@ const jiti = require(jitiModule)(join(packageDir, "tests", "jiti-entry.cjs"), {
   },
 });
 const protocol = jiti(join(packageDir, "extensions", "herdr-run-protocol.ts"));
-const { handlePaneAction } = jiti(join(packageDir, "extensions", "herdr-pane-actions.ts"));
+const paneActionsPath = join(packageDir, "extensions", "herdr-pane-actions.ts");
+const { handlePaneAction } = jiti(paneActionsPath);
+const paneActionsSource = readFileSync(paneActionsPath, "utf8");
+const runCaseSource = paneActionsSource.slice(
+  paneActionsSource.indexOf("case HERDR_ACTION.RUN"),
+  paneActionsSource.indexOf("case HERDR_ACTION.READ"),
+);
+assert.doesNotMatch(
+  runCaseSource,
+  /setInterval|\bsleep\(|waitForPaneOutput|__PI_HERDR_/,
+  "run must use native semantic completion without timers, polling, or visible marker wrappers",
+);
+assert.match(runCaseSource, /runPaneCommand/, "run must delegate to Herdr's atomic semantic command API");
 
 function idleZsh() {
   return {
@@ -47,19 +58,11 @@ function idleZsh() {
   };
 }
 
-for (const shell of ["bash", "zsh"]) {
-  const command = "printf 'quoted: %s\\n' \"it's safe\"; false";
-  const run = protocol.createCommandProtocol(command, shell, `token-${shell}`);
-  assert.equal(run.wrappedCommand.includes(run.donePrefix), false, "echoed wrapper must not contain full done marker");
-  const output = execFileSync(shell, ["-c", run.wrappedCommand], { encoding: "utf8" });
-  const completion = protocol.parseCompletion(output, run.token);
-  assert.equal(completion.exitCode, 1);
-  assert.deepEqual(protocol.extractCommandOutput(output, run.token), {
-    text: "quoted: it's safe",
-    beginFound: true,
-    doneFound: true,
-  });
-}
+assert.match(protocol.createRunToken(), /^[A-Za-z0-9_-]{20,}$/);
+assert.equal(
+  protocol.stripTerminalControlSequences("\x1b]2;command title\x07\x1b[0 qvisible\r\n"),
+  "visible\r\n",
+);
 
 assert.equal(protocol.getIdleSupportedShell(idleZsh()).name, "zsh");
 assert.equal(protocol.getIdleSupportedShell({ ...idleZsh(), foreground_processes: [{ name: "nvim", pid: 11 }] }), undefined);
@@ -75,7 +78,7 @@ registry.clearIfShellIsIdle("pane-1", idleZsh());
 assert.equal(registry.get("pane-1"), undefined);
 
 async function runActionTest() {
-  const calls = { exec: [], wait: 0, read: 0, compress: 0 };
+  const calls = { exec: [], run: [], wait: 0, read: 0, compress: 0 };
   const runtime = {
     signal: undefined,
     currentWorkspaceId: "workspace-1",
@@ -85,25 +88,26 @@ async function runActionTest() {
     client: {
       getPaneProcessInfo: async () => idleZsh(),
       exec: async (args) => { calls.exec.push(args); },
-      waitForPaneOutput: async (_pane, donePrefix) => {
-        calls.wait += 1;
-        const token = /:([^:]+):$/.exec(donePrefix)[1];
+      runPaneCommand: async (paneId, command, timeout) => {
+        calls.run.push({ paneId, command, timeout });
         return {
-          matched_line: `${donePrefix}7`,
-          read: {
-            text: `__PI_HERDR_BEGIN__:${token}\nfinal result\n__PI_HERDR_DONE__:${token}:7\n`,
-            truncated: false,
-          },
+          pane_id: paneId,
+          sequence: 1,
+          exit_code: 7,
+          output: "final result\n",
+          truncated: false,
         };
       },
+      waitForPaneOutput: async () => { calls.wait += 1; throw new Error("unexpected wait"); },
       readPane: async () => { calls.read += 1; return ""; },
       compressShellOutput: async () => { calls.compress += 1; return ""; },
     },
   };
   const result = await handlePaneAction({ action: "run", pane: "test", command: "false", compression: "never" }, runtime);
-  assert.equal(calls.exec.length, 1);
-  assert.equal(calls.wait, 1);
-  assert.equal(calls.read, 0, "normal waiting run must not perform an eager/fallback read");
+  assert.equal(calls.exec.length, 0);
+  assert.deepEqual(calls.run, [{ paneId: "pane-1", command: "false", timeout: 120_000 }]);
+  assert.equal(calls.wait, 0);
+  assert.equal(calls.read, 0, "normal waiting run must not perform pane reads");
   assert.equal(calls.compress, 0);
   assert.match(result.content[0].text, /exited with code 7/);
   assert.match(result.content[0].text, /final result/);
