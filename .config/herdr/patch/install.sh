@@ -4,10 +4,12 @@ set -euo pipefail
 SOURCE_REPO=${HERDR_SOURCE_REPO:-https://github.com/herdrdev/herdr.git}
 SOURCE_COMMIT=7b116c05bfda646af39d2524c54e70c751f57ee8
 PATCH_SHA256=9f7dd4792eca3bd443451c81a583d97cfe710a1ad335561869c99bf44173a846
+FOCUS_PATCH_SHA256=a695c610d8d6b96adbed6ebe52a7582c22648f523d31b1c29bcf076cc77dbf26
 RUST_TOOLCHAIN=1.96.1
 ZIG_VERSION=0.16.0
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 PATCH_PATH=$SCRIPT_DIR/sidebar-unified-agents.patch
+FOCUS_PATCH_PATH=$SCRIPT_DIR/focus-follows-mouse.patch
 TARGET_PATH=${HERDR_INSTALL_PATH:-$HOME/.local/bin/herdr}
 BACKUP_ROOT=${HERDR_BACKUP_ROOT:-$HOME/.local/state/herdr/install-backups}
 CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-$HOME/.cache/herdr-unified-sidebar-target}
@@ -99,9 +101,10 @@ write_candidate_metadata() {
   directory=$(dirname "$metadata")
   temporary=$(mktemp "$directory/.herdr-candidate-metadata.XXXXXX")
   {
-    printf 'format_version=1\n'
+    printf 'format_version=2\n'
     printf 'source_commit=%s\n' "$SOURCE_COMMIT"
     printf 'patch_sha256=%s\n' "$PATCH_SHA256"
+    printf 'focus_patch_sha256=%s\n' "$FOCUS_PATCH_SHA256"
     printf 'candidate_sha256=%s\n' "$(sha256_file "$candidate")"
   } >"$temporary"
   chmod 0600 "$temporary"
@@ -116,10 +119,12 @@ validate_candidate_provenance() {
   [[ $(grep -c '^format_version=' "$metadata") == 1 ]] || { printf 'Invalid candidate metadata format\n' >&2; return 1; }
   [[ $(grep -c '^source_commit=' "$metadata") == 1 ]] || { printf 'Invalid candidate source metadata\n' >&2; return 1; }
   [[ $(grep -c '^patch_sha256=' "$metadata") == 1 ]] || { printf 'Invalid candidate patch metadata\n' >&2; return 1; }
+  [[ $(grep -c '^focus_patch_sha256=' "$metadata") == 1 ]] || { printf 'Invalid candidate focus patch metadata\n' >&2; return 1; }
   [[ $(grep -c '^candidate_sha256=' "$metadata") == 1 ]] || { printf 'Invalid candidate hash metadata\n' >&2; return 1; }
-  grep -Fxq 'format_version=1' "$metadata"
+  grep -Fxq 'format_version=2' "$metadata"
   grep -Fxq "source_commit=$SOURCE_COMMIT" "$metadata"
   grep -Fxq "patch_sha256=$PATCH_SHA256" "$metadata"
+  grep -Fxq "focus_patch_sha256=$FOCUS_PATCH_SHA256" "$metadata"
   candidate_sha=$(awk -F= '/^candidate_sha256=/{print $2}' "$metadata")
   [[ $candidate_sha == "$(sha256_file "$candidate")" ]] || {
     printf 'Candidate hash does not match its staged metadata\n' >&2
@@ -131,8 +136,13 @@ validate_candidate_provenance() {
 stage() (
   local destination=$1 zig_bin workdir source
   require_file "$PATCH_PATH"
+  require_file "$FOCUS_PATCH_PATH"
   [[ $(sha256_file "$PATCH_PATH") == "$PATCH_SHA256" ]] || {
     printf 'Patch hash mismatch: %s\n' "$PATCH_PATH" >&2
+    exit 1
+  }
+  [[ $(sha256_file "$FOCUS_PATCH_PATH") == "$FOCUS_PATCH_SHA256" ]] || {
+    printf 'Patch hash mismatch: %s\n' "$FOCUS_PATCH_PATH" >&2
     exit 1
   }
   rustup run "$RUST_TOOLCHAIN" cargo --version >/dev/null
@@ -151,6 +161,8 @@ stage() (
   [[ $(git -C "$source" rev-parse HEAD) == "$SOURCE_COMMIT" ]]
   git -C "$source" apply --check "$PATCH_PATH"
   git -C "$source" apply "$PATCH_PATH"
+  git -C "$source" apply --check "$FOCUS_PATCH_PATH"
+  git -C "$source" apply "$FOCUS_PATCH_PATH"
   git -C "$source" diff --check
 
   export CARGO_TARGET_DIR
@@ -242,6 +254,7 @@ activate() (
   {
     printf 'source_commit=%s\n' "$SOURCE_COMMIT"
     printf 'patch_sha256=%s\n' "$PATCH_SHA256"
+    printf 'focus_patch_sha256=%s\n' "$FOCUS_PATCH_SHA256"
     printf 'candidate_sha256=%s\n' "$candidate_sha"
     if [[ $had_target == 1 ]]; then
       printf 'previous_sha256=%s\n' "$(sha256_file "$backup_dir/herdr")"

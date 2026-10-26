@@ -1,0 +1,337 @@
+diff --git c/docs/next/website/src/data/config-reference.json w/docs/next/website/src/data/config-reference.json
+index f06507c1..f5979a28 100644
+--- c/docs/next/website/src/data/config-reference.json
++++ w/docs/next/website/src/data/config-reference.json
+@@ -911,6 +911,12 @@
+           "default": "true",
+           "description": "Capture mouse input for Herdr's mouse UI."
+         },
++        {
++          "key": "ui.focus_follows_mouse",
++          "type": "boolean",
++          "default": "false",
++          "description": "Focus the pane under the mouse pointer without clicking it. Requires mouse capture."
++        },
+         {
+           "key": "ui.copy_on_select",
+           "type": "boolean",
+diff --git c/src/client/shell/actions.rs w/src/client/shell/actions.rs
+index 83819b0d..34f0282e 100644
+--- c/src/client/shell/actions.rs
++++ w/src/client/shell/actions.rs
+@@ -567,7 +567,7 @@ impl ClientShellState {
+             }
+         }
+         match pending.kind {
+-            PendingEndpointKind::Generic => {}
++            PendingEndpointKind::Generic | PendingEndpointKind::HoverPaneFocus { .. } => {}
+             PendingEndpointKind::PaneLinkResolve { .. } => unreachable!("handled above"),
+             PendingEndpointKind::ProductAnnouncementDismiss { version, id } => {
+                 return match result {
+diff --git c/src/client/shell/config.rs w/src/client/shell/config.rs
+index 04a3ddb5..b241bcfe 100644
+--- c/src/client/shell/config.rs
++++ w/src/client/shell/config.rs
+@@ -148,6 +148,7 @@ impl ClientShellConfig {
+             prompt_new_workspace_name: config.ui.prompt_new_workspace_name,
+             confirm_close: config.ui.confirm_close,
+             mouse_capture: config.ui.mouse_capture,
++            focus_follows_mouse: config.ui.focus_follows_mouse,
+             mouse_scroll_lines: config.ui.mouse_scroll_lines(),
+             right_click_passthrough_modifiers: config.ui.right_click_passthrough_modifiers(),
+             redraw_on_focus_gained: config.ui.redraw_on_focus_gained,
+@@ -363,6 +364,7 @@ impl ClientShellConfig {
+                 self.prompt_new_workspace_name = ui.prompt_new_workspace_name;
+                 self.confirm_close = ui.confirm_close;
+                 self.mouse_capture = ui.mouse_capture;
++                self.focus_follows_mouse = ui.focus_follows_mouse;
+                 self.mouse_scroll_lines = ui.mouse_scroll_lines();
+                 self.right_click_passthrough_modifiers = ui.right_click_passthrough_modifiers();
+                 self.redraw_on_focus_gained = ui.redraw_on_focus_gained;
+@@ -553,14 +555,27 @@ mod tests {
+ 
+         let mut invalid = Config::default();
+         invalid.ui.sidebar_width = 35;
++        invalid.ui.focus_follows_mouse = true;
+         invalid.keys.prefix = crate::config::BindingConfig::one("ctrl+a");
+         let invalid_sections = vec!["ui".to_owned(), "keys".to_owned()];
+         shell.apply_live_config(&invalid, &[], &invalid_sections);
+ 
+         assert_eq!(shell.sidebar_width, 29);
++        assert!(!shell.focus_follows_mouse);
+         assert_eq!(
+             shell.keybinds.prefix,
+             vec![(KeyCode::Char('x'), KeyModifiers::CONTROL)]
+         );
+     }
++
++    #[test]
++    fn live_reload_updates_focus_follows_mouse() {
++        let mut shell = ClientShellConfig::from_config(&Config::default());
++        let mut reloaded = Config::default();
++        reloaded.ui.focus_follows_mouse = true;
++
++        shell.apply_live_config(&reloaded, &[], &[]);
++
++        assert!(shell.focus_follows_mouse);
++    }
+ }
+diff --git c/src/client/shell/mouse.rs w/src/client/shell/mouse.rs
+index 8e873d68..a9b32eb0 100644
+--- c/src/client/shell/mouse.rs
++++ w/src/client/shell/mouse.rs
+@@ -2303,10 +2303,44 @@ impl ClientShellState {
+                     .hits
+                     .panes
+                     .iter()
+-                    .find(|hit| super::contains(hit.inner_rect, point) && hit.mouse_reporting)
++                    .find(|hit| super::contains(hit.inner_rect, point))
+                     .cloned()
+                 {
+-                    self.push_pane_mouse_event(&hit, mouse, mouse.modifiers, outcome);
++                    if hit.mouse_reporting {
++                        self.push_pane_mouse_event(&hit, mouse, mouse.modifiers, outcome);
++                    }
++                    let gesture_active = self.chrome_drag.is_some()
++                        || self.workspace_press.is_some()
++                        || self.tab_press.is_some()
++                        || self.pane_mouse_gesture.is_some()
++                        || self
++                            .selection
++                            .as_ref()
++                            .is_some_and(crate::selection::Selection::is_in_progress)
++                        || self.word_selection_gesture.is_some();
++                    let focus_pending = self.pending_requests.values().any(|pending| {
++                        matches!(
++                            &pending.kind,
++                            PendingEndpointKind::HoverPaneFocus { pane_id }
++                                if pane_id == &hit.pane_id
++                        )
++                    });
++                    if self.config.mouse_capture
++                        && self.config.focus_follows_mouse
++                        && self.mode == ClientShellMode::Terminal
++                        && !gesture_active
++                        && !focus_pending
++                        && self.focused_pane_id().as_deref() != Some(hit.pane_id.as_str())
++                    {
++                        let pane_id = hit.pane_id;
++                        self.push_endpoint_method_with_kind(
++                            crate::api::schema::Method::PaneFocus(crate::api::schema::PaneTarget {
++                                pane_id: pane_id.clone(),
++                            }),
++                            PendingEndpointKind::HoverPaneFocus { pane_id },
++                            outcome,
++                        );
++                    }
+                 }
+             }
+             MouseEventKind::ScrollUp
+diff --git c/src/client/shell/state.rs w/src/client/shell/state.rs
+index 5a732920..05854b63 100644
+--- c/src/client/shell/state.rs
++++ w/src/client/shell/state.rs
+@@ -42,6 +42,7 @@ pub(crate) struct ClientShellConfig {
+     pub(super) prompt_new_workspace_name: bool,
+     pub(super) confirm_close: bool,
+     pub(super) mouse_capture: bool,
++    pub(super) focus_follows_mouse: bool,
+     pub(super) mouse_scroll_lines: usize,
+     pub(super) right_click_passthrough_modifiers: Option<crossterm::event::KeyModifiers>,
+     pub(super) redraw_on_focus_gained: bool,
+@@ -647,6 +648,9 @@ pub(super) enum PendingEndpointKind {
+         pane_id: String,
+         serial: u64,
+     },
++    HoverPaneFocus {
++        pane_id: String,
++    },
+     WordSelection {
+         pane_id: String,
+         absolute_row: u32,
+diff --git c/src/client/shell/tests/mouse_selection.rs w/src/client/shell/tests/mouse_selection.rs
+index eced2347..8d29f0fd 100644
+--- c/src/client/shell/tests/mouse_selection.rs
++++ w/src/client/shell/tests/mouse_selection.rs
+@@ -1,5 +1,113 @@
+ use super::*;
+ 
++fn focus_follows_mouse_state(enabled: bool, mouse_capture: bool) -> ClientShellState {
++    let mut config = Config::default();
++    config.ui.focus_follows_mouse = enabled;
++    config.ui.mouse_capture = mouse_capture;
++
++    let mut projected = snapshot();
++    let mut second_pane = projected.panes[0].clone();
++    second_pane.pane_id = "pane_2".into();
++    second_pane.focused = false;
++    projected.panes.push(second_pane);
++
++    let mut pane_surface = surface();
++    pane_surface.frame = FrameData::from_ratatui_buffer_with_hyperlinks(
++        &Buffer::with_lines(["ONE TWO ", "        "]),
++        None,
++        &[],
++    );
++    pane_surface.panes[0].rect.width = 4;
++    pane_surface.panes[0].inner_rect.width = 4;
++    let mut second_surface = pane_surface.panes[0].clone();
++    second_surface.pane_id = "pane_2".into();
++    second_surface.rect.x = 4;
++    second_surface.inner_rect.x = 4;
++    second_surface.focused = false;
++    pane_surface.panes.push(second_surface);
++
++    let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
++    state.set_snapshot(Box::new(projected));
++    state.set_pane_surface(pane_surface);
++    state.compose(106, 20).expect("two-pane frame");
++    state
++}
++
++fn move_over_pane(state: &mut ClientShellState, index: usize) -> ClientShellInput {
++    let pane = state.hits.panes[index].clone();
++    state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
++        kind: MouseEventKind::Moved,
++        column: pane.inner_rect.x,
++        row: pane.inner_rect.y,
++        modifiers: KeyModifiers::empty(),
++    })])
++}
++
++#[test]
++fn focus_follows_mouse_focuses_an_unfocused_pane_once() {
++    let mut state = focus_follows_mouse_state(true, true);
++
++    let first = move_over_pane(&mut state, 1);
++    assert!(matches!(
++        &first.actions[..],
++        [ClientShellAction::Endpoint { request, .. }]
++            if matches!(
++                &request.method,
++                crate::api::schema::Method::PaneFocus(target) if target.pane_id == "pane_2"
++            )
++    ));
++
++    let repeated = move_over_pane(&mut state, 1);
++    assert!(repeated.actions.is_empty());
++}
++
++#[test]
++fn focus_follows_mouse_requires_both_settings() {
++    for (enabled, mouse_capture) in [(false, true), (true, false)] {
++        let mut state = focus_follows_mouse_state(enabled, mouse_capture);
++        assert!(move_over_pane(&mut state, 1).actions.is_empty());
++    }
++}
++
++#[test]
++fn focus_follows_mouse_ignores_non_terminal_modes_and_active_gestures() {
++    let mut navigating = focus_follows_mouse_state(true, true);
++    navigating.mode = ClientShellMode::Navigate;
++    assert!(move_over_pane(&mut navigating, 1).actions.is_empty());
++
++    let mut dragging = focus_follows_mouse_state(true, true);
++    dragging.chrome_drag = Some(ClientChromeDrag::SidebarWidth);
++    assert!(move_over_pane(&mut dragging, 1).actions.is_empty());
++}
++
++#[test]
++fn focus_follows_mouse_preserves_pane_mouse_motion() {
++    let mut state = focus_follows_mouse_state(true, true);
++    let mut surface = state.pane_surface.as_ref().expect("pane surface").clone();
++    surface.panes[1].mouse_reporting = true;
++    state.set_pane_surface(surface);
++    state.compose(106, 20).expect("mouse-reporting pane frame");
++
++    let moved = move_over_pane(&mut state, 1);
++    assert!(matches!(
++        &moved.requests[..],
++        [ClientMessage::ClientShellPaneInput { pane_id, events }]
++            if pane_id == "pane_2"
++                && matches!(
++                    &events[..],
++                    [ClientPaneInputEvent::Mouse {
++                        kind: crate::protocol::ClientMouseKind::Moved,
++                        ..
++                    }]
++                )
++    ));
++    assert!(matches!(
++        &moved.actions[..],
++        [ClientShellAction::Endpoint { request, .. }]
++            if matches!(&request.method, crate::api::schema::Method::PaneFocus(_))
++    ));
++}
++
+ #[test]
+ fn selection_repaint_cadence_keeps_one_deadline_and_flushes_when_input_stops() {
+     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+diff --git c/src/client/shell/worktrees.rs w/src/client/shell/worktrees.rs
+index 56c554c8..ebeaebe5 100644
+--- c/src/client/shell/worktrees.rs
++++ w/src/client/shell/worktrees.rs
+@@ -527,6 +527,7 @@ impl ClientShellState {
+             }
+             (
+                 PendingEndpointKind::Generic
++                | PendingEndpointKind::HoverPaneFocus { .. }
+                 | PendingEndpointKind::ProductAnnouncementDismiss { .. }
+                 | PendingEndpointKind::ReleaseNotesDismiss
+                 | PendingEndpointKind::PopupCommand
+diff --git c/src/config/model.rs w/src/config/model.rs
+index 29802fd9..0371c608 100644
+--- c/src/config/model.rs
++++ w/src/config/model.rs
+@@ -950,6 +950,8 @@ pub struct UiConfig {
+     pub mobile_width_threshold: u16,
+     /// Capture mouse input for Herdr's mouse UI. Default: true.
+     pub mouse_capture: bool,
++    /// Focus the pane under the mouse pointer without a click. Default: false.
++    pub focus_follows_mouse: bool,
+     /// Copy text selected with the mouse. Default: true.
+     pub copy_on_select: bool,
+     /// Host cursor policy. Default: auto.
+@@ -1205,6 +1207,7 @@ impl Default for UiConfig {
+             sidebar_collapsed_mode: SidebarCollapsedModeConfig::Compact,
+             mobile_width_threshold: DEFAULT_MOBILE_WIDTH_THRESHOLD,
+             mouse_capture: true,
++            focus_follows_mouse: false,
+             copy_on_select: true,
+             host_cursor: HostCursorModeConfig::Auto,
+             right_click_passthrough_modifier: RightClickPassthroughModifierConfig::default(),
+@@ -1747,6 +1750,19 @@ mouse_capture = false
+         assert!(!config.ui.mouse_capture);
+     }
+ 
++    #[test]
++    fn focus_follows_mouse_default_off_and_parse() {
++        let default_config = Config::default();
++        assert!(!default_config.ui.focus_follows_mouse);
++
++        let toml = r#"
++[ui]
++focus_follows_mouse = true
++"#;
++        let config: Config = toml::from_str(toml).unwrap();
++        assert!(config.ui.focus_follows_mouse);
++    }
++
+     #[test]
+     fn copy_on_select_default_on_and_parse() {
+         let default_config = Config::default();
+diff --git c/src/main.rs w/src/main.rs
+index f97e7e2b..86586b68 100644
+--- c/src/main.rs
++++ w/src/main.rs
+@@ -259,6 +259,10 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
+ # Pane apps like lazygit and btop can still receive mouse when they request it.
+ # mouse_capture = true
+ 
++# Focus the pane under the mouse pointer without clicking it.
++# Requires mouse_capture. Button-held motion keeps the pane where the gesture started.
++# focus_follows_mouse = false
++
+ # Automatically copy text selected with the mouse.
+ # Set false to retain drag or double-click word selection until Ctrl+C,
+ # or Cmd+C when the host forwards it, copies and clears it.
