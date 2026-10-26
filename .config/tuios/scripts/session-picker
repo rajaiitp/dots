@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+entries=$(
+  {
+    tuios ls --json | jq -r '.[] | ["session", .name, (.dir // "")] | @tsv'
+    (zoxide query -l 2>/dev/null || true) | while IFS= read -r dir; do
+      [[ -d "$dir" ]] && printf 'directory\t%s\t%s\n' "$(basename "$dir")" "$dir"
+    done
+  } | awk -F '\t' '!seen[$0]++'
+)
+
+choice=$(printf '%s\n' "$entries" | fzf \
+  --delimiter=$'\t' \
+  --with-nth=1,2,3 \
+  --prompt='Filter> ' \
+  --input-border=rounded \
+  --input-label=' Type to filter ' \
+  --list-border=rounded \
+  --list-label=' Sessions and projects ' \
+  --header='Enter: switch/open  Esc: cancel' \
+  --header-first \
+  --info=inline \
+  --layout=reverse) || exit 0
+[[ -n "$choice" ]] || exit 0
+
+IFS=$'\t' read -r kind label value <<<"$choice"
+if [[ "$kind" == "session" ]]; then
+  tuios switch-session "$label"
+  exit 0
+fi
+
+dir=$value
+name=$(printf '%s' "$label" | tr ' ' '-' | tr -cd '[:alnum:]_.-')
+[[ -n "$name" ]] || name=session
+if tuios ls --json | jq -e --arg name "$name" '.[] | select(.name == $name)' >/dev/null; then
+  tuios switch-session "$name"
+  exit 0
+fi
+
+tuios new "$name" --cwd "$dir" --detach >/dev/null
+window_id=""
+for _ in $(seq 1 100); do
+  window_id=$(tuios list-windows --session "$name" --json | jq -r '.windows[] | select(.at_prompt == true) | .window_id' | head -n1)
+  [[ -n "$window_id" ]] && break
+  sleep 0.05
+done
+if [[ -z "$window_id" ]]; then
+  printf 'The new session shell did not become ready.\n' >&2
+  exit 1
+fi
+
+tuios send-text --session "$name" --window "$window_id" $'pi\n' >/dev/null
+tuios switch-session "$name"

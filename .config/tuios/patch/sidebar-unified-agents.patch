@@ -1,0 +1,2093 @@
+diff --git i/docs/look-keys.json w/docs/look-keys.json
+index acc498ad1bc54ae851bea518e0483d872fe7c95f..0ad0566786bb1c99155d75c47e4da663a301cff2 100644
+--- i/docs/look-keys.json
++++ w/docs/look-keys.json
+@@ -586,6 +586,7 @@
+       "description": "Section names in the order the rail stacks them, each with an optional percent share. A name left out is a section the rail does not draw, and \"spacer\" is an empty block you may repeat.",
+       "default": "sessions:25,terminals,files:25,agents:34",
+       "items": [
++        "overview",
+         "sessions",
+         "terminals",
+         "files",
+diff --git i/internal/app/agent_rail_shipped_width_test.go w/internal/app/agent_rail_shipped_width_test.go
+index d6e342150149d35064e1c8642043a48c2cf38634..38110ccefe808dea6eea4045af8dab142b022518 100644
+--- i/internal/app/agent_rail_shipped_width_test.go
++++ w/internal/app/agent_rail_shipped_width_test.go
+@@ -80,7 +80,7 @@ func TestABlockedMachineHeaderFitsTheShippedRail(t *testing.T) {
+ 		}
+ 	}
+ 	sess := remoteNode(t, m, "a-session")
+-	row := ansi.Strip(m.sidebarRemoteSessionRow(sess, cw, sidebarVariantFull, theme.UI(), sidebarRowState{}, true))
++	row := ansi.Strip(m.sidebarRemoteSessionRow(sess, cw, sidebarVariantFull, theme.UI(), sidebarRowState{}, true, sidebarSessionPresentationSection))
+ 	if !strings.Contains(row, "a-session") || !strings.Contains(row, agentStateIndicator("needs_input")) {
+ 		t.Errorf("a blocked session on another machine lost its name or glyph on the shipped rail: %q", row)
+ 	}
+diff --git i/internal/app/command_palette.go w/internal/app/command_palette.go
+index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..bcd6a006be4305dbfc0e9964d5a51957f0d11e7b 100644
+--- i/internal/app/command_palette.go
++++ w/internal/app/command_palette.go
+@@ -252,10 +252,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 			Bind:     "prefix_close_window",
+ 			Category: "Window",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+-				if len(m.Windows) > 0 && m.FocusedWindow >= 0 {
+-					m.CloseWindowByHand(m.FocusedWindow)
++				if len(m.Windows) == 0 || m.FocusedWindow < 0 {
++					return m, nil
+ 				}
+-				return m, nil
++				return m, m.CloseWindowByHand(m.FocusedWindow)
+ 			},
+ 		},
+ 		{
+diff --git i/internal/app/dock_workspace_names_test.go w/internal/app/dock_workspace_names_test.go
+index 85274718a2726675f72efb49f2830d2e45823ee4..ca4a8a070ae6d3033001ee43765e0829192b324d 100644
+--- i/internal/app/dock_workspace_names_test.go
++++ w/internal/app/dock_workspace_names_test.go
+@@ -9,6 +9,7 @@ import (
+ 	"github.com/Gaurav-Gosain/tuios/internal/session"
+ 	"github.com/Gaurav-Gosain/tuios/internal/terminal"
+ 	"github.com/Gaurav-Gosain/tuios/internal/theme"
++	uv "github.com/charmbracelet/ultraviolet"
+ )
+ 
+ // chipOS is a dock with three occupied workspaces, the middle one named.
+@@ -33,6 +34,20 @@ func chipOS(t *testing.T) *OS {
+ // the hit rectangle is cut to has to be the width the label actually takes. Two
+ // places deriving the same width from state that has since moved is how a dock
+ // entry became unclickable while the cell to its right worked.
++func TestDraggedInactiveFlatWorkspaceTabUsesAccent(t *testing.T) {
++	pal := theme.UI()
++	row := flatWorkspaceTab("2", false, true, &config.DockTabsConfig{Style: config.DockTabStyleFlat}, pal, nil)
++	canvas := uv.NewScreenBuffer(lipgloss.Width(row), 1)
++	uv.NewStyledString(row).Draw(canvas, canvas.Bounds())
++	want := theme.Readable(pal.Accent, pal.Surface)
++	for x := range lipgloss.Width(row) {
++		cell := canvas.CellAt(x, 0)
++		if cell != nil && cell.Width > 0 && !samePaneColor(cell.Style.Fg, want) {
++			t.Fatalf("dragged inactive tab cell %d has foreground %v, want %v", x, cell.Style.Fg, want)
++		}
++	}
++}
++
+ func TestWorkspaceChipWidthFollowsItsLabel(t *testing.T) {
+ 	m := chipOS(t)
+ 	for _, tab := range m.buildDockWorkspaceTabs() {
+diff --git i/internal/app/os.go w/internal/app/os.go
+index 71629421598eb340f54fe1c571c1de0ed1833f86..a01f4c87ca5669d4a23904ec33a37d32f05c53ba 100644
+--- i/internal/app/os.go
++++ w/internal/app/os.go
+@@ -1570,6 +1570,7 @@ type OS struct {
+ 	SidebarScrollF            int
+ 	SidebarScrollG            int
+ 	SidebarScrollC            int
++	SidebarScrollO            int
+ 	// sidebarAgentAnchor keeps the agents section's viewport on the row it was
+ 	// left on rather than on the index that row happened to have, since that
+ 	// section resorts itself on live agent state. See sidebar_anchor.go.
+diff --git i/internal/app/os_popup.go w/internal/app/os_popup.go
+index 119df259ccbd3ed79b9bf469607bb6653e55ac1e..1853e02ffc9916f47cbf5b78f400a047cb261fcb 100644
+--- i/internal/app/os_popup.go
++++ w/internal/app/os_popup.go
+@@ -1,6 +1,8 @@
+ package app
+ 
+ import (
++	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/hooks"
+ 	"github.com/Gaurav-Gosain/tuios/internal/session"
+ 	"github.com/Gaurav-Gosain/tuios/internal/terminal"
+ )
+@@ -103,33 +105,36 @@ func (m *OS) FocusedPopup() *terminal.Window {
+ 	return w
+ }
+ 
+-// CloseFocusedPopup closes the focused popup and reports whether it closed one.
+-//
+-// It is the keyboard's way out of a popup whose command does not exit on its
+-// own, and it goes through DeleteWindow so a popup is closed by exactly the path
+-// every other pane is closed by.
+-func (m *OS) CloseFocusedPopup() bool {
++// CloseFocusedPopup closes the focused popup. It is the keyboard's way out of a
++// popup whose command does not exit on its own, and returns the same quit command
++// as any other final-pane close.
++func (m *OS) CloseFocusedPopup() tea.Cmd {
+ 	w := m.FocusedPopup()
+ 	if w == nil {
+-		return false
++		return nil
+ 	}
+ 	for i := range m.Windows {
+ 		if m.Windows[i] == w {
+-			m.CloseWindowByHand(i)
+-			return true
++			return m.CloseWindowByHand(i)
+ 		}
+ 	}
+-	return false
++	return nil
+ }
+ 
+-// CloseWindowByHand is what a close key, the close button and the palette's
+-// close do to the pane at i. A pane of a scratch group closes like any pane.
+-// When it was the group's last one, the group ends and the view goes back to
+-// the workspace it was shown over.
+-func (m *OS) CloseWindowByHand(i int) {
++// CloseWindowByHand is what a close key, button, dialog or palette does to the
++// pane at i. Closing the final pane of a daemon session switches to the most
++// recently active remaining session before killing the empty one, so no empty
++// desktop is rendered. With no remaining session it kills and quits.
++func (m *OS) CloseWindowByHand(i int) tea.Cmd {
+ 	if i < 0 || i >= len(m.Windows) {
+-		return
++		return nil
++	}
++	window := m.Windows[i]
++	m.FireHook(hooks.AfterCloseWindow, window.ID, window.Title())
++	if m.IsDaemonSession && m.DaemonClient != nil && len(m.Windows) == 1 {
++		return m.KillSessionGoNext(m.NextSessionName())
+ 	}
+ 	m.DeleteWindow(i)
+ 	m.leaveEmptyScratchView()
++	return nil
+ }
+diff --git i/internal/app/quit_menu.go w/internal/app/quit_menu.go
+index 64bcc8d3cad86cf8b8149246c346ad78d8bf4d1b..7669f72e99eab819c9df828b96177a7e5409f697 100644
+--- i/internal/app/quit_menu.go
++++ w/internal/app/quit_menu.go
+@@ -1,9 +1,11 @@
+ package app
+ 
+ import (
++	"cmp"
+ 	"slices"
+ 
+ 	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/session"
+ )
+ 
+ // QuitMenuKind names what a quit-menu row does when run.
+@@ -63,9 +65,8 @@ func (m *OS) CloseQuitMenu() {
+ 	m.QuitMenuOtherSessions = nil
+ }
+ 
+-// NextSessionName returns the session the kill-and-go-next actions would land
+-// on: the first other session in the daemon's list, or "" when this is the
+-// last session.
++// NextSessionName returns the most recently active remaining session, or ""
++// when this is the last session.
+ func (m *OS) NextSessionName() string {
+ 	others := m.otherSessionNames()
+ 	if len(others) == 0 {
+@@ -74,26 +75,29 @@ func (m *OS) NextSessionName() string {
+ 	return others[0]
+ }
+ 
+-// otherSessionNames lists the daemon sessions this client is not attached to,
+-// by identity, from the listing this client already caches.
+-//
+-// It collects identities, not display titles. The title is the display name
+-// once a session has one, so the kill-and-go-next row would switch to a name
+-// that addresses nothing, and switching to a name no session answers to makes
+-// one. It reads the cache rather than fetching a listing, because a fetch is a
+-// blocking daemon round trip on the Update goroutine, taken to open a menu; the
+-// cache is what the rail's own rows are drawn from and is refreshed off that
+-// goroutine, so reading it is both cheaper and in agreement with the screen.
++// otherSessionNames lists the remaining daemon sessions by identity, most
++// recently active first. It reads the cache the rail uses, avoiding a blocking
++// listing request on the UI goroutine.
+ func (m *OS) otherSessionNames() []string {
+ 	if m.DaemonClient == nil {
+ 		return nil
+ 	}
+ 	current := m.sidebarCurrentSessionID()
+-	var out []string
+-	for _, name := range m.DaemonClient.AvailableSessionNames() {
+-		if name != current {
+-			out = append(out, name)
++	remaining := slices.DeleteFunc(m.DaemonClient.CachedSessions(), func(info session.SessionInfo) bool {
++		return info.Name == current
++	})
++	slices.SortFunc(remaining, func(a, b session.SessionInfo) int {
++		if a.LastActive != b.LastActive {
++			return cmp.Compare(b.LastActive, a.LastActive)
+ 		}
++		if a.Created != b.Created {
++			return cmp.Compare(b.Created, a.Created)
++		}
++		return cmp.Compare(a.Name, b.Name)
++	})
++	out := make([]string, len(remaining))
++	for i, info := range remaining {
++		out[i] = info.Name
+ 	}
+ 	return out
+ }
+@@ -227,6 +231,9 @@ func (m *OS) KillSessionGoNext(next string) tea.Cmd {
+ 			return nil
+ 		}
+ 	}
++	if m.lastSession.host == m.attachedMachine() && m.lastSession.name == old {
++		m.lastSession = lastSession{}
++	}
+ 	m.ShowNotification("Killed session: "+oldLabel, "success", m.Settings.NotificationDuration)
+ 	return nil
+ }
+diff --git i/internal/app/render_dock.go w/internal/app/render_dock.go
+index 9429e6b005622c50f73e0d9ac601070e2e214b00..ee139c8ad32b935b66a41cc5ed0ae16fdf24b618 100644
+--- i/internal/app/render_dock.go
++++ w/internal/app/render_dock.go
+@@ -99,6 +99,39 @@ func tabColor(s string, pal *overlay.Palette) color.Color {
+ 	return theme.ConfigColorOn(s, pal)
+ }
+ 
++type dockActiveTabPaint struct {
++	fg      color.Color
++	bg      color.Color
++	bold    bool
++	reverse bool
++}
++
++func activeDockTabPaint(t *config.DockTabsConfig, pal overlay.Palette) dockActiveTabPaint {
++	paint := dockActiveTabPaint{
++		fg:   tabColor(t.ActiveFg, &pal),
++		bg:   tabColor(t.ActiveBg, &pal),
++		bold: t.ActiveBold,
++	}
++	onAccent := paint.bg == nil
++	if onAccent {
++		paint.bold = true
++		if paint.fg == nil && pal.Depth == overlay.Depth16 {
++			paint.fg = pal.Accent
++			paint.reverse = true
++			return paint
++		}
++		paint.bg = pal.Accent
++	}
++	if paint.fg == nil {
++		base := pal.Fg
++		if onAccent {
++			base = pal.PillFg
++		}
++		paint.fg = theme.Readable(base, paint.bg)
++	}
++	return paint
++}
++
+ // flatWorkspaceTab renders one [dock.tabs] style = "flat" tab: the label with a
+ // column of padding either side. A colour the table does not set comes from the
+ // palette the way the pills' do, so the strip still says where you are with no
+@@ -108,6 +141,15 @@ func tabColor(s string, pal *overlay.Palette) color.Color {
+ // does there. A picked-up tab comes up onto Surface, the same lift a dragged
+ // pill gets.
+ func flatWorkspaceTab(label string, active, dragged bool, t *config.DockTabsConfig, pal overlay.Palette, ink color.Color) string {
++	if active && !dragged {
++		paint := activeDockTabPaint(t, pal)
++		st := lipgloss.NewStyle().Bold(paint.bold).Foreground(paint.fg).Reverse(paint.reverse)
++		if paint.bg != nil {
++			st = st.Background(paint.bg)
++		}
++		return st.Render(" " + label + " ")
++	}
++
+ 	fg, bg, bold := tabColor(t.InactiveFg, &pal), tabColor(t.InactiveBg, &pal), t.InactiveBold
+ 	if ink != nil {
+ 		fg = ink
+@@ -115,34 +157,17 @@ func flatWorkspaceTab(label string, active, dragged bool, t *config.DockTabsConf
+ 	if active {
+ 		fg, bg, bold = tabColor(t.ActiveFg, &pal), tabColor(t.ActiveBg, &pal), t.ActiveBold
+ 	}
+-	st := lipgloss.NewStyle()
+-	onAccent := false
+-	switch {
+-	case dragged:
++	if dragged {
+ 		bg = pal.Surface
+-	case active && bg == nil:
+-		onAccent = true
+-		// The accent ground is what marks the current tab when nothing else
+-		// does, so it is bold with it.
+-		bold = true
+-		if fg == nil && theme.Depth() == overlay.Depth16 {
+-			return st.Bold(true).Foreground(pal.Accent).Reverse(true).Render(" " + label + " ")
+-		}
+-		bg = pal.Accent
+ 	}
+ 	if fg == nil {
+-		switch {
+-		case !active:
+-			fg = theme.Readable(pal.FgDim, groundOr(bg, pal.Canvas))
+-		case dragged:
++		if dragged || active {
+ 			fg = theme.Readable(pal.Accent, bg)
+-		case onAccent:
+-			fg = theme.Readable(pal.PillFg, bg)
+-		default:
+-			fg = theme.Readable(pal.Fg, bg)
++		} else {
++			fg = theme.Readable(pal.FgDim, groundOr(bg, pal.Canvas))
+ 		}
+ 	}
+-	st = st.Bold(bold).Foreground(fg)
++	st := lipgloss.NewStyle().Bold(bold).Foreground(fg)
+ 	if bg != nil {
+ 		st = st.Background(bg)
+ 	}
+diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
+index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..078edb421294de81fd45514f68376ec6657d9e1b 100644
+--- i/internal/app/render_sidebar.go
++++ w/internal/app/render_sidebar.go
+@@ -276,6 +276,10 @@ const (
+ 	// the enum sizes every per-section array in this package, and one more
+ 	// value fits all of them as they are. See sidebar_custom.go.
+ 	sidebarSectionCustom
++	// sidebarSectionOverview is the unified session tree with agent panes nested
++	// under their sessions. Config normalization makes it an alternative to the
++	// three flat navigation sections rather than a duplicate of them.
++	sidebarSectionOverview
+ 	sidebarSectionCount
+ )
+ 
+@@ -1534,7 +1538,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	// and hover has to resolve against the same arithmetic the draw uses.
+ 	shown, peeking := m.sidebarShownSession(sessions)
+ 	terminals := m.sidebarTerminals(sessions, shown)
+-	agents, agentsTotal := m.sidebarFilterAgents(m.sidebarAgents(sessions))
++	listedAgents := m.sidebarAgents(sessions)
++	agents, agentsTotal := m.sidebarFilterAgents(listedAgents)
+ 	m.sidebarSortAgents(agents)
+ 	// Rows long at rest fold into one line at the end. The compact rule below
+ 	// reads every agent pane, folded or not, since a folded pane is still one
+@@ -1553,6 +1558,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	// listing was read by a command, off this goroutine, and this only draws
+ 	// whatever the last reply left behind. Nothing here stats, opens or spawns.
+ 	files := m.sidebarFileRows()
++	// The overview is built from the same grouped session rows and cached pane
++	// data as the flat sections. Config normalization makes it their alternative,
++	// so building it here adds no second source of session or agent truth.
++	overview := m.sidebarOverviewRows(sessions, listedAgents)
+ 
+ 	// A peeked session with no panes says so, or the section would read as "the
+ 	// attached session has no panes". Decided before the compact rule below
+@@ -1568,6 +1577,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	nS := len(sessionRows)
+ 	nT := len(terminals)
+ 	nA := len(agents)
++	nO := len(overview)
+ 	if emptyFilter {
+ 		nA = 1
+ 	}
+@@ -1651,6 +1661,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		sidebarSectionFiles:     filesRows,
+ 		sidebarSectionGit:       len(gitRows),
+ 		sidebarSectionCustom:    nC,
++		sidebarSectionOverview:  nO,
+ 	}
+ 	// The last section in the configured layout is the one pinned to the rail's
+ 	// bottom: the slack rides above it, and it wears a blank line of its own so
+@@ -1673,7 +1684,15 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	agentRowH := 1
+ 	// Row heights per section, which is what turns a section's line budget into
+ 	// the rows it can show and a st.lit() line back into the row under it.
+-	rowH := [sidebarSectionCount]int{1, 1, agentRowH, 1, 1, 1}
++	rowH := [sidebarSectionCount]int{
++		sidebarSectionSessions:  1,
++		sidebarSectionTerminals: 1,
++		sidebarSectionAgents:    agentRowH,
++		sidebarSectionFiles:     1,
++		sidebarSectionGit:       1,
++		sidebarSectionCustom:    1,
++		sidebarSectionOverview:  1,
++	}
+ 
+ 	// The chrome each drawn section costs before a row of it appears: its own
+ 	// header, plus the floating blank in front of the pinned block.
+@@ -1869,9 +1888,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	// anchor above and before the cursor's auto-scroll below, so the three
+ 	// mechanisms agree on what is on screen and the cursor keeps the last word.
+ 	// See sidebar_reveal.go.
+-	m.sidebarRevealFocus(sessions, terminals, capRows[sidebarSectionTerminals], capRows[sidebarSectionSessions])
++	m.sidebarRevealFocus(sessions, terminals, overview,
++		capRows[sidebarSectionTerminals], capRows[sidebarSectionSessions], capRows[sidebarSectionOverview])
+ 	if m.sidebarRailFocused() && haveCursorTarget {
+-		if sec, idx, ok := m.sidebarCursorIndex(cursorTarget, sessionRows, terminals, agents, files); ok {
++		if sec, idx, ok := m.sidebarCursorIndex(cursorTarget, sessionRows, terminals, agents, files, overview); ok {
+ 			if rows := capRows[sec]; rows > 0 {
+ 				if idx < *scroll[sec] {
+ 					*scroll[sec] = idx
+@@ -1976,7 +1996,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		footerLines, footerZones = m.sidebarFooter(variant, cw, pal, footerHoverLine, footerHoverX, footerCursor)
+ 	}
+ 
+-	nav := make([]sidebarNavRow, 0, nS+nT+nA+len(files)+2)
++	nav := make([]sidebarNavRow, 0, nS+nT+nA+nO+len(files)+2)
+ 	// recordHit publishes a drawn row's rectangle and its nav row together, in
+ 	// drawn order, so the mouse and the keyboard address one target set. Hits
+ 	// only ever come from the renderer as it draws; nothing recomputes them.
+@@ -2083,13 +2103,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 			}
+ 			if isRemoteNode(s) {
+ 				m.drawHostRow(s, cw, variant, pal, m.railRowState(idx == hoverRow[sidebarSectionSessions], false), canCreate, showCounts,
+-					isCursor, recordHit, recordToken, headerHoverX[sidebarSectionSessions], compose, &lines)
++					sidebarSessionPresentationSection, isCursor, recordHit, recordToken, headerHoverX[sidebarSectionSessions], compose, &lines)
+ 				continue
+ 			}
+ 			dragged := m.SidebarDrag.Dragging && s.ID == m.SidebarDrag.SessionID
+ 			st := m.railRowState(idx == hoverRow[sidebarSectionSessions], isCursor(sidebarRowSession, s.ID, ""))
+ 			recordHit(sidebarRowSession, s.ID, "", -1, 1)
+-			lines = append(lines, compose(st.mark(pal, m.sidebarSessionRow(s, sessionIdx[s.ID], variant, cw, pal, st, dragged, showCounts))))
++			lines = append(lines, compose(st.mark(pal, m.sidebarSessionRow(s, sessionIdx[s.ID], variant, cw, pal, st, dragged, showCounts, sidebarSessionPresentationSection))))
+ 		}
+ 		if h := hidden[sidebarSectionSessions]; h > 0 {
+ 			lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
+@@ -2326,6 +2346,73 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		}
+ 	}
+ 
++	drawOverview := func() {
++		add := ""
++		const label = "overview"
++		if canCreate && len(m.SidebarHostIDs) == 0 {
++			if tok, span, ok := sidebarHeaderAdd(sidebarRowNewSession, cw, sidebarHeaderLabelW(label, &m.Settings),
++				pal, headerHoverX[sidebarSectionOverview], isCursor(sidebarRowNewSession, "", ""), &m.Settings, nil); ok {
++				add = tok
++				recordToken(span, "")
++			}
++		}
++		lines = append(lines, compose(sidebarHeaderRowRuled(label, add, cw, pal, &m.Settings)))
++
++		showCounts := false
++		for _, row := range overview {
++			if row.Kind == sidebarOverviewNode && row.Node.Kind == sessiontree.KindSession && row.Node.WindowCount > 1 {
++				showCounts = true
++				break
++			}
++		}
++		sessionIdx := localSessionIndexes(sessions)
++		for i := range count[sidebarSectionOverview] {
++			idx := start[sidebarSectionOverview] + i
++			row := overview[idx]
++			switch row.Kind {
++			case sidebarOverviewGap:
++				lines = append(lines, compose(strings.Repeat(" ", cw)))
++			case sidebarOverviewAgent:
++				e := row.Agent
++				st := m.railRowState(idx == hoverRow[sidebarSectionOverview], isCursor(sidebarRowAgent, e.SessionID, e.WindowID))
++				recordHit(sidebarRowAgent, e.SessionID, e.WindowID, e.WindowIndex, 1)
++				lines = append(lines, compose(st.mark(pal, m.sidebarOverviewAgentRow(e, row.Indent, cw, pal, st))))
++			case sidebarOverviewNode:
++				s := row.Node
++				if s.Kind == sessiontree.KindSpace {
++					lines = append(lines, compose(m.sidebarSpaceRow(s, cw, pal)))
++					continue
++				}
++				if s.Kind == sessiontree.KindRepo {
++					st := m.railRowState(idx == hoverRow[sidebarSectionOverview], isCursor(sidebarRowRepo, s.ID, s.Space))
++					recordHit(sidebarRowRepo, s.ID, s.Space, -1, 1)
++					lines = append(lines, compose(st.mark(pal, m.sidebarRepoRow(s, cw, pal, st))))
++					continue
++				}
++				if isRemoteNode(s) {
++					m.drawHostRow(s, cw, variant, pal, m.railRowState(idx == hoverRow[sidebarSectionOverview], false), canCreate, showCounts,
++						sidebarSessionPresentationOverview, isCursor, recordHit, recordToken, headerHoverX[sidebarSectionOverview], compose, &lines)
++					continue
++				}
++				dragged := m.SidebarDrag.Dragging && s.ID == m.SidebarDrag.SessionID
++				st := m.railRowState(idx == hoverRow[sidebarSectionOverview], isCursor(sidebarRowSession, s.ID, ""))
++				recordHit(sidebarRowSession, s.ID, "", -1, 1)
++				lines = append(lines, compose(st.mark(pal, m.sidebarSessionRow(s, sessionIdx[s.ID], variant, cw, pal, st, dragged, showCounts, sidebarSessionPresentationOverview))))
++			}
++		}
++		if hidden[sidebarSectionOverview] > 0 {
++			h := 0
++			for _, row := range overview[start[sidebarSectionOverview]+count[sidebarSectionOverview]:] {
++				if row.Kind != sidebarOverviewGap {
++					h++
++				}
++			}
++			if h > 0 {
++				lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
++			}
++		}
++	}
++
+ 	draw := [sidebarSectionCount]func(){
+ 		sidebarSectionSessions:  drawSessions,
+ 		sidebarSectionTerminals: drawTerminals,
+@@ -2333,6 +2420,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		sidebarSectionFiles:     drawFiles,
+ 		sidebarSectionGit:       drawGit,
+ 		sidebarSectionCustom:    drawCustom,
++		sidebarSectionOverview:  drawOverview,
+ 	}
+ 	drawnAt := 0
+ 	for i, p := range plans {
+@@ -2577,7 +2665,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
+ // others from the cached listing, so agents elsewhere surface here marked
+ // Foreign.
+ func (m *OS) sidebarAgents(sessions []sessiontree.Node) []sidebarAgentEntry {
+-	if !sidebarLayoutHas(sidebarSectionAgents, &m.Settings) {
++	if !sidebarLayoutHas(sidebarSectionAgents, &m.Settings) && !sidebarLayoutHas(sidebarSectionOverview, &m.Settings) {
+ 		return nil
+ 	}
+ 	return m.agentEntries(sessions)
+@@ -2638,7 +2726,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+ // auto-scroll knows which offset to move and by how much.
+ func (m *OS) sidebarCursorIndex(target sidebarNavRow, sessions []sessiontree.Node,
+ 	terminals []sidebarTerminalEntry, agents []sidebarAgentEntry, files []fileRowSpec,
++	overview []sidebarOverviewRow,
+ ) (sidebarSection, int, bool) {
++	if m.sidebarSectionOfKind(target.Kind) == sidebarSectionOverview {
++		if i, ok := m.sidebarOverviewCursorIndex(target, overview); ok {
++			return sidebarSectionOverview, i, true
++		}
++	}
+ 	switch target.Kind {
+ 	case sidebarRowSession:
+ 		for i, s := range sessions {
+@@ -2838,6 +2932,14 @@ func (m *OS) windowIndexByID(id string) int {
+ 	return slices.IndexFunc(m.Windows, func(w *terminal.Window) bool { return w != nil && w.ID == id })
+ }
+ 
++type sidebarSessionPresentation uint8
++
++const (
++	sidebarSessionPresentationInvalid sidebarSessionPresentation = iota
++	sidebarSessionPresentationSection
++	sidebarSessionPresentationOverview
++)
++
+ // sidebarSessionRow renders one session row.
+ //
+ //	▎● name              3
+@@ -2850,12 +2952,13 @@ func (m *OS) windowIndexByID(id string) int {
+ // accent gutter mark and a full-strength name; pointer or keyboard cursor a
+ // Surface band; a state wanting a human a severity gutter mark, a coloured
+ // glyph and the rail's one bold. No standing fill, so the only band on a
+-// resting rail is the one under the pointer.
++// resting session row is the one under the pointer or keyboard cursor.
+ //
+ // A drag in progress keeps the band on the dragged row while it rides the
+ // pointer.
+-func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw int, pal overlay.Palette, st sidebarRowState, dragged, showCounts bool) string {
++func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw int, pal overlay.Palette, st sidebarRowState, dragged, showCounts bool, presentation sidebarSessionPresentation) string {
+ 	rowBg := sidebarRowBg(st, pal)
++	rowFg, chromeFg := pal.Fg, pal.FgMute
+ 	if dragged {
+ 		// A drag keeps the strongest band on the row riding the pointer.
+ 		rowBg = pal.Surface
+@@ -2871,7 +2974,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	stated := agentStateIndicator(node.AgentState) != ""
+ 
+ 	glyph := sidebarQuietDotTinted(dotTint(tint, pal, stated), rowBg, pal, &m.Settings)
+-	if stated {
++	if presentation == sidebarSessionPresentationOverview {
++		glyph = sidebarStyle(rowBg, nil).Render(" ")
++	} else if stated {
+ 		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
+ 	}
+ 
+@@ -2908,14 +3013,17 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	// when a row is lit, because the band under it says that now, and a row
+ 	// that changes ground and ink at once reads as an error rather than as a
+ 	// selection.
+-	fg := pal.Fg
++	fg := rowFg
+ 	title := printableTitle(node.Title)
+ 	indent := m.sidebarNodeIndent(node)
+-	// A worktree session is named by its branch under its repository's row,
+-	// behind the mark that says whether the group goes on below it. The branch
+-	// is the whole label there, so nothing rides after it.
++	// A worktree session is named only by its branch under the repository row.
++	// The sessions section carries its configured tree mark; the overview uses
++	// an equal indented row for the primary and linked checkouts.
+ 	grouped := false
+-	if label, ok := m.sidebarWorktreeLabel(node); ok {
++	if node.Worktree != nil && presentation == sidebarSessionPresentationOverview {
++		title, grouped = sidebarWorktreeName(node)
++		indent += sidebarGroupIndent
++	} else if label, ok := m.sidebarWorktreeLabel(node); ok {
+ 		title, grouped = label, true
+ 	}
+ 	// The branch rides after the name in muted ink, and only when the two fit
+@@ -2945,12 +3053,12 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	// name a key that opens something else.
+ 	mark, markW := "", 0
+ 	if m.Settings.SidebarShowNumbers && sessionIdx > 0 && sessionIdx <= 9 {
+-		mark = sidebarStyle(rowBg, pal.FgMute).Bold(node.IsCurrent).
++		mark = sidebarStyle(rowBg, chromeFg).Bold(node.IsCurrent).
+ 			Render(strconv.Itoa(sessionIdx) + " ")
+ 		markW = len(strconv.Itoa(sessionIdx)) + 1
+ 	}
+ 	nameMarked, capsW := railNameMarked(&m.Settings)
+-	nameMarked = nameMarked && node.IsCurrent
++	nameMarked = nameMarked && node.IsCurrent && presentation != sidebarSessionPresentationOverview
+ 	if !nameMarked {
+ 		capsW = 0
+ 	}
+@@ -2958,9 +3066,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	s.keep = keep
+ 	branch := ""
+ 	if keep[0] {
+-		branch = sidebarStyle(rowBg, nil).Render(" ") + sidebarStyle(rowBg, pal.FgMute).Render(b)
++		branch = sidebarStyle(rowBg, nil).Render(" ") + sidebarStyle(rowBg, chromeFg).Render(b)
+ 	}
+-	right := sidebarJoinFigures(figures[:], keep[1:], sidebarStyle(rowBg, pal.FgMute))
++	right := sidebarJoinFigures(figures[:], keep[1:], sidebarStyle(rowBg, chromeFg))
+ 	shown := m.sidebarMarquee("s:"+node.ID, title, max(avail, 1), st.Cursor)
+ 	name := mark + sidebarStyle(rowBg, fg).Bold(sidebarAttention(node.AgentState)).Render(shown) + branch
+ 	if nameMarked {
+@@ -2968,10 +3076,15 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	}
+ 
+ 	gutter := sidebarGutterTinted(node.IsCurrent, node.AgentState, tint, rowBg, pal, &m.Settings)
+-	if nameMarked {
++	if presentation == sidebarSessionPresentationOverview {
++		gutter = sidebarStyle(rowBg, nil).Render(" ")
++		if node.IsCurrent {
++			gutter = sidebarStyle(rowBg, railFocusTint(tint, pal)).Render(m.Settings.GetRailFocusMark())
++		}
++	} else if nameMarked {
+ 		gutter = sidebarGutterNameMarked(node.AgentState, rowBg, pal, &m.Settings)
+ 	}
+-	if tint != nil && stated && !node.IsCurrent && !sidebarAttention(node.AgentState) {
++	if presentation != sidebarSessionPresentationOverview && tint != nil && stated && !node.IsCurrent && !sidebarAttention(node.AgentState) {
+ 		gutter = sidebarStyle(rowBg, tint).Render(accentMark())
+ 	}
+ 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+diff --git i/internal/app/session_close.go w/internal/app/session_close.go
+index 5a389c8144d01219aa046bda5a9fa0ed99e1dd40..cad5b3eb9c6b27ab85ac55ec035bebdbc7395ada 100644
+--- i/internal/app/session_close.go
++++ w/internal/app/session_close.go
+@@ -299,7 +299,7 @@ func (m *OS) SessionCloseActivate(idx int) tea.Cmd {
+ 		// The pane is found again by its ID: it may have moved in
+ 		// m.Windows, or closed on its own, while the dialog was open.
+ 		if i := m.windowIndexByID(win); i >= 0 {
+-			m.CloseWindowByHand(i)
++			return m.CloseWindowByHand(i)
+ 		}
+ 		return nil
+ 	}
+diff --git i/internal/app/session_kill_test.go w/internal/app/session_kill_test.go
+index 8818bdb52d40c7dda61d6079b8d02bdee4cf8d2d..f5aef1fb6a1a1fbd424d91264c6b05811b43d630 100644
+--- i/internal/app/session_kill_test.go
++++ w/internal/app/session_kill_test.go
+@@ -120,3 +120,41 @@ func TestTheNextSessionIsAnIdentity(t *testing.T) {
+ 		}
+ 	}
+ }
++
++func TestTheNextSessionIsTheMostRecentlyActiveOne(t *testing.T) {
++	m := sessionCloseOS(t)
++	m.DaemonClient.UpdateSessionCache([]session.SessionInfo{
++		{Name: "session-1", LastActive: 30, Created: 1},
++		{Name: "older", LastActive: 10, Created: 2},
++		{Name: "recent", LastActive: 20, Created: 3},
++	})
++	if got := m.NextSessionName(); got != "recent" {
++		t.Errorf("next session = %q, want the most recently active remaining session", got)
++	}
++}
++
++func TestClosingTheLastPaneKillsItsSessionAndReturnsToAnother(t *testing.T) {
++	r := newRig(t, 1)
++	other := r.otherSession()
++	if _, err := r.client.RefreshSessionList(); err != nil {
++		t.Fatalf("refresh sessions: %v", err)
++	}
++
++	if cmd := r.m.CloseWindowByHand(0); cmd != nil {
++		t.Fatal("closing the last pane quit even though another session exists")
++	}
++	if r.m.SessionName != other {
++		t.Fatalf("landed on session %q, want %q", r.m.SessionName, other)
++	}
++	if len(r.m.Windows) == 0 {
++		t.Fatal("the client rendered an empty session instead of the remaining session")
++	}
++	if r.m.lastSession.name != "" {
++		t.Fatalf("last-session points back to the killed session: %+v", r.m.lastSession)
++	}
++	for _, info := range r.client.CachedSessions() {
++		if info.Name == r.session {
++			t.Fatalf("the session whose last pane closed still exists: %+v", info)
++		}
++	}
++}
+diff --git i/internal/app/sidebar_cache.go w/internal/app/sidebar_cache.go
+index e72a9fd527af8949740f755acdcdf52d7c09f259..f2965234a0c5b271f93b47d29dbc9f3610eed105 100644
+--- i/internal/app/sidebar_cache.go
++++ w/internal/app/sidebar_cache.go
+@@ -162,6 +162,7 @@ func (m *OS) sidebarSignature() uint64 {
+ 	mixI(m.SidebarScrollS)
+ 	mixI(m.SidebarScrollT)
+ 	mixI(m.SidebarScrollA)
++	mixI(m.SidebarScrollO)
+ 	// The agents offset is derived from the anchor on any frame whose sort has
+ 	// moved, so the anchor picks the rows that are drawn just as directly as the
+ 	// offset does, and a frame drawn under one anchor cannot be served from an
+diff --git i/internal/app/sidebar_editor.go w/internal/app/sidebar_editor.go
+index 94a6e733265a7382f030c2006e860b55b1cf52fc..8e9b28054d91ddd4ec441bbebfe6ac5af1b13262 100644
+--- i/internal/app/sidebar_editor.go
++++ w/internal/app/sidebar_editor.go
+@@ -239,6 +239,15 @@ func (m *OS) SectionEditorToggle() tea.Cmd {
+ 		}
+ 		entries = slices.Delete(entries, row.Index, row.Index+1)
+ 	case railRowAvailable:
++		if row.Name == config.SidebarSectionOverview {
++			entries = slices.DeleteFunc(entries, func(entry config.SidebarSectionShare) bool {
++				return entry.Name == "sessions" || entry.Name == "terminals" || entry.Name == "agents"
++			})
++		} else if row.Name == "sessions" || row.Name == "terminals" || row.Name == "agents" {
++			entries = slices.DeleteFunc(entries, func(entry config.SidebarSectionShare) bool {
++				return entry.Name == config.SidebarSectionOverview
++			})
++		}
+ 		entries = append(entries, config.SidebarSectionShare{Name: row.Name})
+ 	default:
+ 		return nil
+@@ -339,7 +348,8 @@ func (m *OS) selectSectionRow(name string, added bool) {
+ // makes the next frame the new one. MarkAllDirty is here for the panes: a rail
+ // that changed width or a section that appeared moves the ground under them.
+ func (m *OS) commitSectionLayout(entries []config.SidebarSectionShare) tea.Cmd {
+-	return m.commitSectionString(config.SidebarSectionsString(entries))
++	layout := config.SidebarSectionsString(entries)
++	return m.commitSectionString(config.SidebarSectionsString(config.ParseSidebarSections(layout)))
+ }
+ 
+ // commitSectionString writes one layout string, applies it and hands back the
+diff --git i/internal/app/sidebar_editor_test.go w/internal/app/sidebar_editor_test.go
+index a34b66d1333137c00b7236ba15a4f59e7c362796..0428fc043939bf85d3c6f8be6cf27f70c416e98b 100644
+--- i/internal/app/sidebar_editor_test.go
++++ w/internal/app/sidebar_editor_test.go
+@@ -45,6 +45,21 @@ func selectRow(t *testing.T, m *OS, name string, kind railRowKind) {
+ // Negative control, confirmed red: drop the sectionCount guard from
+ // SectionEditorToggle. The last section comes off and the rail comes back with
+ // all four.
++func TestSectionEditorSwitchesBetweenOverviewAndFlatNavigation(t *testing.T) {
++	m := editorOS(t)
++	selectRow(t, m, config.SidebarSectionOverview, railRowAvailable)
++	m.SectionEditorToggle()
++	if got := m.sectionLayout(); got != "files:25,overview" {
++		t.Fatalf("adding overview produced %q", got)
++	}
++
++	selectRow(t, m, "sessions", railRowAvailable)
++	m.SectionEditorToggle()
++	if got := m.sectionLayout(); got != "files:25,sessions" {
++		t.Fatalf("adding sessions back produced %q", got)
++	}
++}
++
+ func TestSectionEditorKeepsOneSection(t *testing.T) {
+ 	m := editorOS(t)
+ 	for _, name := range []string{"files", "terminals", "agents"} {
+diff --git i/internal/app/sidebar_host_agents_test.go w/internal/app/sidebar_host_agents_test.go
+index 8f9be0f5c5f9c8485909c08b2acffd3984ce60f1..aebf52abbcfd824c87df6dcbd0542d0179bc3f92 100644
+--- i/internal/app/sidebar_host_agents_test.go
++++ w/internal/app/sidebar_host_agents_test.go
+@@ -83,7 +83,7 @@ func TestAMachineThatDidNotAnswerDrawsNoGlyph(t *testing.T) {
+ 
+ 	node := remoteNode(t, m, "a-session")
+ 	pal := theme.UI()
+-	row := m.sidebarRemoteSessionRow(node, 40, sidebarVariantFull, pal, sidebarRowState{}, true)
++	row := m.sidebarRemoteSessionRow(node, 40, sidebarVariantFull, pal, sidebarRowState{}, true, sidebarSessionPresentationSection)
+ 
+ 	if strings.Contains(row, agentStateIndicator("needs_input")) {
+ 		t.Errorf("a machine that is not answering still draws an alarm: %q", row)
+diff --git i/internal/app/sidebar_hosts.go w/internal/app/sidebar_hosts.go
+index 5332bb69e43723b82aaf59fb4118c25b04335827..d6f6dc421163e31ef8ca6d112be5cc09584f6952 100644
+--- i/internal/app/sidebar_hosts.go
++++ w/internal/app/sidebar_hosts.go
+@@ -774,6 +774,7 @@ func (m *OS) setSidebarSessionOrder(host string, order []string) {
+ // the machine cannot be reached right now.
+ func (m *OS) drawHostRow(
+ 	node sessiontree.Node, cw, variant int, pal overlay.Palette, st sidebarRowState, canCreate, showCounts bool,
++	presentation sidebarSessionPresentation,
+ 	isCursor func(kind sidebarRowKind, sessionID, windowID string) bool,
+ 	recordHit func(kind sidebarRowKind, sessionID, windowID string, windowIndex, h int),
+ 	recordToken func(tk sidebarTokenSpan, sessionID string),
+@@ -844,7 +845,7 @@ func (m *OS) drawHostRow(
+ 	// up. See host_open.go.
+ 	st.Cursor = st.Cursor || isCursor(sidebarRowHostSession, node.Host, remoteSessionName(node))
+ 	recordHit(sidebarRowHostSession, node.Host, remoteSessionName(node), -1, 1)
+-	*lines = append(*lines, compose(st.mark(pal, m.sidebarRemoteSessionRow(node, cw, variant, pal, st, showCounts))))
++	*lines = append(*lines, compose(st.mark(pal, m.sidebarRemoteSessionRow(node, cw, variant, pal, st, showCounts, presentation))))
+ }
+ 
+ // createRemoteSession creates a session on another machine and attaches it in
+@@ -1124,7 +1125,7 @@ func (m *OS) sidebarHostRowLit(node sessiontree.Node, cw int, pal overlay.Palett
+ //
+ // The count takes the same gate a local session row's count takes: a rail too
+ // narrow for a name and a number keeps the name.
+-func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal overlay.Palette, st sidebarRowState, showCounts bool) string {
++func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal overlay.Palette, st sidebarRowState, showCounts bool, presentation sidebarSessionPresentation) string {
+ 	rowBg := sidebarRowBg(st, pal)
+ 	right, rightW := "", 0
+ 	if m.Settings.SidebarShowCounts && showCounts && node.WindowCount > 0 && variant == sidebarVariantFull {
+@@ -1159,7 +1160,9 @@ func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal
+ 	// last listing said, because its rows are a cached listing rather than
+ 	// sessions you can reach.
+ 	glyph := sidebarStyle(rowBg, pal.FgMute).Render(m.Settings.GetRailBullet())
+-	if m.hostIsUp(node.Host) && agentStateIndicator(node.AgentState) != "" {
++	if presentation == sidebarSessionPresentationOverview {
++		glyph = sidebarStyle(rowBg, nil).Render(" ")
++	} else if m.hostIsUp(node.Host) && agentStateIndicator(node.AgentState) != "" {
+ 		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
+ 	}
+ 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
+index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..df47c17d168f743c54fc3e324b347a1731e60326 100644
+--- i/internal/app/sidebar_keyboard.go
++++ w/internal/app/sidebar_keyboard.go
+@@ -87,7 +87,8 @@ func (m *OS) FocusOtherSidebar() {
+ func (m *OS) sidebarSetCursor(i int) {
+ 	m.SidebarCursor = i
+ 	row, ok := m.sidebarCursorRow()
+-	if !ok || row.Kind != sidebarRowSession || row.SessionID == m.sidebarCurrentSessionID() {
++	if !ok || row.Kind != sidebarRowSession || row.SessionID == m.sidebarCurrentSessionID() ||
++		m.sidebarSectionOfKind(row.Kind) == sidebarSectionOverview {
+ 		m.sidebarClearPeek()
+ 		return
+ 	}
+@@ -160,7 +161,7 @@ func (m *OS) sidebarStepSection(delta int) {
+ 	here := 0
+ 	if row, ok := m.sidebarCursorRow(); ok {
+ 		for i, p := range plans {
+-			if sidebarSectionOfKind(row.Kind) == p.Section {
++			if m.sidebarSectionOfKind(row.Kind) == p.Section {
+ 				here = i
+ 				break
+ 			}
+@@ -176,19 +177,24 @@ func (m *OS) sidebarStepSection(delta int) {
+ 
+ // sidebarSectionOfKind is the section a row kind belongs to, or the count for a
+ // control that belongs to none.
+-func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
++func (m *OS) sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
++	section := sidebarSectionCount
+ 	switch kind {
+-	case sidebarRowSession, sidebarRowHostSession, sidebarRowHostNew, sidebarRowHostSignIn, sidebarRowGlobalNew, sidebarRowHost, sidebarRowRepo:
+-		return sidebarSectionSessions
+-	case sidebarRowWindow:
+-		return sidebarSectionTerminals
++	case sidebarRowSession, sidebarRowHostSession, sidebarRowHostNew, sidebarRowHostSignIn, sidebarRowGlobalNew, sidebarRowHost, sidebarRowRepo, sidebarRowNewSession:
++		section = sidebarSectionSessions
++	case sidebarRowWindow, sidebarRowNewWindow:
++		section = sidebarSectionTerminals
+ 	case sidebarRowAgent, sidebarRowAgentFilter, sidebarRowAgentSort, sidebarRowAgentMail, sidebarRowAgentFold, sidebarRowSubagentToggle:
+-		return sidebarSectionAgents
++		section = sidebarSectionAgents
+ 	case sidebarRowFileUp, sidebarRowFileEntry, sidebarRowFileCd:
+-		return sidebarSectionFiles
+-	default:
+-		return sidebarSectionCount
++		section = sidebarSectionFiles
+ 	}
++	if sidebarLayoutHas(sidebarSectionOverview, &m.Settings) &&
++		(section == sidebarSectionSessions || section == sidebarSectionTerminals || section == sidebarSectionAgents) &&
++		!sidebarLayoutHas(section, &m.Settings) {
++		return sidebarSectionOverview
++	}
++	return section
+ }
+ 
+ // sidebarFirstRowOfSection is the index of the first nav row belonging to a
+@@ -197,7 +203,7 @@ func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
+ // cursor lands past the row a person is looking at.
+ func (m *OS) sidebarFirstRowOfSection(section sidebarSection) int {
+ 	for i, r := range m.SidebarNav {
+-		if sidebarSectionOfKind(r.Kind) == section {
++		if m.sidebarSectionOfKind(r.Kind) == section {
+ 			return i
+ 		}
+ 	}
+@@ -360,21 +366,30 @@ func (m *OS) sidebarSayMachinePinned() {
+ 		"info", m.Settings.NotificationDuration)
+ }
+ 
+-// SidebarCycleSection walks the cursor forward through the rail's three
+-// sections, wrapping at the end and skipping any that has no rows.
++// SidebarCycleSection walks the cursor forward through the configured rail
++// sections, wrapping at the end and skipping any that has no navigable rows.
+ func (m *OS) SidebarCycleSection() {
+-	order := [sidebarSectionCount]sidebarRowKind{sidebarRowSession, sidebarRowWindow, sidebarRowAgent}
+-	here := 0
++	plans := sidebarLayoutPlans(&m.Settings)
++	if len(plans) == 0 {
++		return
++	}
++	here := -1
+ 	if row, ok := m.sidebarCursorRow(); ok {
+-		for i, k := range order {
+-			if row.Kind == k {
++		section := m.sidebarSectionOfKind(row.Kind)
++		for i, plan := range plans {
++			if !plan.Spacer && plan.Section == section {
+ 				here = i
++				break
+ 			}
+ 		}
+ 	}
+-	for step := 1; step <= len(order); step++ {
+-		if j := m.sidebarFirstRowOfKind(order[(here+step)%len(order)]); j >= 0 {
+-			m.sidebarSetCursor(j)
++	for step := 1; step <= len(plans); step++ {
++		plan := plans[(here+step+len(plans))%len(plans)]
++		if plan.Spacer {
++			continue
++		}
++		if i := m.sidebarFirstRowOfSection(plan.Section); i >= 0 {
++			m.sidebarSetCursor(i)
+ 			return
+ 		}
+ 	}
+diff --git i/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
+index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..558e04f907a7783b563f40131696525396b80055 100644
+--- i/internal/app/sidebar_layout.go
++++ w/internal/app/sidebar_layout.go
+@@ -73,18 +73,19 @@ type sidebarSectionPlan struct {
+ // The spacer is not in it: it is not a section, it may appear more than once,
+ // and sidebarLayoutFor turns it into a plan entry of its own.
+ var sidebarSectionByName = map[string]sidebarSection{
+-	"sessions":                  sidebarSectionSessions,
+-	"terminals":                 sidebarSectionTerminals,
+-	"agents":                    sidebarSectionAgents,
+-	"files":                     sidebarSectionFiles,
+-	"git":                       sidebarSectionGit,
+-	config.SidebarSectionCustom: sidebarSectionCustom,
++	"sessions":                    sidebarSectionSessions,
++	"terminals":                   sidebarSectionTerminals,
++	"agents":                      sidebarSectionAgents,
++	"files":                       sidebarSectionFiles,
++	"git":                         sidebarSectionGit,
++	config.SidebarSectionCustom:   sidebarSectionCustom,
++	config.SidebarSectionOverview: sidebarSectionOverview,
+ }
+ 
+ // sidebarSectionFloors is the least each section is shrunk to, in rows, before
+-// the ladder starts taking whole lines off the end of the rail. Terminals keeps
+-// three because it is the list the user works in; the rest keep two, which is
+-// enough for a row and the "+N" that owns up to the ones below it.
++// the ladder starts taking whole lines off the end of the rail. Terminals and
++// overview keep three because they are the lists the user works in; the rest
++// keep two, enough for a row and the "+N" that owns up to the ones below it.
+ var sidebarSectionFloors = [sidebarSectionCount]int{
+ 	sidebarSectionSessions:  2,
+ 	sidebarSectionTerminals: 3,
+@@ -95,7 +96,8 @@ var sidebarSectionFloors = [sidebarSectionCount]int{
+ 	sidebarSectionGit: 2,
+ 	// Two, so a section the user put on the rail is never shrunk to only its
+ 	// title while another section grows.
+-	sidebarSectionCustom: 2,
++	sidebarSectionCustom:   2,
++	sidebarSectionOverview: 3,
+ }
+ 
+ // The parsed layout, cached against the string it came from. The rail parses it
+@@ -413,5 +415,6 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
+ 		sidebarSectionFiles:     &m.SidebarScrollF,
+ 		sidebarSectionGit:       &m.SidebarScrollG,
+ 		sidebarSectionCustom:    &m.SidebarScrollC,
++		sidebarSectionOverview:  &m.SidebarScrollO,
+ 	}
+ }
+diff --git i/internal/app/sidebar_mouse.go w/internal/app/sidebar_mouse.go
+index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..21fc3f197500a9a32b7e71458108f250001016a1 100644
+--- i/internal/app/sidebar_mouse.go
++++ w/internal/app/sidebar_mouse.go
+@@ -127,7 +127,7 @@ func (m *OS) applySidebarFlag(on bool) bool {
+ 		return false
+ 	}
+ 	m.Settings.SidebarEnabled = on
+-	m.SidebarScrollS, m.SidebarScrollT, m.SidebarScrollA, m.SidebarScrollF = 0, 0, 0, 0
++	m.SidebarScrollS, m.SidebarScrollT, m.SidebarScrollA, m.SidebarScrollF, m.SidebarScrollO = 0, 0, 0, 0, 0
+ 	m.sidebarClearPeek()
+ 	m.tooltipClear()
+ 	// The listing the rail labels sessions from is polled slowly, or not at
+diff --git i/internal/app/sidebar_overview.go w/internal/app/sidebar_overview.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..85b452afb5c958763af66ad732a3d037335fdd09
+--- /dev/null
++++ w/internal/app/sidebar_overview.go
+@@ -0,0 +1,249 @@
++package app
++
++import (
++	"strconv"
++	"time"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/overlay"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++)
++
++type sidebarOverviewRowKind uint8
++
++const (
++	sidebarOverviewNode sidebarOverviewRowKind = iota
++	sidebarOverviewAgent
++	sidebarOverviewGap
++)
++
++type sidebarOverviewRow struct {
++	Kind   sidebarOverviewRowKind
++	Node   sessiontree.Node
++	Agent  sidebarAgentEntry
++	Indent int
++}
++
++func (r sidebarOverviewRow) navRow() (sidebarNavRow, bool) {
++	switch r.Kind {
++	case sidebarOverviewAgent:
++		return sidebarNavRow{Kind: sidebarRowAgent, SessionID: r.Agent.SessionID, WindowID: r.Agent.WindowID, WindowIndex: r.Agent.WindowIndex}, true
++	case sidebarOverviewNode:
++		switch r.Node.Kind {
++		case sessiontree.KindSession:
++			if isRemoteNode(r.Node) {
++				return sidebarNavRow{Kind: sidebarRowHostSession, SessionID: r.Node.Host, WindowID: remoteSessionName(r.Node), WindowIndex: -1}, true
++			}
++			return sidebarNavRow{Kind: sidebarRowSession, SessionID: r.Node.ID, WindowIndex: -1}, true
++		case sessiontree.KindRepo:
++			return sidebarNavRow{Kind: sidebarRowRepo, SessionID: r.Node.ID, WindowID: r.Node.Space, WindowIndex: -1}, true
++		case sessiontree.KindHost:
++			return sidebarNavRow{Kind: sidebarRowHost, SessionID: r.Node.Host, WindowIndex: -1}, true
++		}
++	}
++	return sidebarNavRow{}, false
++}
++
++func (r sidebarOverviewRow) matches(target sidebarNavRow) bool {
++	row, ok := r.navRow()
++	return ok && sidebarNavRowsEqual(row, target)
++}
++
++type sidebarOverviewRepoKey struct {
++	repo  string
++	space string
++}
++
++// sidebarOverviewSessionRows gives every local checkout the same repository →
++// branch presentation. Linked worktrees already carry their repository; a
++// primary or standalone checkout gets a copied presentation-only WorktreeRef
++// from its cached branch and label. Nothing written back to the session tree can
++// therefore make a primary checkout removable as a worktree.
++func (m *OS) sidebarOverviewSessionRows(sessions []sessiontree.Node) []sessiontree.Node {
++	local := localSessionNodes(sessions)
++	linkedRepos := make(map[sidebarOverviewRepoKey]struct{})
++	for _, node := range local {
++		if node.Kind == sessiontree.KindSession && node.Worktree != nil {
++			linkedRepos[sidebarOverviewRepoKey{repo: node.Worktree.Repo, space: node.Space}] = struct{}{}
++		}
++	}
++
++	presented := make([]sessiontree.Node, len(local))
++	activeRepos := make(map[sidebarOverviewRepoKey]bool)
++	for i, node := range local {
++		if node.Kind == sessiontree.KindSession && node.Host == "" && !node.Global && node.Worktree == nil && node.Branch != "" {
++			repo := node.Title
++			if repo == "" {
++				repo = node.ID
++			}
++			if _, ok := linkedRepos[sidebarOverviewRepoKey{repo: node.ID, space: node.Space}]; ok {
++				repo = node.ID
++			}
++			node.Worktree = &sessiontree.WorktreeRef{Repo: repo, Branch: node.Branch}
++		}
++		if node.Kind == sessiontree.KindSession && node.Worktree != nil && node.IsCurrent {
++			activeRepos[sidebarOverviewRepoKey{repo: node.Worktree.Repo, space: node.Space}] = true
++		}
++		presented[i] = node
++	}
++
++	grouped := sessiontree.GroupBySpace(presented, sessiontree.GroupByRepo)
++	visible := make([]sessiontree.Node, 0, len(grouped))
++	for _, node := range grouped {
++		if node.Kind == sessiontree.KindRepo {
++			node.IsCurrent = activeRepos[sidebarOverviewRepoKey{repo: node.ID, space: node.Space}]
++		}
++		if node.Kind == sessiontree.KindSession && node.Worktree != nil && m.SidebarRepoCollapsed(node.Worktree.Repo) && !node.IsCurrent {
++			continue
++		}
++		visible = append(visible, node)
++	}
++	return m.sidebarMachineRows(visible, sessions[len(local):])
++}
++
++// sidebarOverviewRows projects the existing session hierarchy into one list.
++// Host, space, repository and session rows keep the sessions section's order
++// and folding. Agent panes are then nested under their local session.
++func (m *OS) sidebarOverviewRows(sessions []sessiontree.Node, agents []sidebarAgentEntry) []sidebarOverviewRow {
++	if !sidebarLayoutHas(sidebarSectionOverview, &m.Settings) {
++		return nil
++	}
++	sessionRows := m.sidebarOverviewSessionRows(sessions)
++	agents = append([]sidebarAgentEntry(nil), agents...)
++	m.sidebarSortAgents(agents)
++	bySession := make(map[string][]sidebarAgentEntry)
++	for _, agent := range agents {
++		if agent.Host != "" {
++			continue
++		}
++		bySession[agent.SessionID] = append(bySession[agent.SessionID], agent)
++	}
++	visible := make(map[string]bool, len(sessionRows))
++	var current sessiontree.Node
++	for _, node := range sessionRows {
++		if node.Kind == sessiontree.KindSession && node.Host == "" {
++			visible[node.ID] = true
++		}
++	}
++	for _, session := range sessions {
++		if session.Host == "" && session.IsCurrent {
++			current = session
++			break
++		}
++	}
++
++	rows := make([]sidebarOverviewRow, 0, len(sessionRows)+len(agents)+2)
++	appendChildren := func(node sessiontree.Node) {
++		children := bySession[node.ID]
++		indent := m.sidebarNodeIndent(node) + sidebarGroupIndent
++		if node.Worktree != nil {
++			indent += sidebarGroupIndent
++		}
++		for _, agent := range children {
++			rows = append(rows, sidebarOverviewRow{
++				Kind: sidebarOverviewAgent, Agent: agent, Indent: indent,
++			})
++		}
++	}
++	for _, node := range sessionRows {
++		startsGroup := node.Kind == sessiontree.KindSpace || node.Kind == sessiontree.KindRepo || node.Kind == sessiontree.KindHost
++		if startsGroup && len(rows) > 0 {
++			last := rows[len(rows)-1]
++			directlyUnderSpace := node.Kind == sessiontree.KindRepo && last.Kind == sidebarOverviewNode && last.Node.Kind == sessiontree.KindSpace
++			if last.Kind != sidebarOverviewGap && !directlyUnderSpace {
++				rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewGap})
++			}
++		}
++		rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewNode, Node: node})
++		if node.Kind == sessiontree.KindSession {
++			if node.Host == "" {
++				appendChildren(node)
++			}
++			rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewGap})
++			continue
++		}
++		if node.Kind == sessiontree.KindRepo && current.ID != "" && !visible[current.ID] &&
++			current.Worktree != nil && node.ID == current.Worktree.Repo && node.Space == current.Space {
++			current.GroupLast = true
++			rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewNode, Node: current})
++			appendChildren(current)
++			rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewGap})
++		}
++	}
++	for len(rows) > 0 && rows[len(rows)-1].Kind == sidebarOverviewGap {
++		rows = rows[:len(rows)-1]
++	}
++	return rows
++}
++
++func overviewAgentFigure(e sidebarAgentEntry, ascii bool, now time.Time) string {
++	switch {
++	case e.Queued > 0:
++		return strconv.Itoa(e.Queued) + "q"
++	case e.Subagents > 0:
++		if ascii {
++			return strconv.Itoa(e.Subagents) + "s"
++		}
++		return strconv.Itoa(e.Subagents) + "↳"
++	default:
++		return railAgentAge(e.State, e.StateAt, now)
++	}
++}
++
++func (m *OS) sidebarOverviewAgentRow(e sidebarAgentEntry, indent, cw int, pal overlay.Palette, st sidebarRowState) string {
++	rowBg := sidebarRowBg(st, pal)
++	fg := pal.FgDim
++	if e.State == "done" && !e.DoneSeen || st.lit() {
++		fg = pal.Fg
++	}
++	nameStyle := sidebarStyle(rowBg, fg).Bold(sidebarAttention(e.State))
++	figure := overviewAgentFigure(e, overlay.UseASCII(), time.Now())
++	right := ""
++	rightW := lipgloss.Width(figure)
++	nameRoom := sidebarNameAvailIn(cw, rightW, indent)
++	if nameRoom < 4 {
++		figure = ""
++		nameRoom = sidebarNameAvailIn(cw, 0, indent)
++	}
++	nameRoom = max(nameRoom, 1)
++	if figure != "" {
++		right = sidebarStyle(rowBg, pal.FgMute).Render(figure)
++	}
++	title := printableTitle(e.Title)
++	if title == "" {
++		title = "agent"
++	}
++	name := nameStyle.Render(m.sidebarMarquee("o:"+e.SessionID+"/"+e.WindowID, title, nameRoom, st.Cursor))
++	gutter := sidebarGutter(false, e.State, rowBg, pal, &m.Settings)
++	if e.Focused {
++		gutter = sidebarGutterTinted(true, e.State, m.sessionTint(e.SessionID, m.rowGround(rowBg)), rowBg, pal, &m.Settings)
++	}
++	return sidebarComposeGroupRow(indent, gutter,
++		sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), name, right, cw, rowBg)
++}
++
++func (m *OS) sidebarOverviewCursorIndex(target sidebarNavRow, rows []sidebarOverviewRow) (int, bool) {
++	for i, row := range rows {
++		if row.matches(target) {
++			return i, true
++		}
++	}
++	return 0, false
++}
++
++func sidebarOverviewFocusedIndex(rows []sidebarOverviewRow, sessionID, windowID string) int {
++	session := -1
++	for i, row := range rows {
++		switch row.Kind {
++		case sidebarOverviewNode:
++			if row.Node.Kind == sessiontree.KindSession && row.Node.ID == sessionID && row.Node.Host == "" {
++				session = i
++			}
++		case sidebarOverviewAgent:
++			if row.Agent.SessionID == sessionID && row.Agent.WindowID == windowID {
++				return i
++			}
++		}
++	}
++	return session
++}
+diff --git i/internal/app/sidebar_overview_test.go w/internal/app/sidebar_overview_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..eb35fee97a8d835a436b33a41b649e84522e4f9f
+--- /dev/null
++++ w/internal/app/sidebar_overview_test.go
+@@ -0,0 +1,409 @@
++package app
++
++import (
++	"strconv"
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/federation"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	"github.com/Gaurav-Gosain/tuios/internal/theme"
++	"github.com/charmbracelet/colorprofile"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func TestOverviewRailNestsAgentsWithoutTerminalContext(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++
++	lines := railPlain(t, m, tree)
++	joined := strings.Join(lines, "\n")
++	for _, want := range []string{"overview", "main", "refactor", "build", "api", "server", "docs"} {
++		if !strings.Contains(joined, want) {
++			t.Fatalf("overview rail does not contain %q:\n%s", want, joined)
++		}
++	}
++	if strings.Contains(joined, "nvim") {
++		t.Fatalf("overview rail exposed a non-agent terminal:\n%s", joined)
++	}
++	for _, pair := range [][2]string{{"main", "refactor"}, {"main", "build"}, {"api", "server"}} {
++		parent, child := lineOf(lines, pair[0]), lineOf(lines, pair[1])
++		if parent < 0 || child <= parent {
++			t.Fatalf("%q is not nested after %q:\n%s", pair[1], pair[0], joined)
++		}
++		parentCol := lipgloss.Width(lines[parent][:strings.Index(lines[parent], pair[0])])
++		childCol := lipgloss.Width(lines[child][:strings.Index(lines[child], pair[1])])
++		if childCol-parentCol != sidebarGroupIndent {
++			t.Fatalf("%q starts at column %d under %q at %d, want one %d-cell hierarchy step:\n%s",
++				pair[1], childCol, pair[0], parentCol, sidebarGroupIndent, joined)
++		}
++	}
++	if lineOf(lines, "server") >= lineOf(lines, "docs") {
++		t.Fatalf("api's agent escaped its session group:\n%s", joined)
++	}
++
++	seen := map[string]bool{}
++	for _, hit := range m.SidebarHits {
++		if hit.Kind == sidebarRowWindow {
++			t.Fatalf("overview published terminal hit %+v", hit)
++		}
++		if hit.Kind == sidebarRowAgent {
++			seen[hit.WindowID] = true
++		}
++	}
++	for _, id := range []string{"bbbbbbbb2222", "cccccccc3333", "dddddddd4444"} {
++		if !seen[id] {
++			t.Errorf("overview did not publish a pane hit for %s", id)
++		}
++	}
++}
++
++func TestOverviewSessionsUseFlatPresentation(t *testing.T) {
++	for _, rowStyle := range config.RailRowStyles {
++		t.Run(rowStyle, func(t *testing.T) {
++			m, tree := sectionsTestOS(t, 120, 40)
++			m.Settings.SidebarSections = "overview"
++			m.Settings.RailRowStyle = rowStyle
++
++			styled := railStyled(t, m, tree)
++			plain := make([]string, len(styled))
++			for i, line := range styled {
++				plain[i] = stripANSIForTrace(line)
++			}
++			main := plain[lineOf(plain, "main")]
++			api := plain[lineOf(plain, "api")]
++			if prefix := main[:strings.Index(main, "main")]; prefix != m.Settings.GetRailFocusMark()+"  " {
++				t.Fatalf("current session prefix = %q, want only the active vertical gutter", prefix)
++			}
++			if prefix := api[:strings.Index(api, "api")]; prefix != "   " {
++				t.Fatalf("inactive session prefix = %q, want a blank gutter and glyph cell", prefix)
++			}
++			joined := strings.Join(plain, "\n")
++			for _, connector := range []string{m.Settings.GetRailTreeBranch(), m.Settings.GetRailTreeLast()} {
++				if strings.Contains(joined, connector) {
++					t.Fatalf("overview retained tree connector %q:\n%s", connector, joined)
++				}
++			}
++
++			activeRow := styledRow(t, styled, "main")
++			width := lipgloss.Width(activeRow) - 1
++			canvas := uv.NewScreenBuffer(width, 1)
++			uv.NewStyledString(activeRow).Draw(canvas, canvas.Bounds())
++			nameCol := lipgloss.Width(main[:strings.Index(main, "main")])
++			for x := nameCol; x < nameCol+lipgloss.Width("main"); x++ {
++				cell := canvas.CellAt(x, 0)
++				if cell == nil || cell.Style.Attrs&uv.AttrBold != 0 {
++					t.Fatalf("active session name cell %d is bold; emphasis belongs to its repository heading: %+v", x, cell)
++				}
++			}
++		})
++	}
++}
++
++func assertOverviewRepositoryNameStyle(t *testing.T, m *OS, tree sessiontree.Tree, name string, active bool) {
++	t.Helper()
++	row := styledRow(t, railStyled(t, m, tree), name)
++	plain := stripANSIForTrace(row)
++	nameCol := lipgloss.Width(plain[:strings.Index(plain, name)])
++	width := lipgloss.Width(row) - 1
++	canvas := uv.NewScreenBuffer(width, 1)
++	uv.NewStyledString(row).Draw(canvas, canvas.Bounds())
++	pal := m.groundUI()
++	wantFg := pal.FgDim
++	if active {
++		wantFg = theme.Readable(pal.Accent, m.railGround())
++	}
++	for x := nameCol; x < nameCol+lipgloss.Width(name); x++ {
++		cell := canvas.CellAt(x, 0)
++		if cell == nil {
++			t.Fatalf("repository name cell %d is missing", x)
++		}
++		if got := cell.Style.Attrs&uv.AttrBold != 0; got != active {
++			t.Fatalf("repository %q bold = %t, want %t: %+v", name, got, active, cell.Style)
++		}
++		if !samePaneColor(cell.Style.Fg, wantFg) {
++			t.Fatalf("repository %q foreground = %v, want %v", name, cell.Style.Fg, wantFg)
++		}
++	}
++}
++
++func TestOverviewActiveRepositoryKeepsTextHighlightAtANSI16(t *testing.T) {
++	was := theme.ColorProfile()
++	theme.SetColorProfile(colorprofile.ANSI)
++	t.Cleanup(func() { theme.SetColorProfile(was) })
++
++	m, _ := worktreeRailOS(t, 120, 30)
++	m.Settings.SidebarSections = "overview"
++	tree := sessiontree.Build([]sessiontree.SessionInput{
++		{Name: "main", Branch: "main", Attached: true, IsCurrent: true},
++		{Name: "feature", Worktree: &sessiontree.WorktreeRef{Repo: "main", Branch: "feature"}},
++	})
++	assertOverviewRepositoryNameStyle(t, m, tree, "main", true)
++}
++
++func TestOverviewRemoteSessionOmitsLegacyGlyph(t *testing.T) {
++	m := hostAgentOS(t, federation.StatusUp, "needs_input")
++	node := remoteNode(t, m, "a-session")
++	row := stripANSIForTrace(m.sidebarRemoteSessionRow(node, 40, sidebarVariantFull,
++		theme.UI(), sidebarRowState{}, true, sidebarSessionPresentationOverview))
++	for _, glyph := range []string{m.Settings.GetRailBullet(), agentStateIndicator("needs_input")} {
++		if strings.Contains(row, glyph) {
++			t.Fatalf("overview remote session retained legacy glyph %q: %q", glyph, row)
++		}
++	}
++}
++
++func TestOverviewSeparatesSessions(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	lines := railPlain(t, m, tree)
++	lastMainChild := max(lineOf(lines, "refactor"), lineOf(lines, "build"))
++	api := lineOf(lines, "api")
++	if lastMainChild < 0 || api <= lastMainChild+1 || strings.Trim(lines[lastMainChild+1], " │") != "" {
++		t.Fatalf("sessions have no blank row between them:\n%s", strings.Join(lines, "\n"))
++	}
++}
++
++func TestOverviewSeparatesRepositoryGroups(t *testing.T) {
++	m, tree := worktreeRailOS(t, 120, 30)
++	m.Settings.SidebarSections = "overview"
++	lines := railPlain(t, m, tree)
++	for _, repo := range []string{"tuios", "docs"} {
++		line := lineOf(lines, repo)
++		if line <= 0 || strings.Trim(lines[line-1], " │") != "" {
++			t.Fatalf("repository %q has no blank row before it:\n%s", repo, strings.Join(lines, "\n"))
++		}
++	}
++}
++
++func TestOverviewGroupsPrimaryAndLinkedCheckoutsAsEqualBranchRows(t *testing.T) {
++	m, _ := worktreeRailOS(t, 120, 30)
++	m.SessionName = "dots"
++	m.Settings.SidebarSections = "overview"
++	tree := sessiontree.Build([]sessiontree.SessionInput{
++		{
++			Name: "dots", Branch: "main", Attached: true, IsCurrent: true, CurrentWorkspace: 1,
++			Windows: []sessiontree.WindowInput{{ID: "aaaaaaaa1111", Title: "nvim", Focused: true, Workspace: 1}},
++		},
++		{
++			Name: "mac", Worktree: &sessiontree.WorktreeRef{Repo: "dots", Branch: "mac"},
++			Windows: []sessiontree.WindowInput{{ID: "bbbbbbbb2222", Title: "pi", AgentState: "working", Workspace: 1}},
++		},
++		{Name: "dots-test", Worktree: &sessiontree.WorktreeRef{Repo: "dots", Branch: "test"}},
++		{Name: "docs-preview", Worktree: &sessiontree.WorktreeRef{Repo: "docs", Branch: "preview"}},
++	})
++
++	lines := railPlain(t, m, tree)
++	repoLine, repoHit := railRowLine(t, m, lines, sidebarRowRepo, "dots")
++	mainLine, mainHit := railRowLine(t, m, lines, sidebarRowSession, "dots")
++	macLine, macHit := railRowLine(t, m, lines, sidebarRowSession, "mac")
++	testLine, testHit := railRowLine(t, m, lines, sidebarRowSession, "dots-test")
++	agentLine, agentHit := railRowLine(t, m, lines, sidebarRowAgent, "mac")
++
++	row := func(hit sidebarRowHit) int { return hit.Y0 - m.GetTopMargin() }
++	if !(row(repoHit) < row(mainHit) && row(mainHit) < row(macHit) && row(macHit) < row(agentHit) && row(agentHit) < row(testHit)) {
++		t.Fatalf("repository hierarchy is out of order:\n%s", strings.Join(lines, "\n"))
++	}
++	col := func(line, label string) int {
++		return lipgloss.Width(line[:strings.Index(line, label)])
++	}
++	repoCol := col(repoLine, "dots")
++	mainCol, macCol, testCol := col(mainLine, "main"), col(macLine, "mac"), col(testLine, "test")
++	if mainCol != macCol || macCol != testCol || mainCol-repoCol != sidebarGroupIndent {
++		t.Fatalf("branch columns main=%d mac=%d test=%d repo=%d, want equal rows one hierarchy step under the repository:\n%s",
++			mainCol, macCol, testCol, repoCol, strings.Join(lines, "\n"))
++	}
++	if agentCol := col(agentLine, "pi"); agentCol-macCol != sidebarGroupIndent {
++		t.Fatalf("agent column = %d under branch at %d, want one %d-cell hierarchy step:\n%s",
++			agentCol, macCol, sidebarGroupIndent, strings.Join(lines, "\n"))
++	}
++	joined := strings.Join(lines, "\n")
++	for _, connector := range []string{m.Settings.GetRailTreeBranch(), m.Settings.GetRailTreeLast()} {
++		if strings.Contains(joined, connector) {
++			t.Fatalf("overview retained tree connector %q:\n%s", connector, joined)
++		}
++	}
++	if tree.Sessions[0].Worktree != nil {
++		t.Fatal("overview grouping changed the primary session into a linked worktree")
++	}
++	assertOverviewRepositoryNameStyle(t, m, tree, "dots", true)
++	assertOverviewRepositoryNameStyle(t, m, tree, "docs", false)
++
++	m.SidebarCollapsedRepos = map[string]bool{"dots": true}
++	lines = railPlain(t, m, tree)
++	joined = strings.Join(lines, "\n")
++	if !strings.Contains(joined, "main") || strings.Contains(joined, "mac") || strings.Contains(joined, "test") {
++		t.Fatalf("folded repository did not keep only its current primary checkout visible:\n%s", joined)
++	}
++}
++
++func TestOverviewGroupsStandaloneCheckoutAsRepositoryBranchAgent(t *testing.T) {
++	m, _ := worktreeRailOS(t, 120, 30)
++	m.SessionName = "calculator"
++	m.Settings.SidebarSections = "overview"
++	tree := sessiontree.Build([]sessiontree.SessionInput{{
++		Name: "calculator", Branch: "master", Attached: true, IsCurrent: true, CurrentWorkspace: 1,
++		Windows: []sessiontree.WindowInput{{
++			ID: "aaaaaaaa1111", Title: "pi", AgentState: "idle", Focused: true, Workspace: 1,
++		}},
++	}})
++
++	lines := railPlain(t, m, tree)
++	repoLine, repoHit := railRowLine(t, m, lines, sidebarRowRepo, "calculator")
++	branchLine, branchHit := railRowLine(t, m, lines, sidebarRowSession, "calculator")
++	agentLine, agentHit := railRowLine(t, m, lines, sidebarRowAgent, "calculator")
++	row := func(hit sidebarRowHit) int { return hit.Y0 - m.GetTopMargin() }
++	if !(row(repoHit) < row(branchHit) && row(branchHit) < row(agentHit)) {
++		t.Fatalf("standalone checkout hierarchy is out of order:\n%s", strings.Join(lines, "\n"))
++	}
++	col := func(line, label string) int {
++		return lipgloss.Width(line[:strings.Index(line, label)])
++	}
++	repoCol := col(repoLine, "calculator")
++	branchCol := col(branchLine, "master")
++	agentCol := col(agentLine, "pi")
++	if branchCol-repoCol != sidebarGroupIndent || agentCol-branchCol != sidebarGroupIndent {
++		t.Fatalf("standalone columns repository=%d branch=%d agent=%d, want one hierarchy step each:\n%s",
++			repoCol, branchCol, agentCol, strings.Join(lines, "\n"))
++	}
++	for _, connector := range []string{m.Settings.GetRailTreeBranch(), m.Settings.GetRailTreeLast()} {
++		if strings.Contains(strings.Join(lines, "\n"), connector) {
++			t.Fatalf("standalone overview retained tree connector %q:\n%s", connector, strings.Join(lines, "\n"))
++		}
++	}
++	if tree.Sessions[0].Worktree != nil {
++		t.Fatal("overview grouping changed a standalone primary checkout into a linked worktree")
++	}
++	assertOverviewRepositoryNameStyle(t, m, tree, "calculator", true)
++}
++
++func TestOverviewKeepsCurrentWorktreeVisibleWhenItsRepositoryIsFolded(t *testing.T) {
++	m, _ := worktreeRailOS(t, 120, 30)
++	m.SessionName = "tuios-feat-one"
++	m.Settings.SidebarSections = "overview"
++	m.SidebarCollapsedRepos = map[string]bool{"tuios": true}
++	tree := sessiontree.Build([]sessiontree.SessionInput{
++		{Name: "tuios-feat-one", Attached: true, IsCurrent: true, CurrentWorkspace: 1,
++			Worktree: &sessiontree.WorktreeRef{Repo: "tuios", Branch: "feat/one"},
++			Windows:  []sessiontree.WindowInput{{ID: "aaaaaaaa1111", Title: "nvim", Focused: true, Workspace: 1}}},
++		{Name: "tuios-feat-two", Worktree: &sessiontree.WorktreeRef{Repo: "tuios", Branch: "feat/two"}},
++	})
++	lines := railPlain(t, m, tree)
++	joined := strings.Join(lines, "\n")
++	if !strings.Contains(joined, "feat/one") {
++		t.Fatalf("folded current repository hid the current session:\n%s", joined)
++	}
++	if strings.Contains(joined, "feat/two") {
++		t.Fatalf("folded repository exposed a non-current member:\n%s", joined)
++	}
++	assertOverviewRepositoryNameStyle(t, m, tree, "tuios", true)
++}
++
++func TestCollapsedOverviewOmitsTerminalContext(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 24)
++	m.Settings.SidebarSections = "overview"
++	m.SidebarCollapsed = true
++	m.sidebarPanelLinesForTree(tree)
++	for _, hit := range m.SidebarHits {
++		if hit.Kind == sidebarRowWindow {
++			t.Fatalf("collapsed overview published terminal hit %+v", hit)
++		}
++	}
++}
++
++func TestCollapsedOverviewKeepsLateCurrentSessionVisible(t *testing.T) {
++	m, _ := stripHeightOS(t, 120, 12, "left")
++	m.Settings.SidebarSections = "overview"
++	inputs := make([]sessiontree.SessionInput, 0, 20)
++	for i := range 20 {
++		name := "session-" + strconv.Itoa(i)
++		input := sessiontree.SessionInput{
++			Name: name, CurrentWorkspace: 1,
++			Windows: []sessiontree.WindowInput{{ID: "window-" + strconv.Itoa(i), Title: "shell", Workspace: 1}},
++		}
++		if i == 19 {
++			input.Attached, input.IsCurrent = true, true
++			m.SessionName = name
++		}
++		inputs = append(inputs, input)
++	}
++	m.sidebarPanelLinesForTree(sessiontree.Build(inputs))
++	for _, hit := range m.SidebarHits {
++		if hit.Kind == sidebarRowWindow {
++			t.Fatalf("collapsed overview published terminal hit %+v", hit)
++		}
++		if hit.Kind == sidebarRowSession && hit.SessionID == "session-19" {
++			return
++		}
++	}
++	t.Fatal("collapsed overview hid the current session at the end of a truncated list")
++}
++
++func TestOverviewRailRowsStayWithinTheRailAtNarrowWidths(t *testing.T) {
++	m, tree := sectionsTestOS(t, 80, 24)
++	m.Settings.SidebarSections = "overview"
++	lines, width := m.sidebarPanelLinesForTree(tree)
++	if width <= 0 {
++		t.Fatal("overview rail was hidden")
++	}
++	for i, line := range lines {
++		if got := lipgloss.Width(line); got != width {
++			t.Errorf("line %d width = %d, want %d", i, got, width)
++		}
++	}
++}
++
++func TestOverviewSectionCycleReachesTheNextConfiguredSection(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview,files"
++	m.loadFileViewNow(t, fileViewTree(t))
++	m.sidebarPanelLinesForTree(tree)
++
++	m.SidebarCursor = navIndexOfSession(m, "main")
++	m.SidebarCycleSection()
++	row, ok := m.sidebarCursorRow()
++	if !ok || m.sidebarSectionOfKind(row.Kind) != sidebarSectionFiles {
++		t.Fatalf("cycle landed on %+v, want the files section", row)
++	}
++
++	for i, candidate := range m.SidebarNav {
++		if candidate.Kind == sidebarRowNewSession {
++			m.SidebarCursor = i
++			m.SidebarCycleSection()
++			row, ok = m.sidebarCursorRow()
++			if !ok || m.sidebarSectionOfKind(row.Kind) != sidebarSectionFiles {
++				t.Fatalf("cycle from overview header landed on %+v, want the files section", row)
++			}
++			return
++		}
++	}
++	t.Fatal("overview header did not publish its new-session control")
++}
++
++func TestOverviewRevealRunsWhenTheSectionAppears(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 8)
++	m.Settings.SidebarSections = "overview"
++	rows := []sidebarOverviewRow{
++		{Kind: sidebarOverviewNode, Node: sessiontree.Node{Kind: sessiontree.KindSession, ID: "docs"}},
++		{Kind: sidebarOverviewNode, Node: sessiontree.Node{Kind: sessiontree.KindSession, ID: "api"}},
++		{Kind: sidebarOverviewNode, Node: sessiontree.Node{Kind: sessiontree.KindSession, ID: "main", IsCurrent: true}},
++	}
++	m.sidebarReveal = sidebarRevealState{
++		WindowID: "aaaaaaaa1111", SessionID: "main", ScrollO: 0, Overview: false, Valid: true,
++	}
++	m.sidebarRevealFocus(nil, nil, rows, 0, 0, 2)
++	if m.SidebarScrollO == 0 {
++		t.Fatal("overview did not reveal the focused row when the section appeared")
++	}
++}
++
++func TestOverviewScrollParticipatesInSecondaryRailState(t *testing.T) {
++	m := &OS{SidebarScrollO: 7}
++	m.secondaryRailView.scrollO = 3
++	m.swapSecondaryRail()
++	if m.SidebarScrollO != 3 || m.secondaryRailView.scrollO != 7 {
++		t.Fatalf("overview scroll did not swap independently: primary=%d secondary=%d", m.SidebarScrollO, m.secondaryRailView.scrollO)
++	}
++}
+diff --git i/internal/app/sidebar_reveal.go w/internal/app/sidebar_reveal.go
+index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..63386e6b1d4d4b0e6137651bc282ecfa5ca1db18 100644
+--- i/internal/app/sidebar_reveal.go
++++ w/internal/app/sidebar_reveal.go
+@@ -35,6 +35,8 @@ type sidebarRevealState struct {
+ 	SessionID string
+ 	ScrollT   int
+ 	ScrollS   int
++	ScrollO   int
++	Overview  bool
+ 	Valid     bool
+ }
+ 
+@@ -42,7 +44,9 @@ type sidebarRevealState struct {
+ // sessions section to the attached session, each only when that identity has
+ // changed since the last frame and the section's offset is still the one the
+ // last frame left. rowsT and rowsS are the sections' folds in rows.
+-func (m *OS) sidebarRevealFocus(sessions []sessiontree.Node, terminals []sidebarTerminalEntry, rowsT, rowsS int) {
++func (m *OS) sidebarRevealFocus(sessions []sessiontree.Node, terminals []sidebarTerminalEntry,
++	overview []sidebarOverviewRow, rowsT, rowsS, rowsO int,
++) {
+ 	r := m.sidebarReveal
+ 	focused := m.sidebarFocusedWindowID()
+ 	attached := m.sidebarCurrentSessionID()
+@@ -62,6 +66,13 @@ func (m *OS) sidebarRevealFocus(sessions []sessiontree.Node, terminals []sidebar
+ 			}
+ 		}
+ 	}
++	overviewEnabled := sidebarLayoutHas(sidebarSectionOverview, &m.Settings)
++	if overviewEnabled && (!r.Valid || !r.Overview || focused != r.WindowID || attached != r.SessionID) &&
++		(!r.Valid || m.SidebarScrollO == r.ScrollO) {
++		if i := sidebarOverviewFocusedIndex(overview, attached, focused); i >= 0 {
++			m.SidebarScrollO = sidebarRevealOffset(m.SidebarScrollO, i, rowsO, len(overview))
++		}
++	}
+ }
+ 
+ // sidebarRecordReveal remembers what this frame was drawn for, after the
+@@ -72,6 +83,8 @@ func (m *OS) sidebarRecordReveal() {
+ 		SessionID: m.sidebarCurrentSessionID(),
+ 		ScrollT:   m.SidebarScrollT,
+ 		ScrollS:   m.SidebarScrollS,
++		ScrollO:   m.SidebarScrollO,
++		Overview:  sidebarLayoutHas(sidebarSectionOverview, &m.Settings),
+ 		Valid:     true,
+ 	}
+ }
+diff --git i/internal/app/sidebar_strip.go w/internal/app/sidebar_strip.go
+index 482946798aa9bacf35b2be11720ea31fba92a79f..27c01e785b21f9cac4f62046cc95fcf8b62b1a91 100644
+--- i/internal/app/sidebar_strip.go
++++ w/internal/app/sidebar_strip.go
+@@ -356,7 +356,8 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
+ 
+ 	shownSession, peeking := m.sidebarShownSession(sessions)
+ 	var terminals []sidebarTerminalEntry
+-	if sidebarLayoutHas(sidebarSectionTerminals, &m.Settings) {
++	hasTerminals := sidebarLayoutHas(sidebarSectionTerminals, &m.Settings)
++	if hasTerminals {
+ 		terminals = m.sidebarTerminals(sessions, shownSession)
+ 	}
+ 
+@@ -369,7 +370,7 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
+ 	// A peeked session with no panes keeps its header, or the group would vanish
+ 	// and the strip would read as the attached session having none.
+ 	listed := ""
+-	if sidebarLayoutHas(sidebarSectionTerminals, &m.Settings) && (len(terminals) > 0 || peeking) {
++	if hasTerminals && (len(terminals) > 0 || peeking) {
+ 		listed = shownSession
+ 		groups = append(groups, sidebarStripGroup{
+ 			kind: sidebarStripTerminal, noun: "terminal", total: len(terminals),
+@@ -383,6 +384,18 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
+ 		})
+ 	}
+ 	groups = sidebarStripPlace(groups, headH, region)
++	sessionStart := 0
++	for _, group := range groups {
++		if group.kind != sidebarStripSession || group.shown() <= 0 || group.shown() >= len(sessions) {
++			continue
++		}
++		for i, session := range sessions {
++			if session.ID == shownSession && i >= group.shown() {
++				sessionStart = min(i-group.shown()+1, len(sessions)-group.shown())
++				break
++			}
++		}
++	}
+ 
+ 	// The band is the target made visible, so it covers the row the pointer is
+ 	// in and exactly that row, every column of it including the edge rule. The
+@@ -467,7 +480,7 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
+ 			case stripPartMark:
+ 				switch g.kind {
+ 				case sidebarStripSession:
+-					s := sessions[idx]
++					s := sessions[sessionStart+idx]
+ 					note(sidebarStripSession, s.ID, "", sidebarTooltipSessionLabel(s), y)
+ 					record(sidebarRowSession, s.ID, "", y)
+ 					// The row being dragged wears the band wherever it has been
+diff --git i/internal/app/sidebar_view_state.go w/internal/app/sidebar_view_state.go
+index c88164cc3a6d24bb16bc59bd1f69b13a44662272..86eeb61bb5175cfa697c0e9b11b606badd6a332f 100644
+--- i/internal/app/sidebar_view_state.go
++++ w/internal/app/sidebar_view_state.go
+@@ -15,6 +15,7 @@ type secondaryRailView struct {
+ 	scrollS, scrollT int
+ 	scrollA, scrollF int
+ 	scrollG, scrollC int
++	scrollO          int
+ 	agentAnchor      sidebarScrollAnchor
+ 	agentsUnfolded   bool
+ 	subagentFold     map[string]bool
+@@ -50,6 +51,7 @@ func (m *OS) swapSecondaryRail() {
+ 	m.SidebarScrollF, s.scrollF = s.scrollF, m.SidebarScrollF
+ 	m.SidebarScrollG, s.scrollG = s.scrollG, m.SidebarScrollG
+ 	m.SidebarScrollC, s.scrollC = s.scrollC, m.SidebarScrollC
++	m.SidebarScrollO, s.scrollO = s.scrollO, m.SidebarScrollO
+ 	m.sidebarAgentAnchor, s.agentAnchor = s.agentAnchor, m.sidebarAgentAnchor
+ 	m.sidebarAgentsUnfolded, s.agentsUnfolded = s.agentsUnfolded, m.sidebarAgentsUnfolded
+ 	m.sidebarSubagentFold, s.subagentFold = s.subagentFold, m.sidebarSubagentFold
+diff --git i/internal/app/sidebar_worktrees.go w/internal/app/sidebar_worktrees.go
+index 02a36280499045c1d0f73d540d0f885055bf1a03..2b8ef641bbe65aed2563609fb2e022c24a9649d4 100644
+--- i/internal/app/sidebar_worktrees.go
++++ w/internal/app/sidebar_worktrees.go
+@@ -120,27 +120,29 @@ func (m *OS) SidebarToggleRepoCollapsed(repo string) {
+ 	m.saveSidebarState()
+ }
+ 
+-// sidebarWorktreeLabel is the name a worktree session's row shows: its branch,
+-// behind the tree mark that says whether the group goes on below it. It
+-// reports false for a session that is not a worktree, whose row is unchanged.
+-//
+-// The branch is laundered like any other title, and the mark is not: the mark
+-// is one of ours, chosen by the glyph settings, and already ASCII in the mode
+-// that asks for ASCII.
+-func (m *OS) sidebarWorktreeLabel(node sessiontree.Node) (string, bool) {
++func sidebarWorktreeName(node sessiontree.Node) (string, bool) {
+ 	if node.Worktree == nil {
+ 		return "", false
+ 	}
++	label := printableTitle(node.Worktree.Branch)
++	if label == "" {
++		label = printableTitle(node.Title)
++	}
++	return label, true
++}
++
++// sidebarWorktreeLabel is the sessions section's branch label, prefixed by the
++// configured tree mark. The overview uses sidebarWorktreeName with indentation
++// instead, so every checkout row has the same connector-free presentation.
++func (m *OS) sidebarWorktreeLabel(node sessiontree.Node) (string, bool) {
++	label, ok := sidebarWorktreeName(node)
++	if !ok {
++		return "", false
++	}
+ 	mark := m.Settings.GetRailTreeBranch()
+ 	if node.GroupLast {
+ 		mark = m.Settings.GetRailTreeLast()
+ 	}
+-	label := printableTitle(node.Worktree.Branch)
+-	if label == "" {
+-		// A record with no branch is a detached head the daemon could not name.
+-		// The session's own title is better than an empty row.
+-		label = printableTitle(node.Title)
+-	}
+ 	return mark + label, true
+ }
+ 
+@@ -181,7 +183,9 @@ func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette,
+ 	}
+ 
+ 	fg := pal.FgDim
+-	if st.lit() {
++	if node.IsCurrent {
++		fg = overlay.Readable(pal.Accent, m.sidebarGroundOr(rowBg))
++	} else if st.lit() {
+ 		fg = pal.Fg
+ 	}
+ 	// A repository is an item that owns a subtree, not a heading: it wears a
+@@ -189,7 +193,7 @@ func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette,
+ 	// machine with every other session row. Its own members hang off it on the
+ 	// tree marks. See sidebarWorktreeLabel.
+ 	indent := m.sidebarNodeIndent(node)
+-	name := sidebarStyle(rowBg, fg).Bold(sidebarAttention(state)).
++	name := sidebarStyle(rowBg, fg).Bold(node.IsCurrent || sidebarAttention(state)).
+ 		Render(overlay.Truncate(printableTitle(node.Title), sidebarNameAvailIn(cw, rightW, indent)))
+ 	gutter := sidebarGutter(false, state, rowBg, pal, &m.Settings)
+ 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+diff --git i/internal/app/test_helpers_test.go w/internal/app/test_helpers_test.go
+index ad10e422c5b7ee95ba9554a3e52d2f6ac24a6069..794398e918ecca77c29d6390ba8fd5577b3f0ae8 100644
+--- i/internal/app/test_helpers_test.go
++++ w/internal/app/test_helpers_test.go
+@@ -427,6 +427,11 @@ func fgParams(c color.Color) string {
+ 	return strings.TrimSuffix(strings.TrimPrefix(rendered[:strings.Index(rendered, "X")], "\x1b["), "m")
+ }
+ 
++func bgParams(c color.Color) string {
++	rendered := lipgloss.NewStyle().Background(c).Render("X")
++	return strings.TrimSuffix(strings.TrimPrefix(rendered[:strings.Index(rendered, "X")], "\x1b["), "m")
++}
++
+ // newSwitchOS builds a client with panes spread over two workspaces, each pane
+ // carrying a recorder for the sizes its PTY is told.
+ func newSwitchOS(t *testing.T, width, height int, perWorkspace map[int]int) (*OS, map[string]*toldSize) {
+diff --git i/internal/config/constants.go w/internal/config/constants.go
+index 81885684d6d5c9f10a44e6252b459d0af73d16d1..0c5c36a128a44127ecb77b95053773f6259539b0 100644
+--- i/internal/config/constants.go
++++ w/internal/config/constants.go
+@@ -493,7 +493,12 @@ const SidebarDefaultSections = "sessions:25,terminals,files:25,agents:34"
+ // section the rail does not draw, and that is the only way to turn one off:
+ // there is no second switch per section, because a switch cannot say where a
+ // thing goes and two spacers would have no switch to share.
+-var SidebarSectionNames = []string{"sessions", "terminals", "files", "agents", "git", SidebarSectionCustom}
++var SidebarSectionNames = []string{"overview", "sessions", "terminals", "files", "agents", "git", SidebarSectionCustom}
++
++// SidebarSectionOverview is the unified session and agent tree. When it is in
++// a layout it replaces the three flat navigation sections, while leaving the
++// informational sections and spacers untouched.
++const SidebarSectionOverview = "overview"
+ 
+ // SidebarSectionCustom is the rail section whose rows are the output of a
+ // command the user writes, configured in [appearance.sidebar.custom]. It is
+diff --git i/internal/config/sidebar_sections.go w/internal/config/sidebar_sections.go
+index 8f4598a5092e8aabdb1f406015f7872ad854ad67..ef214d160d0bacaaa570feeeb76043a24f023039 100644
+--- i/internal/config/sidebar_sections.go
++++ w/internal/config/sidebar_sections.go
+@@ -59,6 +59,15 @@ func ParseSidebarSections(source string) []SidebarSectionShare {
+ 	if sections == 0 && source != SidebarDefaultSections {
+ 		return ParseSidebarSections(SidebarDefaultSections)
+ 	}
++	if slices.Contains(seen, SidebarSectionOverview) {
++		out = slices.DeleteFunc(out, func(entry SidebarSectionShare) bool {
++			switch entry.Name {
++			case "sessions", "terminals", "agents":
++				return true
++			}
++			return false
++		})
++	}
+ 	return out
+ }
+ 
+@@ -75,6 +84,8 @@ func SidebarSectionProblems(source string) []string {
+ 	var problems []string
+ 	var seen []string
+ 	sections := 0
++	overview := false
++	flatNavigation := false
+ 	for field := range strings.SplitSeq(source, ",") {
+ 		field = strings.TrimSpace(field)
+ 		if field == "" {
+@@ -94,6 +105,12 @@ func SidebarSectionProblems(source string) []string {
+ 			}
+ 			seen = append(seen, name)
+ 			sections++
++			switch name {
++			case SidebarSectionOverview:
++				overview = true
++			case "sessions", "terminals", "agents":
++				flatNavigation = true
++			}
+ 		}
+ 		if hasShare {
+ 			pct, err := strconv.Atoi(strings.TrimSpace(share))
+@@ -111,6 +128,9 @@ func SidebarSectionProblems(source string) []string {
+ 		problems = append(problems, "no section in "+strconv.Quote(source)+
+ 			" could be used, so the rail keeps its default layout")
+ 	}
++	if overview && flatNavigation {
++		problems = append(problems, "overview replaces sessions, terminals, and agents in the rail layout")
++	}
+ 	return problems
+ }
+ 
+diff --git i/internal/config/sidebar_sections_test.go w/internal/config/sidebar_sections_test.go
+index 671d70a950cb6d7652d479f511220e7886b526f9..d2812b9fa391660ea9a9a07ac0d5c08fea389f5a 100644
+--- i/internal/config/sidebar_sections_test.go
++++ w/internal/config/sidebar_sections_test.go
+@@ -47,6 +47,7 @@ func TestParseSidebarSections(t *testing.T) {
+ 		{"terminals,sessions", []string{"terminals", "sessions"}},
+ 		{"files:60,sessions:20,terminals,agents:20", []string{"files:60", "sessions:20", "terminals", "agents:20"}},
+ 		{"agents:50,files:50,sessions,terminals", []string{"agents:50", "files:50", "sessions", "terminals"}},
++		{"sessions,overview:60,files,agents,git", []string{"overview:60", "files", "git"}},
+ 	} {
+ 		if got := names(tc.source); !slices.Equal(got, tc.want) {
+ 			t.Errorf("layout %q parsed as %v, want %v", tc.source, got, tc.want)
+@@ -54,6 +55,13 @@ func TestParseSidebarSections(t *testing.T) {
+ 	}
+ }
+ 
++func TestOverviewReplacesTheThreeFlatNavigationSections(t *testing.T) {
++	got := SidebarSectionProblems("sessions,overview,terminals,agents")
++	if len(got) != 1 || !strings.Contains(got[0], "overview replaces sessions, terminals, and agents") {
++		t.Fatalf("problems = %v, want one overview replacement notice", got)
++	}
++}
++
+ // TestSectionProblemsSaySpacerIsFine is the validator's half of the same rule:
+ // a repeated spacer is not a problem and a repeated section still is.
+ //
+diff --git i/internal/input/actions.go w/internal/input/actions.go
+index 0ac4adbc1f010faac7a85dee50040d38794ca333..3e695c6abaf645e4f00eaca6900e181838ba272e 100644
+--- i/internal/input/actions.go
++++ w/internal/input/actions.go
+@@ -8,7 +8,6 @@ import (
+ 	tea "charm.land/bubbletea/v2"
+ 	"github.com/Gaurav-Gosain/tuios/internal/app"
+ 	"github.com/Gaurav-Gosain/tuios/internal/config"
+-	"github.com/Gaurav-Gosain/tuios/internal/hooks"
+ 	"github.com/Gaurav-Gosain/tuios/internal/layout"
+ )
+ 
+@@ -405,16 +404,10 @@ func handleNewWindowSSH(_ tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ }
+ 
+ func handleCloseWindow(_ tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd) {
+-	if len(o.Windows) > 0 && o.FocusedWindow >= 0 {
+-		w := o.Windows[o.FocusedWindow]
+-		if w.IsScratch {
+-			o.CloseWindowByHand(o.FocusedWindow)
+-			return o, nil
+-		}
+-		o.FireHook(hooks.AfterCloseWindow, w.ID, w.Title())
+-		o.DeleteWindow(o.FocusedWindow)
++	if len(o.Windows) == 0 || o.FocusedWindow < 0 {
++		return o, nil
+ 	}
+-	return o, nil
++	return o, o.CloseWindowByHand(o.FocusedWindow)
+ }
+ 
+ // handleRenameWorkspace opens the rename editor on the workspace the session
+diff --git i/internal/input/keyboard_wm.go w/internal/input/keyboard_wm.go
+index 55416ada39978c6edeb5de616f812644537b1b17..24f67bafbc50955baa6572d687c1c0298272e705 100644
+--- i/internal/input/keyboard_wm.go
++++ w/internal/input/keyboard_wm.go
+@@ -152,8 +152,7 @@ func HandleWindowManagementModeKey(msg tea.KeyPressMsg, o *app.OS) (*app.OS, tea
+ 			action = lookupAction(o, msg, o.KeybindRegistry.GetAction)
+ 		}
+ 		if action == "" || action == "enter_window_mode" {
+-			o.CloseFocusedPopup()
+-			return o, nil
++			return o, o.CloseFocusedPopup()
+ 		}
+ 	}
+ 
+diff --git i/internal/input/mouse_click.go w/internal/input/mouse_click.go
+index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..6feb28fcc59da4e1ff607c194f5a0e24cee5313b 100644
+--- i/internal/input/mouse_click.go
++++ w/internal/input/mouse_click.go
+@@ -462,7 +462,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ 		if action, ok := o.WindowButtonIn(clickedWindow.ID, X, Y); ok {
+ 			switch action {
+ 			case app.WindowButtonClose:
+-				o.CloseWindowByHand(clickedWindowIndex)
++				return o, o.CloseWindowByHand(clickedWindowIndex)
+ 			case app.WindowButtonMinimize:
+ 				o.MinimizeWindow(clickedWindowIndex)
+ 			case app.WindowButtonFloat:
+diff --git i/internal/input/prefix_actions.go w/internal/input/prefix_actions.go
+index 63026788ee960bfc22829acd5abb6588ec69872c..d6d832f50df9a3c26e395481f1f3f61dd10cefc0 100644
+--- i/internal/input/prefix_actions.go
++++ w/internal/input/prefix_actions.go
+@@ -6,7 +6,6 @@ import (
+ 	tea "charm.land/bubbletea/v2"
+ 	"github.com/Gaurav-Gosain/tuios/internal/app"
+ 	"github.com/Gaurav-Gosain/tuios/internal/config"
+-	"github.com/Gaurav-Gosain/tuios/internal/hooks"
+ 	"github.com/Gaurav-Gosain/tuios/internal/session"
+ )
+ 
+@@ -208,20 +207,11 @@ func handlePrefixCloseWindow(_ tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ 	if len(o.Windows) == 0 || o.FocusedWindow < 0 {
+ 		return o, nil
+ 	}
+-	w := o.Windows[o.FocusedWindow]
+-	if w.IsScratch {
+-		o.CloseWindowByHand(o.FocusedWindow)
+-		return o, nil
+-	}
+-	o.FireHook(hooks.AfterCloseWindow, w.ID, w.Title())
+-	o.DeleteWindow(o.FocusedWindow)
+-	if len(o.Windows) > 0 {
++	cmd := o.CloseWindowByHand(o.FocusedWindow)
++	if cmd == nil && len(o.Windows) > 0 {
+ 		refreshFocusedWindow(o)
+-	} else if o.Mode == app.TerminalMode {
+-		// Nothing left to type into.
+-		o.Mode = app.WindowManagementMode
+ 	}
+-	return o, nil
++	return o, cmd
+ }
+ 
+ // startRename puts the focused window into rename mode. Renaming is a
+diff --git i/internal/overlay/rows.go w/internal/overlay/rows.go
+index 9ab267c129d849b6ae2e52972d16a133dbb0f81f..e452806ba6902a8a4e5f560be3aabad6851f48af 100644
+--- i/internal/overlay/rows.go
++++ w/internal/overlay/rows.go
+@@ -134,6 +134,17 @@ func reverseCell(c *uv.Cell) {
+ 	c.Style.Attrs &^= uv.AttrFaint
+ }
+ 
++// ReverseRowWithInk turns a styled row into one reverse-video run while
++// retaining one foreground ink. It is the row-width form of an active tab at
++// ANSI depth, where a literal background would replace the terminal palette.
++func ReverseRowWithInk(s string, width int, ink color.Color) string {
++	return restyleRow(s, width, func(c *uv.Cell) {
++		c.Style.Fg, c.Style.Bg = ink, nil
++		c.Style.Attrs |= uv.AttrReverse
++		c.Style.Attrs &^= uv.AttrFaint
++	})
++}
++
+ // underlineCell underlines a cell that carries text, leaving the padding
+ // alone so the line runs under the words rather than across the panel.
+ func underlineCell(c *uv.Cell) {
