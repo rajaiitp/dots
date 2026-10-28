@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "81ebac24-4306-4406-9c45-3b06a5bfbae4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "cancelled",
+  "createdAt": "2026-10-28T21:14:42.477Z",
+  "updatedAt": "2026-10-28T21:17:34.953Z",
+  "runs": [
+    {
+      "runId": "e30e9495-1dad-4ccf-b931-1dfbe6cb2138",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e30e9495-1dad-4ccf-b931-1dfbe6cb2138",
+      "status": "stopped",
+      "startedAt": "2026-10-28T21:14:42.585Z",
+      "completedAt": "2026-10-28T21:17:34.953Z",
+      "usage": {
+        "tokens": 84544
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e30e9495-1dad-4ccf-b931-1dfbe6cb2138/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e30e9495-1dad-4ccf-b931-1dfbe6cb2138/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/e30e9495-1dad-4ccf-b931-1dfbe6cb2138_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-sidebar",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Subagent stopped."
+}

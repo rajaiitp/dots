@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "4a409f52-87ca-41a3-9837-fc4816c2aa08",
+  "projectRoot": "/tmp/tuios-verify",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/31ad8df32a3ee7f115be318b7c95c69b01d0eb4a36d0d2da06872b44c15f3009/4a409f52-87ca-41a3-9837-fc4816c2aa08.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-10-26T19:23:36.276Z",
+  "lastRunId": "10340f37-6f1e-4c2e-a06a-54fcfb185cca"
+}

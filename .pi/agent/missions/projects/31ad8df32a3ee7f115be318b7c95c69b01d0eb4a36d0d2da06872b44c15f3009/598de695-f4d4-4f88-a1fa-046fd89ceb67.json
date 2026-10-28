@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "598de695-f4d4-4f88-a1fa-046fd89ceb67",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T20:28:05.295Z",
+  "updatedAt": "2026-10-26T20:29:10.727Z",
+  "runs": [
+    {
+      "runId": "de1fde0e-7bf4-4b36-b9ff-5e93cce17ab0",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/de1fde0e-7bf4-4b36-b9ff-5e93cce17ab0",
+      "status": "complete",
+      "startedAt": "2026-10-26T20:28:05.328Z",
+      "completedAt": "2026-10-26T20:29:10.727Z",
+      "usage": {
+        "tokens": 57077
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/de1fde0e-7bf4-4b36-b9ff-5e93cce17ab0/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/de1fde0e-7bf4-4b36-b9ff-5e93cce17ab0/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/de1fde0e-7bf4-4b36-b9ff-5e93cce17ab0_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-verify",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "reviewer:\n## Review\n- Correct: Collapsed overview suppresses the entire terminal group, windows session rows to include the shown/current session, and preserves terminal/agent indexing (`internal/app/sidebar_strip.go:357-402`, `internal/app/sidebar_strip.go:480-501`). Regression coverage includes a late current session and terminal-hit checks (`internal/app/sidebar_overview_test.go:85-123`).\n- Correct: Hidden-divider logic is unchanged; no `sidebar_split.go` delta exists, and existing divider conditions remain intact in `internal/app/render_sidebar.go:1776-1781`.\n- No issues found.\n- Merge verdict: OK"
+}

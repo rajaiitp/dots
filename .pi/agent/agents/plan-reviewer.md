@@ -6,7 +6,7 @@ tools: read, grep, find, ls
 skills: false
 extensions: false
 provider: openai-codex
-model: gpt-5.6-sol
+model: gpt-6.1-sol
 thinking: xhigh
 ---
 

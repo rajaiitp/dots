@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "b4fa9fd2-9554-4017-8ef2-a20129a9d4c2",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-28T22:54:05.731Z",
+  "updatedAt": "2026-10-28T22:56:40.986Z",
+  "runs": [
+    {
+      "runId": "15fc2acb-0226-4f4f-9854-04809b84a36e",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-28T22:56:40.985Z",
+      "completedAt": "2026-10-28T22:56:40.985Z",
+      "usage": {
+        "tokens": 73975
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/15fc2acb-0226-4f4f-9854-04809b84a36e_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/15fc2acb-0226-4f4f-9854-04809b84a36e_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — proceed without phone testing, but close the resource-bounding gap before admitting real peers.\n\n## Critical gaps\n- `qlen_in_*` bounds ingress queues, not downstream work/state: pinned `RNS/Transport.py:2460–2529` caches announces and spawns callback threads; `LXMF/LXMRouter.py:2046` limits individual resource size, not aggregate concurrency. Add enforceable node-wide work/state/disk budgets, reserve space, and fail-closed breach handling; otherwise G2 boundedness remains unproven.\n\n## Important improvements\n- Specify separate execution ownership for polling, ingress, and lifecycle work; do not place long-running loops on G0’s single worker. Egress enqueue must be nonblocking, with cleanup deferred outside upstream/bridge locks.\n- Define connect/admission and partial-frame deadlines plus an independent write watchdog that closes the socket; `Socket.soTimeout` does not bound writes.\n- Gate socket readiness on capabilities **and** link properties, not merely `onAvailable`. Resolve publisher port bootstrap and listener ownership when two Networks share a scoped local address; reject ambiguous association.\n- Initialize relay policy before constructing RNS in a fresh process generation; opt-in cannot create a second singleton or toggle transport on the existing G0 runtime.\n\n## Validation gaps\n- Exercise the production adapter in bidirectional A–B–C tests, including B stopped/relay disabled, IFAC mismatch, and maximum-size wire frames.\n- Saturate downstream work and upstream storage; measure threads, state, disk, and recovery—not only queue depths.\n- Race detach against route relearning and generation reuse; old cleanup must not delete replacement routes. `remove_interface` only removes list membership, while `expire_path` takes `path_table_lock` and expires asynchronously.\n- Run two-peer full-duplex JNI tests with stalled writes, partial-frame stalls, cancellation, callback reordering, and permission/availabilit...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with source-backed resource findings, concrete additions, validation requirements, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Static review of DESIGN.md, current Android/Python runtime, and pinned RNS/LXMF queue, interface, routing, callback, and resource handling."
+      ],
+      "residualRisks": [
+        "Physical-phone compatibility, concurrent Aware paths, and publisher socket association remain deferred, not passed.",
+        "Downstream resource-cap feasibility remains unresolved."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes or staging performed.",
+      "reviewFindings": [
+        "Material gap: ingress queue limits do not establish bounded downstream work, state, or storage."
+      ],
+      "manualNotes": "No commands or tests run. Repository staging state was not inspected."
+    }
+  }
+}

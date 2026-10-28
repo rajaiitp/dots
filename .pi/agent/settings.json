@@ -4,22 +4,25 @@
     "npm:@hypabolic/pi-hypa",
     "npm:@juicesharp/rpiv-todo",
     {
-      "source": "npm:pi-subagents@0.66.0",
+      "source": "npm:pi-subagents@0.83.0",
       "skills": [],
       "prompts": [],
       "themes": []
     },
-    "npm:@weshipwork/pi-herdr",
+    "npm:@weshipwork/pi-herdr@0.1.0",
     "npm:pi-powerline-footer",
     "npm:pi-quota-status",
     "npm:pi-web-access",
-    "npm:pi-observational-memory",
-    "npm:pi-mcp-adapter@2.36.0"
+    "npm:pi-observational-memory"
   ],
   "theme": "dark",
   "tuiMode": "regular",
+  "quietStartup": true,
+  "powerline": {
+    "welcome": false
+  },
   "defaultThinkingLevel": "high",
-  "lastChangelogVersion": "0.84.4",
+  "lastChangelogVersion": "1.4.0",
   "hideThinkingBlock": false,
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-sol",

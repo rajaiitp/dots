@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "d4c1ee60-429e-4365-96f8-5b9b68de8fb4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T19:52:20.576Z",
+  "updatedAt": "2026-10-26T19:54:17.889Z",
+  "runs": [
+    {
+      "runId": "7f11d726-5989-4fe4-ab96-f748429140c5",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7f11d726-5989-4fe4-ab96-f748429140c5",
+      "status": "complete",
+      "startedAt": "2026-10-26T19:52:20.593Z",
+      "completedAt": "2026-10-26T19:54:17.889Z",
+      "usage": {
+        "tokens": 116659
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7f11d726-5989-4fe4-ab96-f748429140c5/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7f11d726-5989-4fe4-ab96-f748429140c5/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/7f11d726-5989-4fe4-ab96-f748429140c5_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-verify",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "reviewer:\n## Review\n\nNo issues found.\n\n- Merge verdict: **OK with notes**\n- Verification not run: `nice -n 10 taskset -c 0-7 go test ./internal/app/... ./internal/config/... -timeout 20m`\n- Pre-merge gate: `just check --changed`"
+}

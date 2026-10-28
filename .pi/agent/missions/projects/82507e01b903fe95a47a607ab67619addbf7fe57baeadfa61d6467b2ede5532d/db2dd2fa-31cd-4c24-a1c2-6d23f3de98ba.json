@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "db2dd2fa-31cd-4c24-a1c2-6d23f3de98ba",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T08:23:55.677Z",
+  "updatedAt": "2026-10-26T08:29:50.310Z",
+  "runs": [
+    {
+      "runId": "b01c3625-8059-4349-b266-505289e9d92b",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-26T08:29:50.309Z",
+      "completedAt": "2026-10-26T08:29:50.309Z",
+      "usage": {
+        "tokens": 153451
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/b01c3625-8059-4349-b266-505289e9d92b_reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/b01c3625-8059-4349-b266-505289e9d92b_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-unified-sidebar",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Review\n\n- **Finding: P1 — “Cycle section” navigates between row kinds inside overview instead of configured sections.**  \n  `internal/app/sidebar_keyboard.go:369-389` still hard-codes session/window/agent row kinds. With a layout such as `overview,files`, invoking the section-cycle action from an overview session can move to an overview context/agent row and can never reach `files`. This contradicts the action’s section-level contract and the configured layout order.  \n  **Smallest fix:** iterate `sidebarLayoutPlans`, identify the current section via `sidebarSectionOfKind`, and wrap to the next plan having a navigable row. Add an overview-plus-files navigation regression test.\n\n- **Finding: P1 — Enabling overview does not reveal the current session/pane when focus has not changed.**  \n  `internal/app/sidebar_reveal.go:49-72` gates overview reveal solely on focused-window/session identity changes. However, `sidebarRecordReveal` records those identities on every prior frame even when overview is absent (`internal/app/sidebar_reveal.go:79-87`). Consequently, changing the layout from the default to overview while remaining on the same pane leaves `SidebarScrollO` at zero; the current session or contextual pane can begin below the fold. `render_sidebar.go:1889-1892` cannot correct it because the stale reveal state says nothing changed.  \n  **Smallest fix:** track overview layout/presence in `sidebarRevealState`, or invalidate reveal state when the section layout changes. Add a regression that renders a long default layout, switches to overview without changing focus, and verifies the focused overview row is revealed.\n\n- **Merge verdict: BLOCK**",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

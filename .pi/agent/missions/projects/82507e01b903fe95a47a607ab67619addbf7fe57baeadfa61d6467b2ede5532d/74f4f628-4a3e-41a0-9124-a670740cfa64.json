@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "id": "74f4f628-4a3e-41a0-9124-a670740cfa64",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T08:05:00.275Z",
+  "updatedAt": "2026-10-26T08:23:04.749Z",
+  "runs": [
+    {
+      "runId": "f6137e49-594a-4790-b542-cde5eef5d372",
+      "mode": "single",
+      "agent": "worker",
+      "status": "completed",
+      "startedAt": "2026-10-26T08:23:04.748Z",
+      "completedAt": "2026-10-26T08:23:04.748Z",
+      "usage": {
+        "tokens": 354769
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/f6137e49-594a-4790-b542-cde5eef5d372_worker_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/f6137e49-594a-4790-b542-cde5eef5d372_worker_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-unified-sidebar",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nImplemented the opt-in unified `overview` sidebar with nested local agents/context panes, hierarchy preservation, scrolling, navigation, caching, secondary-rail state, and compact-strip agent availability.\n\nChanged files: `docs/look-keys.json`, 10 app implementation files, `sidebar_overview.go`, and two test files.\n\nValidation:\n- Config suite passed.\n- Overview and relevant sidebar regression tests passed.\n- TUIOS binary built successfully.\n- Full app suite compiled and ran, but failed only because the machine advertises an unavailable Omarchy theme.\n- No Markdown, commits, or staged files.\n\nOpen risks/questions: No manual interactive TUI validation; full app suite remains environmentally blocked by Omarchy.\n\nRecommended next step: Review the diff, then generate/package the patch and installer.",
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": true,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files",
+            "validation-output",
+            "diff-summary"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files",
+        "validation-output",
+        "diff-summary"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files",
+          "validation-output",
+          "diff-summary"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "passed",
+        "message": "tests-added evidence present."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "evidence:validation-output",
+        "status": "passed",
+        "message": "validation-output evidence present."
+      },
+      {
+        "id": "evidence:diff-summary",
+        "status": "passed",
+        "message": "diff-summary evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Added an opt-in overview section while retaining default layouts and independent Files, Git, Custom, compact-strip, secondary-rail, and remote hierarchy behavior."
+        }
+      ],
+      "changedFiles": [
+        "docs/look-keys.json",
+        "internal/app/os.go",
+        "internal/app/render_sidebar.go",
+        "internal/app/sidebar_cache.go",
+        "internal/app/sidebar_keyboard.go",
+        "internal/app/sidebar_layout.go",
+        "internal/app/sidebar_mouse.go",
+        "internal/app/sidebar_overview.go",
+        "internal/app/sidebar_overview_test.go",
+        "internal/app/sidebar_reveal.go",
+        "internal/app/sidebar_view_state.go",
+        "internal/config/constants.go",
+        "internal/config/sidebar_sections.go",
+        "internal/config/sidebar_sections_test.go"
+      ],
+      "testsAddedOrUpdated": [
+        "internal/app/sidebar_overview_test.go",
+        "internal/config/sidebar_sections_test.go"
+      ],
+      "commandsRun": [
+        {
+          "command": "nice -n 10 taskset -c 0-5 go test ./internal/config/...",
+          "result": "passed",
+          "summary": "All configuration tests passed."
+        },
+        {
+          "command": "nice -n 10 taskset -c 0-5 go test ./internal/app/...",
+          "result": "failed",
+          "summary": "Only TestThemeColorsKeepTheirKindAtEveryDepth failed because Omarchy is unavailable on this machine."
+        },
+        {
+          "command": "nice -n 10 taskset -c 0-5 go test ./internal/app -run 'Test(Overview|CompactRailListsEachAgentOnce|DefaultSidebarOnNarrowTerminals|DefaultSidebarTilesOnNarrowTerminals|SidebarScrollingStripStartsAtLeftMargin|RailSectionsNeverOverlapAtAnyHeight|RailAddressingHoldsAcrossEveryCombination|RailFitsAShortRegion|RailRowsWearTheirSwitchNumbers|RailRowsStayQuietWithoutShowNumbers|SidebarSignatureFoldsWhatTheRailDraws|SidebarCacheServesAndInvalidates)' -count=1",
+          "result": "passed",
+          "summary": "Overview tests and relevant sidebar regression tests passed."
+        },
+        {
+          "command": "nice -n 10 taskset -c 0-5 go build -o /tmp/tuios-overview ./cmd/tuios",
+          "result": "passed",
+          "summary": "Built the patched TUIOS binary."
+        },
+        {
+          "command": "git diff --check",
+          "result": "passed",
+          "summary": "No whitespace errors."
+        }
+      ],
+      "validationOutput": [
+        "HEAD remains 3638a6f2093edfa7396b6233515786de4dbda683.",
+        "Overview nesting, narrow-width rendering, and secondary scroll-state tests pass.",
+        "No Markdown files were modified.",
+        "Generated look-keys JSON includes the overview section."
+      ],
+      "residualRisks": [
+        "Full internal/app suite is environmentally blocked by the unavailable Omarchy theme.",
+        "Interactive TUI behavior has not yet been manually exercised."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Adds overview configuration normalization and validation, unified hierarchical row construction/rendering, independent scroll/reveal/cache integration, navigation ownership, secondary-rail state, and generated configuration metadata.",
+      "reviewFindings": [
+        "no blockers",
+        "environmental: full app suite encounters unavailable Omarchy theme"
+      ],
+      "manualNotes": "No commit was created."
+    }
+  }
+}

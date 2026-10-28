@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "4a409f52-87ca-41a3-9837-fc4816c2aa08",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T19:19:20.565Z",
+  "updatedAt": "2026-10-26T19:23:36.276Z",
+  "runs": [
+    {
+      "runId": "10340f37-6f1e-4c2e-a06a-54fcfb185cca",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/10340f37-6f1e-4c2e-a06a-54fcfb185cca",
+      "status": "complete",
+      "startedAt": "2026-10-26T19:19:20.623Z",
+      "completedAt": "2026-10-26T19:23:36.276Z",
+      "usage": {
+        "tokens": 194678
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/10340f37-6f1e-4c2e-a06a-54fcfb185cca/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/10340f37-6f1e-4c2e-a06a-54fcfb185cca/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/10340f37-6f1e-4c2e-a06a-54fcfb185cca_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-verify",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "reviewer:\n## Review\n\n- **Finding: P1 — `--activate` can install a stale or incompletely staged candidate.** `/home/raja/dots/.config/tuios/patch/install-unified-sidebar.sh:128-148` validates only version and base commit. It never verifies that metadata matches the current `PATCH_SHA256` or that `binary_sha256` matches the candidate. It also replaces the target before copying metadata. An older candidate from the same base passes, and missing metadata causes failure after installation. Preflight and verify metadata/hash before modifying the target.\n\n- **Finding: P1 — repeated installation breaks rollback idempotency.** `install-unified-sidebar.sh:138-145,153-175` backs up the current target on every activation, including an already patched build. Rollback always selects the newest backup without consuming it. After two installs, rollback restores the patched backup rather than the original binary, and subsequent rollbacks repeat that result. Preserve a stable pre-install backup, skip managed reactivations, or implement a consumed backup stack.\n\n- **Finding: P2 — section cycling still misbehaves from header controls.** `internal/app/sidebar_keyboard.go:180-198,371-390` assigns no section to `sidebarRowNewSession` or `sidebarRowNewWindow`. From the overview “+” control in an `overview,files` layout, cycling starts from index `-1` and lands back in overview instead of advancing to files. Classify header controls for cycle-origin purposes and add a regression test from the “+” row.\n\n- **Merge verdict: BLOCK**"
+}

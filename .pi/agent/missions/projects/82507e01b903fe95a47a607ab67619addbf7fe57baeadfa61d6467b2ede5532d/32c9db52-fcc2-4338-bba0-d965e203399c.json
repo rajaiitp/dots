@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "32c9db52-fcc2-4338-bba0-d965e203399c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T08:33:05.413Z",
+  "updatedAt": "2026-10-26T08:37:46.531Z",
+  "runs": [
+    {
+      "runId": "82232e42-31fb-4b08-b7d0-45b6cca0bf9f",
+      "mode": "single",
+      "agent": "reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-26T08:37:46.531Z",
+      "completedAt": "2026-10-26T08:37:46.531Z",
+      "usage": {
+        "tokens": 181780
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/82232e42-31fb-4b08-b7d0-45b6cca0bf9f_reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/82232e42-31fb-4b08-b7d0-45b6cca0bf9f_reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-unified-sidebar",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Review\n- Correct: Prior remote-safety blocker is resolved: remote sessions map to `sidebarRowHostSession` and use host-aware actions (`internal/app/sidebar_overview.go:39-40`).\n- Correct: Overview reveal, independent scrolling, secondary-rail swapping, and cache invalidation are wired through `ScrollO`/`Overview` (`internal/app/sidebar_reveal.go:69-87`, `internal/app/sidebar_view_state.go:54`, `internal/app/sidebar_cache.go:165`). Width remains viewer-local (`internal/app/session.go:1225-1245`).\n\n- Finding: **P1** — Folding the repository containing the current session makes both that session and its focused non-agent pane disappear from overview. Folded members are removed in `internal/app/sidebar_worktrees.go:84-94`, while context is only inserted when iterating a remaining session row in `internal/app/sidebar_overview.go:82-97`. Reveal consequently has no target. Smallest fix: retain/inject the current session and focused context beneath a folded ancestor, or provide an actionable current-place row on that ancestor.\n\n- Finding: **P1** — Collapsing an overview-only rail drops its focused non-agent context. The compact strip only builds terminal rows when the normalized layout contains `terminals` (`internal/app/sidebar_strip.go:357-377`); overview removes that section, while the remaining agent group cannot represent a plain pane (`internal/app/sidebar_strip.go:379-384`). Smallest fix: when overview is enabled, include its focused context in the strip while avoiding agent duplication.\n\n- Finding: **P2** — The section editor can save a contradictory layout. Adding overview appends it to the existing flat entries (`internal/app/sidebar_editor.go:242`) and serializes without normalization (`internal/app/sidebar_editor.go:341-342`), although parsing later removes sessions, terminals, and agents (`internal/config/sidebar_sections.go:62-67`). This leaves a config-generated validation warning and makes adding a flat section whil...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

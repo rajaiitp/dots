@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/pi-auto-update"
+log_file="$state_dir/latest.log"
+mkdir -p "$state_dir"
+
+exec 9>"$state_dir/update.lock"
+flock -n 9 || exit 0
+exec >"$log_file" 2>&1
+
+printf 'started_at=%s\n' "$(date --iso-8601=seconds)"
+
+pi_bin="${PI_AUTO_UPDATE_BIN:-$HOME/.npm-global/bin/pi}"
+if [[ ! -x $pi_bin ]]; then
+    pi_bin="$(command -v pi 2>/dev/null || true)"
+fi
+if [[ -z $pi_bin || ! -x $pi_bin ]]; then
+    printf 'error=pi executable not found\n'
+    exit 127
+fi
+
+export GIT_TERMINAL_PROMPT=0
+if timeout --signal=TERM --kill-after=30s 30m "$pi_bin" update --all; then
+    status=0
+else
+    status=$?
+fi
+
+printf 'finished_at=%s\nstatus=%s\n' "$(date --iso-8601=seconds)" "$status"
+exit "$status"

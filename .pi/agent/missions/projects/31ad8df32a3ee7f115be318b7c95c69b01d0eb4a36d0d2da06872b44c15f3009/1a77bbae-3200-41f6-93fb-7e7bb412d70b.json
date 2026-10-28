@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "1a77bbae-3200-41f6-93fb-7e7bb412d70b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T20:59:07.823Z",
+  "updatedAt": "2026-10-26T21:03:30.462Z",
+  "runs": [
+    {
+      "runId": "503862a6-7c9b-4997-99db-b2692e1f7bf6",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/503862a6-7c9b-4997-99db-b2692e1f7bf6",
+      "status": "complete",
+      "startedAt": "2026-10-26T20:59:07.848Z",
+      "completedAt": "2026-10-26T21:03:30.462Z",
+      "usage": {
+        "tokens": 122792
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/503862a6-7c9b-4997-99db-b2692e1f7bf6/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/503862a6-7c9b-4997-99db-b2692e1f7bf6/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/503862a6-7c9b-4997-99db-b2692e1f7bf6_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-verify",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "reviewer:\n## Review\n- **Finding: P1** — Remote overview sessions still render the legacy circle/state glyph. `internal/app/render_sidebar.go:2392-2395` routes remote nodes through `drawHostRow`, which calls the legacy renderer at `internal/app/sidebar_hosts.go:847`; that renderer always emits a bullet or agent-state glyph at `internal/app/sidebar_hosts.go:1161-1164`. Pass the overview presentation into the remote-session renderer and blank its glyph only in overview. Add a remote-session regression case.\n- **Finding: P1** — `row_style = \"underline\"` or `\"pill\"` defeats the required current-session presentation. At `internal/app/render_sidebar.go:3089-3097`, `nameMarked` replaces the colored current gutter with `sidebarGutterNameMarked`; pill mode also paints a second background over the active-tab background. Make overview presentation bypass legacy name marking and always retain its colored gutter/full-row background, while leaving sessions-section rendering unchanged. Test all row styles.\n- **Finding: P1** — The active background is not safely rendered at 16 colors. `internal/app/render_sidebar.go:2943-2952` falls back to `pal.Accent` as a literal background with terminal-default foreground, whereas the actual active tab uses foreground-plus-reverse video at 16 colors (`internal/app/render_dock.go:120-130`). This can be unreadable and violates the project’s no-colored-ground convention at that depth. Reuse a shared depth-aware active-tab style and add an ANSI-16 regression test.\n- **Finding: P2** — The hierarchy regression test does not verify indentation. `internal/app/sidebar_overview_test.go:13-34` only checks that agents occur after their parent session; an agent moved to the same column would still pass. Assert each agent name begins one hierarchy step deeper than its parent.\n- **Merge verdict: BLOCK**\n\nOutput saved to: /tmp/tuios-flat-sidebar-review.txt (1.8 KB, 6 lines). Read this file if needed."
+}

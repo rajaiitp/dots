@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "dcce5681-3d58-454d-9429-d39467b7ac30",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T20:23:21.671Z",
+  "updatedAt": "2026-10-26T20:26:35.440Z",
+  "runs": [
+    {
+      "runId": "fb816709-f430-40c2-80e9-e61ba26ac63f",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb816709-f430-40c2-80e9-e61ba26ac63f",
+      "status": "complete",
+      "startedAt": "2026-10-26T20:23:21.716Z",
+      "completedAt": "2026-10-26T20:26:35.440Z",
+      "usage": {
+        "tokens": 77557
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb816709-f430-40c2-80e9-e61ba26ac63f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb816709-f430-40c2-80e9-e61ba26ac63f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/fb816709-f430-40c2-80e9-e61ba26ac63f_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-verify",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "reviewer:\n## Review\n- **Finding: P1 — Collapsed overview can hide all focused context.** `internal/app/sidebar_strip.go:359-386,471` removes the terminal group but always renders the session list from index 0. If the attached session lies beyond the strip’s truncated rows, neither the focused non-agent terminal nor its fallback session is visible. Window or anchor the compact session list so it always includes the attached session, and add a late-current-session regression test.\n- **Merge verdict: BLOCK**"
+}

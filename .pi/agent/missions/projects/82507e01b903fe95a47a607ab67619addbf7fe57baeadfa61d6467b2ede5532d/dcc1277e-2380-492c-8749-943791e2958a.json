@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "dcc1277e-2380-492c-8749-943791e2958a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-26T07:54:25.728Z",
+  "updatedAt": "2026-10-26T08:02:10.542Z",
+  "runs": [
+    {
+      "runId": "71e05773-61c6-4dfc-9c53-7947825679ac",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-26T08:02:10.542Z",
+      "completedAt": "2026-10-26T08:02:10.542Z",
+      "usage": {
+        "tokens": 122759
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/71e05773-61c6-4dfc-9c53-7947825679ac_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja--/subagent-artifacts/71e05773-61c6-4dfc-9c53-7947825679ac_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/tmp/tuios-unified-sidebar",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja--/2026-10-26T07-25-07-564Z_01a17719-466b-75bc-b6d6-fcdb07ea271f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — the design is viable, but section exclusivity and overview lifecycle integration are not sufficiently specified to prevent incorrect navigation and stale rendering.\n\n## Critical gaps\n- “Documenting/validating” mutual exclusivity is insufficient: validation currently only warns, while parsing, the section editor, and look import would still permit duplicate session/window/agent rows and ambiguous section ownership. Define centralized normalization or rejection; preferably make `overview` deterministically replace `sessions`, `terminals`, and `agents`.\n- The new scroll offset must be integrated beyond state swapping: `sidebarScrollOffsets`, `sidebarSignature`, reveal state/focus handling, cursor indexing, section stepping/cycling, and secondary-rail swapping. Omitting the cache signature causes wheel or cursor scrolling to reuse stale frames.\n\n## Important improvements\n- Specify folding semantics. `sidebarSessionRows` removes sessions under folded repository/host groups; with overview exclusive, this also hides their pane rows. Decide whether that is intended and ensure collapsed parents retain sufficient urgency/count information.\n- Replace “where feasible” with deterministic row priorities at narrow widths: required connector, state/focus/severity marks, and the order in which queue/subagent figures are dropped.\n- Define collapsed-strip acceptance precisely: whether “current session” means one session or the existing full session list, and whether “urgent” includes working/unread-done panes or only attention states.\n- Build overview agents through `agentEntries` or equivalent rather than `sidebarAgents`, which is gated on the normal agents section.\n- Specify installer atomicity and idempotence: exact-base check, clean patch application, immutable preimage backup, postimage checksum/version verification, rollback on failure, and no daemon signal/restart.\n\n## Validation gaps\n- Defaults and all existing sectio...",
+  "acceptance": {
+    "status": "not-required",
+    "evidenceStatus": "not-required",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "none",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [],
+      "evidence": [],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [],
+    "runtimeChecks": [],
+    "verifyRuns": []
+  }
+}

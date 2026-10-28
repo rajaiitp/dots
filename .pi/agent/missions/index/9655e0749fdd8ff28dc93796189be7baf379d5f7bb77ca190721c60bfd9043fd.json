@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "81ebac24-4306-4406-9c45-3b06a5bfbae4",
+  "projectRoot": "/tmp/tuios-sidebar",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/f8689573fa734b95d7d7812ee999af9cac50d2074841f6bf3fe59a248ebcded3/81ebac24-4306-4406-9c45-3b06a5bfbae4.json",
+  "title": "[prompt redacted]",
+  "status": "cancelled",
+  "updatedAt": "2026-10-28T21:17:34.953Z",
+  "lastRunId": "e30e9495-1dad-4ccf-b931-1dfbe6cb2138"
+}
