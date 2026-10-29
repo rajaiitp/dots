@@ -1,5 +1,5 @@
 diff --git i/docs/look-keys.json w/docs/look-keys.json
-index acc498ad1bc54ae851bea518e0483d872fe7c95f..32a0efd82767d73d3fe9aff15a49a4655e747e11 100644
+index acc498a..32a0efd 100644
 --- i/docs/look-keys.json
 +++ w/docs/look-keys.json
 @@ -586,11 +586,13 @@
@@ -46,7 +46,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..32a0efd82767d73d3fe9aff15a49a465
        "type": "string",
 diff --git i/e2e/tui/dock_growing_tabs_test.go w/e2e/tui/dock_growing_tabs_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..d8dd5de15b19c88ffc1e93dab90dd6b6b1ef2772
+index 0000000..0f1c8ae
 --- /dev/null
 +++ w/e2e/tui/dock_growing_tabs_test.go
 @@ -0,0 +1,112 @@
@@ -86,7 +86,7 @@ index 0000000000000000000000000000000000000000..d8dd5de15b19c88ffc1e93dab90dd6b6
 +min_width = %d
 +padding = 2
 +show_add = true
-+active_bg = "#7daea3"
++active_bg = "accent"
 +active_fg = "#101010"
 +active_bold = true
 +inactive_bg = "#3c3836"
@@ -164,7 +164,7 @@ index 0000000000000000000000000000000000000000..d8dd5de15b19c88ffc1e93dab90dd6b6
 +}
 diff --git i/e2e/tui/dock_sidebar_bounds_test.go w/e2e/tui/dock_sidebar_bounds_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..2b14646c32df5afb97ecffb564280f32562f13bd
+index 0000000..2b14646
 --- /dev/null
 +++ w/e2e/tui/dock_sidebar_bounds_test.go
 @@ -0,0 +1,82 @@
@@ -250,8 +250,71 @@ index 0000000000000000000000000000000000000000..2b14646c32df5afb97ecffb564280f32
 +		}
 +	}
 +}
+diff --git i/e2e/tui/sidebar_checkout_test.go w/e2e/tui/sidebar_checkout_test.go
+new file mode 100644
+index 0000000..e73a40e
+--- /dev/null
++++ w/e2e/tui/sidebar_checkout_test.go
+@@ -0,0 +1,57 @@
++package tuie2e
++
++import (
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarCheckoutTracksHeadWithoutFollowingPaneCaches(t *testing.T) {
++	base := t.TempDir()
++	repo := filepath.Join(base, "checkout")
++	if out, err := exec.Command("git", "init", "--initial-branch=mac", repo).CombinedOutput(); err != nil {
++		t.Fatalf("initialize checkout: %v\n%s", err, out)
++	}
++	writeConfig(t, base, `[appearance.sidebar]
++enabled = true
++width = 24
++sections = "overview"
++`)
++	const name = "checkout-e2e"
++	term := startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"new", name, "--cwd", repo}})
++	waitBoot(t, term)
++	newWindow(t, term)
++	waitWindowCount(t, term, 1, "first pane")
++	waitBranch := func(branch string) {
++		t.Helper()
++		if err := term.WaitFor(func(s tuitest.Screen) bool {
++			_, rows := s.Size()
++			for y := range rows {
++				line := []rune(s.Line(y))
++				if strings.Contains(string(line[:min(24, len(line))]), branch) {
++					return true
++				}
++			}
++			return false
++		}, uiTimeout); err != nil {
++			t.Fatalf("sidebar did not show branch %s: %v\n%s", branch, err, term.Snapshot())
++		}
++	}
++	waitBranch("mac")
++	if err := os.WriteFile(filepath.Join(repo, ".git", "HEAD"), []byte("ref: refs/heads/main\n"), 0o644); err != nil {
++		t.Fatal(err)
++	}
++	waitBranch("main")
++	newWindow(t, term)
++	waitWindowCount(t, term, 2, "second pane")
++	for _, pane := range []string{"0", "1", "0"} {
++		if out, err := tuiosCLI(t, base, "focus-window", "-s", name, pane); err != nil {
++			t.Fatalf("focus pane %s: %v\n%s", pane, err, out)
++		}
++		waitBranch("main")
++	}
++}
 diff --git i/internal/app/agent_rail_shipped_width_test.go w/internal/app/agent_rail_shipped_width_test.go
-index d6e342150149d35064e1c8642043a48c2cf38634..38110ccefe808dea6eea4045af8dab142b022518 100644
+index d6e3421..38110cc 100644
 --- i/internal/app/agent_rail_shipped_width_test.go
 +++ w/internal/app/agent_rail_shipped_width_test.go
 @@ -80,7 +80,7 @@ func TestABlockedMachineHeaderFitsTheShippedRail(t *testing.T) {
@@ -264,7 +327,7 @@ index d6e342150149d35064e1c8642043a48c2cf38634..38110ccefe808dea6eea4045af8dab14
  		t.Errorf("a blocked session on another machine lost its name or glyph on the shipped rail: %q", row)
  	}
 diff --git i/internal/app/command_palette.go w/internal/app/command_palette.go
-index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..bcd6a006be4305dbfc0e9964d5a51957f0d11e7b 100644
+index 3a85835..bcd6a00 100644
 --- i/internal/app/command_palette.go
 +++ w/internal/app/command_palette.go
 @@ -252,10 +252,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
@@ -282,7 +345,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..bcd6a006be4305dbfc0e9964d5a51957
  		},
  		{
 diff --git i/internal/app/contextmenu_build.go w/internal/app/contextmenu_build.go
-index 666deba7b3ca4c82378fcc6654b2a16afc77cad3..9bbf02da29d8abd9e71e2e57127247db08f22b0e 100644
+index 666deba..9bbf02d 100644
 --- i/internal/app/contextmenu_build.go
 +++ w/internal/app/contextmenu_build.go
 @@ -94,7 +94,7 @@ func (m *OS) OpenContextMenu(x, y int) {
@@ -294,9 +357,21 @@ index 666deba7b3ca4c82378fcc6654b2a16afc77cad3..9bbf02da29d8abd9e71e2e57127247db
  		if idx := m.DockItemAt(x, y); idx >= 0 {
  			return CtxTargetDockItem, idx, 0
  		}
+diff --git i/internal/app/daemon_wiring.go w/internal/app/daemon_wiring.go
+index 16e2b0e..b92240a 100644
+--- i/internal/app/daemon_wiring.go
++++ w/internal/app/daemon_wiring.go
+@@ -291,6 +291,7 @@ func (m *OS) reportFocusChange() {
+ 	if m.detachFired.Load() {
+ 		return
+ 	}
++	m.rememberFocusedSidebarAgent()
+ 	current := ""
+ 	if w := m.GetFocusedWindow(); w != nil {
+ 		current = w.ID
 diff --git i/internal/app/dock_geometry.go w/internal/app/dock_geometry.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..0b807b604959127b0077dda5ab78ba3a7baccb7e
+index 0000000..0b807b6
 --- /dev/null
 +++ w/internal/app/dock_geometry.go
 @@ -0,0 +1,68 @@
@@ -369,7 +444,7 @@ index 0000000000000000000000000000000000000000..0b807b604959127b0077dda5ab78ba3a
 +	}
 +}
 diff --git i/internal/app/dock_helpers.go w/internal/app/dock_helpers.go
-index 94b799477c2a35cd743bb8f450622ef8f8c1cf19..8d2e31fffc719687c02c1d0c2cc10a6ef861ba4a 100644
+index 94b7994..8d2e31f 100644
 --- i/internal/app/dock_helpers.go
 +++ w/internal/app/dock_helpers.go
 @@ -153,12 +153,18 @@ func (m *OS) dockTabs() config.DockTabsConfig {
@@ -443,7 +518,7 @@ index 94b799477c2a35cd743bb8f450622ef8f8c1cf19..8d2e31fffc719687c02c1d0c2cc10a6e
  	}
  	// A mode's legend does not yield either. It is up only while the mode is,
 diff --git i/internal/app/dock_workspace_names_test.go w/internal/app/dock_workspace_names_test.go
-index 85274718a2726675f72efb49f2830d2e45823ee4..ca4a8a070ae6d3033001ee43765e0829192b324d 100644
+index 8527471..ca4a8a0 100644
 --- i/internal/app/dock_workspace_names_test.go
 +++ w/internal/app/dock_workspace_names_test.go
 @@ -9,6 +9,7 @@ import (
@@ -476,7 +551,7 @@ index 85274718a2726675f72efb49f2830d2e45823ee4..ca4a8a070ae6d3033001ee43765e0829
  	m := chipOS(t)
  	for _, tab := range m.buildDockWorkspaceTabs() {
 diff --git i/internal/app/keyboard_enhancements.go w/internal/app/keyboard_enhancements.go
-index c194ae5b93a1ccfec60c6dc1af2be27b20055d0f..a8fbd22320c7b5b6c2c92f3badaceab1362af1d3 100644
+index c194ae5..a8fbd22 100644
 --- i/internal/app/keyboard_enhancements.go
 +++ w/internal/app/keyboard_enhancements.go
 @@ -1,10 +1,17 @@
@@ -548,7 +623,7 @@ index c194ae5b93a1ccfec60c6dc1af2be27b20055d0f..a8fbd22320c7b5b6c2c92f3badaceab1
  // escape code and the host has not yet said it switched.
  //
 diff --git i/internal/app/keyboard_enhancements_test.go w/internal/app/keyboard_enhancements_test.go
-index d2263dd97247f5266e21cee712cc1a5ecd63b635..9ac671db3828ed5fbc427d60279316274d64a0b8 100644
+index d2263dd..9ac671d 100644
 --- i/internal/app/keyboard_enhancements_test.go
 +++ w/internal/app/keyboard_enhancements_test.go
 @@ -3,8 +3,10 @@ package app
@@ -627,7 +702,7 @@ index d2263dd97247f5266e21cee712cc1a5ecd63b635..9ac671db3828ed5fbc427d6027931627
 +	}
 +}
 diff --git i/internal/app/link_pointer.go w/internal/app/link_pointer.go
-index febd944f51ce8d02aad201374fc13996295bd362..f76cb018c2279fd53fa52884959567048eb8ec75 100644
+index febd944..f76cb01 100644
 --- i/internal/app/link_pointer.go
 +++ w/internal/app/link_pointer.go
 @@ -101,7 +101,7 @@ func (m *OS) PointerSeen() (x, y int) {
@@ -640,7 +715,7 @@ index febd944f51ce8d02aad201374fc13996295bd362..f76cb018c2279fd53fa5288495956704
  		return
  	}
 diff --git i/internal/app/os.go w/internal/app/os.go
-index 71629421598eb340f54fe1c571c1de0ed1833f86..813dd9bd661d4be0342654b6d9140d07fa59af88 100644
+index 7162942..2500a72 100644
 --- i/internal/app/os.go
 +++ w/internal/app/os.go
 @@ -1019,6 +1019,12 @@ type OS struct {
@@ -664,8 +739,17 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..813dd9bd661d4be0342654b6d9140d07
  	// sidebarAgentAnchor keeps the agents section's viewport on the row it was
  	// left on rather than on the index that row happened to have, since that
  	// section resorts itself on live agent state. See sidebar_anchor.go.
+@@ -1588,6 +1595,8 @@ type OS struct {
+ 	// sidebarSubagentFoldGen counts the toggles of any rail's headings, for
+ 	// the rails' signatures.
+ 	sidebarSubagentFoldGen int
++	sidebarAgentFocus      sidebarAgentFocusState
++	sidebarCheckouts       sidebarCheckoutState
+ 	// subagentHideDue is the earliest moment a finished subagent's row is
+ 	// due to go under appearance.sidebar.subagent_hide_finished, noted while
+ 	// the rail is drawn, and subagentHideArmed the moment a frame was last
 diff --git i/internal/app/os_popup.go w/internal/app/os_popup.go
-index 119df259ccbd3ed79b9bf469607bb6653e55ac1e..1853e02ffc9916f47cbf5b78f400a047cb261fcb 100644
+index 119df25..1853e02 100644
 --- i/internal/app/os_popup.go
 +++ w/internal/app/os_popup.go
 @@ -1,6 +1,8 @@
@@ -731,7 +815,7 @@ index 119df259ccbd3ed79b9bf469607bb6653e55ac1e..1853e02ffc9916f47cbf5b78f400a047
 +	return nil
  }
 diff --git i/internal/app/program_options.go w/internal/app/program_options.go
-index ee4e568d96187a9db7f95051975f789dbe8543da..accbf5866e1fecdee9191cf020b5865a11343563 100644
+index ee4e568..accbf58 100644
 --- i/internal/app/program_options.go
 +++ w/internal/app/program_options.go
 @@ -292,7 +292,7 @@ func FilterMouseMotion(model tea.Model, msg tea.Msg) tea.Msg {
@@ -744,7 +828,7 @@ index ee4e568d96187a9db7f95051975f789dbe8543da..accbf5866e1fecdee9191cf020b5865a
  	}
  
 diff --git i/internal/app/quit_menu.go w/internal/app/quit_menu.go
-index 64bcc8d3cad86cf8b8149246c346ad78d8bf4d1b..7faae45b795c7660cdd3ead269df57e7680c5c07 100644
+index 64bcc8d..7faae45 100644
 --- i/internal/app/quit_menu.go
 +++ w/internal/app/quit_menu.go
 @@ -1,9 +1,11 @@
@@ -835,7 +919,7 @@ index 64bcc8d3cad86cf8b8149246c346ad78d8bf4d1b..7faae45b795c7660cdd3ead269df57e7
  	return nil
  }
 diff --git i/internal/app/render_dock.go w/internal/app/render_dock.go
-index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd491411a6ac 100644
+index 9429e6b..c3d480d 100644
 --- i/internal/app/render_dock.go
 +++ w/internal/app/render_dock.go
 @@ -10,6 +10,7 @@ import (
@@ -991,7 +1075,7 @@ index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd49
  	// The styled hairline is kept until its width, glyph or colour changes.
  	// Keyed on the glyph as well as the width: the separator character follows
 diff --git i/internal/app/render_dock_session.go w/internal/app/render_dock_session.go
-index 3de66d46536f3e52d167987b3bbf4b4dbddf5758..41ece9bfadce151826931e10c1ee51295b22a455 100644
+index 3de66d4..41ece9b 100644
 --- i/internal/app/render_dock_session.go
 +++ w/internal/app/render_dock_session.go
 @@ -32,7 +32,7 @@ func (m *OS) buildDockSessionStrip() (string, []dockSessionCell) {
@@ -1004,7 +1088,7 @@ index 3de66d46536f3e52d167987b3bbf4b4dbddf5758..41ece9bfadce151826931e10c1ee5129
  	}
  
 diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
-index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831058e304e 100644
+index 9e06237..925409c 100644
 --- i/internal/app/render_sidebar.go
 +++ w/internal/app/render_sidebar.go
 @@ -134,6 +134,13 @@ const (
@@ -1021,7 +1105,32 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  )
  
  // sidebarAddGlyph is the mark both add controls wear. One cell, so it costs a
-@@ -276,6 +283,10 @@ const (
+@@ -156,12 +163,13 @@ type sidebarRowState struct {
+ 	// CursorBg is appearance.sidebar.cursor_background as written, empty
+ 	// when unset. It is a string so a row state stays cheap to build per row;
+ 	// sidebarRowBg resolves it against the palette the row is drawn with.
+-	CursorBg string
++	CursorBg      string
++	ActiveSubtree bool
+ }
+ 
+ // lit reports whether the row is drawing any band at all, which is what the
+ // parts of a row that only care about being on a ground ask.
+-func (st sidebarRowState) lit() bool { return st.Cursor || st.Hover }
++func (st sidebarRowState) lit() bool { return st.Cursor || st.Hover || st.ActiveSubtree }
+ 
+ // mark applies the row's state to a finished row in attributes (see
+ // overlay.RowState). At 16 colours that is the whole cursor treatment. At
+@@ -216,6 +224,8 @@ func sidebarRowBg(st sidebarRowState, pal overlay.Palette) color.Color {
+ 			return c
+ 		}
+ 		return pal.Surface
++	case st.ActiveSubtree:
++		return pal.Surface
+ 	case st.Cursor, st.Hover:
+ 		return pal.RowSel
+ 	}
+@@ -276,6 +286,10 @@ const (
  	// the enum sizes every per-section array in this package, and one more
  	// value fits all of them as they are. See sidebar_custom.go.
  	sidebarSectionCustom
@@ -1032,7 +1141,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	sidebarSectionCount
  )
  
-@@ -1326,7 +1337,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
+@@ -1326,7 +1340,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
  		return nil
  	}
  	sidebarX := sidebarEdgeX(m.legacySidebarEdge(), w, m.GetRenderWidth())
@@ -1041,7 +1150,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  }
  
  // renderSecondarySidebar draws the opt-in opposite edge with its own layout
-@@ -1377,7 +1388,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
+@@ -1377,7 +1391,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
  	if panel == "" {
  		return nil
  	}
@@ -1050,7 +1159,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  }
  
  // sidebarWindowSection windows one section's rows onto the lines it was given,
-@@ -1431,12 +1442,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1431,12 +1445,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if w <= 0 {
  		return nil, 0
  	}
@@ -1065,7 +1174,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	side := m.legacySidebarEdge()
  	if m.sidebarDrawing {
  		side = m.sidebarDrawingEdge
-@@ -1534,7 +1545,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1534,7 +1548,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// and hover has to resolve against the same arithmetic the draw uses.
  	shown, peeking := m.sidebarShownSession(sessions)
  	terminals := m.sidebarTerminals(sessions, shown)
@@ -1075,7 +1184,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	m.sidebarSortAgents(agents)
  	// Rows long at rest fold into one line at the end. The compact rule below
  	// reads every agent pane, folded or not, since a folded pane is still one
-@@ -1553,6 +1565,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1553,6 +1568,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// listing was read by a command, off this goroutine, and this only draws
  	// whatever the last reply left behind. Nothing here stats, opens or spawns.
  	files := m.sidebarFileRows()
@@ -1086,7 +1195,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  
  	// A peeked session with no panes says so, or the section would read as "the
  	// attached session has no panes". Decided before the compact rule below
-@@ -1568,6 +1584,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1568,6 +1587,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	nS := len(sessionRows)
  	nT := len(terminals)
  	nA := len(agents)
@@ -1094,7 +1203,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	if emptyFilter {
  		nA = 1
  	}
-@@ -1617,13 +1634,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1617,13 +1637,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  
  	canCreate := m.SidebarCanCreateSession()
  	footerCursor := func(kind sidebarRowKind) bool { return isCursor(kind, "", "") }
@@ -1136,7 +1245,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
  
  	gitRows := m.gitRows()
-@@ -1651,6 +1689,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1651,6 +1692,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		sidebarSectionFiles:     filesRows,
  		sidebarSectionGit:       len(gitRows),
  		sidebarSectionCustom:    nC,
@@ -1144,7 +1253,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
  	// The last section in the configured layout is the one pinned to the rail's
  	// bottom: the slack rides above it, and it wears a blank line of its own so
-@@ -1673,12 +1712,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1673,12 +1715,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	agentRowH := 1
  	// Row heights per section, which is what turns a section's line budget into
  	// the rows it can show and a st.lit() line back into the row under it.
@@ -1174,7 +1283,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	chrome := 0
  	drawn := 0
  	for i, p := range plans {
-@@ -1694,15 +1749,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1694,15 +1752,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawn++
@@ -1194,7 +1303,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	// The rows under the agent rows, one per subagent, fitted to the lines
  	// the section's budget gives it (see sidebarAgentChildren). They are rows
  	// of the section like any other, so the tall test and the viewport below
-@@ -1758,7 +1810,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1758,7 +1813,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// when something is drawn above it to split from. What the drag needs to
  	// turn a pointer row into a share is written down here, in this frame's
  	// numbers.
@@ -1203,7 +1312,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	pinnedAt := -1
  	for i, p := range plans {
  		if !p.Spacer && p.Section == pinned {
-@@ -1778,7 +1830,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1778,7 +1833,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	for s := range place {
  		place[s] = sectionPlace{header: -1}
  	}
@@ -1212,7 +1321,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	placed := 0
  	// The last section placed above the current entry, so a spacer's lines can
  	// be given to its band. Empty space draws nothing and so has no band of its
-@@ -1803,20 +1855,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1803,20 +1858,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		y0 := line
  		placed++
  		if p.Section == pinned {
@@ -1247,7 +1356,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		prev = p.Section
  	}
  	// With nothing pinned the slack falls where it always did, under the last
-@@ -1834,9 +1889,9 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1834,9 +1892,9 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			break
  		}
  	}
@@ -1260,7 +1369,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	// the draw below cuts the lines and the rectangles to fit, and a band left
  	// past the cut would hand the wheel to a section with nothing on screen.
  	for s := range m.sidebarSectionY {
-@@ -1869,9 +1924,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1869,9 +1927,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// anchor above and before the cursor's auto-scroll below, so the three
  	// mechanisms agree on what is on screen and the cursor keeps the last word.
  	// See sidebar_reveal.go.
@@ -1273,7 +1382,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  			if rows := capRows[sec]; rows > 0 {
  				if idx < *scroll[sec] {
  					*scroll[sec] = idx
-@@ -1935,6 +1991,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1935,6 +1994,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		hoverRow[s] = -1
  	}
  	footerHoverLine, footerHoverX := -1, -1
@@ -1281,7 +1390,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	dividerHover := false
  	// Every header now carries click targets of its own (the add controls, the
  	// agents section's filter and sort, the files section's cd), so the
-@@ -1946,6 +2003,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1946,6 +2006,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if !m.SidebarDrag.Dragging && m.SidebarHoverActive && m.SidebarBandContains(m.SidebarHoverX, m.SidebarHoverY) {
  		delta := m.SidebarHoverY - topMargin
  		footerTop := height - footerH
@@ -1292,7 +1401,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		onHeader := -1
  		for s := range place {
  			if place[s].header >= 0 && delta == place[s].header {
-@@ -1953,7 +2014,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1953,7 +2017,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			}
  		}
  		switch {
@@ -1305,7 +1414,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  			footerHoverLine, footerHoverX = delta-footerTop, m.SidebarHoverX-contentX0
  		case onHeader >= 0:
  			headerHoverX[onHeader] = m.SidebarHoverX - contentX0
-@@ -1972,11 +2037,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1972,11 +2040,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  	// Re-rendered now the pointer is resolved; the first pass only measured how
  	// many lines the footer takes so the sections could be sized.
@@ -1323,7 +1432,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	// recordHit publishes a drawn row's rectangle and its nav row together, in
  	// drawn order, so the mouse and the keyboard address one target set. Hits
  	// only ever come from the renderer as it draws; nothing recomputes them.
-@@ -2031,6 +2099,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2031,6 +2102,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: tk.Kind, SessionID: sessionID, WindowID: tk.WindowID, WindowIndex: -1})
  	}
@@ -1344,7 +1453,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  
  	drawSessions := func() {
  		add := ""
-@@ -2067,7 +2149,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2067,7 +2152,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// A space's heading. It names the rows under it and is not a
  				// row to act on, so it records no hit and no nav row: the
  				// pointer and the cursor pass over it.
@@ -1353,7 +1462,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  				continue
  			}
  			if s.Kind == sessiontree.KindRepo {
-@@ -2078,18 +2160,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2078,18 +2163,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// cursor has to tell them apart.
  				st := m.railRowState(idx == hoverRow[sidebarSectionSessions], isCursor(sidebarRowRepo, s.ID, s.Space))
  				recordHit(sidebarRowRepo, s.ID, s.Space, -1, 1)
@@ -1375,7 +1484,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		}
  		if h := hidden[sidebarSectionSessions]; h > 0 {
  			lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
-@@ -2326,6 +2408,90 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2326,6 +2411,90 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  	}
  
@@ -1466,7 +1575,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	draw := [sidebarSectionCount]func(){
  		sidebarSectionSessions:  drawSessions,
  		sidebarSectionTerminals: drawTerminals,
-@@ -2333,6 +2499,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2333,6 +2502,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		sidebarSectionFiles:     drawFiles,
  		sidebarSectionGit:       drawGit,
  		sidebarSectionCustom:    drawCustom,
@@ -1474,7 +1583,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
  	drawnAt := 0
  	for i, p := range plans {
-@@ -2346,19 +2513,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2346,19 +2516,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawnAt++
@@ -1511,7 +1620,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  			}
  		}
  		draw[p.Section]()
-@@ -2368,11 +2544,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2368,11 +2547,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		lines = append(lines, blank)
  	}
  
@@ -1527,7 +1636,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		y := footerTop + z.Line
  		m.SidebarHits = append(m.SidebarHits, sidebarRowHit{
  			X0: contentX0 + z.X0, X1: contentX0 + z.X1,
-@@ -2382,12 +2558,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2382,12 +2561,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: z.Kind, WindowIndex: -1})
  	}
@@ -1560,7 +1669,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	// that the chrome alone overruns it produced a rail taller than its own band:
  	// the extra rows painted over the dock, and the hit rectangles recorded on
  	// them made a row outside the band clickable.
-@@ -2577,7 +2770,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
+@@ -2577,7 +2773,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
  // others from the cached listing, so agents elsewhere surface here marked
  // Foreign.
  func (m *OS) sidebarAgents(sessions []sessiontree.Node) []sidebarAgentEntry {
@@ -1569,7 +1678,15 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		return nil
  	}
  	return m.agentEntries(sessions)
-@@ -2638,7 +2831,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2590,6 +2786,7 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+ 	if !m.agentsOn() {
+ 		return nil
+ 	}
++	m.reconcileSidebarAgentFocus(sessions)
+ 	var agents []sidebarAgentEntry
+ 	for _, s := range sessions {
+ 		pr := ""
+@@ -2638,7 +2835,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  // auto-scroll knows which offset to move and by how much.
  func (m *OS) sidebarCursorIndex(target sidebarNavRow, sessions []sessiontree.Node,
  	terminals []sidebarTerminalEntry, agents []sidebarAgentEntry, files []fileRowSpec,
@@ -1583,7 +1700,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	switch target.Kind {
  	case sidebarRowSession:
  		for i, s := range sessions {
-@@ -2812,13 +3011,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2812,13 +3015,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  	slices.SortFunc(items, func(a, b placed) int { return a.zone.X0 - b.zone.X0 })
  
  	zones := make([]sidebarFooterZone, 0, len(items))
@@ -1604,7 +1721,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		for c := it.zone.X0 + 1; c < it.zone.X1 && c < cw; c++ {
  			row[c] = ""
  		}
-@@ -2827,7 +3029,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2827,7 +3033,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  
  	lines := make([]string, len(cells))
  	for i, row := range cells {
@@ -1613,7 +1730,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
  	return lines, zones
  }
-@@ -2838,6 +3040,14 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2838,6 +3044,14 @@ func (m *OS) windowIndexByID(id string) int {
  	return slices.IndexFunc(m.Windows, func(w *terminal.Window) bool { return w != nil && w.ID == id })
  }
  
@@ -1628,7 +1745,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  // sidebarSessionRow renders one session row.
  //
  //	▎● name              3
-@@ -2850,16 +3060,37 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2850,16 +3064,27 @@ func (m *OS) windowIndexByID(id string) int {
  // accent gutter mark and a full-strength name; pointer or keyboard cursor a
  // Surface band; a state wanting a human a severity gutter mark, a coloured
  // glyph and the rail's one bold. No standing fill, so the only band on a
@@ -1639,6 +1756,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  // pointer.
 -func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw int, pal overlay.Palette, st sidebarRowState, dragged, showCounts bool) string {
 +func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw int, pal overlay.Palette, st sidebarRowState, dragged, showCounts bool, presentation sidebarSessionPresentation) string {
++	st.ActiveSubtree = presentation == sidebarSessionPresentationOverview && node.IsCurrent
  	rowBg := sidebarRowBg(st, pal)
  	if dragged {
  		// A drag keeps the strongest band on the row riding the pointer.
@@ -1646,17 +1764,6 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
 +	highlighted := presentation == sidebarSessionPresentationOverview
 +	fg := color.Color(pal.Fg)
-+	if highlighted {
-+		highlight := pal.Accent
-+		if node.Worktree != nil {
-+			if current := theme.Current(); current != nil && current.BrightPurple != nil {
-+				highlight = theme.AsColor(current.BrightPurple)
-+			} else {
-+				highlight = overlay.Slot(13)
-+			}
-+		}
-+		fg = overlay.Readable(highlight, m.sidebarGroundOr(rowBg))
-+	}
 +	element := sidebarUISession
 +	if highlighted && node.Worktree != nil {
 +		element = sidebarUIBranch
@@ -1668,7 +1775,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  
  	// The session's colour takes whichever of the row's two marks the louder
  	// signals have not claimed. The quiet dot first, which costs the rail
-@@ -2871,7 +3102,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2871,7 +3096,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	stated := agentStateIndicator(node.AgentState) != ""
  
  	glyph := sidebarQuietDotTinted(dotTint(tint, pal, stated), rowBg, pal, &m.Settings)
@@ -1679,10 +1786,11 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
  	}
  
-@@ -2897,27 +3130,22 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2896,28 +3123,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+ 	// the thing on the rail you act on, so emphasis drains down from it: the
  	// machine heading over it is a step quieter, and the counts and marks
  	// quieter still.
- 	//
+-	//
 -	// It used to be dim unless this was the attached session, which put a
 -	// non-attached session on the same ink as the heading above it once that
 -	// heading stopped being bright. Two levels sharing an ink is the complaint
@@ -1695,9 +1803,6 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
 -	// that changes ground and ink at once reads as an error rather than as a
 -	// selection.
 -	fg := pal.Fg
-+	// Overview names use the accent as a stable hierarchy label. Current focus
-+	// remains the gutter mark, so highlighting every name does not erase where
-+	// input is attached.
  	title := printableTitle(node.Title)
  	indent := m.sidebarNodeIndent(node)
 -	// A worktree session is named by its branch under its repository's row,
@@ -1718,7 +1823,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	// The branch rides after the name in muted ink, and only when the two fit
  	// together: a name that has to scroll wants every column, and a branch
  	// with its name cut from under it says nothing. So it is context for the
-@@ -2945,33 +3173,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2945,33 +3163,39 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// name a key that opens something else.
  	mark, markW := "", 0
  	if m.Settings.SidebarShowNumbers && sessionIdx > 0 && sessionIdx <= 9 {
@@ -1757,10 +1862,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	gutter := sidebarGutterTinted(node.IsCurrent, node.AgentState, tint, rowBg, pal, &m.Settings)
 -	if nameMarked {
 +	if presentation == sidebarSessionPresentationOverview {
-+		gutter = sidebarStyle(rowBg, nil).Render(" ")
-+		if node.IsCurrent {
-+			gutter = sidebarStyle(rowBg, railFocusTint(tint, pal)).Render(m.Settings.GetRailFocusMark())
-+		}
++		gutter = m.sidebarOverviewGutter(node.IsCurrent, rowBg, pal)
 +	} else if nameMarked {
  		gutter = sidebarGutterNameMarked(node.AgentState, rowBg, pal, &m.Settings)
  	}
@@ -1770,7 +1872,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..2f91679c1042362b89d8395dda612831
  	}
  	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
 diff --git i/internal/app/session_close.go w/internal/app/session_close.go
-index 5a389c8144d01219aa046bda5a9fa0ed99e1dd40..cad5b3eb9c6b27ab85ac55ec035bebdbc7395ada 100644
+index 5a389c8..cad5b3e 100644
 --- i/internal/app/session_close.go
 +++ w/internal/app/session_close.go
 @@ -299,7 +299,7 @@ func (m *OS) SessionCloseActivate(idx int) tea.Cmd {
@@ -1783,7 +1885,7 @@ index 5a389c8144d01219aa046bda5a9fa0ed99e1dd40..cad5b3eb9c6b27ab85ac55ec035bebdb
  		return nil
  	}
 diff --git i/internal/app/session_kill_test.go w/internal/app/session_kill_test.go
-index 8818bdb52d40c7dda61d6079b8d02bdee4cf8d2d..f5aef1fb6a1a1fbd424d91264c6b05811b43d630 100644
+index 8818bdb..f5aef1f 100644
 --- i/internal/app/session_kill_test.go
 +++ w/internal/app/session_kill_test.go
 @@ -120,3 +120,41 @@ func TestTheNextSessionIsAnIdentity(t *testing.T) {
@@ -1828,8 +1930,356 @@ index 8818bdb52d40c7dda61d6079b8d02bdee4cf8d2d..f5aef1fb6a1a1fbd424d91264c6b0581
 +		}
 +	}
 +}
+diff --git i/internal/app/session_labels.go w/internal/app/session_labels.go
+index 0ad9968..cf3c592 100644
+--- i/internal/app/session_labels.go
++++ w/internal/app/session_labels.go
+@@ -2,6 +2,7 @@ package app
+ 
+ import (
+ 	"maps"
++	"path/filepath"
+ 	"strconv"
+ 
+ 	"github.com/Gaurav-Gosain/tuios/internal/session"
+@@ -12,6 +13,7 @@ import (
+ // them and the merge treats an empty incoming value as "not sent"), so this is
+ // a read-only adoption and a client can never clear a label by syncing.
+ func (m *OS) adoptSessionLabels(state *session.SessionState) {
++	m.adoptSidebarCheckout(state)
+ 	m.SessionDisplayName = state.DisplayName
+ 	m.SessionAccent = state.Accent
+ 	m.SessionRestored = state.Restored
+@@ -68,16 +70,18 @@ func (m *OS) sessionTitle(name string) string {
+ 	return name
+ }
+ 
+-// sessionPlace is where a session is, as the rail shows it: the directory label
+-// for its focused pane and the git branch there, both from the daemon's listing
+-// and both empty until the listing has said. The directory is offered only for
+-// a name tuios generated, since "session-3" says nothing and a name a person
+-// chose says more than a directory. The branch follows either.
++// sessionPlace prefers the checkout's actual branch. Sessions whose checkout
++// has not been visited fall back to the daemon's focused-pane listing.
+ func (m *OS) sessionPlace(name string) (dir, branch string) {
+-	if m.DaemonClient == nil {
+-		return "", ""
++	if m.DaemonClient != nil {
++		dir, branch = m.DaemonClient.SessionPlace(name)
++	}
++	if checkout, known := m.sidebarCheckoutPlace(name); known {
++		dir, branch = filepath.Base(checkout.dir), checkout.branch
++		if checkout.root != "" {
++			dir = filepath.Base(checkout.root)
++		}
+ 	}
+-	dir, branch = m.DaemonClient.SessionPlace(name)
+ 	if !session.IsGeneratedSessionName(name) {
+ 		dir = ""
+ 	}
+diff --git i/internal/app/session_tree.go w/internal/app/session_tree.go
+index 8919d8b..5d4271e 100644
+--- i/internal/app/session_tree.go
++++ w/internal/app/session_tree.go
+@@ -112,7 +112,7 @@ func (m *OS) currentSessionInput() sessiontree.SessionInput {
+ 		Restored:         m.SessionRestored,
+ 		Global:           m.SessionGlobal,
+ 		CurrentWorkspace: m.dockWorkspace(),
+-		Worktree:         worktreeRef(m.SessionWorktree),
++		Worktree:         m.sidebarCheckoutWorktree(name, m.SessionWorktree),
+ 		Space:            m.SessionSpace,
+ 		Windows:          windows,
+ 	}
+@@ -161,7 +161,7 @@ func (m *OS) foreignSessionInput(client *session.TUIClient, name string) session
+ 		Restored:         client.SessionRestored(name),
+ 		Global:           client.SessionGlobal(name),
+ 		CurrentWorkspace: client.SessionCurrentWorkspace(name),
+-		Worktree:         worktreeRef(client.SessionWorktree(name)),
++		Worktree:         m.sidebarCheckoutWorktree(name, client.SessionWorktree(name)),
+ 		Space:            client.SessionSpace(name),
+ 		Windows:          windows,
+ 	}
+diff --git i/internal/app/sidebar_agent_focus.go w/internal/app/sidebar_agent_focus.go
+new file mode 100644
+index 0000000..d1eb567
+--- /dev/null
++++ w/internal/app/sidebar_agent_focus.go
+@@ -0,0 +1,80 @@
++package app
++
++import "github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++
++type sidebarAgentFocusKey struct {
++	machine string
++	session string
++}
++
++type sidebarAgentFocusState struct {
++	windows    map[sidebarAgentFocusKey]string
++	generation uint64
++}
++
++func (s *sidebarAgentFocusState) remember(key sidebarAgentFocusKey, windowID string) {
++	if s.windows[key] == windowID {
++		return
++	}
++	if windowID == "" {
++		delete(s.windows, key)
++	} else {
++		if s.windows == nil {
++			s.windows = make(map[sidebarAgentFocusKey]string)
++		}
++		s.windows[key] = windowID
++	}
++	s.generation++
++}
++
++func (m *OS) sidebarAgentFocusKey(sessionID string) sidebarAgentFocusKey {
++	return sidebarAgentFocusKey{machine: m.attachedMachine(), session: sessionID}
++}
++
++func (m *OS) rememberFocusedSidebarAgent() {
++	w := m.GetFocusedWindow()
++	if !m.agentsOn() || w == nil || w.AgentState == "" || isScratch(w) {
++		return
++	}
++	sessionID := m.SessionName
++	if sessionID == "" {
++		sessionID = "local"
++	}
++	m.sidebarAgentFocus.remember(m.sidebarAgentFocusKey(sessionID), w.ID)
++}
++
++func (m *OS) reconcileSidebarAgentFocus(sessions []sessiontree.Node) {
++	machine := m.attachedMachine()
++	known := make(map[string]bool, len(sessions))
++	for _, node := range sessions {
++		if node.Kind != sessiontree.KindSession || node.Host != "" {
++			continue
++		}
++		known[node.ID] = true
++		key := m.sidebarAgentFocusKey(node.ID)
++		remembered := m.sidebarAgentFocus.windows[key]
++		found := false
++		for _, win := range node.Children {
++			if win.AgentState == "" {
++				continue
++			}
++			if node.IsCurrent && win.IsCurrent {
++				m.sidebarAgentFocus.remember(key, win.ID)
++				remembered = win.ID
++			}
++			found = found || win.ID == remembered
++		}
++		if node.Children != nil && !found {
++			m.sidebarAgentFocus.remember(key, "")
++		}
++	}
++	for key := range m.sidebarAgentFocus.windows {
++		if key.machine == machine && !known[key.session] {
++			m.sidebarAgentFocus.remember(key, "")
++		}
++	}
++}
++
++func (m *OS) sidebarAgentWasLastFocused(e sidebarAgentEntry) bool {
++	return e.Host == "" && e.WindowID != "" && m.sidebarAgentFocus.windows[m.sidebarAgentFocusKey(e.SessionID)] == e.WindowID
++}
+diff --git i/internal/app/sidebar_agent_focus_test.go w/internal/app/sidebar_agent_focus_test.go
+new file mode 100644
+index 0000000..ecc6852
+--- /dev/null
++++ w/internal/app/sidebar_agent_focus_test.go
+@@ -0,0 +1,187 @@
++package app
++
++import (
++	"image/color"
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func focusOverviewSession(tree *sessiontree.Tree, sessionID, windowID string) {
++	for i := range tree.Sessions {
++		s := &tree.Sessions[i]
++		s.IsCurrent = s.ID == sessionID
++		for j := range s.Children {
++			s.Children[j].IsCurrent = s.IsCurrent && s.Children[j].ID == windowID
++		}
++	}
++}
++
++func TestOverviewRemembersAnAgentPerSession(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	for _, target := range [][2]string{
++		{"main", "bbbbbbbb2222"},
++		{"main", "cccccccc3333"},
++		{"main", "aaaaaaaa1111"},
++		{"api", "dddddddd4444"},
++		{"api", "eeeeeeee5555"},
++	} {
++		focusOverviewSession(&tree, target[0], target[1])
++		m.agentEntries(tree.Sessions)
++	}
++	for sessionID, want := range map[string]string{"main": "cccccccc3333", "api": "dddddddd4444"} {
++		if got := m.sidebarAgentFocus.windows[m.sidebarAgentFocusKey(sessionID)]; got != want {
++			t.Fatalf("%s remembers %q, want %q", sessionID, got, want)
++		}
++	}
++	if m.sidebarAgentWasLastFocused(sidebarAgentEntry{SessionID: "main", WindowID: "bbbbbbbb2222"}) {
++		t.Fatal("two agents in one subtree are remembered")
++	}
++	if m.sidebarAgentWasLastFocused(sidebarAgentEntry{Host: "other", SessionID: "main", WindowID: "cccccccc3333"}) {
++		t.Fatal("a remote session reused this machine's memory")
++	}
++
++	// An agent that closes or stops being an agent must not retain the mark.
++	tree.Sessions[0].Children[2].AgentState = ""
++	m.agentEntries(tree.Sessions)
++	if got := m.sidebarAgentFocus.windows[m.sidebarAgentFocusKey("main")]; got != "" {
++		t.Fatalf("stopped agent retained its mark: %q", got)
++	}
++	m.agentEntries(tree.Sessions[:1])
++	if len(m.sidebarAgentFocus.windows) != 0 {
++		t.Fatalf("removed session retained memory: %v", m.sidebarAgentFocus.windows)
++	}
++}
++
++func TestOverviewFocusMemorySurvivesHiddenRailsAndInvalidatesCache(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "sessions"
++	m.FocusedWindow = 1
++	m.focusReportedID = m.Windows[1].ID
++	before := m.sidebarSignature()
++	m.reportFocusChange()
++	if !m.sidebarAgentWasLastFocused(sidebarAgentEntry{SessionID: "main", WindowID: m.Windows[1].ID}) {
++		t.Fatal("focus on an already-focused agent was not remembered with overview hidden")
++	}
++	after := m.sidebarSignature()
++	if before == after {
++		t.Fatal("focus memory did not invalidate the sidebar signature")
++	}
++	m.reportFocusChange()
++	if after != m.sidebarSignature() {
++		t.Fatal("unchanged focus invalidated the signature again")
++	}
++	m.FocusedWindow = 0
++	m.focusReportedID = m.Windows[0].ID
++	m.reportFocusChange()
++	if !m.sidebarAgentWasLastFocused(sidebarAgentEntry{SessionID: "main", WindowID: m.Windows[1].ID}) {
++		t.Fatal("focusing a shell forgot the last agent")
++	}
++}
++
++func TestOverviewFocusMemoryKeepsUnknownAndOtherMachineSessions(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	local := m.sidebarAgentFocusKey("api")
++	other := sidebarAgentFocusKey{machine: "other", session: "api"}
++	m.sidebarAgentFocus.remember(local, "dddddddd4444")
++	m.sidebarAgentFocus.remember(other, "remote-window")
++	tree.Sessions[1].Children = nil
++	m.reconcileSidebarAgentFocus(tree.Sessions)
++	if m.sidebarAgentFocus.windows[local] != "dddddddd4444" || m.sidebarAgentFocus.windows[other] != "remote-window" {
++		t.Fatalf("unknown children or another machine lost memory: %v", m.sidebarAgentFocus.windows)
++	}
++	tree.Sessions[1].Children = []sessiontree.Node{}
++	m.reconcileSidebarAgentFocus(tree.Sessions)
++	if m.sidebarAgentFocus.windows[local] != "" || m.sidebarAgentFocus.windows[other] != "remote-window" {
++		t.Fatalf("empty session cleanup crossed machines: %v", m.sidebarAgentFocus.windows)
++	}
++}
++
++func overviewStyleConfig(t *testing.T, m *OS) {
++	t.Helper()
++	cfg, err := config.ParseUserConfig([]byte(`
++[appearance.sidebar.ui.repository]
++active_background = "surface"
++[appearance.sidebar.ui.branch]
++active_background = "surface"
++[appearance.sidebar.ui.agent]
++active_background = "surface"
++active_foreground = "accent"
++active_bold = true
++`))
++	if err != nil {
++		t.Fatal(err)
++	}
++	m.UserConfig = cfg
++}
++
++func overviewRowCanvas(row string) uv.ScreenBuffer {
++	canvas := uv.NewScreenBuffer(lipgloss.Width(row), 1)
++	uv.NewStyledString(row).Draw(canvas, canvas.Bounds())
++	return canvas
++}
++
++func TestOverviewActiveSubtreeBackgroundIncludesEveryAgent(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	overviewStyleConfig(t, m)
++	for i := range 2 {
++		tree.Sessions[i].Worktree = &sessiontree.WorktreeRef{Repo: "project", Branch: tree.Sessions[i].ID}
++	}
++	pal := m.groundUI()
++	for _, focused := range []string{"aaaaaaaa1111", "bbbbbbbb2222", "cccccccc3333"} {
++		focusOverviewSession(&tree, "main", focused)
++		styled := railStyled(t, m, tree)
++		for _, title := range []string{"project", "main", "refactor", "build"} {
++			row := styledRow(t, styled, title)
++			canvas := overviewRowCanvas(row)
++			for x := range lipgloss.Width(row) - 1 {
++				if cell := canvas.CellAt(x, 0); cell == nil || !samePaneColor(cell.Style.Bg, pal.Surface) {
++					t.Fatalf("%s with focus %s has an unfilled cell at %d", title, focused, x)
++				}
++			}
++		}
++		for _, title := range []string{"api", "server"} {
++			canvas := overviewRowCanvas(styledRow(t, styled, title))
++			if samePaneColor(canvas.CellAt(0, 0).Style.Bg, pal.Surface) {
++				t.Fatalf("inactive subtree %s inherited the current subtree's background", title)
++			}
++		}
++	}
++}
++
++func TestOverviewRememberedAgentTextFollowsAccentWithoutFocusGutter(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	overviewStyleConfig(t, m)
++	e := sidebarAgentEntry{SessionID: "api", WindowID: "dddddddd4444", Title: "server", State: "idle", Foreign: true}
++	m.sidebarAgentFocus.remember(m.sidebarAgentFocusKey(e.SessionID), e.WindowID)
++	for _, accent := range []color.Color{color.RGBA{R: 125, G: 174, B: 163, A: 255}, color.RGBA{R: 245, G: 190, B: 90, A: 255}} {
++		pal := m.groundUI()
++		pal.Accent = accent
++		paint := activeDockTabPaint(&config.DockTabsConfig{ActiveBg: "accent"}, pal)
++		if !samePaneColor(paint.bg, accent) {
++			t.Fatal("tab did not resolve the theme accent")
++		}
++		for _, st := range []sidebarRowState{{}, {Hover: true}, {Cursor: true, Focused: true}} {
++			row := m.sidebarOverviewAgentRow(e, 2, 30, pal, st)
++			canvas := overviewRowCanvas(row)
++			plain := stripANSIForTrace(row)
++			col := lipgloss.Width(plain[:strings.Index(plain, e.Title)])
++			cell := canvas.CellAt(col, 0)
++			if !samePaneColor(cell.Style.Fg, paint.bg) || cell.Style.Attrs&uv.AttrBold == 0 {
++				t.Fatalf("remembered agent text lost accent/bold: %+v", cell.Style)
++			}
++			if canvas.CellAt(0, 0).Content != " " {
++				t.Fatal("remembered agent claimed the actual-focus gutter")
++			}
++			if !st.lit() && canvas.CellAt(0, 0).Style.Bg != nil {
++				t.Fatal("remembered agent filled an inactive subtree")
++			}
++		}
++	}
++}
 diff --git i/internal/app/sidebar_cache.go w/internal/app/sidebar_cache.go
-index e72a9fd527af8949740f755acdcdf52d7c09f259..ec24d1ea5517a607d31ec5e1cfa3ac89e66e5720 100644
+index e72a9fd..fa2ef8b 100644
 --- i/internal/app/sidebar_cache.go
 +++ w/internal/app/sidebar_cache.go
 @@ -124,8 +124,8 @@ func (m *OS) sidebarSignature() uint64 {
@@ -1851,8 +2301,379 @@ index e72a9fd527af8949740f755acdcdf52d7c09f259..ec24d1ea5517a607d31ec5e1cfa3ac89
  	// The agents offset is derived from the anchor on any frame whose sort has
  	// moved, so the anchor picks the rows that are drawn just as directly as the
  	// offset does, and a frame drawn under one anchor cannot be served from an
+@@ -171,6 +172,8 @@ func (m *OS) sidebarSignature() uint64 {
+ 	mixS(m.sidebarAgentAnchor.SessionID)
+ 	mixS(m.sidebarAgentAnchor.WindowID)
+ 	mixI(m.FocusedWindow)
++	mixU(m.sidebarAgentFocus.generation)
++	mixU(m.sidebarCheckouts.generation)
+ 	// The reveal is not folded. It acts on the difference between this frame's
+ 	// focus and the last one's, and both halves of that are already here: the
+ 	// focused pane above, the attached session and the offsets it moves below.
+diff --git i/internal/app/sidebar_checkout.go w/internal/app/sidebar_checkout.go
+new file mode 100644
+index 0000000..a39be81
+--- /dev/null
++++ w/internal/app/sidebar_checkout.go
+@@ -0,0 +1,174 @@
++package app
++
++import (
++	"path/filepath"
++	"time"
++
++	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/gitstate"
++	"github.com/Gaurav-Gosain/tuios/internal/session"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++)
++
++const sidebarCheckoutRefreshInterval = 2 * time.Second
++
++type sidebarCheckoutKey struct {
++	machine string
++	session string
++}
++
++type sidebarCheckout struct {
++	dir     string
++	root    string
++	repo    string
++	branch  string
++	askedAt time.Time
++	pending bool
++}
++
++type sidebarCheckoutState struct {
++	entries    map[sidebarCheckoutKey]sidebarCheckout
++	generation uint64
++}
++
++type sidebarCheckoutMsg struct {
++	key    sidebarCheckoutKey
++	dir    string
++	root   string
++	repo   string
++	branch string
++}
++
++func (m *OS) sidebarCheckoutKey(name string) sidebarCheckoutKey {
++	if name == "" {
++		name = "local"
++	}
++	return sidebarCheckoutKey{machine: m.attachedMachine(), session: name}
++}
++
++func (m *OS) rememberSidebarCheckout(name, dir string) {
++	if m.AttachedHost != "" || dir == "" || !filepath.IsAbs(dir) {
++		return
++	}
++	key := m.sidebarCheckoutKey(name)
++	if _, exists := m.sidebarCheckouts.entries[key]; exists {
++		return
++	}
++	if m.sidebarCheckouts.entries == nil {
++		m.sidebarCheckouts.entries = make(map[sidebarCheckoutKey]sidebarCheckout)
++	}
++	m.sidebarCheckouts.entries[key] = sidebarCheckout{dir: filepath.Clean(dir)}
++	m.sidebarCheckouts.generation++
++}
++
++func (m *OS) adoptSidebarCheckout(state *session.SessionState) {
++	if state.Global || m.AttachedHost != "" {
++		return
++	}
++	if state.Worktree != nil && state.Worktree.Path != "" {
++		m.rememberSidebarCheckout(state.Name, state.Worktree.Path)
++		return
++	}
++	if state.StartDir != "" {
++		m.rememberSidebarCheckout(state.Name, state.StartDir)
++		return
++	}
++	for _, w := range state.Windows {
++		if w.Scratch || w.Host != "" || w.CwdHost != "" {
++			continue
++		}
++		dir := w.StartDir
++		if dir == "" {
++			dir = w.Cwd
++		}
++		if dir != "" {
++			m.rememberSidebarCheckout(state.Name, dir)
++			return
++		}
++	}
++}
++
++func (m *OS) sidebarCheckoutEnabled() bool {
++	return m.AttachedHost == "" && (m.Settings.SidebarEnabled || m.sidebarDrawing) &&
++		(sidebarLayoutHas(sidebarSectionOverview, &m.Settings) || sidebarLayoutHas(sidebarSectionSessions, &m.Settings))
++}
++
++func (m *OS) sidebarCheckoutSyncCmd() tea.Cmd {
++	if !m.sidebarCheckoutEnabled() {
++		return nil
++	}
++	if m.DaemonClient != nil {
++		known := map[string]bool{m.sidebarCheckoutKey(m.SessionName).session: true}
++		for _, info := range m.DaemonClient.CachedSessions() {
++			known[info.Name] = true
++			if !info.Global && info.Worktree != nil {
++				m.rememberSidebarCheckout(info.Name, info.Worktree.Path)
++			}
++		}
++		for key := range m.sidebarCheckouts.entries {
++			if key.machine == m.attachedMachine() && !known[key.session] {
++				delete(m.sidebarCheckouts.entries, key)
++				m.sidebarCheckouts.generation++
++			}
++		}
++	}
++	if !m.SessionGlobal {
++		for _, w := range m.Windows {
++			if w != nil && !isScratch(w) && m.paneIsLocal(w) && w.CwdHost == "" && w.Cwd != "" {
++				key := m.sidebarCheckoutKey(m.SessionName)
++				if entry, exists := m.sidebarCheckouts.entries[key]; exists && entry.root == "" && !entry.pending && !entry.askedAt.IsZero() && entry.dir != filepath.Clean(w.Cwd) {
++					delete(m.sidebarCheckouts.entries, key)
++				}
++				m.rememberSidebarCheckout(m.SessionName, w.Cwd)
++				break
++			}
++		}
++	}
++	var cmds []tea.Cmd
++	for key, entry := range m.sidebarCheckouts.entries {
++		if key.machine != m.attachedMachine() || entry.pending || time.Since(entry.askedAt) < sidebarCheckoutRefreshInterval {
++			continue
++		}
++		entry.pending, entry.askedAt = true, time.Now()
++		m.sidebarCheckouts.entries[key] = entry
++		cmds = append(cmds, func() tea.Msg { return readSidebarCheckout(key, entry.dir) })
++	}
++	return tea.Batch(cmds...)
++}
++
++func readSidebarCheckout(key sidebarCheckoutKey, dir string) sidebarCheckoutMsg {
++	msg := sidebarCheckoutMsg{key: key, dir: dir}
++	_, common, root, found := gitstate.Locate(dir)
++	if found {
++		msg.root = root
++		msg.repo = filepath.Base(filepath.Dir(common))
++		msg.branch = gitstate.Branch(root)
++	}
++	return msg
++}
++
++func (m *OS) applySidebarCheckout(msg sidebarCheckoutMsg) {
++	entry, exists := m.sidebarCheckouts.entries[msg.key]
++	if !exists || entry.dir != msg.dir {
++		return
++	}
++	entry.pending = false
++	if entry.root != msg.root || entry.repo != msg.repo || entry.branch != msg.branch {
++		m.sidebarCheckouts.generation++
++	}
++	entry.root, entry.repo, entry.branch = msg.root, msg.repo, msg.branch
++	m.sidebarCheckouts.entries[msg.key] = entry
++}
++
++func (m *OS) sidebarCheckoutPlace(name string) (sidebarCheckout, bool) {
++	entry, exists := m.sidebarCheckouts.entries[m.sidebarCheckoutKey(name)]
++	return entry, exists
++}
++
++func (m *OS) sidebarCheckoutWorktree(name string, info *session.WorktreeInfo) *sessiontree.WorktreeRef {
++	ref := worktreeRef(info)
++	if checkout, known := m.sidebarCheckoutPlace(name); ref != nil && known {
++		ref.Branch = checkout.branch
++	}
++	return ref
++}
+diff --git i/internal/app/sidebar_checkout_test.go w/internal/app/sidebar_checkout_test.go
+new file mode 100644
+index 0000000..93ea150
+--- /dev/null
++++ w/internal/app/sidebar_checkout_test.go
+@@ -0,0 +1,176 @@
++package app
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/session"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++)
++
++func sidebarCheckoutRepo(t *testing.T, branch string) string {
++	t.Helper()
++	root := filepath.Join(t.TempDir(), "checkout")
++	if err := os.MkdirAll(filepath.Join(root, ".git"), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	setSidebarCheckoutBranch(t, filepath.Join(root, ".git"), branch)
++	return root
++}
++
++func setSidebarCheckoutBranch(t *testing.T, gitdir, branch string) {
++	t.Helper()
++	if err := os.WriteFile(filepath.Join(gitdir, "HEAD"), []byte("ref: refs/heads/"+branch+"\n"), 0o644); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func runSidebarCheckoutCmd(t *testing.T, m *OS, cmd tea.Cmd) {
++	t.Helper()
++	if cmd == nil {
++		t.Fatal("checkout refresh was not scheduled")
++	}
++	switch msg := cmd().(type) {
++	case sidebarCheckoutMsg:
++		m.applySidebarCheckout(msg)
++	case tea.BatchMsg:
++		for _, child := range msg {
++			runSidebarCheckoutCmd(t, m, child)
++		}
++	default:
++		t.Fatalf("unexpected checkout message %T", msg)
++	}
++}
++
++func TestSidebarCheckoutIgnoresPaneFocusAndStaleBranches(t *testing.T) {
++	root := sidebarCheckoutRepo(t, "main")
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	m.adoptSidebarCheckout(&session.SessionState{Name: m.SessionName, StartDir: root})
++	if _, branch := m.sessionPlace(m.SessionName); branch != "" {
++		t.Fatalf("unresolved checkout used stale branch %q", branch)
++	}
++	runSidebarCheckoutCmd(t, m, m.sidebarCheckoutSyncCmd())
++	for i := range m.Windows {
++		m.FocusedWindow = i
++		tree.Sessions[0].Branch = []string{"mac", "main", "stale"}[i]
++		if _, branch := m.sessionPlace(m.SessionName); branch != "main" {
++			t.Fatalf("pane %d changed checkout branch to %q", i, branch)
++		}
++		if cmd := m.sidebarCheckoutSyncCmd(); cmd != nil {
++			t.Fatal("pane focus forced another checkout read")
++		}
++		for _, node := range m.sidebarOverviewSessionRows(tree.Sessions) {
++			if node.Kind == sessiontree.KindSession && node.ID == m.SessionName {
++				if node.Worktree == nil || node.Worktree.Branch != "main" || node.Worktree.Repo != "checkout" {
++					t.Fatalf("pane %d changed the worktree identity: %+v", i, node.Worktree)
++				}
++			}
++		}
++	}
++	before := m.sidebarSignature()
++	setSidebarCheckoutBranch(t, filepath.Join(root, ".git"), "release")
++	key := m.sidebarCheckoutKey(m.SessionName)
++	entry := m.sidebarCheckouts.entries[key]
++	entry.askedAt = time.Time{}
++	m.sidebarCheckouts.entries[key] = entry
++	runSidebarCheckoutCmd(t, m, m.sidebarCheckoutSyncCmd())
++	if _, branch := m.sessionPlace(m.SessionName); branch != "release" {
++		t.Fatalf("actual HEAD change was not reflected: %q", branch)
++	}
++	if before == m.sidebarSignature() {
++		t.Fatal("HEAD change did not invalidate sidebar rendering")
++	}
++}
++
++func TestSidebarCheckoutUsesStableWindowStartDirectory(t *testing.T) {
++	root := sidebarCheckoutRepo(t, "main")
++	other := sidebarCheckoutRepo(t, "mac")
++	m, _ := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	state := &session.SessionState{Name: m.SessionName, Windows: []session.WindowState{
++		{ID: "first", StartDir: root, Cwd: other},
++		{ID: "second", StartDir: other, Cwd: other},
++	}}
++	m.adoptSidebarCheckout(state)
++	runSidebarCheckoutCmd(t, m, m.sidebarCheckoutSyncCmd())
++	state.Windows = state.Windows[1:]
++	m.adoptSidebarCheckout(state)
++	if entry, _ := m.sidebarCheckoutPlace(m.SessionName); entry.dir != root || entry.branch != "main" {
++		t.Fatalf("closing or moving a pane changed the checkout: %+v", entry)
++	}
++}
++
++func TestSidebarCheckoutReadsLinkedWorktreeHeadWithoutMutatingMetadata(t *testing.T) {
++	root := sidebarCheckoutRepo(t, "main")
++	linked := t.TempDir()
++	gitdir := filepath.Join(root, ".git", "worktrees", "feature")
++	if err := os.MkdirAll(gitdir, 0o755); err != nil {
++		t.Fatal(err)
++	}
++	for path, content := range map[string]string{
++		filepath.Join(linked, ".git"):      "gitdir: " + gitdir,
++		filepath.Join(gitdir, "commondir"): "../..",
++	} {
++		if err := os.WriteFile(path, []byte(content+"\n"), 0o644); err != nil {
++			t.Fatal(err)
++		}
++	}
++	setSidebarCheckoutBranch(t, gitdir, "feature")
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	info := &session.WorktreeInfo{}
++	info.Path = linked
++	m.adoptSidebarCheckout(&session.SessionState{Name: m.SessionName, Worktree: info})
++	runSidebarCheckoutCmd(t, m, m.sidebarCheckoutSyncCmd())
++	ref := &sessiontree.WorktreeRef{Repo: "checkout", Branch: "stale", Path: linked}
++	tree.Sessions[0].Worktree = ref
++	for _, node := range m.sidebarOverviewSessionRows(tree.Sessions) {
++		if node.Kind == sessiontree.KindSession && node.ID == m.SessionName && node.Worktree.Branch != "feature" {
++			t.Fatalf("linked worktree used another checkout's branch: %+v", node.Worktree)
++		}
++	}
++	if ref.Branch != "stale" {
++		t.Fatal("display refresh mutated managed worktree metadata")
++	}
++	info.Branch = "stale"
++	m.SessionWorktree = info
++	if got := m.currentSessionInput().Worktree.Branch; got != "feature" || info.Branch != "stale" {
++		t.Fatalf("session tree branch = %q, daemon metadata = %q", got, info.Branch)
++	}
++}
++
++func TestSidebarCheckoutRejectsRemoteAndStaleResults(t *testing.T) {
++	root := sidebarCheckoutRepo(t, "main")
++	m, _ := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	m.AttachedHost = "remote"
++	m.adoptSidebarCheckout(&session.SessionState{Name: m.SessionName, StartDir: root})
++	if len(m.sidebarCheckouts.entries) != 0 || m.sidebarCheckoutSyncCmd() != nil {
++		t.Fatal("remote daemon paths were read on this machine")
++	}
++	m.AttachedHost = ""
++	m.adoptSidebarCheckout(&session.SessionState{Name: m.SessionName, StartDir: root})
++	cmd := m.sidebarCheckoutSyncCmd()
++	if m.sidebarCheckoutSyncCmd() != nil {
++		t.Fatal("duplicate checkout read was scheduled while pending")
++	}
++	key := m.sidebarCheckoutKey(m.SessionName)
++	m.applySidebarCheckout(sidebarCheckoutMsg{key: key, dir: root + "/old", branch: "wrong"})
++	if entry, _ := m.sidebarCheckoutPlace(m.SessionName); entry.branch != "" {
++		t.Fatal("stale result overwrote the current checkout")
++	}
++	runSidebarCheckoutCmd(t, m, cmd)
++	var due time.Time
++	m.railReadsDue(func(at time.Time) { due = at })
++	if want := m.sidebarCheckouts.entries[key].askedAt.Add(sidebarCheckoutRefreshInterval); !due.Equal(want) {
++		t.Fatalf("checkout refresh deadline = %s, want %s", due, want)
++	}
++	m.Settings.SidebarEnabled = false
++	if m.sidebarCheckoutSyncCmd() != nil {
++		t.Fatal("hidden sidebar kept polling")
++	}
++}
 diff --git i/internal/app/sidebar_custom.go w/internal/app/sidebar_custom.go
-index 38e5351c9480abd3685a3b59ad0a1faa5fb0c657..65dff5708be4d366294543a2630f3e4aefe8e466 100644
+index 38e5351..65dff57 100644
 --- i/internal/app/sidebar_custom.go
 +++ w/internal/app/sidebar_custom.go
 @@ -220,7 +220,7 @@ func (m *OS) railContextNow() railContext {
@@ -1875,7 +2696,7 @@ index 38e5351c9480abd3685a3b59ad0a1faa5fb0c657..65dff5708be4d366294543a2630f3e4a
  		if m.legacySidebarEdge() == sidebarLeft {
 diff --git i/internal/app/sidebar_dock.go w/internal/app/sidebar_dock.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..65c146bd211b660b85ad9063ae57077b2c3f57c9
+index 0000000..65c146b
 --- /dev/null
 +++ w/internal/app/sidebar_dock.go
 @@ -0,0 +1,485 @@
@@ -2366,7 +3187,7 @@ index 0000000000000000000000000000000000000000..65c146bd211b660b85ad9063ae57077b
 +}
 diff --git i/internal/app/sidebar_dock_test.go w/internal/app/sidebar_dock_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..2ea46720f3b1eaafe389a1af264716b577173a93
+index 0000000..2ea4672
 --- /dev/null
 +++ w/internal/app/sidebar_dock_test.go
 @@ -0,0 +1,491 @@
@@ -2862,7 +3683,7 @@ index 0000000000000000000000000000000000000000..2ea46720f3b1eaafe389a1af264716b5
 +	}
 +}
 diff --git i/internal/app/sidebar_edge.go w/internal/app/sidebar_edge.go
-index 5ede96d2d29b34d3eb2db4daa71db0209eff1d49..e539396232cf9292fadc7853e21e2da3e3749e34 100644
+index 5ede96d..e539396 100644
 --- i/internal/app/sidebar_edge.go
 +++ w/internal/app/sidebar_edge.go
 @@ -40,10 +40,21 @@ func sidebarEdgeX(edge sidebarEdge, w, screenWidth int) int {
@@ -2889,7 +3710,7 @@ index 5ede96d2d29b34d3eb2db4daa71db0209eff1d49..e539396232cf9292fadc7853e21e2da3
  	}
  	edge := sidebarLeft
 diff --git i/internal/app/sidebar_editor.go w/internal/app/sidebar_editor.go
-index 94a6e733265a7382f030c2006e860b55b1cf52fc..8e9b28054d91ddd4ec441bbebfe6ac5af1b13262 100644
+index 94a6e73..8e9b280 100644
 --- i/internal/app/sidebar_editor.go
 +++ w/internal/app/sidebar_editor.go
 @@ -239,6 +239,15 @@ func (m *OS) SectionEditorToggle() tea.Cmd {
@@ -2919,7 +3740,7 @@ index 94a6e733265a7382f030c2006e860b55b1cf52fc..8e9b28054d91ddd4ec441bbebfe6ac5a
  
  // commitSectionString writes one layout string, applies it and hands back the
 diff --git i/internal/app/sidebar_editor_test.go w/internal/app/sidebar_editor_test.go
-index a34b66d1333137c00b7236ba15a4f59e7c362796..0428fc043939bf85d3c6f8be6cf27f70c416e98b 100644
+index a34b66d..0428fc0 100644
 --- i/internal/app/sidebar_editor_test.go
 +++ w/internal/app/sidebar_editor_test.go
 @@ -45,6 +45,21 @@ func selectRow(t *testing.T, m *OS, name string, kind railRowKind) {
@@ -2945,7 +3766,7 @@ index a34b66d1333137c00b7236ba15a4f59e7c362796..0428fc043939bf85d3c6f8be6cf27f70
  	m := editorOS(t)
  	for _, name := range []string{"files", "terminals", "agents"} {
 diff --git i/internal/app/sidebar_host_agents_test.go w/internal/app/sidebar_host_agents_test.go
-index 8f9be0f5c5f9c8485909c08b2acffd3984ce60f1..aebf52abbcfd824c87df6dcbd0542d0179bc3f92 100644
+index 8f9be0f..aebf52a 100644
 --- i/internal/app/sidebar_host_agents_test.go
 +++ w/internal/app/sidebar_host_agents_test.go
 @@ -83,7 +83,7 @@ func TestAMachineThatDidNotAnswerDrawsNoGlyph(t *testing.T) {
@@ -2958,7 +3779,7 @@ index 8f9be0f5c5f9c8485909c08b2acffd3984ce60f1..aebf52abbcfd824c87df6dcbd0542d01
  	if strings.Contains(row, agentStateIndicator("needs_input")) {
  		t.Errorf("a machine that is not answering still draws an alarm: %q", row)
 diff --git i/internal/app/sidebar_hosts.go w/internal/app/sidebar_hosts.go
-index 5332bb69e43723b82aaf59fb4118c25b04335827..d6f6dc421163e31ef8ca6d112be5cc09584f6952 100644
+index 5332bb6..d6f6dc4 100644
 --- i/internal/app/sidebar_hosts.go
 +++ w/internal/app/sidebar_hosts.go
 @@ -774,6 +774,7 @@ func (m *OS) setSidebarSessionOrder(host string, order []string) {
@@ -2999,7 +3820,7 @@ index 5332bb69e43723b82aaf59fb4118c25b04335827..d6f6dc421163e31ef8ca6d112be5cc09
  	}
  	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
 diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
-index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..7c449147ca6ff314c659c6a82e241fe6790e3618 100644
+index 09a44b7..7c44914 100644
 --- i/internal/app/sidebar_keyboard.go
 +++ w/internal/app/sidebar_keyboard.go
 @@ -87,7 +87,8 @@ func (m *OS) FocusOtherSidebar() {
@@ -3114,7 +3935,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..7c449147ca6ff314c659c6a82e241fe6
  
  // sidebarSetCursorToHit points the keyboard cursor at a clicked row, so a click
 diff --git i/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
-index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..558e04f907a7783b563f40131696525396b80055 100644
+index c6394bb..558e04f 100644
 --- i/internal/app/sidebar_layout.go
 +++ w/internal/app/sidebar_layout.go
 @@ -73,18 +73,19 @@ type sidebarSectionPlan struct {
@@ -3164,7 +3985,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..558e04f907a7783b563f401316965253
  	}
  }
 diff --git i/internal/app/sidebar_mouse.go w/internal/app/sidebar_mouse.go
-index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..2fac524cd4f18fc3acea937d24468ebb773b6eef 100644
+index 738c0e2..2fac524 100644
 --- i/internal/app/sidebar_mouse.go
 +++ w/internal/app/sidebar_mouse.go
 @@ -127,7 +127,7 @@ func (m *OS) applySidebarFlag(on bool) bool {
@@ -3222,13 +4043,14 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..2fac524cd4f18fc3acea937d24468ebb
  		m.sidebarFocusWindow(hit)
 diff --git i/internal/app/sidebar_overview.go w/internal/app/sidebar_overview.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..1138173b27df155288e22f71013f3284b8e6e5b4
+index 0000000..76ab75d
 --- /dev/null
 +++ w/internal/app/sidebar_overview.go
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,279 @@
 +package app
 +
 +import (
++	"image/color"
 +	"strconv"
 +	"time"
 +
@@ -3299,8 +4121,20 @@ index 0000000000000000000000000000000000000000..1138173b27df155288e22f71013f3284
 +	presented := make([]sessiontree.Node, len(local))
 +	activeRepos := make(map[sidebarOverviewRepoKey]bool)
 +	for i, node := range local {
++		checkout, known := m.sidebarCheckoutPlace(node.ID)
++		if node.Kind == sessiontree.KindSession && known {
++			node.Branch = checkout.branch
++			if node.Worktree != nil {
++				ref := *node.Worktree
++				ref.Branch = checkout.branch
++				node.Worktree = &ref
++			}
++		}
 +		if node.Kind == sessiontree.KindSession && node.Host == "" && !node.Global && node.Worktree == nil && node.Branch != "" {
 +			repo := node.Title
++			if checkout.repo != "" {
++				repo = checkout.repo
++			}
 +			if repo == "" {
 +				repo = node.ID
 +			}
@@ -3422,13 +4256,27 @@ index 0000000000000000000000000000000000000000..1138173b27df155288e22f71013f3284
 +	}
 +}
 +
-+func (m *OS) sidebarOverviewAgentRow(e sidebarAgentEntry, indent, cw int, pal overlay.Palette, st sidebarRowState) string {
-+	rowBg := sidebarRowBg(st, pal)
-+	fg := pal.FgDim
-+	if e.State == "done" && !e.DoneSeen || st.lit() {
-+		fg = pal.Fg
++func (m *OS) sidebarOverviewGutter(current bool, bg color.Color, pal overlay.Palette) string {
++	mark, ink := " ", color.Color(nil)
++	if current {
++		mark, ink = m.Settings.GetRailFocusMark(), pal.Accent
 +	}
-+	style := m.sidebarUIResolved(sidebarUIAgent, e.Focused, pal, fg, rowBg, sidebarAttention(e.State), false)
++	return sidebarStyle(bg, ink).Render(mark)
++}
++
++func (m *OS) sidebarOverviewAgentRow(e sidebarAgentEntry, indent, cw int, pal overlay.Palette, st sidebarRowState) string {
++	st.ActiveSubtree = !e.Foreign
++	rowBg := sidebarRowBg(st, pal)
++	fg := pal.Fg
++	lastFocused := e.Focused || m.sidebarAgentWasLastFocused(e)
++	if lastFocused {
++		fg = overlay.Readable(pal.Accent, m.sidebarGroundOr(rowBg))
++	}
++	// The ground marks the current subtree; text remembers an agent even in another subtree.
++	style := m.sidebarUIResolved(sidebarUIAgent, !e.Foreign, pal, fg, rowBg, false, false)
++	textStyle := m.sidebarUIResolved(sidebarUIAgent, lastFocused, pal, fg, nil,
++		lastFocused, false)
++	style.fg, style.bold = textStyle.fg, textStyle.bold
 +	rowBg = style.rowBackground(rowBg)
 +	indent = style.rowIndent(max(indent-1, 0))
 +	figure := overviewAgentFigure(e, overlay.UseASCII(), time.Now())
@@ -3448,10 +4296,7 @@ index 0000000000000000000000000000000000000000..1138173b27df155288e22f71013f3284
 +		title = "agent"
 +	}
 +	name := style.render(m.sidebarMarquee("o:"+e.SessionID+"/"+e.WindowID, title, nameRoom, st.Cursor), nameRoom)
-+	gutter := sidebarGutter(false, e.State, rowBg, pal, &m.Settings)
-+	if e.Focused {
-+		gutter = sidebarGutterTinted(true, e.State, m.sessionTint(e.SessionID, m.rowGround(rowBg)), rowBg, pal, &m.Settings)
-+	}
++	gutter := m.sidebarOverviewGutter(!e.Foreign, rowBg, pal)
 +	return sidebarComposeGroupRow(indent, gutter,
 +		sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), name, right, cw, rowBg)
 +}
@@ -3481,12 +4326,89 @@ index 0000000000000000000000000000000000000000..1138173b27df155288e22f71013f3284
 +	}
 +	return session
 +}
+diff --git i/internal/app/sidebar_overview_rail_test.go w/internal/app/sidebar_overview_rail_test.go
+new file mode 100644
+index 0000000..ba59ba8
+--- /dev/null
++++ w/internal/app/sidebar_overview_rail_test.go
+@@ -0,0 +1,71 @@
++package app
++
++import (
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func TestOverviewWorktreeRailSpansEveryAgent(t *testing.T) {
++	for _, rowStyle := range config.RailRowStyles {
++		t.Run(rowStyle, func(t *testing.T) {
++			m, tree := sectionsTestOS(t, 120, 40)
++			m.Settings.SidebarSections = "overview"
++			m.Settings.RailRowStyle = rowStyle
++			overviewStyleConfig(t, m)
++			for i := range 2 {
++				tree.Sessions[i].Worktree = &sessiontree.WorktreeRef{Repo: "project", Branch: tree.Sessions[i].ID}
++			}
++			pal := m.groundUI()
++			for _, focus := range [][2]string{
++				{"main", "aaaaaaaa1111"},
++				{"main", "bbbbbbbb2222"},
++				{"main", "cccccccc3333"},
++				{"api", "dddddddd4444"},
++				{"api", "eeeeeeee5555"},
++			} {
++				focusOverviewSession(&tree, focus[0], focus[1])
++				styled := railStyled(t, m, tree)
++				for title, session := range map[string]string{
++					"main": "main", "refactor": "main", "build": "main",
++					"api": "api", "server": "api", "project": "",
++				} {
++					canvas := overviewRowCanvas(styledRow(t, styled, title))
++					cell := canvas.CellAt(0, 0)
++					if session == focus[0] {
++						if cell.Content != m.Settings.GetRailFocusMark() || !samePaneColor(cell.Style.Fg, pal.Accent) {
++							t.Fatalf("%s lost the worktree rail with focus on %s: %+v", title, focus[1], cell)
++						}
++					} else if cell.Content != " " {
++						t.Fatalf("%s acquired the active worktree rail: %+v", title, cell)
++					}
++				}
++			}
++		})
++	}
++}
++
++func TestOverviewUnselectedAgentTextKeepsNormalForeground(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	overviewStyleConfig(t, m)
++	pal := m.groundUI()
++	for _, foreign := range []bool{false, true} {
++		for _, state := range []string{"idle", "working", "needs_input", "done"} {
++			for _, st := range []sidebarRowState{{}, {Hover: true}, {Cursor: true}, {Cursor: true, Focused: true}} {
++				e := sidebarAgentEntry{SessionID: "main", WindowID: "agent-window", Title: "pi", State: state, Foreign: foreign}
++				row := m.sidebarOverviewAgentRow(e, 2, 30, pal, st)
++				canvas := overviewRowCanvas(row)
++				plain := stripANSIForTrace(row)
++				col := lipgloss.Width(plain[:strings.Index(plain, e.Title)])
++				cell := canvas.CellAt(col, 0)
++				if !samePaneColor(cell.Style.Fg, pal.Fg) || cell.Style.Attrs&uv.AttrBold != 0 {
++					t.Fatalf("unselected Pi label changed for state %s, foreign %t, row %+v: %+v", state, foreign, st, cell.Style)
++				}
++			}
++		}
++	}
++}
 diff --git i/internal/app/sidebar_overview_test.go w/internal/app/sidebar_overview_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..344e98ab992ee5c4bdbac7b0069c14758367fa57
+index 0000000..04be491
 --- /dev/null
 +++ w/internal/app/sidebar_overview_test.go
-@@ -0,0 +1,524 @@
+@@ -0,0 +1,522 @@
 +package app
 +
 +import (
@@ -3497,7 +4419,6 @@ index 0000000000000000000000000000000000000000..344e98ab992ee5c4bdbac7b0069c1475
 +	"charm.land/lipgloss/v2"
 +	"github.com/Gaurav-Gosain/tuios/internal/config"
 +	"github.com/Gaurav-Gosain/tuios/internal/federation"
-+	"github.com/Gaurav-Gosain/tuios/internal/overlay"
 +	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
 +	"github.com/Gaurav-Gosain/tuios/internal/theme"
 +	"github.com/charmbracelet/colorprofile"
@@ -3577,23 +4498,23 @@ index 0000000000000000000000000000000000000000..344e98ab992ee5c4bdbac7b0069c1475
 +				}
 +			}
 +
-+			assertOverviewNameStyle(t, m, tree, "main")
-+			assertOverviewNameStyle(t, m, tree, "api")
++			assertOverviewBranchNameStyle(t, m, tree, "main")
++			assertOverviewBranchNameStyle(t, m, tree, "api")
 +		})
 +	}
 +}
 +
-+func assertOverviewNameStyle(t *testing.T, m *OS, tree sessiontree.Tree, name string) {
-+	t.Helper()
-+	assertOverviewNameStyleWithColor(t, m, tree, name, false)
-+}
-+
 +func assertOverviewBranchNameStyle(t *testing.T, m *OS, tree sessiontree.Tree, name string) {
 +	t.Helper()
-+	assertOverviewNameStyleWithColor(t, m, tree, name, true)
++	assertOverviewNameStyleWithAccent(t, m, tree, name, false)
 +}
 +
-+func assertOverviewNameStyleWithColor(t *testing.T, m *OS, tree sessiontree.Tree, name string, bright bool) {
++func assertOverviewNameStyle(t *testing.T, m *OS, tree sessiontree.Tree, name string) {
++	t.Helper()
++	assertOverviewNameStyleWithAccent(t, m, tree, name, true)
++}
++
++func assertOverviewNameStyleWithAccent(t *testing.T, m *OS, tree sessiontree.Tree, name string, accented bool) {
 +	t.Helper()
 +	row := styledRow(t, railStyled(t, m, tree), name)
 +	plain := stripANSIForTrace(row)
@@ -3602,25 +4523,24 @@ index 0000000000000000000000000000000000000000..344e98ab992ee5c4bdbac7b0069c1475
 +	canvas := uv.NewScreenBuffer(width, 1)
 +	uv.NewStyledString(row).Draw(canvas, canvas.Bounds())
 +	pal := m.groundUI()
-+	highlight := pal.Accent
-+	if bright {
-+		if current := theme.Current(); current != nil && current.BrightPurple != nil {
-+			highlight = theme.AsColor(current.BrightPurple)
-+		} else {
-+			highlight = overlay.Slot(13)
-+		}
++	ground := canvas.CellAt(nameCol, 0).Style.Bg
++	if ground == nil {
++		ground = m.railGround()
 +	}
-+	wantFg := theme.Readable(highlight, m.railGround())
++	wantFg := pal.Fg
++	if accented {
++		wantFg = theme.Readable(pal.Accent, ground)
++	}
 +	for x := nameCol; x < nameCol+lipgloss.Width(name); x++ {
 +		cell := canvas.CellAt(x, 0)
 +		if cell == nil {
-+			t.Fatalf("repository name cell %d is missing", x)
++			t.Fatalf("name cell %d is missing", x)
 +		}
 +		if cell.Style.Attrs&uv.AttrBold == 0 {
 +			t.Fatalf("overview name %q is not bold: %+v", name, cell.Style)
 +		}
 +		if !samePaneColor(cell.Style.Fg, wantFg) {
-+			t.Fatalf("repository %q foreground = %v, want %v", name, cell.Style.Fg, wantFg)
++			t.Fatalf("name %q foreground = %v, want %v", name, cell.Style.Fg, wantFg)
 +		}
 +	}
 +}
@@ -4012,7 +4932,7 @@ index 0000000000000000000000000000000000000000..344e98ab992ee5c4bdbac7b0069c1475
 +	}
 +}
 diff --git i/internal/app/sidebar_reveal.go w/internal/app/sidebar_reveal.go
-index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..63386e6b1d4d4b0e6137651bc282ecfa5ca1db18 100644
+index e340eb1..63386e6 100644
 --- i/internal/app/sidebar_reveal.go
 +++ w/internal/app/sidebar_reveal.go
 @@ -35,6 +35,8 @@ type sidebarRevealState struct {
@@ -4059,7 +4979,7 @@ index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..63386e6b1d4d4b0e6137651bc282ecfa
  	}
  }
 diff --git i/internal/app/sidebar_session.go w/internal/app/sidebar_session.go
-index 7d8ea5e6981a6083025b567856a19c315040bf0b..ebedddd7a96ad15bc645ad2dc5f0c560bbe98dbf 100644
+index 7d8ea5e..ebedddd 100644
 --- i/internal/app/sidebar_session.go
 +++ w/internal/app/sidebar_session.go
 @@ -88,7 +88,7 @@ func (m *OS) sidebarSessionVisible(edge sidebarEdge) bool {
@@ -4141,7 +5061,7 @@ index 7d8ea5e6981a6083025b567856a19c315040bf0b..ebedddd7a96ad15bc645ad2dc5f0c560
  	}
  	for _, side := range []sidebarEdge{sidebarLeft, sidebarRight} {
 diff --git i/internal/app/sidebar_spaces.go w/internal/app/sidebar_spaces.go
-index bcc71d438b2fc69a3798210f3c16cc2fac5feca9..3c3ddc9ed805c57f241d1bbe1aae99cb3572ab3d 100644
+index bcc71d4..3c3ddc9 100644
 --- i/internal/app/sidebar_spaces.go
 +++ w/internal/app/sidebar_spaces.go
 @@ -35,11 +35,18 @@ func (m *OS) sidebarNodeIndent(node sessiontree.Node) int {
@@ -4170,7 +5090,7 @@ index bcc71d438b2fc69a3798210f3c16cc2fac5feca9..3c3ddc9ed805c57f241d1bbe1aae99cb
 +	return sidebarComposeRuledRow(indent, gutter, glyph, name, "", cw, rowBg, pal, &m.Settings)
  }
 diff --git i/internal/app/sidebar_split.go w/internal/app/sidebar_split.go
-index 093cd0112a4968cb62da6342496ad16f34bddd59..f4c3678c31fa513905c540e64c76880f1ad14a93 100644
+index 093cd01..f4c3678 100644
 --- i/internal/app/sidebar_split.go
 +++ w/internal/app/sidebar_split.go
 @@ -196,7 +196,7 @@ func (m *OS) SidebarSplitMotion(x, y int) bool {
@@ -4183,7 +5103,7 @@ index 093cd0112a4968cb62da6342496ad16f34bddd59..f4c3678c31fa513905c540e64c76880f
  		m.SidebarSectionSplit = share
  		m.MarkAllDirty()
 diff --git i/internal/app/sidebar_strip.go w/internal/app/sidebar_strip.go
-index 482946798aa9bacf35b2be11720ea31fba92a79f..27c01e785b21f9cac4f62046cc95fcf8b62b1a91 100644
+index 4829467..27c01e7 100644
 --- i/internal/app/sidebar_strip.go
 +++ w/internal/app/sidebar_strip.go
 @@ -356,7 +356,8 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
@@ -4235,7 +5155,7 @@ index 482946798aa9bacf35b2be11720ea31fba92a79f..27c01e785b21f9cac4f62046cc95fcf8
  					// The row being dragged wears the band wherever it has been
 diff --git i/internal/app/sidebar_ui.go w/internal/app/sidebar_ui.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..92969da9bec450f2745edcd2619639c0fe175232
+index 0000000..92969da
 --- /dev/null
 +++ w/internal/app/sidebar_ui.go
 @@ -0,0 +1,258 @@
@@ -4498,7 +5418,7 @@ index 0000000000000000000000000000000000000000..92969da9bec450f2745edcd2619639c0
 +	return sidebarUIInt(m.sidebarUIConfig().DockGroupGap, 1, 0, 6)
 +}
 diff --git i/internal/app/sidebar_view_state.go w/internal/app/sidebar_view_state.go
-index c88164cc3a6d24bb16bc59bd1f69b13a44662272..86eeb61bb5175cfa697c0e9b11b606badd6a332f 100644
+index c88164c..86eeb61 100644
 --- i/internal/app/sidebar_view_state.go
 +++ w/internal/app/sidebar_view_state.go
 @@ -15,6 +15,7 @@ type secondaryRailView struct {
@@ -4518,7 +5438,7 @@ index c88164cc3a6d24bb16bc59bd1f69b13a44662272..86eeb61bb5175cfa697c0e9b11b606ba
  	m.sidebarAgentsUnfolded, s.agentsUnfolded = s.agentsUnfolded, m.sidebarAgentsUnfolded
  	m.sidebarSubagentFold, s.subagentFold = s.subagentFold, m.sidebarSubagentFold
 diff --git i/internal/app/sidebar_worktrees.go w/internal/app/sidebar_worktrees.go
-index 02a36280499045c1d0f73d540d0f885055bf1a03..731af62474148f7d8a3f01cd1db9c030ebdbe3aa 100644
+index 02a3628..79abcf0 100644
 --- i/internal/app/sidebar_worktrees.go
 +++ w/internal/app/sidebar_worktrees.go
 @@ -120,27 +120,29 @@ func (m *OS) SidebarToggleRepoCollapsed(repo string) {
@@ -4565,12 +5485,13 @@ index 02a36280499045c1d0f73d540d0f885055bf1a03..731af62474148f7d8a3f01cd1db9c030
  	return mark + label, true
  }
  
-@@ -157,9 +159,23 @@ func (m *OS) sidebarWorktreeLabel(node sessiontree.Node) (string, bool) {
+@@ -157,9 +159,24 @@ func (m *OS) sidebarWorktreeLabel(node sessiontree.Node) (string, bool) {
  // parent would draw the same alarm twice. A shut group is the opposite case:
  // its rows are not on screen, so the parent carries the worst of them and the
  // count of what it is hiding.
 -func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette, st sidebarRowState) string {
 +func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette, st sidebarRowState, presentation sidebarSessionPresentation) string {
++	st.ActiveSubtree = presentation == sidebarSessionPresentationOverview && node.IsCurrent
  	rowBg := sidebarRowBg(st, pal)
  	collapsed := m.SidebarRepoCollapsed(node.ID)
 +	state := ""
@@ -4590,7 +5511,7 @@ index 02a36280499045c1d0f73d540d0f885055bf1a03..731af62474148f7d8a3f01cd1db9c030
  
  	right, rightW := "", 0
  	if collapsed && node.WindowCount > 0 {
-@@ -170,27 +186,23 @@ func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette,
+@@ -170,27 +187,23 @@ func (m *OS) sidebarRepoRow(node sessiontree.Node, cw int, pal overlay.Palette,
  		right = sidebarStyle(rowBg, pal.FgMute).Render(count)
  		rightW = lipgloss.Width(count)
  	}
@@ -4627,11 +5548,69 @@ index 02a36280499045c1d0f73d540d0f885055bf1a03..731af62474148f7d8a3f01cd1db9c030
  	gutter := sidebarGutter(false, state, rowBg, pal, &m.Settings)
  	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
  }
+diff --git i/internal/app/tick_deadline.go w/internal/app/tick_deadline.go
+index 74e4a7d..9904149 100644
+--- i/internal/app/tick_deadline.go
++++ w/internal/app/tick_deadline.go
+@@ -177,6 +177,13 @@ func (m *OS) nextWake(now time.Time) (time.Time, bool) {
+ // state and retries its file listing. GitSyncCmd and FilesSyncCmd ask on the
+ // message after that moment.
+ func (m *OS) railReadsDue(at func(time.Time)) {
++	if m.sidebarCheckoutEnabled() {
++		for key, entry := range m.sidebarCheckouts.entries {
++			if key.machine == m.attachedMachine() && !entry.pending {
++				at(entry.askedAt.Add(sidebarCheckoutRefreshInterval))
++			}
++		}
++	}
+ 	if m.gitView.asked != "" && m.gitSectionEnabled() {
+ 		at(m.gitView.at.Add(gitRefreshInterval))
+ 	}
 diff --git i/internal/app/update.go w/internal/app/update.go
-index 977651030077e7eac33e7c23c7dd44385aa2b9d1..31bb43a61cd97f99ad4e45c02d93e1e6342c26b7 100644
+index 9776510..5ac82a7 100644
 --- i/internal/app/update.go
 +++ w/internal/app/update.go
-@@ -2213,6 +2213,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -943,6 +943,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+ 	// pane's directory is what both are about, and every handler that can move
+ 	// it is covered by one comparison here rather than by a hook in each.
+ 	gitSync := m.GitSyncCmd()
++	checkoutSync := m.sidebarCheckoutSyncCmd()
+ 	// The opposite edge may be the only rail that names files or git. Its
+ 	// presentation state is scoped to that edge; the directory and repository
+ 	// readings themselves are shared because both follow the same pane.
+@@ -950,6 +951,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+ 	if m.secondarySidebarWidth() > 0 {
+ 		m.withSecondaryRail(func() bool {
+ 			secondFiles, secondGit = m.FilesSyncCmd(), m.GitSyncCmd()
++			checkoutSync = tea.Batch(checkoutSync, m.sidebarCheckoutSyncCmd())
+ 			return true
+ 		})
+ 	}
+@@ -1006,10 +1008,10 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+ 	// for: it is armed for the earliest job that is due, and not at all when
+ 	// none is. See nextWake.
+ 	tick := m.tickWakeCmd()
+-	if sync == nil && replan == nil && gitSync == nil && secondFiles == nil && secondGit == nil && dockSync == nil && railSync == nil && loading == nil && motion == nil && agents == nil && tick == nil {
++	if sync == nil && replan == nil && gitSync == nil && checkoutSync == nil && secondFiles == nil && secondGit == nil && dockSync == nil && railSync == nil && loading == nil && motion == nil && agents == nil && tick == nil {
+ 		return model, cmd
+ 	}
+-	return model, tea.Batch(cmd, sync, replan, gitSync, secondFiles, secondGit, dockSync, railSync, loading, motion, agents, tick)
++	return model, tea.Batch(cmd, sync, replan, gitSync, checkoutSync, secondFiles, secondGit, dockSync, railSync, loading, motion, agents, tick)
+ }
+ 
+ // handleMsg is Update's body: one switch over every message the client can see.
+@@ -1109,6 +1111,10 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		m.renderSkipped = !changed
+ 		return m, due
+ 
++	case sidebarCheckoutMsg:
++		m.applySidebarCheckout(msg)
++		return m, nil
++
+ 	case GitStateMsg:
+ 		// The reading the git section asked for. It is applied rather than
+ 		// acted on: the section draws whatever the last answer was, and a
+@@ -2213,6 +2219,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		return m, nil
  
@@ -4644,7 +5623,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..31bb43a61cd97f99ad4e45c02d93e1e6
  	case tea.KeyboardEnhancementsMsg:
  		// The host answered the Kitty keyboard protocol query, so tuios now knows
  		// which of the things it asked for it actually got.
-@@ -2227,7 +2233,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -2227,7 +2239,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		if reason := m.HoldModeUnsupportedReason(); reason != "" && first {
  			m.ShowNotification(reason, "warning", m.Settings.NotificationDuration)
  		}
@@ -4654,7 +5633,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..31bb43a61cd97f99ad4e45c02d93e1e6
  	// Multi-client daemon messages
  	case StateSyncMsg:
 diff --git i/internal/config/constants.go w/internal/config/constants.go
-index 81885684d6d5c9f10a44e6252b459d0af73d16d1..6c3ca2c7d83a2b0a0001b3f4f6ec70d1f6f18112 100644
+index 8188568..6c3ca2c 100644
 --- i/internal/config/constants.go
 +++ w/internal/config/constants.go
 @@ -493,7 +493,12 @@ const SidebarDefaultSections = "sessions:25,terminals,files:25,agents:34"
@@ -4684,7 +5663,7 @@ index 81885684d6d5c9f10a44e6252b459d0af73d16d1..6c3ca2c7d83a2b0a0001b3f4f6ec70d1
  // lines, which is how a person puts a gap between two sections or pushes what
  // follows it to the bottom of the rail.
 diff --git i/internal/config/dock.go w/internal/config/dock.go
-index 2992b7c41078d3ce7155a6842bcc35c6432e386f..cdc9b25c06b0c36ad1ed534b7ea7363729adaa6f 100644
+index 2992b7c..cdc9b25 100644
 --- i/internal/config/dock.go
 +++ w/internal/config/dock.go
 @@ -147,6 +147,10 @@ type DockConfig struct {
@@ -4749,7 +5728,7 @@ index 2992b7c41078d3ce7155a6842bcc35c6432e386f..cdc9b25c06b0c36ad1ed534b7ea73637
  		"separator_fg": t.SeparatorFg, "active_fg": t.ActiveFg, "active_bg": t.ActiveBg,
  		"inactive_fg": t.InactiveFg, "inactive_bg": t.InactiveBg,
 diff --git i/internal/config/look.go w/internal/config/look.go
-index abe4b1bdd730de9175aa69ad1062864d7bf7ba69..ea8647b1f88ab503a17dd0b1556bca9c5428dc1f 100644
+index abe4b1b..ea8647b 100644
 --- i/internal/config/look.go
 +++ w/internal/config/look.go
 @@ -279,7 +279,7 @@ func LookKeysJSON() ([]byte, error) {
@@ -4762,7 +5741,7 @@ index abe4b1bdd730de9175aa69ad1062864d7bf7ba69..ea8647b1f88ab503a17dd0b1556bca9c
  			if spec.MaxBytes < maxLookString {
  				info.MaxBytes = spec.MaxBytes
 diff --git i/internal/config/look_items.go w/internal/config/look_items.go
-index 611532354699f7d560c24c87e1cb9cd5cf12ec5d..e4a7c0bbe7a2fc6c4a0e018fb4314757bac409cd 100644
+index 6115323..e4a7c0b 100644
 --- i/internal/config/look_items.go
 +++ w/internal/config/look_items.go
 @@ -45,6 +45,7 @@ type lookFileKey struct {
@@ -4832,7 +5811,7 @@ index 611532354699f7d560c24c87e1cb9cd5cf12ec5d..e4a7c0bbe7a2fc6c4a0e018fb4314757
  		target.SetBool(v)
  	case string:
 diff --git i/internal/config/options.go w/internal/config/options.go
-index bfeb88ffd40b8e48151976a7666e5c361f47c765..57dae2e66627981f41c209ef97754e8101fbc308 100644
+index bfeb88f..57dae2e 100644
 --- i/internal/config/options.go
 +++ w/internal/config/options.go
 @@ -155,7 +155,7 @@ const (
@@ -4894,7 +5873,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..57dae2e66627981f41c209ef97754e81
  
  // optionsByPath indexes the registry for lookup. Built once at init so a caller
 diff --git i/internal/config/sidebar_sections.go w/internal/config/sidebar_sections.go
-index 8f4598a5092e8aabdb1f406015f7872ad854ad67..ef214d160d0bacaaa570feeeb76043a24f023039 100644
+index 8f4598a..ef214d1 100644
 --- i/internal/config/sidebar_sections.go
 +++ w/internal/config/sidebar_sections.go
 @@ -59,6 +59,15 @@ func ParseSidebarSections(source string) []SidebarSectionShare {
@@ -4946,7 +5925,7 @@ index 8f4598a5092e8aabdb1f406015f7872ad854ad67..ef214d160d0bacaaa570feeeb76043a2
  }
  
 diff --git i/internal/config/sidebar_sections_test.go w/internal/config/sidebar_sections_test.go
-index 671d70a950cb6d7652d479f511220e7886b526f9..f0669e67c293ff8d3164b6778208bbb3239c0971 100644
+index 671d70a..f0669e6 100644
 --- i/internal/config/sidebar_sections_test.go
 +++ w/internal/config/sidebar_sections_test.go
 @@ -47,6 +47,8 @@ func TestParseSidebarSections(t *testing.T) {
@@ -4980,7 +5959,7 @@ index 671d70a950cb6d7652d479f511220e7886b526f9..f0669e67c293ff8d3164b6778208bbb3
  //
 diff --git i/internal/config/sidebar_ui_test.go w/internal/config/sidebar_ui_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..4aedae81ab30bf3ad5159ea31fa2dd7a69ad1936
+index 0000000..4aedae8
 --- /dev/null
 +++ w/internal/config/sidebar_ui_test.go
 @@ -0,0 +1,64 @@
@@ -5049,7 +6028,7 @@ index 0000000000000000000000000000000000000000..4aedae81ab30bf3ad5159ea31fa2dd7a
 +	}
 +}
 diff --git i/internal/config/userconfig.go w/internal/config/userconfig.go
-index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..4d380037b068603c83b43343b50e308981329073 100644
+index 8163e60..4d38003 100644
 --- i/internal/config/userconfig.go
 +++ w/internal/config/userconfig.go
 @@ -806,6 +806,48 @@ type SelectionConfig struct {
@@ -5110,7 +6089,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..4d380037b068603c83b43343b50e3089
  	// When absent, the existing rail still lives at Position with its existing
  	// settings. A new edge must be explicitly enabled; see sidebar_edges.go.
 diff --git i/internal/config/validation.go w/internal/config/validation.go
-index 21fc5de33f6fb21076e8a3d0ed46cc0592ee0e22..93a00b74e965f92239425aa8b819a738aebdd52c 100644
+index 21fc5de..93a00b7 100644
 --- i/internal/config/validation.go
 +++ w/internal/config/validation.go
 @@ -386,6 +386,7 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
@@ -5163,7 +6142,7 @@ index 21fc5de33f6fb21076e8a3d0ed46cc0592ee0e22..93a00b74e965f92239425aa8b819a738
  	a := &cfg.Appearance
  	for _, bg := range []struct {
 diff --git i/internal/input/actions.go w/internal/input/actions.go
-index 0ac4adbc1f010faac7a85dee50040d38794ca333..3e695c6abaf645e4f00eaca6900e181838ba272e 100644
+index 0ac4adb..3e695c6 100644
 --- i/internal/input/actions.go
 +++ w/internal/input/actions.go
 @@ -8,7 +8,6 @@ import (
@@ -5195,7 +6174,7 @@ index 0ac4adbc1f010faac7a85dee50040d38794ca333..3e695c6abaf645e4f00eaca6900e1818
  
  // handleRenameWorkspace opens the rename editor on the workspace the session
 diff --git i/internal/input/border_resize.go w/internal/input/border_resize.go
-index 39c011158f06cdf05c3b207b7cd1baf045b8e62e..bde4f2042c8c816750a18a11176e531ce7e4bf4f 100644
+index 39c0111..bde4f20 100644
 --- i/internal/input/border_resize.go
 +++ w/internal/input/border_resize.go
 @@ -45,7 +45,7 @@ func within(v, target, slop int) bool { return abs(v-target) <= slop }
@@ -5208,7 +6187,7 @@ index 39c011158f06cdf05c3b207b7cd1baf045b8e62e..bde4f2042c8c816750a18a11176e531c
  	}
  	// Scrolling columns drawing their own borders have the right drag for
 diff --git i/internal/input/keyboard_wm.go w/internal/input/keyboard_wm.go
-index 55416ada39978c6edeb5de616f812644537b1b17..24f67bafbc50955baa6572d687c1c0298272e705 100644
+index 55416ad..24f67ba 100644
 --- i/internal/input/keyboard_wm.go
 +++ w/internal/input/keyboard_wm.go
 @@ -152,8 +152,7 @@ func HandleWindowManagementModeKey(msg tea.KeyPressMsg, o *app.OS) (*app.OS, tea
@@ -5222,7 +6201,7 @@ index 55416ada39978c6edeb5de616f812644537b1b17..24f67bafbc50955baa6572d687c1c029
  	}
  
 diff --git i/internal/input/mouse_click.go w/internal/input/mouse_click.go
-index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..fe0f085155d79f321fd2e0c4d7e6b35682ee226b 100644
+index 094f9b0..fe0f085 100644
 --- i/internal/input/mouse_click.go
 +++ w/internal/input/mouse_click.go
 @@ -139,7 +139,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
@@ -5244,7 +6223,7 @@ index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..fe0f085155d79f321fd2e0c4d7e6b356
  				o.MinimizeWindow(clickedWindowIndex)
  			case app.WindowButtonFloat:
 diff --git i/internal/input/mouse_motion.go w/internal/input/mouse_motion.go
-index 53c8e3739689c2e9456a974bca0248ddfb1dcb38..fcadf8b787e92682bbf521a20c22839ba13637bd 100644
+index 53c8e37..fcadf8b 100644
 --- i/internal/input/mouse_motion.go
 +++ w/internal/input/mouse_motion.go
 @@ -208,7 +208,7 @@ func handleMouseMotion(msg tea.MouseMotionMsg, o *app.OS) (*app.OS, tea.Cmd) {
@@ -5257,7 +6236,7 @@ index 53c8e3739689c2e9456a974bca0248ddfb1dcb38..fcadf8b787e92682bbf521a20c22839b
  		// is not over the tile underneath.
  		idx := findClickedWindow(mouse.X, mouse.Y, o)
 diff --git i/internal/input/prefix_actions.go w/internal/input/prefix_actions.go
-index 63026788ee960bfc22829acd5abb6588ec69872c..d6d832f50df9a3c26e395481f1f3f61dd10cefc0 100644
+index 6302678..d6d832f 100644
 --- i/internal/input/prefix_actions.go
 +++ w/internal/input/prefix_actions.go
 @@ -6,7 +6,6 @@ import (
@@ -5293,7 +6272,7 @@ index 63026788ee960bfc22829acd5abb6588ec69872c..d6d832f50df9a3c26e395481f1f3f61d
  
  // startRename puts the focused window into rename mode. Renaming is a
 diff --git i/internal/overlay/rows.go w/internal/overlay/rows.go
-index 9ab267c129d849b6ae2e52972d16a133dbb0f81f..e452806ba6902a8a4e5f560be3aabad6851f48af 100644
+index 9ab267c..e452806 100644
 --- i/internal/overlay/rows.go
 +++ w/internal/overlay/rows.go
 @@ -134,6 +134,17 @@ func reverseCell(c *uv.Cell) {

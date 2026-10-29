@@ -7,6 +7,8 @@
   "cyan": "#689d6a",
   "white": "#a89984",
   "chrome": {
-    "accent": "#7daea3"
+    "accent": "#7daea3",
+    "surface": "#504945",
+    "panel": "#3c3836"
   }
 }

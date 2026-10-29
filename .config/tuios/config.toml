@@ -126,16 +126,15 @@ style = "flat"
 min_width = 8
 padding = 2
 show_add = true
-active_bg = "#7daea3"
-active_fg = "#1d2021"
+active_bg = "accent"
 active_bold = true
-inactive_bg = "#3c3836"
-inactive_fg = "#d4be98"
+inactive_bg = "panel"
+inactive_fg = "fg"
 
 [appearance]
 theme = "gruvbox-teal"
 dockbar_position = "top"
-border_focused_color = "#7daea3"
+border_focused_color = "accent"
 border_unfocused_color = "bright_black"
 border_focused_gradient = ""
 session_border = false
@@ -175,22 +174,28 @@ visible = false
 
 [appearance.sidebar.ui.dock_header]
 visible = true
-background = "#3c3836"
+background = "panel"
 padding_left = 2
 
 [appearance.sidebar.ui.repository]
-background = "#3c3836"
+background = "panel"
+active_background = "panel"
 
 [appearance.sidebar.ui.branch]
-active_background = "#504945"
+foreground = "fg"
+active_background = "surface"
 full_width = true
 
 [appearance.sidebar.ui.session]
-active_background = "#504945"
+foreground = "fg"
+active_background = "surface"
 full_width = true
 
 [appearance.sidebar.ui.agent]
-active_background = "#504945"
+foreground = "fg"
+bold = false
+active_background = "surface"
+active_foreground = "accent"
 active_bold = true
 full_width = true
 
