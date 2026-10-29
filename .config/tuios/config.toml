@@ -133,8 +133,9 @@ inactive_bg = "#3c3836"
 inactive_fg = "#d4be98"
 
 [appearance]
+theme = "gruvbox-teal"
 dockbar_position = "top"
-border_focused_color = "red"
+border_focused_color = "#7daea3"
 border_unfocused_color = "bright_black"
 border_focused_gradient = ""
 session_border = false

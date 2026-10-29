@@ -1,0 +1,12 @@
+{
+  "id": "gruvbox-teal",
+  "display_name": "Gruvbox Teal",
+  "base": "gruvbox_dark",
+  "yellow": "#d79921",
+  "purple": "#b16286",
+  "cyan": "#689d6a",
+  "white": "#a89984",
+  "chrome": {
+    "accent": "#7daea3"
+  }
+}
