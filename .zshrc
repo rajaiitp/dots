@@ -118,6 +118,7 @@ if [[ -z ${_zim_initialized:-} && -r ${ZIM_HOME}/zimfw.zsh ]]; then
   fi
   [[ -r ${ZIM_HOME}/init.zsh ]] && source "${ZIM_HOME}/init.zsh" && typeset -g _zim_initialized=1
 fi
+bindkey -e
 
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"

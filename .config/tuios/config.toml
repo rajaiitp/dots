@@ -116,7 +116,24 @@
 # `tuios list-dock-components` says which and why.
 # ============================================================================
 
+[dock]
+left = ["workspaces", "tape"]
+center = ["windows"]
+right = ["notifications", "copy-help", "cpu", "ram", "clock", "session-controls"]
+
+[dock.tabs]
+style = "flat"
+min_width = 8
+padding = 2
+show_add = true
+active_bg = "#7daea3"
+active_fg = "#1d2021"
+active_bold = true
+inactive_bg = "#3c3836"
+inactive_fg = "#d4be98"
+
 [appearance]
+dockbar_position = "top"
 border_focused_color = "red"
 border_unfocused_color = "bright_black"
 border_focused_gradient = ""
@@ -126,20 +143,74 @@ motion = "none"
 shared_borders = false
 gap = 0
 dock_compact = true
+dock_workspace_label_max = 0
 dim_unfocused = 8
 window_title_position = "hidden"
 border_style = "normal"
 session_colors = false
 focus_follows_mouse = true
+master_position = "left"
+master_count = 1
+master_ratio = 50
+master_grid = false
 
 [appearance.sidebar]
 position = "left"
 sections = "overview"
 
+# Live sidebar stylesheet. Elements support visible, align, foreground,
+# background, active_foreground, active_background, bold, active_bold,
+# full_width, padding_left, padding_right, indent, and bottom_offset_percent.
+# Elements: overview_header,
+# space, repository, session, branch, agent, dock_header, mode, workspace, status,
+# window, info, session_control, footer. Reorder overview/dock with sections;
+# reorder dock components in [dock].
+[appearance.sidebar.ui]
+section_gap = 0
+dock_group_gap = 1
+
+[appearance.sidebar.ui.overview_header]
+visible = false
+
+[appearance.sidebar.ui.dock_header]
+visible = true
+background = "#3c3836"
+padding_left = 2
+
+[appearance.sidebar.ui.repository]
+background = "#3c3836"
+
+[appearance.sidebar.ui.branch]
+active_background = "#504945"
+full_width = true
+
+[appearance.sidebar.ui.session]
+active_background = "#504945"
+full_width = true
+
+[appearance.sidebar.ui.agent]
+active_background = "#504945"
+active_bold = true
+full_width = true
+
+[appearance.sidebar.ui.mode]
+visible = false
+
+[appearance.sidebar.ui.workspace]
+align = "left"
+full_width = false
+padding_left = 1
+padding_right = 1
+bottom_offset_percent = 33
+
+[appearance.sidebar.ui.footer]
+visible = false
+
 [daemon]
 resume_agents = "auto"
 
 [startup]
+layout = "master-stack"
 tiled = true
 daemon = true
 open_default_window = true

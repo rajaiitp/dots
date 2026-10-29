@@ -4,7 +4,7 @@ set -euo pipefail
 readonly SOURCE_URL="https://github.com/Gaurav-Gosain/tuios.git"
 readonly BASE_COMMIT="3638a6f2093edfa7396b6233515786de4dbda683"
 readonly VERSION="0.11.0"
-readonly PATCH_SHA256="36fce992fada0c75e7a15233b55c6acf6e5aad6753a773782b7beb654f168831"
+readonly PATCH_SHA256="6eff88a51795514b9f1c6c9805b74497d4f56f4603013f89ef5e7de101c7c7c0"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PATCH_FILE="$SCRIPT_DIR/sidebar-unified-agents.patch"
 readonly STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tuios-unified-sidebar"
@@ -170,11 +170,16 @@ stage() {
   (
     cd "$source"
     nice -n 10 taskset -c 0-5 go test ./internal/config/...
-    nice -n 10 taskset -c 0-5 go test ./internal/app/... -run 'TestOverview|TestCollapsedOverview|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent' -count=1
+    nice -n 10 taskset -c 0-5 go test ./internal/app/... -run 'TestOverview|TestCollapsedOverview|TestSidebarDock|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
     nice -n 10 taskset -c 0-5 go vet ./internal/config/... ./internal/app/...
     CGO_ENABLED=0 nice -n 10 taskset -c 0-5 go build -trimpath \
       -ldflags "-s -w -X main.version=$VERSION -X main.commit=$BASE_COMMIT -X main.date=$date -X main.builtBy=pi-overview-patch" \
       -o "$built" ./cmd/tuios
+    (
+      cd e2e/tui
+      TUIOS_E2E=1 TUIOS_E2E_BIN="$built" nice -n 10 taskset -c 0-5 go test \
+        -run '^Test(TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels)$' -count=1 -timeout 180s .
+    )
   )
   validate_binary "$built"
 

@@ -22,7 +22,7 @@
   "lastChangelogVersion": "0.84.4",
   "hideThinkingBlock": false,
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
+  "defaultModel": "gpt-6.1-sol",
   "observational-memory": {
     "compactAfterTokens": 160000,
     "compactAfterTokensMode": "calibrated",

@@ -7,10 +7,13 @@ enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
 [workspace-to-monitor-force-assignment]
-"1" = 1
-"2" = 1
-"3" = 1
-"4" = 'built-in'
+# Keep workspace 5 on the laptop. Route every other configured workspace to
+# the external display when connected, falling back to the macOS main display.
+"1" = ['^PL3494WQ$', 'main']
+"2" = ['^PL3494WQ$', 'main']
+"3" = ['^PL3494WQ$', 'main']
+"4" = ['^PL3494WQ$', 'main']
+"5" = 'built-in'
 
 [gaps]
 inner.horizontal = 5
