@@ -235,8 +235,19 @@ open_default_window = true
 [keybindings.window_management]
 toggle_pip = []
 
+[keybindings.layout]
+toggle_tiling = []
+
 [keybindings.prefix_mode]
 prefix_session_switcher = []
+prefix_toggle_tiling = []
+prefix_close_session = []
+kill_session_next = ["X"]
+prefix_workspace_switcher = []
+new_workspace = ["W"]
+
+[keybindings.window_prefix]
+window_prefix_tiling = []
 
 [[keybindings.command]]
 key = "prefix+shift+s"

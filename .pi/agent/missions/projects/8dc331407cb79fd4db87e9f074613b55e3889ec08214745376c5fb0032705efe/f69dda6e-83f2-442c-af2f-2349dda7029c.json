@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "id": "f69dda6e-83f2-442c-af2f-2349dda7029c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-28T23:21:05.927Z",
+  "updatedAt": "2026-10-28T23:25:34.638Z",
+  "runs": [
+    {
+      "runId": "2f570279-b29e-4350-b7ac-1466f64735c5",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-10-28T23:25:34.638Z",
+      "completedAt": "2026-10-28T23:25:34.638Z",
+      "usage": {
+        "tokens": 38852
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/2f570279-b29e-4350-b7ac-1466f64735c5_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/2f570279-b29e-4350-b7ac-1466f64735c5_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The static comparison is viable, but dynamic conclusions require explicit control-delivery and epoch-transition semantics.\n\n## Critical gaps\n- Counting control bytes is insufficient unless successful delivery governs subscription installation, epoch advancement, and Welcome acceptance. Define removal effectiveness for partitioned or stale-epoch publishers; coordinator ordering alone cannot provide instantaneous revocation. Alternatively, label instantaneous state updates as oracle assumptions and exclude churn/security robustness claims.\n\n## Important improvements\n- Specify workload sizes, message rates, churn rates, and sender/coordinator placement for two-member DMs, single-source announcements, and many-source chat. Include both unsaturated and overloaded cases.\n- Make batching costs depend on change count and relevant proposal/tree overhead, not merely a fixed Commit-size sweep. Otherwise apparent batching savings can be structurally overstated.\n- State how the shared forest is constructed and rooted; count its bootstrap and subscription rebuilding, or label those preinstalled-state assumptions as oracle-assisted too.\n- Define the transmission/loss unit and framing overhead. Treating a 256 KiB Welcome as one atomic transmission can materially distort retries, queue admission, and comparisons with small messages.\n- State the coordinator’s trust assumptions and announcement publishing policy. MLS does not itself define application authorization or protect routing metadata.\n\n## Validation gaps\n- Exercise delayed, lost, duplicated, and reordered membership controls; traffic before Welcome/subscription installation; partitioned removal; and recovery with stale publishers.\n- Check byte-ledger conservation across queued, transmitted, retried, and dropped traffic, including control and ACK traffic sharing the modeled egress resource.\n…\nFull output: /home/raja/.pi/agent/sessions/--home-raja-Projects-network_rect...",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Failed to parse acceptance-report: Invalid acceptance-report: noStagedFiles: expected boolean; got null"
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Failed to parse acceptance-report: Invalid acceptance-report: noStagedFiles: expected boolean; got null"
+  }
+}
