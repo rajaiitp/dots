@@ -4,7 +4,7 @@ set -euo pipefail
 readonly SOURCE_URL="https://github.com/Gaurav-Gosain/tuios.git"
 readonly BASE_COMMIT="3638a6f2093edfa7396b6233515786de4dbda683"
 readonly VERSION="0.11.0"
-readonly PATCH_SHA256="5f386bf9893da22e9fd99580809355bd8ee69e2316ca3caff001b200d727e83c"
+readonly PATCH_SHA256="811b248b711af65459f94d5beaad3610a5c815659bf614c2f9707193837626ff"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PATCH_FILE="$SCRIPT_DIR/sidebar-unified-agents.patch"
 readonly STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tuios-unified-sidebar"
@@ -170,15 +170,17 @@ stage() {
   (
     cd "$source"
     nice -n 10 taskset -c 0-5 go test ./internal/config/...
-    nice -n 10 taskset -c 0-5 go test ./internal/app/... -run 'TestOverview|TestCollapsedOverview|TestSidebarDock|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
-    nice -n 10 taskset -c 0-5 go vet ./internal/config/... ./internal/app/...
+    nice -n 10 taskset -c 0-5 go test ./internal/session/... -run 'Test.*Workspace|Test.*ForegroundCommand' -count=1
+    nice -n 10 taskset -c 0-5 go test ./internal/app/... -run 'TestTerminalPrefixOnly|TestOverview|TestCollapsedOverview|TestSidebarDock|TestCloseWorkspace|TestWorkspaceCloseSetting|TestSplash|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
+    nice -n 10 taskset -c 0-5 go test ./internal/input/... -count=1
+    nice -n 10 taskset -c 0-5 go vet ./internal/config/... ./internal/app/... ./internal/session/... ./internal/input/...
     CGO_ENABLED=0 nice -n 10 taskset -c 0-5 go build -trimpath \
       -ldflags "-s -w -X main.version=$VERSION -X main.commit=$BASE_COMMIT -X main.date=$date -X main.builtBy=pi-overview-patch" \
       -o "$built" ./cmd/tuios
     (
       cd e2e/tui
       TUIOS_E2E=1 TUIOS_E2E_BIN="$built" nice -n 10 taskset -c 0-5 go test \
-        -run '^Test(TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels)$' -count=1 -timeout 180s .
+        -run '^Test(TerminalPrefixOnlyInteraction|TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels|SidebarCheckoutTracksHeadWithoutFollowingPaneCaches|WorkspaceAutoNameRetainsProgramAcrossSplitsReattachAndRestart|WorkspaceCloseWithoutConfirmation|PendingConsoleDoesNotFlashWelcome|WorkspaceTabCloseClosesThatTabsWorkspace|CloseWorkspaceFromAKeyClosesTheCurrentOne)$' -count=1 -timeout 180s .
     )
   )
   validate_binary "$built"

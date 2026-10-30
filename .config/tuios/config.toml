@@ -119,7 +119,7 @@
 [dock]
 left = ["workspaces", "tape"]
 center = ["windows"]
-right = ["notifications", "copy-help", "cpu", "ram", "clock", "session-controls"]
+right = ["copy-help", "cpu", "ram", "clock", "session-controls"]
 
 [dock.tabs]
 style = "flat"
@@ -131,6 +131,11 @@ active_bold = true
 inactive_bg = "panel"
 inactive_fg = "fg"
 
+[workspaces]
+auto_name_single_pane = true
+new_window_when_empty = true
+confirm_close = false
+
 [appearance]
 theme = "gruvbox-teal"
 dockbar_position = "top"
@@ -140,8 +145,9 @@ border_focused_gradient = ""
 session_border = false
 hide_window_buttons = true
 motion = "none"
-shared_borders = false
-gap = 0
+shared_borders = true
+terminal_prefix_only = true
+gap = 1
 dock_compact = true
 dock_workspace_label_max = 0
 dim_unfocused = 8
@@ -153,6 +159,10 @@ master_position = "left"
 master_count = 1
 master_ratio = 50
 master_grid = false
+zen_mode = "mouse"
+tiling_scheme = "spiral"
+panel_padding = 1
+drop_preview = "off"
 
 [appearance.sidebar]
 position = "left"
@@ -218,6 +228,7 @@ resume_agents = "auto"
 [startup]
 layout = "master-stack"
 tiled = true
+start_in_terminal_mode = true
 daemon = true
 open_default_window = true
 
@@ -234,3 +245,16 @@ command = "$HOME/.config/tuios/scripts/session-picker"
 description = "Open or create a project session"
 width = "90%"
 height = "80%"
+
+[spotlight]
+enabled = false
+
+[notifications.agent]
+notify = false
+dock = false
+sound = true
+
+[notifications.mail]
+notify = false
+dock = false
+sound = false

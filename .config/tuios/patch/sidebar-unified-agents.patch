@@ -250,6 +250,86 @@ index 0000000..2b14646
 +		}
 +	}
 +}
+diff --git i/e2e/tui/interaction_modes_test.go w/e2e/tui/interaction_modes_test.go
+new file mode 100644
+index 0000000..ff19ae0
+--- /dev/null
++++ w/e2e/tui/interaction_modes_test.go
+@@ -0,0 +1,74 @@
++package tuie2e
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestTerminalPrefixOnlyInteraction(t *testing.T) {
++	for _, standalone := range []bool{false, true} {
++		name := "daemon"
++		if standalone {
++			name = "standalone"
++		}
++		t.Run(name, func(t *testing.T) {
++			base := t.TempDir()
++			writeConfig(t, base, `[startup]
++open_default_window = true
++start_in_terminal_mode = true
++tiled = true
++[appearance]
++terminal_prefix_only = true
++[appearance.sidebar]
++position = "left"
++width = 24
++sections = "overview"
++[dock]
++left = ["workspaces", "trail"]
++center = []
++right = ["notifications"]
++`)
++			const session = "terminal-prefix"
++			args := []string{"new", session}
++			if standalone {
++				args = []string{"--standalone"}
++			}
++			term := startIn(t, base, startOpts{cols: 140, rows: 40, args: args})
++			waitWindowCount(t, term, 1, "initial console")
++			runInShell(t, term, "echo BOOT-$((6*7))", "BOOT-42", shellTimeout)
++			for _, tc := range []struct {
++				name string
++				keys []any
++			}{
++				{"WINDOW", []any{tuitest.Ctrl('b'), tuitest.Esc}},
++				{"COPY", []any{tuitest.Ctrl('b'), "["}},
++				{"SIDEBAR", []any{tuitest.Ctrl('b'), "e"}},
++				{"ALTESC", []any{tuitest.Alt(tuitest.Esc)}},
++			} {
++				sendKeys(t, term, tc.keys...)
++				runInShell(t, term, "echo "+tc.name+"-$((6*7))", tc.name+"-42", shellTimeout)
++			}
++			mouseClick(t, term, 3, 30, tuitest.MouseLeft, 0)
++			runInShell(t, term, "echo RAILCLICK-$((6*7))", "RAILCLICK-42", shellTimeout)
++			sendKeys(t, term, tuitest.Ctrl('b'), "r", tuitest.Ctrl('u'), "renamed-console", tuitest.Enter)
++			runInShell(t, term, "echo RENAME-$((6*7))", "RENAME-42", shellTimeout)
++			if !standalone {
++				out, err := tuiosCLI(t, base, "run-command", "WindowManagementMode", "-s", session)
++				if err == nil || !strings.Contains(string(out), "only terminal and prefix modes") {
++					t.Fatalf("window-mode API was not rejected: %v\n%s", err, out)
++				}
++				runInShell(t, term, "echo API-$((6*7))", "API-42", shellTimeout)
++				if out, err := tuiosCLI(t, base, "close-window", "renamed-console", "-s", session); err != nil {
++					t.Fatalf("close last pane: %v\n%s", err, out)
++				}
++				waitWindowCount(t, term, 0, "empty session")
++				sendKeys(t, term, tuitest.Ctrl('b'), "c")
++				waitWindowCount(t, term, 1, "prefix opens a console without a focused pane")
++				runInShell(t, term, "echo EMPTY-$((6*7))", "EMPTY-42", shellTimeout)
++			}
++			alive(t, term, "after restricted mode requests")
++		})
++	}
++}
 diff --git i/e2e/tui/sidebar_checkout_test.go w/e2e/tui/sidebar_checkout_test.go
 new file mode 100644
 index 0000000..e73a40e
@@ -313,6 +393,227 @@ index 0000000..e73a40e
 +		waitBranch("main")
 +	}
 +}
+diff --git i/e2e/tui/workspace_auto_name_test.go w/e2e/tui/workspace_auto_name_test.go
+new file mode 100644
+index 0000000..993f49e
+--- /dev/null
++++ w/e2e/tui/workspace_auto_name_test.go
+@@ -0,0 +1,99 @@
++package tuie2e
++
++import (
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestWorkspaceAutoNameRetainsProgramAcrossSplitsReattachAndRestart(t *testing.T) {
++	base := t.TempDir()
++	writeConfig(t, base, `[workspaces]
++auto_name_single_pane = true
++[daemon]
++agent_detect_seconds = 1
++[appearance]
++dockbar_position = "top"
++dock_workspace_tab_format = "{name}"
++dock_workspace_label_max = 0
++[dock]
++left = ["workspaces", "trail"]
++center = []
++right = ["notifications"]
++`)
++	const session = "auto-tab"
++	term := startIn(t, base, startOpts{args: []string{"new", session}})
++	waitBoot(t, term)
++	newWindow(t, term)
++	waitWindowCount(t, term, 1, "initial pane")
++	waitName := func(term *tuitest.Terminal, name string) {
++		t.Helper()
++		if err := term.WaitFor(func(s tuitest.Screen) bool {
++			return strings.Contains(s.Line(0), name)
++		}, uiTimeout); err != nil {
++			t.Fatalf("tab did not show %q: %v\n%s", name, err, term.Snapshot())
++		}
++		if got := workspaceNamesOf(t, base, session)["1"]; got != name {
++			t.Fatalf("daemon name = %q, want %q", got, name)
++		}
++	}
++	waitProgram := func(want string) {
++		t.Helper()
++		deadline := time.Now().Add(uiTimeout)
++		for {
++			state, err := daemonJSON[struct {
++				Windows []struct {
++					Focused bool   `json:"focused"`
++					Command string `json:"foreground_cmd"`
++				} `json:"windows"`
++			}](base, "list-windows", "-s", session)
++			if err != nil {
++				t.Fatal(err)
++			}
++			for _, window := range state.Windows {
++				if window.Focused && window.Command == want {
++					return
++				}
++			}
++			if time.Now().After(deadline) {
++				t.Fatalf("focused pane never reported program %q", want)
++			}
++			time.Sleep(50 * time.Millisecond)
++		}
++	}
++	enterTerminalMode(t, term)
++	sendKeys(t, term, "sleep 60", tuitest.Enter)
++	waitProgram("sleep")
++	waitName(term, "sleep")
++	sendKeys(t, term, tuitest.Ctrl('c'))
++	runInShell(t, term, "echo EXIT-$((6*7))", "EXIT-42", shellTimeout)
++	waitProgram("")
++	waitName(term, "sleep")
++	sendKeys(t, term, "cat", tuitest.Enter)
++	waitProgram("cat")
++	waitName(term, "cat")
++	sendKeys(t, term, tuitest.Ctrl('c'))
++	runInShell(t, term, "echo SECOND-$((6*7))", "SECOND-42", shellTimeout)
++	waitProgram("")
++	leaveTerminalMode(t, term)
++	newWindow(t, term)
++	waitWindowCount(t, term, 2, "split workspace")
++	enterTerminalMode(t, term)
++	sendKeys(t, term, "sleep 60", tuitest.Enter)
++	waitProgram("sleep")
++	waitName(term, "cat")
++	leaveTerminalMode(t, term)
++	sendKeys(t, term, tuitest.Ctrl('b'), "d")
++	waitExit(t, term, "detach with inherited name")
++	reattached := startIn(t, base, startOpts{args: []string{"attach", session}})
++	waitName(reattached, "cat")
++	sendKeys(t, reattached, tuitest.Ctrl('b'), "d")
++	waitExit(t, reattached, "detach before isolated daemon restart")
++	if out, err := tuiosCLI(t, base, "restart-server", "--yes"); err != nil {
++		t.Fatalf("restart isolated daemon: %v\n%s", err, out)
++	}
++	restored := startIn(t, base, startOpts{args: []string{"attach", session}})
++	waitName(restored, "cat")
++}
+diff --git i/e2e/tui/workspace_close_settings_test.go w/e2e/tui/workspace_close_settings_test.go
+new file mode 100644
+index 0000000..111d3d3
+--- /dev/null
++++ w/e2e/tui/workspace_close_settings_test.go
+@@ -0,0 +1,49 @@
++package tuie2e
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestWorkspaceCloseWithoutConfirmation(t *testing.T) {
++	for _, tc := range []struct {
++		name     string
++		fromMenu bool
++	}{
++		{"tab-menu", true},
++		{"key", false},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			base := t.TempDir()
++			writeConfig(t, base, "[workspaces]\nconfirm_close = false\n[keybindings.prefix_mode]\nclose_workspace = [\"alt+x\"]\n")
++			term := startTwoWorkspaces(t, base, 1)
++			want := "farws"
++			if tc.fromMenu {
++				want = "homews"
++				col, row, ok := dockCell(term.Screen(), "farws")
++				if !ok {
++					t.Fatal("farws tab is missing")
++				}
++				mouseClick(t, term, col+1, row, tuitest.MouseRight, 0)
++				waitMenu(t, term, "the farws tab", "Switch to", "Rename", "Close")
++				col, row = screenCell(t, term, "Close")
++				mouseClick(t, term, col, row, tuitest.MouseLeft, 0)
++			} else {
++				sendKeys(t, term, tuitest.Ctrl('b'), tuitest.Alt("x"))
++			}
++			waitPanesOn(t, term, base, wsCloseSession, 2, 0, "closing without confirmation")
++			if n := panesOn(t, base, wsCloseSession, 1); n != 1 {
++				t.Fatalf("remaining workspace has %d panes, want 1", n)
++			}
++			if names := workspaceNamesOf(t, base, wsCloseSession); names["1"] != want || len(names) != 1 {
++				t.Fatalf("remaining names = %v, want %q alone", names, want)
++			}
++			if strings.Contains(term.Screen().Text(), "Close every pane on") {
++				t.Fatal("workspace confirmation is still visible")
++			}
++			alive(t, term, "after immediate workspace close")
++		})
++	}
++}
+diff --git i/e2e/tui/workspace_console_pending_test.go w/e2e/tui/workspace_console_pending_test.go
+new file mode 100644
+index 0000000..bf7c5de
+--- /dev/null
++++ w/e2e/tui/workspace_console_pending_test.go
+@@ -0,0 +1,55 @@
++package tuie2e
++
++import (
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/charmbracelet/x/ansi"
++)
++
++func TestPendingConsoleDoesNotFlashWelcome(t *testing.T) {
++	for _, tc := range []struct {
++		name    string
++		hold    string
++		refused bool
++	}{
++		{"slow", "3000", false},
++		{"refused", "refuse", true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			base := t.TempDir()
++			hold := filepath.Join(base, "hold-pane")
++			const sess = "pending-console"
++			term := startHeld(t, base, sess, hold)
++			setHold(t, hold, tc.hold)
++			screen := term.Screen()
++			_, rows := screen.Size()
++			line := screen.Line(rows - 1)
++			index := strings.Index(line, "+")
++			if index < 0 {
++				t.Fatal("dock has no + tab")
++			}
++			leftClick(t, term, ansi.StringWidth(line[:index]), rows-1)
++			waitDockStatus(t, term, "bottom", 2, 0, "pending console")
++			if err := term.WaitStable(uiTimeout); err != nil {
++				t.Fatal(err)
++			}
++			if countWindows(term.Screen()) != 0 {
++				t.Fatal("the held console arrived before pending rendering was checked")
++			}
++			if strings.Contains(term.Screen().Text(), "Terminal UI Operating System") {
++				t.Fatalf("welcome flashed while the console was pending\n%s", term.Snapshot())
++			}
++			if tc.refused {
++				if err := term.WaitForText("Terminal UI Operating System", uiTimeout); err != nil {
++					t.Fatalf("welcome did not return after request expiry: %v\n%s", err, term.Snapshot())
++				}
++				return
++			}
++			exactlyPanesOn(t, term, base, sess, 2, 1, "console arrives without welcome")
++			enterTerminalMode(t, term)
++			runInShell(t, term, "echo CONSOLE-$((6*7))", "CONSOLE-42", shellTimeout)
++		})
++	}
++}
 diff --git i/internal/app/agent_rail_shipped_width_test.go w/internal/app/agent_rail_shipped_width_test.go
 index d6e3421..38110cc 100644
 --- i/internal/app/agent_rail_shipped_width_test.go
@@ -326,11 +627,127 @@ index d6e3421..38110cc 100644
  	if !strings.Contains(row, "a-session") || !strings.Contains(row, agentStateIndicator("needs_input")) {
  		t.Errorf("a blocked session on another machine lost its name or glyph on the shipped rail: %q", row)
  	}
+diff --git i/internal/app/close_workspace.go w/internal/app/close_workspace.go
+index 8c07cb6..2ecbb43 100644
+--- i/internal/app/close_workspace.go
++++ w/internal/app/close_workspace.go
+@@ -11,9 +11,7 @@ import (
+ 
+ // close_workspace closes every pane on a workspace, like tmux kill-window: the
+ // workspace whose dock tab menu ran it, or the current one when a key or the
+-// palette did. It asks first, in the session-close dialog, every time: the
+-// dialog counts the panes and the agents it would take down, which is the
+-// reason to read it. tuios close-workspace is the same for a script.
++// palette did. Confirmation follows workspaces.confirm_close.
+ //
+ // A scratch pane stays unless the workspace is its scratch workspace, as in
+ // the close-workspace verb (session.WindowsToCloseOnWorkspace).
+@@ -72,11 +70,7 @@ func (m *OS) sessionCloseLabel() string {
+ 	return "Close session"
+ }
+ 
+-// OpenWorkspaceClose raises the confirmation for the workspace the user meant:
+-// the one whose tab menu the action came from, or the one they are on when it
+-// came from a key or the palette. The dialog counts, and its answer closes, that
+-// workspace's panes. A workspace with no pane to close says so and asks
+-// nothing.
++// OpenWorkspaceClose closes the targeted workspace, asking first unless disabled.
+ func (m *OS) OpenWorkspaceClose() {
+ 	ws := m.TakeMenuWorkspace()
+ 	if ws <= 0 {
+@@ -86,6 +80,10 @@ func (m *OS) OpenWorkspaceClose() {
+ 		m.ShowNotification(fmt.Sprintf("Workspace %d has no panes to close.", ws), "info", m.Settings.NotificationDuration)
+ 		return
+ 	}
++	if m.UserConfig != nil && !m.UserConfig.Workspaces.ConfirmsClose() {
++		m.CloseWorkspacePanes(ws)
++		return
++	}
+ 	// The workspace is set first, so the dialog opens as a workspace one: it
+ 	// carries no delete-worktree row, and the toll that row would need is
+ 	// never fetched.
+diff --git i/internal/app/close_workspace_test.go w/internal/app/close_workspace_test.go
+index c3e0571..96b19aa 100644
+--- i/internal/app/close_workspace_test.go
++++ w/internal/app/close_workspace_test.go
+@@ -4,6 +4,7 @@ import (
+ 	"strings"
+ 	"testing"
+ 
++	"github.com/Gaurav-Gosain/tuios/internal/session"
+ 	"github.com/Gaurav-Gosain/tuios/internal/terminal"
+ )
+ 
+@@ -59,3 +60,52 @@ func TestCloseWorkspaceAsksThenClosesItsPanes(t *testing.T) {
+ 		t.Fatal("an empty workspace raised the dialog")
+ 	}
+ }
++
++func TestCloseWorkspaceSkipsConfirmationWhenDisabled(t *testing.T) {
++	for _, fromMenu := range []bool{false, true} {
++		m := scratchOS(t, false)
++		confirm := false
++		m.UserConfig.Workspaces.ConfirmClose = &confirm
++		m.CurrentWorkspace = 2
++		m.Windows = []*terminal.Window{
++			{ID: "other", Workspace: 1},
++			{ID: "a", Workspace: 2, AgentState: string(session.AgentStateWorking)},
++			{ID: "b", Workspace: 2},
++			{ID: "scratch", Workspace: 2, IsScratch: true, IsPopup: true, IsFloating: true},
++		}
++		m.FocusedWindow = 1
++		if fromMenu {
++			m.CurrentWorkspace, m.FocusedWindow = 1, 0
++			m.menuWorkspace = 2
++		}
++		m.OpenWorkspaceClose()
++		if m.ShowSessionClose || m.SessionCloseWorkspace != 0 {
++			t.Fatalf("menu %t: disabled confirmation opened a dialog", fromMenu)
++		}
++		var left []string
++		for _, w := range m.Windows {
++			left = append(left, w.ID)
++		}
++		if strings.Join(left, ",") != "other,scratch" {
++			t.Fatalf("menu %t: windows left = %v", fromMenu, left)
++		}
++		if m.QuitRequested {
++			t.Fatal("closing a workspace quit the session")
++		}
++	}
++}
++
++func TestWorkspaceCloseSettingPreservesSessionAndPaneConfirmation(t *testing.T) {
++	m := scratchOS(t, false)
++	confirm := false
++	m.UserConfig.Workspaces.ConfirmClose = &confirm
++	m.OpenSessionClose()
++	if !m.ShowSessionClose || m.SessionCloseWorkspace != 0 {
++		t.Fatal("workspace setting disabled session confirmation")
++	}
++	m.CloseSessionClose()
++	m.OpenSessionCloseForWindow(0)
++	if !m.ShowSessionClose || m.SessionCloseWindow != m.Windows[0].ID {
++		t.Fatal("workspace setting disabled pane-link confirmation")
++	}
++}
 diff --git i/internal/app/command_palette.go w/internal/app/command_palette.go
-index 3a85835..bcd6a00 100644
+index 3a85835..ebc9c1b 100644
 --- i/internal/app/command_palette.go
 +++ w/internal/app/command_palette.go
-@@ -252,10 +252,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -145,8 +145,9 @@ type CommandPaletteItem struct {
+ 	// one per settings row, so they are left out of the empty palette and
+ 	// ranked after every command, and a query that names a setting still
+ 	// reaches it: "pane background" or "settings: pane background".
+-	Setting bool
+-	Action  func(m *OS) (*OS, tea.Cmd)
++	Setting           bool
++	Action            func(m *OS) (*OS, tea.Cmd)
++	RequiresFullModes bool
+ }
+ 
+ // GetCommandPaletteItems returns all available commands for the command palette.
+@@ -252,10 +253,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  			Bind:     "prefix_close_window",
  			Category: "Window",
  			Action: func(m *OS) (*OS, tea.Cmd) {
@@ -344,8 +761,112 @@ index 3a85835..bcd6a00 100644
  			},
  		},
  		{
+@@ -267,7 +268,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 				// The editor is a centred dialog, so hidden titles are no reason
+ 				// for the palette to offer a row that does nothing.
+ 				if focused := m.GetFocusedWindow(); focused != nil {
+-					m.Mode = WindowManagementMode
++					m.EnterWindowManagementMode()
+ 					m.BeginRenameWindow(focused)
+ 				}
+ 				return m, nil
+@@ -516,7 +517,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 			},
+ 		})
+ 	}
+-	return append(items, []CommandPaletteItem{
++	items = append(items, []CommandPaletteItem{
+ 		{
+ 			Name:     "Add a master pane",
+ 			Shortcut: "",
+@@ -1252,12 +1253,15 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 			},
+ 		},
+ 		{
+-			Name:     "Window management mode",
+-			Shortcut: "prefix+esc",
+-			Bind:     "prefix_exit_mode",
+-			Category: "Session",
++			Name:              "Window management mode",
++			RequiresFullModes: true,
++			Shortcut:          "prefix+esc",
++			Bind:              "prefix_exit_mode",
++			Category:          "Session",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+-				m.Mode = WindowManagementMode
++				if !m.EnterWindowManagementMode() {
++					return m, nil
++				}
+ 				m.ShowNotification("Window management mode", "info", s.NotificationDuration)
+ 				if focusedWindow := m.GetFocusedWindow(); focusedWindow != nil {
+ 					focusedWindow.InvalidateCache()
+@@ -1286,10 +1290,11 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 			},
+ 		},
+ 		{
+-			Name:     "Enter copy mode",
+-			Shortcut: "prefix+[",
+-			Bind:     "prefix_selection",
+-			Category: "Session",
++			Name:              "Enter copy mode",
++			RequiresFullModes: true,
++			Shortcut:          "prefix+[",
++			Bind:              "prefix_selection",
++			Category:          "Session",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+ 				m.EnterCopyModeFocused()
+ 				return m, nil
+@@ -1297,8 +1302,9 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 		},
+ 		{
+ 			// No Shortcut: copy_mode_search_forward has no default binding.
+-			Name:     "Copy mode: search forward",
+-			Category: "Session",
++			Name:              "Copy mode: search forward",
++			RequiresFullModes: true,
++			Category:          "Session",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+ 				m.EnterCopyModeSearch(false)
+ 				return m, nil
+@@ -1306,24 +1312,30 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+ 		},
+ 		{
+ 			// No Shortcut: copy_mode_search_backward has no default binding.
+-			Name:     "Copy mode: search backward",
+-			Category: "Session",
++			Name:              "Copy mode: search backward",
++			RequiresFullModes: true,
++			Category:          "Session",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+ 				m.EnterCopyModeSearch(true)
+ 				return m, nil
+ 			},
+ 		},
+ 		{
+-			Name:     paletteMultiCopyName,
+-			Shortcut: "prefix+[",
+-			Bind:     "prefix_selection",
+-			Category: "Session",
++			Name:              paletteMultiCopyName,
++			RequiresFullModes: true,
++			Shortcut:          "prefix+[",
++			Bind:              "prefix_selection",
++			Category:          "Session",
+ 			Action: func(m *OS) (*OS, tea.Cmd) {
+ 				m.EnterMultiCopyMode()
+ 				return m, nil
+ 			},
+ 		},
+ 	}...)
++	if s.TerminalPrefixOnly {
++		items = slices.DeleteFunc(items, func(item CommandPaletteItem) bool { return item.RequiresFullModes })
++	}
++	return items
+ }
+ 
+ // paletteStateTokens are the states a leading "@" token narrows the palette to.
 diff --git i/internal/app/contextmenu_build.go w/internal/app/contextmenu_build.go
-index 666deba..9bbf02d 100644
+index 666deba..4f4c9e6 100644
 --- i/internal/app/contextmenu_build.go
 +++ w/internal/app/contextmenu_build.go
 @@ -94,7 +94,7 @@ func (m *OS) OpenContextMenu(x, y int) {
@@ -357,6 +878,40 @@ index 666deba..9bbf02d 100644
  		if idx := m.DockItemAt(x, y); idx >= 0 {
  			return CtxTargetDockItem, idx, 0
  		}
+@@ -321,8 +321,7 @@ func (m *OS) dockItemMenu(windowIndex int) (string, []ContextMenuItem) {
+ //
+ // The title is what the tab says, so the menu names the workspace it will act
+ // on even when that workspace is not the one being shown. Every row acts on the
+-// tab's workspace, Close included: it raises close_workspace's confirmation for
+-// this workspace, and is dimmed when the workspace has no pane to close.
++// tab's workspace, Close included; it is dimmed when the workspace has no panes.
+ func (m *OS) workspacePillMenu(ws int) (string, []ContextMenuItem) {
+ 	closeItem := m.item(glyphClose, "Close", "close_workspace", len(m.workspacePanes(ws)) == 0)
+ 	closeItem.Warn = true
+diff --git i/internal/app/copymode_entry.go w/internal/app/copymode_entry.go
+index f4ae7ce..e1732f5 100644
+--- i/internal/app/copymode_entry.go
++++ w/internal/app/copymode_entry.go
+@@ -10,6 +10,9 @@ import (
+ // default, as tmux does), or in the middle row. In multi copy mode each pane
+ // goes through here, so each one starts on its own cursor.
+ func (m *OS) enterCopyMode(w *terminal.Window) {
++	if m.restrictedModeRequested() {
++		return
++	}
+ 	if m.Settings.CopyEntry == config.CopyEntryCenter {
+ 		w.EnterCopyModeCentered()
+ 		return
+@@ -25,6 +28,9 @@ func (m *OS) enterCopyMode(w *terminal.Window) {
+ // multi copy mode the prompt opens in every pane of the mode, the same as the
+ // / or ? key does there.
+ func (m *OS) EnterCopyModeSearch(backward bool) {
++	if m.restrictedModeRequested() {
++		return
++	}
+ 	fw := m.GetFocusedWindow()
+ 	if fw == nil {
+ 		return
 diff --git i/internal/app/daemon_wiring.go w/internal/app/daemon_wiring.go
 index 16e2b0e..b92240a 100644
 --- i/internal/app/daemon_wiring.go
@@ -550,6 +1105,289 @@ index 8527471..ca4a8a0 100644
  func TestWorkspaceChipWidthFollowsItsLabel(t *testing.T) {
  	m := chipOS(t)
  	for _, tab := range m.buildDockWorkspaceTabs() {
+diff --git i/internal/app/factory.go w/internal/app/factory.go
+index a149881..e39c9e9 100644
+--- i/internal/app/factory.go
++++ w/internal/app/factory.go
+@@ -384,5 +384,6 @@ func NewOS(opts OSOptions) *OS {
+ 		os.SubscribedPTYs = make(map[string]bool)
+ 	}
+ 
++	os.EnforceInteractionModes()
+ 	return os
+ }
+diff --git i/internal/app/hold_mode.go w/internal/app/hold_mode.go
+index 116bffa..8eca937 100644
+--- i/internal/app/hold_mode.go
++++ w/internal/app/hold_mode.go
+@@ -60,6 +60,9 @@ func (m *OS) HoldModeKey() string {
+ // the trigger needs it: it turns every keystroke in the session into an escape
+ // code, and that is too much to impose on someone not using this.
+ func (m *OS) HoldModeNeedsAllKeys() bool {
++	if m.Settings.TerminalPrefixOnly {
++		return false
++	}
+ 	_, isModifier := modifierKeyMods[m.HoldModeKey()]
+ 	return isModifier
+ }
+@@ -72,7 +75,7 @@ func (m *OS) HoldModeNeedsAllKeys() bool {
+ // either, so the feature degrades to doing nothing at all rather than to a mode
+ // nobody can leave.
+ func (m *OS) HoldModeAvailable() bool {
+-	if m.HoldModeKey() == "" {
++	if m.Settings.TerminalPrefixOnly || m.HoldModeKey() == "" {
+ 		return false
+ 	}
+ 	return m.KeyboardFlags == 0 || m.KeyboardFlags&ansi.KittyReportEventTypes != 0
+@@ -82,7 +85,7 @@ func (m *OS) HoldModeAvailable() bool {
+ // "" when it works. Shown once the terminal has answered, so the user is not
+ // left pressing a key that silently does nothing.
+ func (m *OS) HoldModeUnsupportedReason() string {
+-	if m.HoldModeKey() == "" || m.HoldModeAvailable() {
++	if m.Settings.TerminalPrefixOnly || m.HoldModeKey() == "" || m.HoldModeAvailable() {
+ 		return ""
+ 	}
+ 	return "Hold-to-window mode needs the Kitty keyboard protocol. " +
+@@ -109,7 +112,7 @@ func (m *OS) PressHoldKey(key tea.KeyPressMsg) bool {
+ 	switch {
+ 	case !m.hold.active:
+ 		m.hold = holdMode{active: true, returnMode: m.Mode, strip: modifierKeyMods[trigger]}
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	case key.IsRepeat:
+ 		// The key is still down; the terminal is just repeating it.
+ 	default:
+diff --git i/internal/app/interaction_modes.go w/internal/app/interaction_modes.go
+new file mode 100644
+index 0000000..46d94c4
+--- /dev/null
++++ w/internal/app/interaction_modes.go
+@@ -0,0 +1,46 @@
++package app
++
++import "errors"
++
++var ErrInteractionModeDisabled = errors.New("only terminal and prefix modes are enabled")
++
++func (m *OS) EnterWindowManagementMode() bool {
++	if m.Settings.TerminalPrefixOnly {
++		return false
++	}
++	m.Mode = WindowManagementMode
++	return true
++}
++
++func (m *OS) restrictedModeRequested() bool {
++	if !m.Settings.TerminalPrefixOnly {
++		return false
++	}
++	m.ShowNotification(ErrInteractionModeDisabled.Error(), "info", m.Settings.NotificationDuration)
++	return true
++}
++
++func (m *OS) EnforceInteractionModes() {
++	if !m.Settings.TerminalPrefixOnly {
++		return
++	}
++	changed := m.Mode != TerminalMode || m.HoldModeActive() || m.MultiCopy != nil || m.SidebarFocused
++	m.EndHold()
++	m.ExitSidebarFocus()
++	m.Mode = TerminalMode
++	m.ExitMultiCopyMode()
++	for _, w := range m.Windows {
++		// Implicit copy state renders ordinary scrolling, not an interaction mode.
++		if w.CopyModeVisible() {
++			w.ExitCopyMode()
++			changed = true
++		}
++	}
++	if w := m.SidebarSessionWindow(); w.CopyModeVisible() {
++		w.ExitCopyMode()
++		changed = true
++	}
++	if changed {
++		m.MarkAllDirty()
++	}
++}
+diff --git i/internal/app/interaction_modes_test.go w/internal/app/interaction_modes_test.go
+new file mode 100644
+index 0000000..b1e78d0
+--- /dev/null
++++ w/internal/app/interaction_modes_test.go
+@@ -0,0 +1,173 @@
++package app
++
++import (
++	"errors"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/terminal"
++)
++
++func restrictedModeOS(t *testing.T) *OS {
++	t.Helper()
++	settings := config.Global
++	settings.TerminalPrefixOnly = true
++	cfg := config.DefaultConfig()
++	cfg.Appearance.TerminalPrefixOnly = true
++	cfg.Keybindings.ModeControl[HoldModeAction] = []string{"leftalt"}
++	m := NewOS(OSOptions{Settings: &settings, UserConfig: cfg, KeybindRegistry: config.NewKeybindRegistry(cfg)})
++	m.Windows = []*terminal.Window{liveWindow(t, "first"), liveWindow(t, "second")}
++	m.FocusedWindow = 0
++	m.MultifocusSet = map[string]bool{"first": true, "second": true}
++	return m
++}
++
++func TestTerminalPrefixOnlyBlocksModeEntries(t *testing.T) {
++	m := restrictedModeOS(t)
++	if m.Mode != TerminalMode || m.EnterWindowManagementMode() {
++		t.Fatal("window mode was allowed")
++	}
++	if err := m.SetMode("window"); !errors.Is(err, ErrInteractionModeDisabled) {
++		t.Fatalf("window-mode API error = %v", err)
++	}
++	m.EnterSidebarFocus()
++	if m.SidebarFocused || m.sidebarReturnArmed {
++		t.Fatal("sidebar captured keyboard focus")
++	}
++	m.ExitTerminalMode()
++	if m.Mode != TerminalMode {
++		t.Fatal("exit-terminal changed the mode")
++	}
++	m.EnterCopyModeFocused()
++	m.EnterCopyModeSearch(false)
++	m.EnterCopyModeSearch(true)
++	if m.EnterMultiCopyMode() || m.MultiCopy != nil {
++		t.Fatal("multi copy mode was allowed")
++	}
++	for _, w := range m.Windows {
++		if w.InCopyMode() {
++			t.Fatalf("copy mode entered on %s", w.ID)
++		}
++	}
++	if err := m.SetMode("terminal"); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func TestTerminalPrefixOnlyKeepsSidebarPaneSelection(t *testing.T) {
++	m := restrictedModeOS(t)
++	idx, ok := m.sidebarFocusWindow(sidebarRowHit{WindowID: "second"})
++	if !ok || idx != 1 || m.FocusedWindow != 1 || m.SidebarFocused || m.Mode != TerminalMode {
++		t.Fatal("sidebar pane selection did not retain terminal focus")
++	}
++}
++
++func TestTerminalPrefixOnlyDoesNotRevealHiddenSidebar(t *testing.T) {
++	m := restrictedModeOS(t)
++	m.Settings.SidebarEnabled = false
++	m.EnterSidebarFocus()
++	if m.SidebarFocused || m.SidebarRevealedForFocus || m.Settings.SidebarEnabled {
++		t.Fatal("sidebar focus request revealed the hidden rail")
++	}
++}
++
++func TestTerminalPrefixOnlyReconcilesExistingModes(t *testing.T) {
++	m := restrictedModeOS(t)
++	m.Mode = WindowManagementMode
++	m.SidebarFocused = true
++	m.beginSidebarReturn()
++	m.hold = holdMode{active: true, returnMode: WindowManagementMode}
++	for _, w := range m.Windows {
++		w.EnterCopyMode()
++	}
++	m.MultiCopy = &MultiCopy{IDs: []string{"first", "second"}}
++	m.EnforceInteractionModes()
++	if m.Mode != TerminalMode || m.HoldModeActive() || m.MultiCopy != nil || m.SidebarFocused || m.sidebarReturnArmed {
++		t.Fatal("restricted modes survived normalization")
++	}
++	for _, w := range m.Windows {
++		if w.InCopyMode() {
++			t.Fatalf("copy mode survived on %s", w.ID)
++		}
++	}
++	m.Windows[0].EnterCopyModeImplicit()
++	m.EnforceInteractionModes()
++	if !m.Windows[0].InImplicitCopyMode() || m.Windows[0].CopyModeVisible() {
++		t.Fatal("ordinary scrolling was not preserved")
++	}
++	if m.HoldModeAvailable() || m.HoldModeNeedsAllKeys() || m.HoldModeKey() == "" {
++		t.Fatal("configured hold-to-window mode was not disabled")
++	}
++}
++
++func TestTerminalPrefixOnlyFiltersPalette(t *testing.T) {
++	settings := config.Global
++	settings.TerminalPrefixOnly = false
++	full := GetCommandPaletteItems(&settings)
++	settings.TerminalPrefixOnly = true
++	limited := GetCommandPaletteItems(&settings)
++	removed := 0
++	for _, item := range full {
++		if item.RequiresFullModes {
++			removed++
++		}
++	}
++	if removed != 5 || len(limited) != len(full)-removed {
++		t.Fatalf("palette removed %d entries, lengths %d/%d", removed, len(limited), len(full))
++	}
++	for _, item := range limited {
++		if item.RequiresFullModes {
++			t.Fatalf("restricted palette entry: %s", item.Name)
++		}
++	}
++}
++
++func TestTerminalPrefixOnlyBlocksCachedPaletteActions(t *testing.T) {
++	m := restrictedModeOS(t)
++	settings := m.Settings
++	settings.TerminalPrefixOnly = false
++	for _, item := range GetCommandPaletteItems(&settings) {
++		if item.RequiresFullModes {
++			item.Action(m)
++		}
++	}
++	if m.Mode != TerminalMode || m.GetFocusedWindow().CopyModeVisible() || m.MultiCopy != nil {
++		t.Fatal("cached palette entered a disabled mode")
++	}
++}
++
++func TestTerminalPrefixOnlyAppliesLive(t *testing.T) {
++	m := restrictedModeOS(t)
++	m.Settings.TerminalPrefixOnly = false
++	m.UserConfig.Appearance.TerminalPrefixOnly = false
++	m.Mode = WindowManagementMode
++	m.EnterSidebarFocus()
++	m.Windows[0].EnterCopyMode()
++	if err := m.SetConfig("appearance.terminal_prefix_only", "true"); err != nil {
++		t.Fatal(err)
++	}
++	if m.Mode != TerminalMode || m.Windows[0].CopyModeVisible() || m.SidebarFocused {
++		t.Fatal("live setting did not leave restricted modes")
++	}
++}
++
++func TestTerminalPrefixOnlyDoesNotChangeLegacyBehavior(t *testing.T) {
++	m := restrictedModeOS(t)
++	m.Settings.TerminalPrefixOnly = false
++	if !m.EnterWindowManagementMode() || m.Mode != WindowManagementMode {
++		t.Fatal("legacy window mode was blocked")
++	}
++	m.EnterSidebarFocus()
++	if !m.SidebarFocused {
++		t.Fatal("legacy sidebar focus was blocked")
++	}
++	m.ExitSidebarFocus()
++	m.EnterCopyModeFocused()
++	if m.MultiCopy == nil || !m.Windows[0].CopyModeVisible() {
++		t.Fatal("legacy copy mode was blocked")
++	}
++	m.EnforceInteractionModes()
++	if m.Mode != WindowManagementMode || m.MultiCopy == nil {
++		t.Fatal("disabled policy changed legacy state")
++	}
++}
 diff --git i/internal/app/keyboard_enhancements.go w/internal/app/keyboard_enhancements.go
 index c194ae5..a8fbd22 100644
 --- i/internal/app/keyboard_enhancements.go
@@ -714,6 +1552,41 @@ index febd944..f76cb01 100644
  		m.clearLinkHover()
  		return
  	}
+diff --git i/internal/app/mode_switch.go w/internal/app/mode_switch.go
+index cd31c1f..83dfe6a 100644
+--- i/internal/app/mode_switch.go
++++ w/internal/app/mode_switch.go
+@@ -28,12 +28,15 @@ func (m *OS) EnterTerminalMode() tea.Cmd {
+ // ExitTerminalMode switches from terminal to window management mode.
+ // In window management mode, Bubbletea handles input parsing.
+ func (m *OS) ExitTerminalMode() tea.Cmd {
++	if m.restrictedModeRequested() {
++		return nil
++	}
+ 	// Record mode switch for tape recording
+ 	if m.TapeRecorder != nil && m.TapeRecorder.IsRecording() {
+ 		m.TapeRecorder.RecordModeSwitch(tape.CommandTypeWindowManagementMode)
+ 	}
+ 
+-	m.Mode = WindowManagementMode
++	m.EnterWindowManagementMode()
+ 
+ 	// The raw reader is disabled. Bubbletea handles all input correctly.
+ 	return nil
+diff --git i/internal/app/multicopy.go w/internal/app/multicopy.go
+index 6dff26e..6ce539c 100644
+--- i/internal/app/multicopy.go
++++ w/internal/app/multicopy.go
+@@ -125,6 +125,9 @@ func (m *OS) EnterCopyModeFocused() {
+ // mode together. It reports false, with a message that says what to do, when
+ // there are fewer than two such panes.
+ func (m *OS) EnterMultiCopyMode() bool {
++	if m.restrictedModeRequested() {
++		return false
++	}
+ 	panes := m.multiCopyCandidates()
+ 	if len(panes) < 2 {
+ 		m.ShowNotification("Multi copy mode needs two or more panes in multifocus. Add panes with Ctrl+Shift+Click.", "warning", 2*m.Settings.NotificationDuration)
 diff --git i/internal/app/os.go w/internal/app/os.go
 index 7162942..2500a72 100644
 --- i/internal/app/os.go
@@ -748,6 +1621,19 @@ index 7162942..2500a72 100644
  	// subagentHideDue is the earliest moment a finished subagent's row is
  	// due to go under appearance.sidebar.subagent_hide_finished, noted while
  	// the rail is drawn, and subagentHideArmed the moment a frame was last
+diff --git i/internal/app/os_minimize.go w/internal/app/os_minimize.go
+index f2fed1c..34f7a0e 100644
+--- i/internal/app/os_minimize.go
++++ w/internal/app/os_minimize.go
+@@ -121,7 +121,7 @@ func (m *OS) RestoreWindow(i int) {
+ 		// Bring the window to front and focus it
+ 		m.FocusWindow(i)
+ 		// Enter window management mode to interact with the restored window
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	}
+ }
+ 
 diff --git i/internal/app/os_popup.go w/internal/app/os_popup.go
 index 119df25..1853e02 100644
 --- i/internal/app/os_popup.go
@@ -814,6 +1700,60 @@ index 119df25..1853e02 100644
  	m.leaveEmptyScratchView()
 +	return nil
  }
+diff --git i/internal/app/os_tape_executor.go w/internal/app/os_tape_executor.go
+index f2d53c5..b43747d 100644
+--- i/internal/app/os_tape_executor.go
++++ w/internal/app/os_tape_executor.go
+@@ -528,7 +528,9 @@ func (m *OS) SetMode(mode string) error {
+ 			}
+ 		}
+ 	case "window", "Window", "WindowManagementMode":
+-		m.Mode = WindowManagementMode
++		if !m.EnterWindowManagementMode() {
++			return ErrInteractionModeDisabled
++		}
+ 	}
+ 	return nil
+ }
+diff --git i/internal/app/os_window.go w/internal/app/os_window.go
+index 600611a..1d0cc5d 100644
+--- i/internal/app/os_window.go
++++ w/internal/app/os_window.go
+@@ -699,6 +699,9 @@ func (m *OS) addDaemonWindow(dir, name, sshFrom string, command []string) *OS {
+ 		// know the session's window set, so the state it holds must not be
+ 		// pushed. See SyncStateToDaemon.
+ 		m.daemonWindowIntent = true
++		if m.GetWorkspaceWindowCount(m.CurrentWorkspace) == 0 {
++			m.trackPaneRequest(m.CurrentWorkspace)
++		}
+ 	}
+ 	return m
+ }
+@@ -1014,9 +1017,8 @@ func (m *OS) DeleteWindow(i int) *OS {
+ 	// Update focused window index
+ 	if len(m.Windows) == 0 {
+ 		m.FocusedWindow = -1
+-		m.LogInfo("No windows remaining, switching to window management mode")
+-		// Reset to window management mode when no windows are left
+-		m.Mode = WindowManagementMode
++		m.LogInfo("No windows remaining")
++		m.EnterWindowManagementMode()
+ 	} else if i < m.FocusedWindow {
+ 		m.FocusedWindow--
+ 	} else if i == m.FocusedWindow {
+diff --git i/internal/app/pointer_gesture.go w/internal/app/pointer_gesture.go
+index 8096eea..c15b3ad 100644
+--- i/internal/app/pointer_gesture.go
++++ w/internal/app/pointer_gesture.go
+@@ -19,7 +19,7 @@ package app
+ func (m *OS) BeginPointerGesture() {
+ 	if m.Mode == TerminalMode {
+ 		m.pointerGestureWasTerminal = true
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	}
+ }
+ 
 diff --git i/internal/app/program_options.go w/internal/app/program_options.go
 index ee4e568..accbf58 100644
 --- i/internal/app/program_options.go
@@ -1087,6 +2027,19 @@ index 3de66d4..41ece9b 100644
  		return "", nil
  	}
  
+diff --git i/internal/app/render_overlays.go w/internal/app/render_overlays.go
+index c920c2f..cf9ca2e 100644
+--- i/internal/app/render_overlays.go
++++ w/internal/app/render_overlays.go
+@@ -97,7 +97,7 @@ func (m *OS) renderOverlays() []*lipgloss.Layer {
+ 		layers = append(layers, timeLayer)
+ 	}
+ 
+-	if len(m.GetVisibleWindows()) == 0 && m.ViewContentWidth() > 0 && m.ViewUsableHeight() > 0 {
++	if len(m.GetVisibleWindows()) == 0 && !m.paneRequestPending(m.CurrentWorkspace) && m.ViewContentWidth() > 0 && m.ViewUsableHeight() > 0 {
+ 		asciiArt := `████████╗██╗   ██╗██╗ ██████╗ ███████╗
+ ╚══██╔══╝██║   ██║██║██╔═══██╗██╔════╝
+    ██║   ██║   ██║██║██║   ██║███████╗
 diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
 index 9e06237..925409c 100644
 --- i/internal/app/render_sidebar.go
@@ -1871,6 +2824,64 @@ index 9e06237..925409c 100644
  		gutter = sidebarStyle(rowBg, tint).Render(accentMark())
  	}
  	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+diff --git i/internal/app/render_splash_test.go w/internal/app/render_splash_test.go
+index fff3937..082c0a5 100644
+--- i/internal/app/render_splash_test.go
++++ w/internal/app/render_splash_test.go
+@@ -3,6 +3,7 @@ package app
+ import (
+ 	"strings"
+ 	"testing"
++	"time"
+ 
+ 	"charm.land/lipgloss/v2"
+ )
+@@ -20,6 +21,32 @@ func splashLayer(t *testing.T, m *OS) *lipgloss.Layer {
+ 	return nil
+ }
+ 
++func TestSplashWaitsForPendingConsole(t *testing.T) {
++	for _, tc := range []struct {
++		name     string
++		requests map[int]time.Time
++		welcome  bool
++	}{
++		{"empty", nil, true},
++		{"creating-current", map[int]time.Time{2: time.Now()}, false},
++		{"creating-other", map[int]time.Time{1: time.Now()}, true},
++		{"expired", map[int]time.Time{2: time.Now().Add(-paneRequestTimeout)}, true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			m := newNarrowOS(t, 120, 40)
++			m.CurrentWorkspace = 2
++			m.paneRequests = tc.requests
++			welcome := false
++			for _, layer := range m.renderOverlays() {
++				welcome = welcome || layer.GetID() == "welcome"
++			}
++			if welcome != tc.welcome {
++				t.Fatalf("welcome = %t, want %t", welcome, tc.welcome)
++			}
++		})
++	}
++}
++
+ // TestSplashCentersInContentRegion pins the splash to the region the panes get,
+ // not the whole screen. Centering on the screen drew the box across the rail's
+ // reserved columns and left it visibly off-centre in the part of the desktop
+diff --git i/internal/app/session.go w/internal/app/session.go
+index 0e1bcdc..c6cda37 100644
+--- i/internal/app/session.go
++++ w/internal/app/session.go
+@@ -798,7 +798,7 @@ func (m *OS) ApplyStateSyncFrom(state *session.SessionState, sourceID string) er
+ 	// terminal to reach. Closing is the daemon's job, so the drop back to window
+ 	// management after the last window closes happens here.
+ 	if m.FocusedWindow < 0 && m.Mode == TerminalMode {
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	}
+ 
+ 	// Update workspace focus map
 diff --git i/internal/app/session_close.go w/internal/app/session_close.go
 index 5a389c8..cad5b3e 100644
 --- i/internal/app/session_close.go
@@ -1999,6 +3010,49 @@ index 8919d8b..5d4271e 100644
  		Space:            client.SessionSpace(name),
  		Windows:          windows,
  	}
+diff --git i/internal/app/settings.go w/internal/app/settings.go
+index ba2243f..442c3d1 100644
+--- i/internal/app/settings.go
++++ w/internal/app/settings.go
+@@ -149,6 +149,7 @@ func clampInt(v, lo, hi int) int {
+ // immediately; when retile is set it also reflows the tiling layout for
+ // changes that affect window geometry (dock position, borders, title bars).
+ func (m *OS) applyAppearanceLive(retile bool) {
++	m.EnforceInteractionModes()
+ 	// max_fps may have moved, and auto may have just been chosen with no rate
+ 	// found yet.
+ 	m.applyFrameRate()
+@@ -661,6 +662,7 @@ func (m *OS) settingsCategories() []settingsCategory {
+ 			opt("startup.tiled"),
+ 			opt("startup.layout"),
+ 			opt("startup.start_in_terminal_mode"),
++			opt("appearance.terminal_prefix_only"),
+ 			opt("startup.daemon"),
+ 		}),
+ 	}
+@@ -709,6 +711,8 @@ func (m *OS) settingsCategories() []settingsCategory {
+ 			opt("launcher.gui_command"),
+ 			opt("workspaces.return_when_empty"),
+ 			opt("workspaces.new_window_when_empty"),
++			opt("workspaces.confirm_close"),
++			opt("workspaces.auto_name_single_pane"),
+ 		}),
+ 	}
+ 
+diff --git i/internal/app/settings_registry.go w/internal/app/settings_registry.go
+index 04a8d1b..94f02e2 100644
+--- i/internal/app/settings_registry.go
++++ w/internal/app/settings_registry.go
+@@ -121,6 +121,9 @@ var settingLabels = map[string]string{
+ 	"launcher.gui_command":                "Launcher GUI command",
+ 	"workspaces.return_when_empty":        "Go back from an empty workspace",
+ 	"workspaces.new_window_when_empty":    "Open a pane on an empty workspace",
++	"workspaces.confirm_close":            "Confirm before closing a workspace",
++	"appearance.terminal_prefix_only":     "Terminal and prefix modes only",
++	"workspaces.auto_name_single_pane":    "Name single-pane tabs after their program",
+ 	"paste_buffers.limit":                 "Paste buffers to keep",
+ 	"paste_buffers.max_kb":                "Paste buffer size limit",
+ 
 diff --git i/internal/app/sidebar_agent_focus.go w/internal/app/sidebar_agent_focus.go
 new file mode 100644
 index 0000000..d1eb567
@@ -3820,10 +4874,20 @@ index 5332bb6..d6f6dc4 100644
  	}
  	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
 diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
-index 09a44b7..7c44914 100644
+index 09a44b7..985543b 100644
 --- i/internal/app/sidebar_keyboard.go
 +++ w/internal/app/sidebar_keyboard.go
-@@ -87,7 +87,8 @@ func (m *OS) FocusOtherSidebar() {
+@@ -41,6 +41,9 @@ func (m *OS) sidebarCursorRow() (sidebarNavRow, bool) {
+ // the rail is not already showing. The cursor lands on the current session so
+ // navigation starts where the eye is.
+ func (m *OS) EnterSidebarFocus() {
++	if m.Settings.TerminalPrefixOnly {
++		return
++	}
+ 	if m.SidebarFocused && m.sidebarFocusSecondary == m.sidebarDrawing {
+ 		return
+ 	}
+@@ -87,7 +90,8 @@ func (m *OS) FocusOtherSidebar() {
  func (m *OS) sidebarSetCursor(i int) {
  	m.SidebarCursor = i
  	row, ok := m.sidebarCursorRow()
@@ -3833,7 +4897,7 @@ index 09a44b7..7c44914 100644
  		m.sidebarClearPeek()
  		return
  	}
-@@ -160,7 +161,7 @@ func (m *OS) sidebarStepSection(delta int) {
+@@ -160,7 +164,7 @@ func (m *OS) sidebarStepSection(delta int) {
  	here := 0
  	if row, ok := m.sidebarCursorRow(); ok {
  		for i, p := range plans {
@@ -3842,7 +4906,7 @@ index 09a44b7..7c44914 100644
  				here = i
  				break
  			}
-@@ -176,19 +177,24 @@ func (m *OS) sidebarStepSection(delta int) {
+@@ -176,19 +180,24 @@ func (m *OS) sidebarStepSection(delta int) {
  
  // sidebarSectionOfKind is the section a row kind belongs to, or the count for a
  // control that belongs to none.
@@ -3876,7 +4940,7 @@ index 09a44b7..7c44914 100644
  }
  
  // sidebarFirstRowOfSection is the index of the first nav row belonging to a
-@@ -197,7 +203,7 @@ func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
+@@ -197,7 +206,7 @@ func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
  // cursor lands past the row a person is looking at.
  func (m *OS) sidebarFirstRowOfSection(section sidebarSection) int {
  	for i, r := range m.SidebarNav {
@@ -3885,7 +4949,7 @@ index 09a44b7..7c44914 100644
  			return i
  		}
  	}
-@@ -360,21 +366,30 @@ func (m *OS) sidebarSayMachinePinned() {
+@@ -360,21 +369,30 @@ func (m *OS) sidebarSayMachinePinned() {
  		"info", m.Settings.NotificationDuration)
  }
  
@@ -3925,7 +4989,7 @@ index 09a44b7..7c44914 100644
  			return
  		}
  	}
-@@ -468,7 +483,7 @@ func (m *OS) sidebarCursorAnchor(row sidebarNavRow) (int, int) {
+@@ -468,7 +486,7 @@ func (m *OS) sidebarCursorAnchor(row sidebarNavRow) (int, int) {
  	if m.railEdge() == sidebarRight {
  		x = m.GetRenderWidth() - m.GetSidebarWidth()
  	}
@@ -4931,6 +5995,18 @@ index 0000000..04be491
 +		t.Fatalf("overview scroll did not swap independently: primary=%d secondary=%d", m.SidebarScrollO, m.secondaryRailView.scrollO)
 +	}
 +}
+diff --git i/internal/app/sidebar_return.go w/internal/app/sidebar_return.go
+index 4150332..95474fb 100644
+--- i/internal/app/sidebar_return.go
++++ w/internal/app/sidebar_return.go
+@@ -82,6 +82,6 @@ func (m *OS) endSidebarReturn() {
+ 	// management is the mode that can go find another one, so a terminal mode
+ 	// with nothing to type into is not handed back.
+ 	if m.Mode == TerminalMode && m.GetFocusedWindow() == nil {
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	}
+ }
 diff --git i/internal/app/sidebar_reveal.go w/internal/app/sidebar_reveal.go
 index e340eb1..63386e6 100644
 --- i/internal/app/sidebar_reveal.go
@@ -5567,10 +6643,26 @@ index 74e4a7d..9904149 100644
  		at(m.gitView.at.Add(gitRefreshInterval))
  	}
 diff --git i/internal/app/update.go w/internal/app/update.go
-index 9776510..5ac82a7 100644
+index 9776510..396ad3c 100644
 --- i/internal/app/update.go
 +++ w/internal/app/update.go
-@@ -943,6 +943,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -853,6 +853,7 @@ type foreignSessionsChangedMsg struct{}
+ // one somebody writes. One comparison, once, is the whole cost, and it answers
+ // nil without allocating for a client whose rail has no files section.
+ func (m *OS) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
++	m.EnforceInteractionModes()
+ 	// The frame the last View composed is stored now: write it. Nothing
+ 	// else changes, so the View after this message serves the same frame.
+ 	if _, ok := msg.(flushMsg); ok {
+@@ -922,6 +923,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+ 	}
+ 	noteCmd := m.noteHostPixelMouse(msg)
+ 	model, cmd := m.handleMsg(msg)
++	m.EnforceInteractionModes()
+ 	if pixelCmd := m.hostPixelMouseCmd(msg); pixelCmd != nil || noteCmd != nil {
+ 		cmd = tea.Batch(cmd, noteCmd, pixelCmd)
+ 	}
+@@ -943,6 +945,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	// pane's directory is what both are about, and every handler that can move
  	// it is covered by one comparison here rather than by a hook in each.
  	gitSync := m.GitSyncCmd()
@@ -5578,7 +6670,7 @@ index 9776510..5ac82a7 100644
  	// The opposite edge may be the only rail that names files or git. Its
  	// presentation state is scoped to that edge; the directory and repository
  	// readings themselves are shared because both follow the same pane.
-@@ -950,6 +951,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -950,6 +953,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	if m.secondarySidebarWidth() > 0 {
  		m.withSecondaryRail(func() bool {
  			secondFiles, secondGit = m.FilesSyncCmd(), m.GitSyncCmd()
@@ -5586,7 +6678,7 @@ index 9776510..5ac82a7 100644
  			return true
  		})
  	}
-@@ -1006,10 +1008,10 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -1006,10 +1010,10 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	// for: it is armed for the earliest job that is due, and not at all when
  	// none is. See nextWake.
  	tick := m.tickWakeCmd()
@@ -5599,7 +6691,7 @@ index 9776510..5ac82a7 100644
  }
  
  // handleMsg is Update's body: one switch over every message the client can see.
-@@ -1109,6 +1111,10 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1109,6 +1113,10 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		m.renderSkipped = !changed
  		return m, due
  
@@ -5610,7 +6702,16 @@ index 9776510..5ac82a7 100644
  	case GitStateMsg:
  		// The reading the git section asked for. It is applied rather than
  		// acted on: the section draws whatever the last answer was, and a
-@@ -2213,6 +2219,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1668,7 +1676,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		}
+ 		// Ensure we're in window management mode if no windows remain
+ 		if len(m.Windows) == 0 {
+-			m.Mode = WindowManagementMode
++			m.EnterWindowManagementMode()
+ 		}
+ 		return m, ListenForWindowExits(m.WindowExitChan)
+ 
+@@ -2213,6 +2221,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		return m, nil
  
@@ -5623,7 +6724,7 @@ index 9776510..5ac82a7 100644
  	case tea.KeyboardEnhancementsMsg:
  		// The host answered the Kitty keyboard protocol query, so tuios now knows
  		// which of the things it asked for it actually got.
-@@ -2227,7 +2239,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -2227,7 +2241,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		if reason := m.HoldModeUnsupportedReason(); reason != "" && first {
  			m.ShowNotification(reason, "warning", m.Settings.NotificationDuration)
  		}
@@ -5632,6 +6733,95 @@ index 9776510..5ac82a7 100644
  
  	// Multi-client daemon messages
  	case StateSyncMsg:
+diff --git i/internal/app/workspace.go w/internal/app/workspace.go
+index eb41e83..d749525 100644
+--- i/internal/app/workspace.go
++++ w/internal/app/workspace.go
+@@ -66,8 +66,7 @@ func (m *OS) newWorkspaceSlot(workspace int) int {
+ 	for ws := 1; ws <= m.NumWorkspaces; ws++ {
+ 		// A pane asked for and on its way counts as there: opt+2 opt+3 with
+ 		// new_window_when_empty opens both.
+-		at, asked := m.paneRequests[ws]
+-		if m.GetWorkspaceWindowCount(ws) > 0 || (asked && time.Since(at) < paneRequestTimeout) {
++		if m.GetWorkspaceWindowCount(ws) > 0 || m.paneRequestPending(ws) {
+ 			last = ws
+ 		}
+ 	}
+@@ -146,7 +145,7 @@ func (m *OS) openPaneOnEmptyWorkspace(from, workspace int, fromPane *terminal.Wi
+ 		// opens one pane per workspace whatever reaches it (see
+ 		// ErrWorkspaceHasPane), which covers a request slower than the
+ 		// timeout and a second client.
+-		if at, ok := m.paneRequests[workspace]; ok && time.Since(at) < paneRequestTimeout {
++		if m.paneRequestPending(workspace) {
+ 			return
+ 		}
+ 		cwdFrom, sshFrom := "", ""
+@@ -169,10 +168,7 @@ func (m *OS) openPaneOnEmptyWorkspace(from, workspace int, fromPane *terminal.Wi
+ 			m.LogError("Failed to ask the daemon for a pane on workspace %d: %v", workspace, err)
+ 			return
+ 		}
+-		if m.paneRequests == nil {
+-			m.paneRequests = make(map[int]time.Time)
+-		}
+-		m.paneRequests[workspace] = time.Now()
++		m.trackPaneRequest(workspace)
+ 		return
+ 	}
+ 	dir := ""
+@@ -187,6 +183,18 @@ func (m *OS) openPaneOnEmptyWorkspace(from, workspace int, fromPane *terminal.Wi
+ // is one whose answer was lost, and the next switch may ask again.
+ const paneRequestTimeout = 5 * time.Second
+ 
++func (m *OS) trackPaneRequest(workspace int) {
++	if m.paneRequests == nil {
++		m.paneRequests = make(map[int]time.Time)
++	}
++	m.paneRequests[workspace] = time.Now()
++}
++
++func (m *OS) paneRequestPending(workspace int) bool {
++	at, requested := m.paneRequests[workspace]
++	return requested && time.Since(at) < paneRequestTimeout
++}
++
+ // settlePaneRequests clears the request for each workspace a sync shows a
+ // window on. When that workspace is on screen with nothing focused, which is
+ // where a push this client sent before the pane arrived leaves it, the pane
+@@ -214,8 +222,8 @@ func (m *OS) settlePaneRequests() {
+ // has not arrived, for GetSessionInfo.
+ func (m *OS) PaneRequestsInFlight() []int {
+ 	out := []int{}
+-	for ws, at := range m.paneRequests {
+-		if time.Since(at) < paneRequestTimeout {
++	for ws := range m.paneRequests {
++		if m.paneRequestPending(ws) {
+ 			out = append(out, ws)
+ 		}
+ 	}
+@@ -346,13 +354,10 @@ func (m *OS) switchToWorkspaceHeld(workspace, focusTarget int) {
+ 	if !focusedSet {
+ 		m.FocusedWindow = -1
+ 		m.LogInfo("No visible windows in workspace %d", workspace)
+-		// Exit terminal mode when switching to empty workspace
+-		if m.Mode == TerminalMode {
+-			// Record mode switch for tape recording
++		if m.Mode == TerminalMode && m.EnterWindowManagementMode() {
+ 			if m.TapeRecorder != nil && m.TapeRecorder.IsRecording() {
+ 				m.TapeRecorder.RecordModeSwitch(tape.CommandTypeWindowManagementMode)
+ 			}
+-			m.Mode = WindowManagementMode
+ 			m.LogInfo("Switched to window management mode (empty workspace)")
+ 		}
+ 	} else {
+@@ -574,7 +579,7 @@ func (m *OS) FocusNextVisibleWindowInWorkspace() {
+ 	// No visible windows in workspace
+ 	m.FocusedWindow = -1
+ 	if m.Mode == TerminalMode {
+-		m.Mode = WindowManagementMode
++		m.EnterWindowManagementMode()
+ 	}
+ }
+ 
 diff --git i/internal/config/constants.go w/internal/config/constants.go
 index 8188568..6c3ca2c 100644
 --- i/internal/config/constants.go
@@ -5727,6 +6917,41 @@ index 2992b7c..cdc9b25 100644
  	validateDockColors(result, "dock.tabs", map[string]string{
  		"separator_fg": t.SeparatorFg, "active_fg": t.ActiveFg, "active_bg": t.ActiveBg,
  		"inactive_fg": t.InactiveFg, "inactive_bg": t.InactiveBg,
+diff --git i/internal/config/interaction_modes_test.go w/internal/config/interaction_modes_test.go
+new file mode 100644
+index 0000000..6dd6da5
+--- /dev/null
++++ w/internal/config/interaction_modes_test.go
+@@ -0,0 +1,29 @@
++package config
++
++import "testing"
++
++func TestTerminalPrefixOnlyOption(t *testing.T) {
++	cfg := DefaultConfig()
++	if cfg.Appearance.TerminalPrefixOnly {
++		t.Fatal("restriction must be opt-in")
++	}
++	const path = "appearance.terminal_prefix_only"
++	if err := SetOptionValue(cfg, path, "true"); err != nil {
++		t.Fatal(err)
++	}
++	if value, ok := GetOptionValue(cfg, path); !ok || value != "true" {
++		t.Fatalf("option = %q, %v", value, ok)
++	}
++	settings := Global
++	ApplyAppearanceConfig(cfg, &settings)
++	if !settings.TerminalPrefixOnly {
++		t.Fatal("restriction did not reach client settings")
++	}
++	if err := SetOptionValue(cfg, path, "false"); err != nil {
++		t.Fatal(err)
++	}
++	ApplyAppearanceConfig(cfg, &settings)
++	if settings.TerminalPrefixOnly {
++		t.Fatal("restriction stayed enabled after disabling it")
++	}
++}
 diff --git i/internal/config/look.go w/internal/config/look.go
 index abe4b1b..ea8647b 100644
 --- i/internal/config/look.go
@@ -5811,7 +7036,7 @@ index 6115323..e4a7c0b 100644
  		target.SetBool(v)
  	case string:
 diff --git i/internal/config/options.go w/internal/config/options.go
-index bfeb88f..57dae2e 100644
+index bfeb88f..e885cbf 100644
 --- i/internal/config/options.go
 +++ w/internal/config/options.go
 @@ -155,7 +155,7 @@ const (
@@ -5823,7 +7048,37 @@ index bfeb88f..57dae2e 100644
  	// [appearance]
  	{
  		Path: "appearance.border_style", Type: OptionString, Section: "appearance",
-@@ -1519,6 +1519,48 @@ var optionSpecs = []Option{
+@@ -1011,6 +1011,12 @@ var optionSpecs = []Option{
+ 		Deprecated:  "no longer used: panes name their own workspace, and switching lives on the dock and alt+1..9",
+ 	},
+ 
++	{
++		Path: "appearance.terminal_prefix_only", Type: OptionBool, Section: "appearance",
++		Description: "Allow terminal and prefix interaction only; disable window-management, explicit copy and sidebar keyboard modes",
++		Default:     "false",
++	},
++
+ 	// [startup]
+ 	{
+ 		Path: "startup.open_default_window", Type: OptionBool, Section: "startup",
+@@ -1501,6 +1507,16 @@ var optionSpecs = []Option{
+ 		Description: "When the last pane on the workspace on screen closes, show the workspace you came from. Off shows the splash screen",
+ 		Default:     "true",
+ 	},
++	{
++		Path: "workspaces.confirm_close", Type: OptionBool, Section: "workspaces",
++		Description: "Confirm before closing every pane on a workspace",
++		Default:     "true",
++	},
++	{
++		Path: "workspaces.auto_name_single_pane", Type: OptionBool, Section: "workspaces",
++		Description: "Name a single-pane workspace after its running program. Retain the last name after exit or splitting; manual names take precedence",
++		Default:     "false",
++	},
+ 	// [paste_buffers]. The daemon reads it when it starts and when the file
+ 	// changes, and so does a client with no daemon.
+ 	{
+@@ -1519,6 +1535,48 @@ var optionSpecs = []Option{
  		Description: "When you switch to a workspace with no panes, open a new pane there. It starts in the folder of the pane you came from",
  		Default:     "false",
  	},
@@ -5872,6 +7127,20 @@ index bfeb88f..57dae2e 100644
  }
  
  // optionsByPath indexes the registry for lookup. Built once at init so a caller
+diff --git i/internal/config/settings.go w/internal/config/settings.go
+index 65d2946..6695711 100644
+--- i/internal/config/settings.go
++++ w/internal/config/settings.go
+@@ -643,7 +643,8 @@ type Settings struct {
+ 	OptionGlyphs   string
+ 	// Lock is keybindings.lock: terminal mode gives every key but the leader
+ 	// to the focused pane.
+-	Lock bool
++	Lock               bool
++	TerminalPrefixOnly bool
+ 
+ 	// PaneGap is the cells of empty space the tiler keeps between two neighbouring
+ 	// panes: i3's inner gap, and about the only spacing a terminal window manager
 diff --git i/internal/config/sidebar_sections.go w/internal/config/sidebar_sections.go
 index 8f4598a..ef214d1 100644
 --- i/internal/config/sidebar_sections.go
@@ -6028,10 +7297,64 @@ index 0000000..4aedae8
 +	}
 +}
 diff --git i/internal/config/userconfig.go w/internal/config/userconfig.go
-index 8163e60..4d38003 100644
+index 8163e60..15988f9 100644
 --- i/internal/config/userconfig.go
 +++ w/internal/config/userconfig.go
-@@ -806,6 +806,48 @@ type SelectionConfig struct {
+@@ -333,29 +333,30 @@ var WindowSizeModes = []string{WindowSizeSmallest, WindowSizeLargest, WindowSize
+ 
+ // AppearanceConfig holds appearance-related settings
+ type AppearanceConfig struct {
+-	BorderStyle              string                  `toml:"border_style"`                 // Border style: rounded, normal, thick, double, hidden, block, ascii, outer-half-block, inner-half-block, glyphs
+-	FramePanels              bool                    `toml:"frame_panels"`                 // Frame overlay panels in the border style at every colour depth (default: false)
+-	ZenMode                  string                  `toml:"zen_mode"`                     // Zen mode: disabled, always, mouse (default: disabled)
+-	Links                    string                  `toml:"links"`                        // Links tuios acts on: off, marked, all (default: all)
+-	LinkClick                string                  `toml:"link_click"`                   // The click that opens a link: both, ctrl, shift, off (default: both)
+-	LinkHover                string                  `toml:"link_hover"`                   // The hover highlight: safe (skips a pane whose guest tracks the mouse) or always (default: safe)
+-	LinkOpener               string                  `toml:"link_opener"`                  // Command that opens a web link; empty uses $BROWSER, then the system opener
+-	HideWindowButtons        bool                    `toml:"hide_window_buttons"`          // Hide window control buttons (minimize, maximize, close)
+-	WindowButtonStyle        string                  `toml:"window_button_style"`          // Window control style: pill, dots (default: dots)
+-	WindowButtonPosition     string                  `toml:"window_button_position"`       // Which end of the title bar the window controls sit on: right, left (default: left)
+-	HideScrollbar            bool                    `toml:"hide_scrollbar"`               // Hide the window scrollbar thumb on the border
+-	ScrollbackLines          int                     `toml:"scrollback_lines"`             // Number of lines to keep in scrollback buffer (default: 10000, min: 100, max: 1000000)
+-	ScrollLines              int                     `toml:"scroll_lines"`                 // Lines scrolled per mouse wheel notch (default: 3, min: 1, max: 50)
+-	CopyOnSelect             *bool                   `toml:"copy_on_select"`               // Copy a mouse selection to the clipboard on release (default: true)
+-	NvimNavigation           *bool                   `toml:"nvim_navigation"`              // Let the Neovim navigator plugin hand terminal focus keys back to TUIOS (default: false)
+-	FocusFollowsMouse        *bool                   `toml:"focus_follows_mouse"`          // Focus the pane under the cursor as the mouse moves (default: false)
+-	FocusFollowsMousePause   string                  `toml:"focus_follows_mouse_pause"`    // The key that pauses focus_follows_mouse while held: ctrl, alt, off (default: off)
+-	AltDrag                  *bool                   `toml:"alt_drag"`                     // Alt + left-drag moves a pane (default: true)
+-	RightClickOpensMenu      *bool                   `toml:"right_click_opens_menu"`       // A plain right-click on a pane in terminal mode opens the pane menu (default: false)
+-	KittyPlaceholders        string                  `toml:"kitty_placeholders"`           // Draw kitty Unicode placeholder images: auto, on, off (default: auto)
+-	ImageSymbols             string                  `toml:"image_symbols"`                // Draw pane images as block glyphs on a terminal without graphics: auto, octant, sextant, quadrant, half, off (default: auto)
+-	NewWindowInheritCwd      *bool                   `toml:"new_window_inherit_cwd"`       // A new window starts in the focused pane's working directory (default: true)
+-	NewWindowFollowSSH       *bool                   `toml:"new_window_follow_ssh"`        // A split or new window of a pane that runs ssh runs the same ssh (default: false)
++	BorderStyle              string                  `toml:"border_style"`              // Border style: rounded, normal, thick, double, hidden, block, ascii, outer-half-block, inner-half-block, glyphs
++	FramePanels              bool                    `toml:"frame_panels"`              // Frame overlay panels in the border style at every colour depth (default: false)
++	ZenMode                  string                  `toml:"zen_mode"`                  // Zen mode: disabled, always, mouse (default: disabled)
++	Links                    string                  `toml:"links"`                     // Links tuios acts on: off, marked, all (default: all)
++	LinkClick                string                  `toml:"link_click"`                // The click that opens a link: both, ctrl, shift, off (default: both)
++	LinkHover                string                  `toml:"link_hover"`                // The hover highlight: safe (skips a pane whose guest tracks the mouse) or always (default: safe)
++	LinkOpener               string                  `toml:"link_opener"`               // Command that opens a web link; empty uses $BROWSER, then the system opener
++	HideWindowButtons        bool                    `toml:"hide_window_buttons"`       // Hide window control buttons (minimize, maximize, close)
++	WindowButtonStyle        string                  `toml:"window_button_style"`       // Window control style: pill, dots (default: dots)
++	WindowButtonPosition     string                  `toml:"window_button_position"`    // Which end of the title bar the window controls sit on: right, left (default: left)
++	HideScrollbar            bool                    `toml:"hide_scrollbar"`            // Hide the window scrollbar thumb on the border
++	ScrollbackLines          int                     `toml:"scrollback_lines"`          // Number of lines to keep in scrollback buffer (default: 10000, min: 100, max: 1000000)
++	ScrollLines              int                     `toml:"scroll_lines"`              // Lines scrolled per mouse wheel notch (default: 3, min: 1, max: 50)
++	CopyOnSelect             *bool                   `toml:"copy_on_select"`            // Copy a mouse selection to the clipboard on release (default: true)
++	NvimNavigation           *bool                   `toml:"nvim_navigation"`           // Let the Neovim navigator plugin hand terminal focus keys back to TUIOS (default: false)
++	FocusFollowsMouse        *bool                   `toml:"focus_follows_mouse"`       // Focus the pane under the cursor as the mouse moves (default: false)
++	FocusFollowsMousePause   string                  `toml:"focus_follows_mouse_pause"` // The key that pauses focus_follows_mouse while held: ctrl, alt, off (default: off)
++	AltDrag                  *bool                   `toml:"alt_drag"`                  // Alt + left-drag moves a pane (default: true)
++	RightClickOpensMenu      *bool                   `toml:"right_click_opens_menu"`    // A plain right-click on a pane in terminal mode opens the pane menu (default: false)
++	KittyPlaceholders        string                  `toml:"kitty_placeholders"`        // Draw kitty Unicode placeholder images: auto, on, off (default: auto)
++	ImageSymbols             string                  `toml:"image_symbols"`             // Draw pane images as block glyphs on a terminal without graphics: auto, octant, sextant, quadrant, half, off (default: auto)
++	NewWindowInheritCwd      *bool                   `toml:"new_window_inherit_cwd"`    // A new window starts in the focused pane's working directory (default: true)
++	NewWindowFollowSSH       *bool                   `toml:"new_window_follow_ssh"`     // A split or new window of a pane that runs ssh runs the same ssh (default: false)
++	TerminalPrefixOnly       bool                    `toml:"terminal_prefix_only"`
+ 	AutoEnterTerminalOnFocus AutoEnterTerminalPolicy `toml:"auto_enter_terminal_on_focus"` // When a keyboard focus command should start typing in that pane: off, targeted, all (default: off)
+ 	ClickToType              string                  `toml:"click_to_type"`                // What a click on a pane's content does in window-management mode: single, double, off (default: double)
+ 	WordCharacters           *string                 `toml:"word_characters"`              // Punctuation that counts as part of a word for double-click selection (default: "@-./_~?&=%+#")
+@@ -806,6 +807,48 @@ type SelectionConfig struct {
  	CopyCommand string `toml:"copy_command,omitempty"`
  }
  
@@ -6080,7 +7403,7 @@ index 8163e60..4d38003 100644
  // SidebarConfig holds the [appearance.sidebar] table: everything about the
  // vertical session rail. Each toggle is a pointer so nil can mean "unset, use
  // the default" and an explicit false survives a reload.
-@@ -893,6 +935,7 @@ type SidebarConfig struct {
+@@ -893,6 +936,7 @@ type SidebarConfig struct {
  	// output the custom section draws, its heading, and when it runs. Read
  	// from the file only; see SidebarCustomConfig for why.
  	Custom SidebarCustomConfig `toml:"custom"`
@@ -6088,6 +7411,14 @@ index 8163e60..4d38003 100644
  	// Left and Right independently configure rails on the two screen edges.
  	// When absent, the existing rail still lives at Position with its existing
  	// settings. A new edge must be explicitly enabled; see sidebar_edges.go.
+@@ -2843,6 +2887,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+ 	s.KeyboardLayout = cfg.Keybindings.KeyboardLayout
+ 	s.OptionGlyphs = cfg.Keybindings.OptionGlyphs
+ 	s.Lock = cfg.Keybindings.Lock != nil && *cfg.Keybindings.Lock
++	s.TerminalPrefixOnly = cfg.Appearance.TerminalPrefixOnly
+ 
+ 	// The motion level. A config that was not run through the load path (one
+ 	// built in code) can still carry the old boolean, so it is folded here as
 diff --git i/internal/config/validation.go w/internal/config/validation.go
 index 21fc5de..93a00b7 100644
 --- i/internal/config/validation.go
@@ -6141,6 +7472,81 @@ index 21fc5de..93a00b7 100644
  func validateBackgrounds(cfg *UserConfig, result *ValidationResult) {
  	a := &cfg.Appearance
  	for _, bg := range []struct {
+diff --git i/internal/config/workspaces.go w/internal/config/workspaces.go
+index 7f3ff9e..0a6d399 100644
+--- i/internal/config/workspaces.go
++++ w/internal/config/workspaces.go
+@@ -1,10 +1,6 @@
+ package config
+ 
+-// WorkspacesConfig is the [workspaces] section. The daemon reads
+-// return_when_empty: it owns the window set, so it is the side that sees a
+-// workspace lose its last pane. The client reads new_window_when_empty: it
+-// is the side that knows a switch came from the person and not from a
+-// command that brings its own panes.
++// WorkspacesConfig controls tab naming and empty-workspace behavior.
+ type WorkspacesConfig struct {
+ 	// ReturnWhenEmpty switches the session back to the workspace the person
+ 	// came from when the workspace on screen loses its last pane, instead of
+@@ -15,7 +11,13 @@ type WorkspacesConfig struct {
+ 	// workspace that has no panes, as the new-window key would. The window
+ 	// starts in the directory of the pane focused on the workspace they
+ 	// came from (default: false).
+-	NewWindowWhenEmpty bool `toml:"new_window_when_empty"`
++	NewWindowWhenEmpty bool  `toml:"new_window_when_empty"`
++	AutoNameSinglePane bool  `toml:"auto_name_single_pane"`
++	ConfirmClose       *bool `toml:"confirm_close"`
++}
++
++func (w WorkspacesConfig) ConfirmsClose() bool {
++	return w.ConfirmClose == nil || *w.ConfirmClose
+ }
+ 
+ // ReturnsWhenEmpty reports whether return_when_empty is on. Unset means on.
+diff --git i/internal/config/workspaces_test.go w/internal/config/workspaces_test.go
+new file mode 100644
+index 0000000..c53ee7f
+--- /dev/null
++++ w/internal/config/workspaces_test.go
+@@ -0,0 +1,38 @@
++package config
++
++import "testing"
++
++func TestWorkspaceCloseConfirmationOption(t *testing.T) {
++	for _, tc := range []struct {
++		name string
++		toml string
++		want bool
++	}{
++		{"default", "", true},
++		{"enabled", "[workspaces]\nconfirm_close = true\n", true},
++		{"disabled", "[workspaces]\nconfirm_close = false\n", false},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			cfg, err := ParseUserConfig([]byte(tc.toml))
++			if err != nil {
++				t.Fatal(err)
++			}
++			if cfg.Workspaces.ConfirmsClose() != tc.want {
++				t.Fatalf("confirmation = %t, want %t", cfg.Workspaces.ConfirmsClose(), tc.want)
++			}
++		})
++	}
++	option, ok := LookupOption("workspaces.confirm_close")
++	if !ok || option.Type != OptionBool || option.Default != "true" {
++		t.Fatal("workspace confirmation is not a default-on boolean option")
++	}
++	cfg := DefaultConfig()
++	for _, value := range []string{"false", "true"} {
++		if err := SetOptionValue(cfg, option.Path, value); err != nil {
++			t.Fatal(err)
++		}
++		if got, ok := GetOptionValue(cfg, option.Path); !ok || got != value {
++			t.Fatalf("option value = %q, %t; want %q", got, ok, value)
++		}
++	}
++}
 diff --git i/internal/input/actions.go w/internal/input/actions.go
 index 0ac4adb..3e695c6 100644
 --- i/internal/input/actions.go
@@ -6186,6 +7592,138 @@ index 39c0111..bde4f20 100644
  		return false
  	}
  	// Scrolling columns drawing their own borders have the right drag for
+diff --git i/internal/input/handler.go w/internal/input/handler.go
+index 94bbb6f..996f4fb 100644
+--- i/internal/input/handler.go
++++ w/internal/input/handler.go
+@@ -16,6 +16,8 @@ import (
+ 
+ // HandleInput is the main input coordinator that routes messages to appropriate handlers
+ func HandleInput(msg tea.Msg, o *app.OS) (tea.Model, tea.Cmd) {
++	o.EnforceInteractionModes()
++	defer o.EnforceInteractionModes()
+ 	var result tea.Model
+ 	var cmd tea.Cmd
+ 
+@@ -373,6 +375,8 @@ func detachSession(o *app.OS) (*app.OS, tea.Cmd, bool) {
+ 
+ // HandleKeyPress handles all keyboard input and routes to mode-specific handlers
+ func HandleKeyPress(msg tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd) {
++	o.EnforceInteractionModes()
++	defer o.EnforceInteractionModes()
+ 	// Keep the key as the host sent it for the pane, and read it the rest of
+ 	// the way by the key the layout produced (see readKey).
+ 	o.NoteHostKey(msg)
+diff --git i/internal/input/interaction_modes_test.go w/internal/input/interaction_modes_test.go
+new file mode 100644
+index 0000000..008eeca
+--- /dev/null
++++ w/internal/input/interaction_modes_test.go
+@@ -0,0 +1,82 @@
++package input
++
++import (
++	"testing"
++
++	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/app"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/terminal"
++)
++
++func terminalPrefixOS(t *testing.T) *app.OS {
++	t.Helper()
++	cfg := config.DefaultConfig()
++	cfg.Appearance.TerminalPrefixOnly = true
++	settings := config.Global
++	settings.TerminalPrefixOnly = true
++	m := app.NewOS(app.OSOptions{Settings: &settings, UserConfig: cfg, KeybindRegistry: config.NewKeybindRegistry(cfg)})
++	for i, id := range []string{"first", "second"} {
++		w := terminal.NewDaemonWindow(id, id, i*40, 0, 40, 24, 0, "pty-"+id, make(chan struct{}, 64), config.DefaultScrollbackLines)
++		w.Workspace = 1
++		t.Cleanup(func() { w.Close() })
++		m.Windows = append(m.Windows, w)
++	}
++	m.FocusedWindow = 0
++	return m
++}
++
++func TestTerminalPrefixOnlyKeyboardRoutes(t *testing.T) {
++	for _, tc := range []struct {
++		name string
++		keys []tea.KeyPressMsg
++	}{
++		{"prefix-escape", []tea.KeyPressMsg{press("ctrl+b"), press("esc")}},
++		{"prefix-copy", []tea.KeyPressMsg{press("ctrl+b"), press("[")}},
++		{"prefix-sidebar", []tea.KeyPressMsg{press("ctrl+b"), press("e")}},
++		{"terminal-escape", []tea.KeyPressMsg{{Code: tea.KeyEscape, Mod: tea.ModAlt}}},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			m := terminalPrefixOS(t)
++			for _, key := range tc.keys {
++				HandleKeyPress(key, m)
++			}
++			if m.Mode != app.TerminalMode || m.GetFocusedWindow().CopyModeVisible() || m.SidebarFocused {
++				t.Fatal("keyboard entered a restricted mode")
++			}
++		})
++	}
++}
++
++func TestTerminalPrefixOnlyKeepsFocusShortcuts(t *testing.T) {
++	m := terminalPrefixOS(t)
++	HandleKeyPress(tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModAlt}, m)
++	if m.FocusedWindow != 1 || m.Mode != app.TerminalMode {
++		t.Fatalf("focus = %d, mode = %v", m.FocusedWindow, m.Mode)
++	}
++}
++
++func TestTerminalPrefixOnlyRenameStaysModal(t *testing.T) {
++	m := terminalPrefixOS(t)
++	for _, key := range []string{"ctrl+b", "r"} {
++		HandleKeyPress(press(key), m)
++	}
++	if !m.Renaming() || m.Mode != app.TerminalMode {
++		t.Fatal("rename did not stay in terminal mode")
++	}
++	HandleKeyPress(press("esc"), m)
++	if m.Renaming() || m.Mode != app.TerminalMode {
++		t.Fatal("rename did not close in terminal mode")
++	}
++}
++
++func TestTerminalPrefixOnlyLeaderWorksWithoutPanes(t *testing.T) {
++	m := terminalPrefixOS(t)
++	m.Windows = nil
++	m.FocusedWindow = -1
++	m.Mode = app.WindowManagementMode
++	HandleKeyPress(press("ctrl+b"), m)
++	if m.Mode != app.TerminalMode || !m.PrefixActive {
++		t.Fatal("leader was unavailable without a focused pane")
++	}
++}
+diff --git i/internal/input/keyboard_terminal.go w/internal/input/keyboard_terminal.go
+index 8d19387..ee88f09 100644
+--- i/internal/input/keyboard_terminal.go
++++ w/internal/input/keyboard_terminal.go
+@@ -304,7 +304,7 @@ func typeIntoPane(msg tea.KeyPressMsg, o *app.OS, nvimNavigation bool) (*app.OS,
+ 			}
+ 			if err := focusedWindow.SendInput(rawInput); err != nil {
+ 				// Terminal unavailable, switch back to window mode
+-				o.Mode = app.WindowManagementMode
++				o.EnterWindowManagementMode()
+ 				focusedWindow.InvalidateCache()
+ 			}
+ 			// Forward keystrokes to the multifocus set's panes on screen.
+@@ -321,7 +321,7 @@ func typeIntoPane(msg tea.KeyPressMsg, o *app.OS, nvimNavigation bool) (*app.OS,
+ 		}
+ 	} else {
+ 		// No focused window, switch back to window mode
+-		o.Mode = app.WindowManagementMode
++		o.EnterWindowManagementMode()
+ 	}
+ 	return o, nil
+ }
 diff --git i/internal/input/keyboard_wm.go w/internal/input/keyboard_wm.go
 index 55416ad..24f67ba 100644
 --- i/internal/input/keyboard_wm.go
@@ -6201,7 +7739,7 @@ index 55416ad..24f67ba 100644
  	}
  
 diff --git i/internal/input/mouse_click.go w/internal/input/mouse_click.go
-index 094f9b0..fe0f085 100644
+index 094f9b0..8883fb2 100644
 --- i/internal/input/mouse_click.go
 +++ w/internal/input/mouse_click.go
 @@ -139,7 +139,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
@@ -6222,6 +7760,24 @@ index 094f9b0..fe0f085 100644
  			case app.WindowButtonMinimize:
  				o.MinimizeWindow(clickedWindowIndex)
  			case app.WindowButtonFloat:
+@@ -539,7 +539,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ 	}
+ 	o.FocusWindowFromClick(clickedWindowIndex, X, Y)
+ 	if o.Mode == app.TerminalMode {
+-		o.Mode = app.WindowManagementMode
++		o.EnterWindowManagementMode()
+ 	}
+ 
+ 	// A left press on the content area in window-management mode arms
+@@ -662,7 +662,7 @@ func beginWindowDrag(o *app.OS, idx, x, y int) {
+ 	win := o.Windows[idx]
+ 	o.FocusWindowFromClick(idx, x, y)
+ 	if o.Mode == app.TerminalMode {
+-		o.Mode = app.WindowManagementMode
++		o.EnterWindowManagementMode()
+ 	}
+ 	o.SetPointerShape(app.PointerGrabbing)
+ 	o.InteractionMode = true
 diff --git i/internal/input/mouse_motion.go w/internal/input/mouse_motion.go
 index 53c8e37..fcadf8b 100644
 --- i/internal/input/mouse_motion.go
@@ -6235,8 +7791,21 @@ index 53c8e37..fcadf8b 100644
  		// The picture-in-picture view is not a pane: a pointer resting on it
  		// is not over the tile underneath.
  		idx := findClickedWindow(mouse.X, mouse.Y, o)
+diff --git i/internal/input/multifocus_actions.go w/internal/input/multifocus_actions.go
+index 97017f8..d9df801 100644
+--- i/internal/input/multifocus_actions.go
++++ w/internal/input/multifocus_actions.go
+@@ -20,7 +20,7 @@ func (d *ActionDispatcher) registerMultifocusHandlers() {
+ }
+ 
+ // actionCloseWorkspace closes every pane on a workspace, like tmux
+-// kill-window, after the confirmation dialog: the workspace whose dock tab menu
++// kill-window, with configurable confirmation: the workspace whose dock tab menu
+ // ran it, or the current one. It has no default key. It sits here because it
+ // is how a multifocus set from tuios xpanes goes away.
+ const actionCloseWorkspace = "close_workspace"
 diff --git i/internal/input/prefix_actions.go w/internal/input/prefix_actions.go
-index 6302678..d6d832f 100644
+index 6302678..dbec852 100644
 --- i/internal/input/prefix_actions.go
 +++ w/internal/input/prefix_actions.go
 @@ -6,7 +6,6 @@ import (
@@ -6271,6 +7840,35 @@ index 6302678..d6d832f 100644
  }
  
  // startRename puts the focused window into rename mode. Renaming is a
+@@ -240,7 +230,7 @@ func startRename(o *app.OS) {
+ 	if focused == nil {
+ 		return
+ 	}
+-	o.Mode = app.WindowManagementMode
++	o.EnterWindowManagementMode()
+ 	o.BeginRenameWindow(focused)
+ }
+ 
+@@ -265,7 +255,7 @@ func handleWindowPrefixRename(msg tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd)
+ // from which: the pill the menu was opened on, or the workspace in view.
+ // Renaming is a window-management activity, like renaming a pane.
+ func handleWorkspaceRename(_ tea.KeyPressMsg, o *app.OS) (*app.OS, tea.Cmd) {
+-	o.Mode = app.WindowManagementMode
++	o.EnterWindowManagementMode()
+ 	o.BeginRenameCurrentWorkspace()
+ 	return o, nil
+ }
+@@ -474,7 +464,9 @@ func leaveTerminalMode(o *app.OS) {
+ 	if o.Mode != app.TerminalMode {
+ 		return
+ 	}
+-	o.Mode = app.WindowManagementMode
++	if !o.EnterWindowManagementMode() {
++		return
++	}
+ 	o.ShowNotification("Window management mode", "info", o.Settings.NotificationDuration)
+ 	refreshFocusedWindow(o)
+ }
 diff --git i/internal/overlay/rows.go w/internal/overlay/rows.go
 index 9ab267c..e452806 100644
 --- i/internal/overlay/rows.go
@@ -6293,3 +7891,516 @@ index 9ab267c..e452806 100644
  // underlineCell underlines a cell that carries text, leaving the padding
  // alone so the line runs under the words rather than across the panel.
  func underlineCell(c *uv.Cell) {
+diff --git i/internal/session/agent_detect.go w/internal/session/agent_detect.go
+index 1556c35..d8e5d8a 100644
+--- i/internal/session/agent_detect.go
++++ w/internal/session/agent_detect.go
+@@ -938,6 +938,9 @@ func (s *Session) detectionPass(st *SessionState, readings map[string]detectRead
+ 			delete(s.agentSharedGuards, id)
+ 		}
+ 	}
++	if s.autoNamesSinglePanesLocked(st) && st.reconcileWorkspaceAutoNames(write) {
++		out.labels++
++	}
+ 	return out
+ }
+ 
+diff --git i/internal/session/daemon.go w/internal/session/daemon.go
+index ecc6fcf..a308ac0 100644
+--- i/internal/session/daemon.go
++++ w/internal/session/daemon.go
+@@ -833,6 +833,7 @@ type DaemonConfig struct {
+ 	// session stays on a workspace that loses its last pane. The zero value
+ 	// is the default, which returns. See empty_workspace.go.
+ 	StayOnEmptyWorkspace bool
++	AutoNameSinglePane   bool
+ 	// PasteBufferLimit and PasteBufferMaxBytes are [paste_buffers]: how many
+ 	// paste buffers the daemon keeps and how many bytes they hold together.
+ 	// Zero takes the default, so a daemon made from a hand-built config keeps
+@@ -998,6 +999,7 @@ func NewDaemon(cfg *DaemonConfig) *Daemon {
+ 	d.manager.SetPreferredShell(cfg.PreferredShell)
+ 	d.manager.SetHerdrProtocol(cfg.HerdrProtocol)
+ 	d.manager.SetReturnWhenEmpty(!cfg.StayOnEmptyWorkspace)
++	d.manager.SetAutoNameSinglePane(cfg.AutoNameSinglePane)
+ 	d.agentDetectInterval = resolveAgentDetectInterval(cfg.AgentAutoDetect, cfg.AgentDetectInterval)
+ 	d.agentsOff.Store(cfg.AgentsOff)
+ 	d.wakes.init()
+diff --git i/internal/session/daemon_hosts.go w/internal/session/daemon_hosts.go
+index 617878d..bbdfce9 100644
+--- i/internal/session/daemon_hosts.go
++++ w/internal/session/daemon_hosts.go
+@@ -120,6 +120,7 @@ func (d *Daemon) applyUserConfig(cfg *config.UserConfig, byPerson bool) {
+ 	d.manager.SetPreferredShell(cfg.Appearance.PreferredShell)
+ 	d.manager.SetHerdrProtocol(cfg.Agents.HerdrProtocol)
+ 	d.manager.SetReturnWhenEmpty(cfg.Workspaces.ReturnsWhenEmpty())
++	d.manager.SetAutoNameSinglePane(cfg.Workspaces.AutoNameSinglePane)
+ 	if d.buffers != nil {
+ 		d.buffers.SetLimits(cfg.PasteBuffers.Resolved())
+ 	}
+diff --git i/internal/session/daemon_user_config.go w/internal/session/daemon_user_config.go
+index 92e9936..8b57e9e 100644
+--- i/internal/session/daemon_user_config.go
++++ w/internal/session/daemon_user_config.go
+@@ -74,6 +74,7 @@ func DaemonConfigFromUser(uc *config.UserConfig) *DaemonConfig {
+ 	// The daemon owns the window set, so it sees the workspace on screen
+ 	// lose its last pane, with or without a client attached.
+ 	cfg.StayOnEmptyWorkspace = !uc.Workspaces.ReturnsWhenEmpty()
++	cfg.AutoNameSinglePane = uc.Workspaces.AutoNameSinglePane
+ 	// The daemon holds the paste buffers every client shares.
+ 	cfg.PasteBufferLimit, cfg.PasteBufferMaxBytes = uc.PasteBuffers.Resolved()
+ 	cfg.PasteBuffersOff = cfg.PasteBufferLimit == 0
+diff --git i/internal/session/manager.go w/internal/session/manager.go
+index 620ac49..7550fd0 100644
+--- i/internal/session/manager.go
++++ w/internal/session/manager.go
+@@ -46,7 +46,8 @@ type Manager struct {
+ 	preferredShell atomic.Pointer[string]
+ 	// stayOnEmpty is workspaces.return_when_empty turned off. The zero value
+ 	// is the default, on. Every session reads it through ReturnWhenEmpty.
+-	stayOnEmpty atomic.Bool
++	stayOnEmpty        atomic.Bool
++	autoNameSinglePane atomic.Bool
+ 	// sshAgentFollow is [daemon] ssh_agent = "follow": a new pane gets
+ 	// SSH_AUTH_SOCK naming its session's agent link. See ssh_agent_follow.go.
+ 	sshAgentFollow atomic.Bool
+@@ -172,6 +173,14 @@ func (m *Manager) ReturnWhenEmpty() bool {
+ 	return !m.stayOnEmpty.Load()
+ }
+ 
++func (m *Manager) SetAutoNameSinglePane(on bool) {
++	m.autoNameSinglePane.Store(on)
++}
++
++func (m *Manager) AutoNameSinglePane() bool {
++	return m.autoNameSinglePane.Load()
++}
++
+ // PreferredShell is what SetPreferredShell last set, or "".
+ func (m *Manager) PreferredShell() string {
+ 	if p := m.preferredShell.Load(); p != nil {
+@@ -308,6 +317,9 @@ func (m *Manager) CreateSession(name string, cfg *SessionConfig, width, height i
+ 	if cfg.ReturnWhenEmpty == nil {
+ 		cfg.ReturnWhenEmpty = m.ReturnWhenEmpty
+ 	}
++	if cfg.AutoNameSinglePane == nil {
++		cfg.AutoNameSinglePane = m.AutoNameSinglePane
++	}
+ 	if cfg.HerdrEnv == nil {
+ 		cfg.HerdrEnv = m.HerdrEnv
+ 	}
+diff --git i/internal/session/session.go w/internal/session/session.go
+index 086d93d..a70959d 100644
+--- i/internal/session/session.go
++++ w/internal/session/session.go
+@@ -492,6 +492,8 @@ type SessionState struct {
+ 	// sees it. A workspace's number is its position, and a move renumbers the
+ 	// name with the rest of the workspace (see workspace_renumber.go).
+ 	WorkspaceNames map[int]string `json:"workspace_names,omitempty"`
++	// WorkspaceAutoNames records generated labels so manual names remain protected.
++	WorkspaceAutoNames map[int]string `json:"workspace_auto_names,omitempty"`
+ 	// WorkspaceOrder is a display order saved by a build that arranged the
+ 	// workspaces without renumbering them. It is read so such a state still
+ 	// loads, applied once as a renumber when the session is restored, and never
+@@ -1692,7 +1694,8 @@ type SessionConfig struct {
+ 	// ReturnWhenEmpty reports workspaces.return_when_empty. The manager
+ 	// stamps it with its own getter, so a config reload reaches every
+ 	// session. Nil means on.
+-	ReturnWhenEmpty func() bool
++	ReturnWhenEmpty    func() bool
++	AutoNameSinglePane func() bool
+ 	// HerdrEnv returns the herdr protocol variables a pane with the given
+ 	// window id that runs the given command is started with, nil for none.
+ 	// See Manager.HerdrEnv.
+@@ -3039,6 +3042,7 @@ func (s *Session) snapshotStateLocked() *SessionState {
+ 		stateCopy.WorkspaceNames = make(map[int]string, len(s.state.WorkspaceNames))
+ 		maps.Copy(stateCopy.WorkspaceNames, s.state.WorkspaceNames)
+ 	}
++	stateCopy.WorkspaceAutoNames = maps.Clone(s.state.WorkspaceAutoNames)
+ 	if s.state.WorkspaceOrder != nil {
+ 		stateCopy.WorkspaceOrder = slices.Clone(s.state.WorkspaceOrder)
+ 	}
+@@ -3401,6 +3405,10 @@ func (s *Session) updateStateFrom(state *SessionState, seen bool) (accepted, beh
+ 		s.noteRenumberLocked()
+ 		accepted = false
+ 	}
++	if s.inheritWorkspaceNamesLocked(s.state) {
++		s.state.Version++
++		accepted = false
++	}
+ 	s.noteStateChangeLocked()
+ 	s.emitLifecycleLocked(before)
+ 	return accepted, behind, s.changeSeq
+@@ -3478,6 +3486,7 @@ func (s *Session) mutateStateLocked(fn func(state *SessionState) error) (*Sessio
+ 	if s.noteWorkspacesLocked() {
+ 		s.noteRenumberLocked()
+ 	}
++	s.inheritWorkspaceNamesLocked(s.state)
+ 	s.noteStateChangeLocked()
+ 	s.emitLifecycleLocked(before)
+ 	return s.snapshotStateLocked(), nil
+diff --git i/internal/session/session_ops.go w/internal/session/session_ops.go
+index 77b2f10..406cb56 100644
+--- i/internal/session/session_ops.go
++++ w/internal/session/session_ops.go
+@@ -3,6 +3,7 @@ package session
+ import (
+ 	"errors"
+ 	"fmt"
++	"maps"
+ 	"os"
+ 	"strings"
+ 	"sync"
+@@ -821,6 +822,9 @@ func (s *Session) SetDaemonWorkspaceName(ws int, name string) error {
+ 		if ws < 1 || ws > state.workspaceBound() {
+ 			return fmt.Errorf("workspace %d out of range (1-%d)", ws, state.workspaceBound())
+ 		}
++		state.WorkspaceNames = maps.Clone(state.WorkspaceNames)
++		state.WorkspaceAutoNames = maps.Clone(state.WorkspaceAutoNames)
++		delete(state.WorkspaceAutoNames, ws)
+ 		if name == "" {
+ 			delete(state.WorkspaceNames, ws)
+ 			return nil
+diff --git i/internal/session/state_fingerprint.go w/internal/session/state_fingerprint.go
+index db73a50..9b08f2e 100644
+--- i/internal/session/state_fingerprint.go
++++ w/internal/session/state_fingerprint.go
+@@ -192,6 +192,7 @@ func StateFingerprint(s *SessionState) uint64 {
+ 		}
+ 	}
+ 	hashIntStr(s.WorkspaceNames)
++	hashIntStr(s.WorkspaceAutoNames)
+ 
+ 	// The per-workspace master ratios, folded in the same way and for the same
+ 	// reason as the flat one above: a peer acts on them, so a push that changes
+diff --git i/internal/session/state_merge.go w/internal/session/state_merge.go
+index 99427da..bc2629b 100644
+--- i/internal/session/state_merge.go
++++ w/internal/session/state_merge.go
+@@ -68,6 +68,7 @@ func retainDaemonExclusive(incoming, canonical *SessionState) {
+ 	if incoming.WorkspaceNames == nil {
+ 		incoming.WorkspaceNames = canonical.WorkspaceNames
+ 	}
++	incoming.WorkspaceAutoNames = canonical.WorkspaceAutoNames
+ 	// Older clients omit focus history.
+ 	if incoming.FocusHistory == nil {
+ 		incoming.FocusHistory = canonical.FocusHistory
+diff --git i/internal/session/workspace_auto_name.go w/internal/session/workspace_auto_name.go
+new file mode 100644
+index 0000000..3bc0e45
+--- /dev/null
++++ w/internal/session/workspace_auto_name.go
+@@ -0,0 +1,77 @@
++package session
++
++import (
++	"maps"
++	"strconv"
++	"strings"
++)
++
++const optionAutoNameSinglePane = "workspaces.auto_name_single_pane"
++
++func (s *Session) autoNamesSinglePanesLocked(state *SessionState) bool {
++	if value, exists := state.Options[optionAutoNameSinglePane]; exists {
++		on, err := strconv.ParseBool(value)
++		return err == nil && on
++	}
++	return s.config != nil && s.config.AutoNameSinglePane != nil && s.config.AutoNameSinglePane()
++}
++
++func (state *SessionState) reconcileWorkspaceAutoNames(write bool) bool {
++	changed, cloned := false, false
++	change := func() {
++		changed = true
++		if !write || cloned {
++			return
++		}
++		state.WorkspaceNames = maps.Clone(state.WorkspaceNames)
++		state.WorkspaceAutoNames = maps.Clone(state.WorkspaceAutoNames)
++		if state.WorkspaceNames == nil {
++			state.WorkspaceNames = make(map[int]string)
++		}
++		if state.WorkspaceAutoNames == nil {
++			state.WorkspaceAutoNames = make(map[int]string)
++		}
++		cloned = true
++	}
++	for ws, generated := range state.WorkspaceAutoNames {
++		if generated != "" && state.WorkspaceNames[ws] == generated {
++			continue
++		}
++		change()
++		if write {
++			delete(state.WorkspaceAutoNames, ws)
++		}
++	}
++	counts := make(map[int]int)
++	programs := make(map[int]string)
++	for _, window := range state.Windows {
++		if window.Scratch || IsScratchWorkspace(window.Workspace) || window.Workspace < 1 {
++			continue
++		}
++		counts[window.Workspace]++
++		programs[window.Workspace] = ClampDisplayText(agentBaseName(strings.TrimSpace(window.ForegroundCmd)))
++	}
++	for ws, count := range counts {
++		name := programs[ws]
++		if count != 1 || name == "" || loginShells[name] {
++			continue
++		}
++		current, generated := state.WorkspaceNames[ws], state.WorkspaceAutoNames[ws]
++		if current != "" && current != generated {
++			continue
++		}
++		if current == name && generated == name {
++			continue
++		}
++		change()
++		if write {
++			state.WorkspaceNames[ws] = name
++			state.WorkspaceAutoNames[ws] = name
++		}
++	}
++	return changed
++}
++
++func (s *Session) inheritWorkspaceNamesLocked(state *SessionState) bool {
++	return s.autoNamesSinglePanesLocked(state) && state.reconcileWorkspaceAutoNames(true)
++}
+diff --git i/internal/session/workspace_auto_name_test.go w/internal/session/workspace_auto_name_test.go
+new file mode 100644
+index 0000000..971b2aa
+--- /dev/null
++++ w/internal/session/workspace_auto_name_test.go
+@@ -0,0 +1,199 @@
++package session
++
++import (
++	"maps"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++)
++
++func TestWorkspaceAutoNamesFollowSinglePaneAndRetainLastProgram(t *testing.T) {
++	state := &SessionState{Windows: []WindowState{{ID: "one", Workspace: 1, ForegroundCmd: "pi"}}}
++	if !state.reconcileWorkspaceAutoNames(false) || state.WorkspaceNames != nil || state.WorkspaceAutoNames != nil {
++		t.Fatal("dry run changed state or missed an automatic name")
++	}
++	for _, step := range []struct {
++		program string
++		split   bool
++		want    string
++	}{
++		{"pi", false, "pi"},
++		{"nvim", false, "nvim"},
++		{"", false, "nvim"},
++		{"bash", false, "nvim"},
++		{"htop", true, "nvim"},
++		{"pi", true, "nvim"},
++		{"pi", false, "pi"},
++	} {
++		state.Windows[0].ForegroundCmd = step.program
++		state.Windows = state.Windows[:1]
++		if step.split {
++			state.Windows = append(state.Windows, WindowState{ID: "two", Workspace: 1, ForegroundCmd: "other"})
++		}
++		state.reconcileWorkspaceAutoNames(true)
++		if state.WorkspaceNames[1] != step.want || state.WorkspaceAutoNames[1] != step.want {
++			t.Fatalf("program %q, split %t: names %v, provenance %v, want %q", step.program, step.split, state.WorkspaceNames, state.WorkspaceAutoNames, step.want)
++		}
++	}
++	state.Windows = nil
++	state.reconcileWorkspaceAutoNames(true)
++	if state.WorkspaceNames[1] != "pi" {
++		t.Fatal("an empty workspace forgot its inherited name")
++	}
++}
++
++func TestWorkspaceAutoNamesPreserveManualLabelsAndIgnoreScratch(t *testing.T) {
++	state := &SessionState{
++		WorkspaceNames:     map[int]string{1: "review", 2: "old-generated"},
++		WorkspaceAutoNames: map[int]string{2: "old-generated"},
++		Windows: []WindowState{
++			{ID: "manual", Workspace: 1, ForegroundCmd: "pi"},
++			{ID: "single", Workspace: 2, ForegroundCmd: "nvim", CustomName: "not-the-program"},
++			{ID: "scratch", Workspace: 2, ForegroundCmd: "scratch-program", Scratch: true},
++		},
++	}
++	before := state.WorkspaceNames
++	generated := state.WorkspaceAutoNames
++	state.reconcileWorkspaceAutoNames(true)
++	if state.WorkspaceNames[1] != "review" || state.WorkspaceNames[2] != "nvim" {
++		t.Fatalf("manual or single-pane name wrong: %v", state.WorkspaceNames)
++	}
++	if before[2] != "old-generated" || generated[2] != "old-generated" {
++		t.Fatal("name update mutated an older map")
++	}
++	state.WorkspaceNames[2] = "external-rename"
++	state.reconcileWorkspaceAutoNames(true)
++	if state.WorkspaceNames[2] != "external-rename" || state.WorkspaceAutoNames[2] != "" {
++		t.Fatal("a client-assigned name was overwritten or still marked automatic")
++	}
++}
++
++func TestWorkspaceAutoNamesIntegrateWithDetectionAndManualRename(t *testing.T) {
++	sess, id := bareSessionWithWindow(t)
++	sess.SetOption(optionAutoNameSinglePane, "true")
++	ptyID := ptyIDOfWindow(t, sess, id)
++	matcher := newAgentMatcher(nil)
++	program := func(name string) {
++		sess.applyAgentDetection(fakeResolver(map[string]fakeProc{
++			ptyID: {info: foregroundInfo{comm: name, argv: []string{name}}, running: true},
++		}), matcher.identifyDetail)
++	}
++	program("pi")
++	if got := sess.GetState().WorkspaceNames[1]; got != "pi" {
++		t.Fatalf("detected program did not name the tab: %q", got)
++	}
++	snapshot := sess.GetState()
++	snapshot.WorkspaceAutoNames[1] = "changed-copy"
++	if sess.GetState().WorkspaceAutoNames[1] != "pi" {
++		t.Fatal("snapshot shared provenance with canonical state")
++	}
++	if err := sess.SetDaemonWorkspaceName(1, "pi"); err != nil {
++		t.Fatal(err)
++	}
++	program("nvim")
++	if state := sess.GetState(); state.WorkspaceNames[1] != "pi" || state.WorkspaceAutoNames[1] != "" {
++		t.Fatalf("explicit same-name rename was not protected: %+v", state.WorkspaceNames)
++	}
++	if err := sess.SetDaemonWorkspaceName(1, ""); err != nil {
++		t.Fatal(err)
++	}
++	if state := sess.GetState(); state.WorkspaceNames[1] != "nvim" || state.WorkspaceAutoNames[1] != "nvim" {
++		t.Fatal("clearing a manual name did not resume automatic naming")
++	}
++	program("bash")
++	if sess.GetState().WorkspaceNames[1] != "nvim" {
++		t.Fatal("returning to the shell replaced the last program")
++	}
++}
++
++func TestWorkspaceAutoNamesSurviveSavedStateMergeAndRenumber(t *testing.T) {
++	defer useResurrectionDir(t.TempDir())()
++	state := &SessionState{
++		Name: "auto-names", NumWorkspaces: 3, CurrentWorkspace: 1,
++		WorkspaceNames:     map[int]string{1: "pi", 2: "review"},
++		WorkspaceAutoNames: map[int]string{1: "pi"},
++		Windows:            []WindowState{{ID: "one", Workspace: 1}},
++	}
++	if err := SaveSessionForResurrection(state); err != nil {
++		t.Fatal(err)
++	}
++	restored, err := LoadResurrectionState(state.Name)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if !maps.Equal(restored.WorkspaceNames, state.WorkspaceNames) || !maps.Equal(restored.WorkspaceAutoNames, state.WorkspaceAutoNames) {
++		t.Fatal("saved state lost names or their provenance")
++	}
++	incoming := &SessionState{WorkspaceAutoNames: map[int]string{1: "forged"}}
++	retainDaemonExclusive(incoming, restored)
++	if incoming.WorkspaceAutoNames[1] != "pi" {
++		t.Fatal("a client overwrote daemon-owned provenance")
++	}
++	restored.renumberWorkspaces(map[int]int{1: 2, 2: 1})
++	if restored.WorkspaceNames[2] != "pi" || restored.WorkspaceAutoNames[2] != "pi" || restored.WorkspaceNames[1] != "review" || restored.WorkspaceAutoNames[1] != "" {
++		t.Fatal("renumbering separated names from their provenance")
++	}
++	restored.Windows[0].ForegroundCmd = "htop"
++	restored.reconcileWorkspaceAutoNames(true)
++	if restored.WorkspaceNames[2] != "htop" || restored.WorkspaceNames[1] != "review" {
++		t.Fatal("restored automatic name no longer updates or manual name changed")
++	}
++}
++
++func TestWorkspaceAutoNamesClearOnTabCloseAndAffectFingerprint(t *testing.T) {
++	sess, id := bareSessionWithWindow(t)
++	sess.SetOption(optionAutoNameSinglePane, "true")
++	if err := sess.mutateState(func(state *SessionState) error {
++		state.Windows[0].ForegroundCmd = "pi"
++		return nil
++	}); err != nil {
++		t.Fatal(err)
++	}
++	state := sess.GetState()
++	before := StateFingerprint(state)
++	state.WorkspaceAutoNames = nil
++	if before == StateFingerprint(state) {
++		t.Fatal("provenance change did not affect the state fingerprint")
++	}
++	other, err := sess.AddDaemonWindow("other workspace", nil)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := sess.MoveDaemonWindowToWorkspace(other.ID, 2); err != nil {
++		t.Fatal(err)
++	}
++	if err := sess.FocusDaemonWindow(other.ID); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := sess.CloseDaemonWindow(id); err != nil {
++		t.Fatal(err)
++	}
++	if len(sess.GetState().WorkspaceAutoNames) != 0 {
++		t.Fatal("a closed tab retained automatic-name provenance")
++	}
++}
++
++func TestWorkspaceAutoNamesAreOptInAndReachDaemon(t *testing.T) {
++	cfg := config.DefaultConfig()
++	if DaemonConfigFromUser(cfg).AutoNameSinglePane {
++		t.Fatal("automatic naming enabled by default")
++	}
++	cfg.Workspaces.AutoNameSinglePane = true
++	if !DaemonConfigFromUser(cfg).AutoNameSinglePane {
++		t.Fatal("automatic naming config did not reach the daemon")
++	}
++	sess, id := bareSessionWithWindow(t)
++	if err := sess.mutateState(func(state *SessionState) error {
++		for i := range state.Windows {
++			if state.Windows[i].ID == id {
++				state.Windows[i].ForegroundCmd = "pi"
++			}
++		}
++		return nil
++	}); err != nil {
++		t.Fatal(err)
++	}
++	if sess.GetState().WorkspaceNames[1] != "" {
++		t.Fatal("automatic naming ignored the default-off policy")
++	}
++}
+diff --git i/internal/session/workspace_renumber.go w/internal/session/workspace_renumber.go
+index ee9f01e..2f4f38d 100644
+--- i/internal/session/workspace_renumber.go
++++ w/internal/session/workspace_renumber.go
+@@ -177,6 +177,7 @@ func (st *SessionState) renumberWorkspaces(newOf map[int]int) {
+ 	st.WorkspaceFocus = RenumberWorkspaceMap(st.WorkspaceFocus, newOf)
+ 	st.FocusHistory = RenumberWorkspaceMap(st.FocusHistory, newOf)
+ 	st.WorkspaceNames = RenumberWorkspaceMap(st.WorkspaceNames, newOf)
++	st.WorkspaceAutoNames = RenumberWorkspaceMap(st.WorkspaceAutoNames, newOf)
+ 	st.WorkspaceTrees = RenumberWorkspaceMap(st.WorkspaceTrees, newOf)
+ 	st.WorkspaceMasterRatio = RenumberWorkspaceMap(st.WorkspaceMasterRatio, newOf)
+ 	st.WorkspaceStackRatio = RenumberWorkspaceMap(st.WorkspaceStackRatio, newOf)
+@@ -347,6 +348,11 @@ func (s *Session) noteWorkspacesLocked() bool {
+ 		s.hadPanes[at.ws] = true
+ 	}
+ 	for _, ws := range gone {
++		if st.WorkspaceAutoNames[ws] != "" {
++			generated := maps.Clone(st.WorkspaceAutoNames)
++			delete(generated, ws)
++			st.WorkspaceAutoNames = generated
++		}
+ 		if st.WorkspaceNames[ws] != "" {
+ 			names := maps.Clone(st.WorkspaceNames)
+ 			delete(names, ws)
+@@ -557,6 +563,7 @@ func (s *Session) workspaceRenumberMissedLocked(base int) bool {
+ // a new map (see placeTree and renumberWorkspaces).
+ func takeWorkspaceMapsFrom(incoming, canonical *SessionState) {
+ 	incoming.WorkspaceNames = maps.Clone(canonical.WorkspaceNames)
++	incoming.WorkspaceAutoNames = maps.Clone(canonical.WorkspaceAutoNames)
+ 	incoming.WorkspaceMasterRatio = maps.Clone(canonical.WorkspaceMasterRatio)
+ 	incoming.WorkspaceStackRatio = maps.Clone(canonical.WorkspaceStackRatio)
+ 	incoming.WorkspaceMasterSplits = cloneMasterSplits(canonical.WorkspaceMasterSplits)
