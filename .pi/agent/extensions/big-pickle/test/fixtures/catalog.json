@@ -1,0 +1,568 @@
+[
+	{
+		"id": "big-pickle",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "Big Pickle",
+		"type": "chat",
+		"description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
+		"family": "big-pickle",
+		"open_weights": false,
+		"knowledge": "2025-01",
+		"release_date": "2025-10-17",
+		"last_updated": "2025-10-17",
+		"modalities": {
+			"input": ["text"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true
+			},
+			"structured_output": true,
+			"temperature": true,
+			"system_updates": false,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 200000,
+			"input": 160000,
+			"output": 32000
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0,
+						"write": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "beam-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "Beam Free",
+		"canonical_id": "reflection/beam-1.0-501b-a23b",
+		"type": "chat",
+		"description": "Sparse mixture-of-experts reasoning model with 23B active parameters for coding and agentic workflows",
+		"family": "beam",
+		"open_weights": true,
+		"knowledge": "2026-06-30",
+		"release_date": "2026-10-05",
+		"last_updated": "2026-10-16",
+		"modalities": {
+			"input": ["text"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true,
+				"effort": ["low", "medium", "high", "xhigh", "max"]
+			},
+			"structured_output": true,
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": false,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 1048576,
+			"output": 131072
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"strict": true,
+						"choice": ["auto", "none", "required", "tool"],
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "flint-40b-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "Flint 40B Free",
+		"canonical_id": "recursive/flint",
+		"type": "chat",
+		"description": "Open-weight mixture-of-experts model with about 2.5B active parameters for local coding agents",
+		"family": "flint",
+		"open_weights": true,
+		"knowledge": "2026-06",
+		"release_date": "2026-10-21",
+		"last_updated": "2026-10-21",
+		"modalities": {
+			"input": ["text"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true,
+				"effort": ["low", "medium", "high", "xhigh", "max"]
+			},
+			"structured_output": true,
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": false,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 262144,
+			"output": 65536
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "mimo-v2.6-flash-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "MiMo-V2.6-Flash Free",
+		"canonical_id": "xiaomi/mimo-v2.6-flash",
+		"type": "chat",
+		"description": "MiMo Flash model for multimodal coding agents and long-context automation",
+		"family": "mimo",
+		"open_weights": true,
+		"release_date": "2026-09-22",
+		"last_updated": "2026-09-22",
+		"modalities": {
+			"input": [
+				"text",
+				"image/jpeg",
+				"image/png",
+				"image/gif",
+				"image/webp",
+				"image/bmp",
+				"audio/mpeg",
+				"audio/wav",
+				"audio/flac",
+				"audio/mp4",
+				"audio/ogg",
+				"video/mp4",
+				"video/quicktime",
+				"video/x-msvideo",
+				"video/x-ms-wmv"
+			],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true
+			},
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": true,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 200000,
+			"output": 32000
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"strict": true,
+						"choice": ["auto"],
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "nemotron-3.5-super-vl-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "Nemotron 3.5 Super VL Free",
+		"canonical_id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+		"type": "chat",
+		"description": "NVIDIA vision-language reasoning model for text, image, and video understanding and agentic tool use",
+		"family": "nemotron",
+		"open_weights": true,
+		"release_date": "2026-10-15",
+		"last_updated": "2026-10-15",
+		"modalities": {
+			"input": ["text", "image/jpeg", "image/png"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true,
+				"effort": ["none", "minimal", "low", "medium", "high", "xhigh"]
+			},
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": false,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 1048576,
+			"input": 1048576,
+			"output": 131072
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "nemotron-3.5-lightning-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "Nemotron 3.5 Lightning Free",
+		"canonical_id": "nvidia/nemotron-3.5-lightning",
+		"type": "chat",
+		"description": "Fast NVIDIA Nemotron MoE for reliable agentic tasks across enterprise workloads",
+		"family": "nemotron",
+		"open_weights": true,
+		"knowledge": "2025-09",
+		"release_date": "2026-08-11",
+		"last_updated": "2026-08-11",
+		"modalities": {
+			"input": ["text"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true
+			},
+			"structured_output": true,
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": false,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 262144,
+			"output": 262144
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "deepseek-v4.1-flash-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "DeepSeek V4.1 Flash Free",
+		"canonical_id": "deepseek/deepseek-v4.1-flash",
+		"type": "chat",
+		"description": "DeepSeek V4.1 Flash model for reasoning and agentic coding",
+		"family": "deepseek-flash",
+		"open_weights": true,
+		"knowledge": "2025-05",
+		"release_date": "2026-09-10",
+		"last_updated": "2026-09-10",
+		"modalities": {
+			"input": ["text", "image/jpeg", "image/png", "image/gif", "image/webp"],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true,
+				"toggle": true,
+				"effort": ["low", "high", "max"]
+			},
+			"structured_output": true,
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": true,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 200000,
+			"output": 32000
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"choice": ["auto", "none", "required", "tool"],
+						"updates": false
+					}
+				}
+			}
+		}
+	},
+	{
+		"id": "glm-5.3-flash-free",
+		"object": "model",
+		"created": 1793476611,
+		"owned_by": "opencode",
+		"name": "GLM-5.3-Flash Free",
+		"canonical_id": "zhipuai/glm-5.3-flash",
+		"type": "chat",
+		"description": "Native multimodal GLM model for efficient coding and long-horizon agent tasks",
+		"family": "glm-flash",
+		"open_weights": true,
+		"release_date": "2026-08-26",
+		"last_updated": "2026-08-26",
+		"modalities": {
+			"input": [
+				"text",
+				"image/jpeg",
+				"image/png",
+				"video/mp4",
+				"video/x-matroska",
+				"video/quicktime"
+			],
+			"output": ["text"]
+		},
+		"capabilities": {
+			"tools": {
+				"supported": true
+			},
+			"reasoning": {
+				"supported": true,
+				"effort": ["low", "high", "max"]
+			},
+			"structured_output": true,
+			"temperature": true,
+			"top_p": true,
+			"top_k": true,
+			"system_updates": true,
+			"effort_updates": false
+		},
+		"limit": {
+			"context": 200000,
+			"output": 32000
+		},
+		"cost": {
+			"text": {
+				"input": {
+					"price": 0,
+					"cache": {
+						"read": 0
+					}
+				},
+				"output": {
+					"price": 0
+				}
+			}
+		},
+		"api": {
+			"chat-completions": {
+				"base_url": "https://opencode.ai/inference/openai/v1",
+				"sdk": {
+					"aisdk": "@ai-sdk/openai-compatible",
+					"opencodeai": "@opencode/ai/providers/openai-compatible"
+				},
+				"compatibility": {
+					"reasoning_field": "reasoning_content"
+				},
+				"capabilities": {
+					"tools": {
+						"choice": ["auto"],
+						"updates": false
+					}
+				}
+			}
+		}
+	}
+]

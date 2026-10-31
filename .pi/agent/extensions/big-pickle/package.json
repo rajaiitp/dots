@@ -1,0 +1,21 @@
+{
+	"name": "pi-big-pickle",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"test": "node --test test/*.test.mjs",
+		"test:live": "PI_BIG_PICKLE_LIVE_TEST=1 node --test test/live.test.mjs",
+		"test:models": "PI_BIG_PICKLE_LIVE_TEST=1 node --test test/models-live.test.mjs",
+		"check": "node test/check.mjs"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*"
+	},
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	}
+}

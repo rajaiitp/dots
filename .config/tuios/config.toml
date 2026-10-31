@@ -188,23 +188,26 @@ background = "panel"
 padding_left = 2
 
 [appearance.sidebar.ui.repository]
-background = "panel"
-active_background = "panel"
+background = "surface"
+active_background = "surface"
 
 [appearance.sidebar.ui.branch]
+background = "panel"
 foreground = "fg"
-active_background = "surface"
+active_background = "panel"
 full_width = true
 
 [appearance.sidebar.ui.session]
+background = "panel"
 foreground = "fg"
-active_background = "surface"
+active_background = "panel"
 full_width = true
 
 [appearance.sidebar.ui.agent]
+background = "panel"
 foreground = "fg"
 bold = false
-active_background = "surface"
+active_background = "panel"
 active_foreground = "accent"
 active_bold = true
 full_width = true
