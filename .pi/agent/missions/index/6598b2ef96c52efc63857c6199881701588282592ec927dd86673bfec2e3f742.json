@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "1d05d2af-7a3d-4d19-b17a-c2a7401cb193",
+  "projectRoot": "/home/raja/dots",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/16066a6c41bd98003e7d4525d89a7081aa3e5ebfe02bef82ef1d8147a103002d/1d05d2af-7a3d-4d19-b17a-c2a7401cb193.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-10-31T13:53:16.797Z",
+  "lastRunId": "5f6fca26-5633-473d-aae0-b03ed1a45bc9"
+}

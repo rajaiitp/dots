@@ -393,6 +393,72 @@ index 0000000..e73a40e
 +		waitBranch("main")
 +	}
 +}
+diff --git i/e2e/tui/sidebar_padding_test.go w/e2e/tui/sidebar_padding_test.go
+new file mode 100644
+index 0000000..4b4111b
+--- /dev/null
++++ w/e2e/tui/sidebar_padding_test.go
+@@ -0,0 +1,60 @@
++package tuie2e
++
++import (
++	"fmt"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarPaddingReloadsWithoutRestart(t *testing.T) {
++	base := t.TempDir()
++	const repoName = "paddingrepo"
++	repo := filepath.Join(base, repoName)
++	if out, err := exec.Command("git", "init", "--initial-branch=main", repo).CombinedOutput(); err != nil {
++		t.Fatalf("initialize checkout: %v\n%s", err, out)
++	}
++	setPadding := func(padding int) {
++		writeConfig(t, base, fmt.Sprintf(`[appearance.sidebar]
++enabled = true
++position = "left"
++width = 24
++sections = "overview"
++[appearance.sidebar.ui]
++padding_left = %d
++`, padding))
++	}
++	setPadding(1)
++	const name = "padding-e2e"
++	term := startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"new", name, "--cwd", repo}})
++	waitBoot(t, term)
++	newWindow(t, term)
++	waitWindowCount(t, term, 1, "first pane")
++	column := func(screen tuitest.Screen, text string) int {
++		_, rows := screen.Size()
++		for y := range rows {
++			line := []rune(screen.Line(y))
++			if x := strings.Index(string(line[:min(24, len(line))]), text); x >= 0 {
++				return x
++			}
++		}
++		return -1
++	}
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		return column(screen, repoName) > 0 && column(screen, "main") > 0
++	}, uiTimeout); err != nil {
++		t.Fatalf("sidebar did not load checkout: %v\n%s", err, term.Snapshot())
++	}
++	repoColumn, branchColumn := column(term.Screen(), repoName), column(term.Screen(), "main")
++	for _, padding := range []int{0, 3, 1} {
++		setPadding(padding)
++		if err := term.WaitFor(func(screen tuitest.Screen) bool {
++			return column(screen, repoName) == repoColumn+padding-1 && column(screen, "main") == branchColumn+padding-1
++		}, uiTimeout); err != nil {
++			t.Fatalf("padding %d did not reload: %v\n%s", padding, err, term.Snapshot())
++		}
++	}
++}
 diff --git i/e2e/tui/workspace_auto_name_test.go w/e2e/tui/workspace_auto_name_test.go
 new file mode 100644
 index 0000000..993f49e
@@ -2041,7 +2107,7 @@ index c920c2f..cf9ca2e 100644
  ╚══██╔══╝██║   ██║██║██╔═══██╗██╔════╝
     ██║   ██║   ██║██║██║   ██║███████╗
 diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
-index 9e06237..925409c 100644
+index 9e06237..5741338 100644
 --- i/internal/app/render_sidebar.go
 +++ w/internal/app/render_sidebar.go
 @@ -134,6 +134,13 @@ const (
@@ -2058,13 +2124,14 @@ index 9e06237..925409c 100644
  )
  
  // sidebarAddGlyph is the mark both add controls wear. One cell, so it costs a
-@@ -156,12 +163,13 @@ type sidebarRowState struct {
+@@ -156,12 +163,14 @@ type sidebarRowState struct {
  	// CursorBg is appearance.sidebar.cursor_background as written, empty
  	// when unset. It is a string so a row state stays cheap to build per row;
  	// sidebarRowBg resolves it against the palette the row is drawn with.
 -	CursorBg string
 +	CursorBg      string
 +	ActiveSubtree bool
++	nameColumn    int
  }
  
  // lit reports whether the row is drawing any band at all, which is what the
@@ -2074,7 +2141,26 @@ index 9e06237..925409c 100644
  
  // mark applies the row's state to a finished row in attributes (see
  // overlay.RowState). At 16 colours that is the whole cursor treatment. At
-@@ -216,6 +224,8 @@ func sidebarRowBg(st sidebarRowState, pal overlay.Palette) color.Color {
+@@ -172,12 +181,16 @@ func (st sidebarRowState) lit() bool { return st.Cursor || st.Hover }
+ // severity mark and the foreign tint in the gutter keep their own meaning.
+ func (st sidebarRowState) mark(pal overlay.Palette, row string) string {
+ 	rs := overlay.RowState{Cursor: st.Cursor, Focused: st.Focused, Hover: st.Hover}
+-	return pal.CursorText(pal.Mark(row, rs), rs, sidebarNameCol-1)
++	column := st.nameColumn
++	if column == 0 {
++		column = sidebarNameCol
++	}
++	return pal.CursorText(pal.Mark(row, rs), rs, column-1)
+ }
+ 
+ // railRowState reads the rail's focus once so a row site does not have to.
+ func (m *OS) railRowState(hover, cursor bool) sidebarRowState {
+-	return sidebarRowState{Cursor: cursor, Hover: hover, Focused: m.sidebarRailFocused(), CursorBg: m.Settings.SidebarCursorBackground}
++	return sidebarRowState{Cursor: cursor, Hover: hover, Focused: m.sidebarRailFocused(), CursorBg: m.Settings.SidebarCursorBackground, nameColumn: m.sidebarNameColumn()}
+ }
+ 
+ // railCursorBg is the ground appearance.sidebar.cursor_background asks for on
+@@ -216,6 +229,8 @@ func sidebarRowBg(st sidebarRowState, pal overlay.Palette) color.Color {
  			return c
  		}
  		return pal.Surface
@@ -2083,7 +2169,7 @@ index 9e06237..925409c 100644
  	case st.Cursor, st.Hover:
  		return pal.RowSel
  	}
-@@ -276,6 +286,10 @@ const (
+@@ -276,6 +291,10 @@ const (
  	// the enum sizes every per-section array in this package, and one more
  	// value fits all of them as they are. See sidebar_custom.go.
  	sidebarSectionCustom
@@ -2094,7 +2180,103 @@ index 9e06237..925409c 100644
  	sidebarSectionCount
  )
  
-@@ -1326,7 +1340,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
+@@ -517,6 +536,7 @@ type sidebarAgentEntry struct {
+ 	SessionID   string
+ 	WindowID    string
+ 	Title       string
++	BaseTitle   string
+ 	State       string
+ 	DoneSeen    bool
+ 	StateAt     int64
+@@ -752,9 +772,7 @@ func printableRune(r rune, ascii bool) bool {
+ 	return true
+ }
+ 
+-// sidebarNameCol is the column every rail row's text starts on: gutter, glyph,
+-// one cell of air. One spine for all three sections, which is what the flat
+-// layout buys over the tree.
++// sidebarNameCol is the default column after the gutter, glyph, and name spacing.
+ const sidebarNameCol = 3
+ 
+ // sidebarGlyph returns the styled agent-state glyph for a row, or a single
+@@ -868,7 +886,7 @@ func sidebarHeaderRightRoom(cw, labelW int) int {
+ // with the section's icon in front of it (icon), and decides the rule: auto
+ // draws it with headings on, plain never, rule always. See
+ // sidebarHeaderDecorW for the cells the fill or the icon adds.
+-func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *config.Settings) string {
++func sidebarHeaderPaddedRow(label, right string, cw int, pal overlay.Palette, s *config.Settings, padding int) string {
+ 	headings := s.GetRailHeaderCase() == config.RailHeaderUppercase
+ 	style := s.GetRailHeaderStyle()
+ 	section := label
+@@ -885,7 +903,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
+ 		ruled = true
+ 	}
+ 	decorW := sidebarHeaderDecorW(section, s)
+-	text := overlay.Truncate(label, max(cw-2-decorW, 1))
++	text := overlay.Truncate(label, max(cw-padding-1-decorW, 1))
+ 	shown := labelStyle.Render(text)
+ 	switch style {
+ 	case config.RailHeaderPill:
+@@ -899,7 +917,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
+ 		}
+ 	}
+ 	headings = ruled
+-	row := sidebarStyle(nil, nil).Render(" ") + shown
++	row := sidebarStyle(nil, nil).Render(strings.Repeat(" ", padding)) + shown
+ 	lw := lipgloss.Width(row)
+ 	rw := lipgloss.Width(right)
+ 	if rw > 0 {
+@@ -1222,15 +1240,7 @@ func sidebarMailToken(unread int) (string, bool) {
+ 	return sidebarMailGlyph() + " " + strconv.Itoa(unread), true
+ }
+ 
+-// sidebarComposeRow assembles one rail row on the single spine: gutter, glyph,
+-// a cell of air, the name, and an optional right-aligned figure inset one cell
+-// from the rail's edge. Every piece arrives already styled; name must already
+-// be truncated to sidebarNameAvail so the fit below cannot eat the figure.
+-func sidebarComposeRow(gutter, glyph, name, right string, cw int, bg color.Color) string {
+-	return sidebarComposeGroupRow(0, gutter, glyph, name, right, cw, bg)
+-}
+-
+-// sidebarComposeGroupRow is sidebarComposeRow for a row that belongs to a
++// sidebarComposePaddedGroupRow is sidebarComposeRow for a row that belongs to a
+ // group: the same spine, stepped in by indent cells between the gutter and the
+ // glyph.
+ //
+@@ -1239,9 +1249,9 @@ func sidebarComposeRow(gutter, glyph, name, right string, cw int, bg color.Color
+ // down whichever column the row's level happens to put them in. Everything
+ // after it does move together, so a group's glyphs stay in one column and the
+ // step is what says the rows are somebody's.
+-func sidebarComposeGroupRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color) string {
++func sidebarComposePaddedGroupRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color, padding int) string {
+ 	row := gutter + sidebarStyle(bg, nil).Render(strings.Repeat(" ", max(indent, 0))) +
+-		glyph + sidebarStyle(bg, nil).Render(" ") + name
++		glyph + sidebarStyle(bg, nil).Render(strings.Repeat(" ", padding)) + name
+ 	if rw := lipgloss.Width(right); rw > 0 {
+ 		gap := max(cw-lipgloss.Width(row)-rw-1, 0)
+ 		row += sidebarStyle(bg, nil).Render(strings.Repeat(" ", gap)) +
+@@ -1260,7 +1270,7 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
+ 	return pal.Surface
+ }
+ 
+-// sidebarComposeRuledRow is sidebarComposeRow for a group heading: the gap
++// sidebarComposePaddedRuledRow is sidebarComposeRow for a group heading: the gap
+ // between the name and the trailing figure is filled with a rule instead of
+ // with blanks.
+ //
+@@ -1271,9 +1281,9 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
+ // a heading even in monochrome, and the session names below it get to be the
+ // brightest thing on the rail, which is correct because they are what you act
+ // on.
+-func sidebarComposeRuledRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color, pal overlay.Palette, s *config.Settings) string {
++func sidebarComposePaddedRuledRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color, pal overlay.Palette, s *config.Settings, padding int) string {
+ 	row := gutter + sidebarStyle(bg, nil).Render(strings.Repeat(" ", max(indent, 0))) +
+-		glyph + sidebarStyle(bg, nil).Render(" ") + name
++		glyph + sidebarStyle(bg, nil).Render(strings.Repeat(" ", padding)) + name
+ 	rw := lipgloss.Width(right)
+ 	pad := 1
+ 	if rw > 0 {
+@@ -1326,7 +1336,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
  		return nil
  	}
  	sidebarX := sidebarEdgeX(m.legacySidebarEdge(), w, m.GetRenderWidth())
@@ -2103,7 +2285,7 @@ index 9e06237..925409c 100644
  }
  
  // renderSecondarySidebar draws the opt-in opposite edge with its own layout
-@@ -1377,7 +1391,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
+@@ -1377,7 +1387,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
  	if panel == "" {
  		return nil
  	}
@@ -2112,7 +2294,7 @@ index 9e06237..925409c 100644
  }
  
  // sidebarWindowSection windows one section's rows onto the lines it was given,
-@@ -1431,12 +1445,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1431,12 +1441,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if w <= 0 {
  		return nil, 0
  	}
@@ -2127,7 +2309,7 @@ index 9e06237..925409c 100644
  	side := m.legacySidebarEdge()
  	if m.sidebarDrawing {
  		side = m.sidebarDrawingEdge
-@@ -1534,7 +1548,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1534,7 +1544,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// and hover has to resolve against the same arithmetic the draw uses.
  	shown, peeking := m.sidebarShownSession(sessions)
  	terminals := m.sidebarTerminals(sessions, shown)
@@ -2137,7 +2319,7 @@ index 9e06237..925409c 100644
  	m.sidebarSortAgents(agents)
  	// Rows long at rest fold into one line at the end. The compact rule below
  	// reads every agent pane, folded or not, since a folded pane is still one
-@@ -1553,6 +1568,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1553,6 +1564,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// listing was read by a command, off this goroutine, and this only draws
  	// whatever the last reply left behind. Nothing here stats, opens or spawns.
  	files := m.sidebarFileRows()
@@ -2148,7 +2330,7 @@ index 9e06237..925409c 100644
  
  	// A peeked session with no panes says so, or the section would read as "the
  	// attached session has no panes". Decided before the compact rule below
-@@ -1568,6 +1587,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1568,6 +1583,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	nS := len(sessionRows)
  	nT := len(terminals)
  	nA := len(agents)
@@ -2156,7 +2338,7 @@ index 9e06237..925409c 100644
  	if emptyFilter {
  		nA = 1
  	}
-@@ -1617,13 +1637,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1617,13 +1633,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  
  	canCreate := m.SidebarCanCreateSession()
  	footerCursor := func(kind sidebarRowKind) bool { return isCursor(kind, "", "") }
@@ -2198,7 +2380,7 @@ index 9e06237..925409c 100644
  	}
  
  	gitRows := m.gitRows()
-@@ -1651,6 +1692,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1651,6 +1688,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		sidebarSectionFiles:     filesRows,
  		sidebarSectionGit:       len(gitRows),
  		sidebarSectionCustom:    nC,
@@ -2206,7 +2388,7 @@ index 9e06237..925409c 100644
  	}
  	// The last section in the configured layout is the one pinned to the rail's
  	// bottom: the slack rides above it, and it wears a blank line of its own so
-@@ -1673,12 +1715,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1673,12 +1711,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	agentRowH := 1
  	// Row heights per section, which is what turns a section's line budget into
  	// the rows it can show and a st.lit() line back into the row under it.
@@ -2236,7 +2418,7 @@ index 9e06237..925409c 100644
  	chrome := 0
  	drawn := 0
  	for i, p := range plans {
-@@ -1694,15 +1752,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1694,15 +1748,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawn++
@@ -2256,7 +2438,7 @@ index 9e06237..925409c 100644
  	// The rows under the agent rows, one per subagent, fitted to the lines
  	// the section's budget gives it (see sidebarAgentChildren). They are rows
  	// of the section like any other, so the tall test and the viewport below
-@@ -1758,7 +1813,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1758,7 +1809,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// when something is drawn above it to split from. What the drag needs to
  	// turn a pointer row into a share is written down here, in this frame's
  	// numbers.
@@ -2265,7 +2447,7 @@ index 9e06237..925409c 100644
  	pinnedAt := -1
  	for i, p := range plans {
  		if !p.Spacer && p.Section == pinned {
-@@ -1778,7 +1833,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1778,7 +1829,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	for s := range place {
  		place[s] = sectionPlace{header: -1}
  	}
@@ -2274,7 +2456,7 @@ index 9e06237..925409c 100644
  	placed := 0
  	// The last section placed above the current entry, so a spacer's lines can
  	// be given to its band. Empty space draws nothing and so has no band of its
-@@ -1803,20 +1858,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1803,20 +1854,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		y0 := line
  		placed++
  		if p.Section == pinned {
@@ -2309,7 +2491,7 @@ index 9e06237..925409c 100644
  		prev = p.Section
  	}
  	// With nothing pinned the slack falls where it always did, under the last
-@@ -1834,9 +1892,9 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1834,9 +1888,9 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			break
  		}
  	}
@@ -2322,7 +2504,7 @@ index 9e06237..925409c 100644
  	// the draw below cuts the lines and the rectangles to fit, and a band left
  	// past the cut would hand the wheel to a section with nothing on screen.
  	for s := range m.sidebarSectionY {
-@@ -1869,9 +1927,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1869,9 +1923,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// anchor above and before the cursor's auto-scroll below, so the three
  	// mechanisms agree on what is on screen and the cursor keeps the last word.
  	// See sidebar_reveal.go.
@@ -2335,7 +2517,7 @@ index 9e06237..925409c 100644
  			if rows := capRows[sec]; rows > 0 {
  				if idx < *scroll[sec] {
  					*scroll[sec] = idx
-@@ -1935,6 +1994,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1935,6 +1990,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		hoverRow[s] = -1
  	}
  	footerHoverLine, footerHoverX := -1, -1
@@ -2343,7 +2525,7 @@ index 9e06237..925409c 100644
  	dividerHover := false
  	// Every header now carries click targets of its own (the add controls, the
  	// agents section's filter and sort, the files section's cd), so the
-@@ -1946,6 +2006,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1946,6 +2002,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if !m.SidebarDrag.Dragging && m.SidebarHoverActive && m.SidebarBandContains(m.SidebarHoverX, m.SidebarHoverY) {
  		delta := m.SidebarHoverY - topMargin
  		footerTop := height - footerH
@@ -2354,7 +2536,7 @@ index 9e06237..925409c 100644
  		onHeader := -1
  		for s := range place {
  			if place[s].header >= 0 && delta == place[s].header {
-@@ -1953,7 +2017,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1953,7 +2013,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			}
  		}
  		switch {
@@ -2367,7 +2549,7 @@ index 9e06237..925409c 100644
  			footerHoverLine, footerHoverX = delta-footerTop, m.SidebarHoverX-contentX0
  		case onHeader >= 0:
  			headerHoverX[onHeader] = m.SidebarHoverX - contentX0
-@@ -1972,11 +2040,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1972,11 +2036,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  	// Re-rendered now the pointer is resolved; the first pass only measured how
  	// many lines the footer takes so the sections could be sized.
@@ -2385,7 +2567,16 @@ index 9e06237..925409c 100644
  	// recordHit publishes a drawn row's rectangle and its nav row together, in
  	// drawn order, so the mouse and the keyboard address one target set. Hits
  	// only ever come from the renderer as it draws; nothing recomputes them.
-@@ -2031,6 +2102,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2013,7 +2080,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	overflowRow := func(n, indent int) string {
+ 		// Stands in for the rows it hides, so it starts where their names do.
+ 		more := overlay.Ellipsis() + " +" + strconv.Itoa(n)
+-		return compose(sidebarFit(strings.Repeat(" ", sidebarNameCol+indent)+
++		return compose(sidebarFit(strings.Repeat(" ", m.sidebarNameColumn()+indent)+
+ 			sidebarStyle(nil, pal.FgMute).Render(more), cw, nil))
+ 	}
+ 	// recordToken publishes a header control's rectangle and its nav row, the
+@@ -2031,6 +2098,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: tk.Kind, SessionID: sessionID, WindowID: tk.WindowID, WindowIndex: -1})
  	}
@@ -2406,7 +2597,23 @@ index 9e06237..925409c 100644
  
  	drawSessions := func() {
  		add := ""
-@@ -2067,7 +2152,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2039,13 +2120,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		// its own control and the section header none: two "+" for one
+ 		// machine would be one more than the rail can explain.
+ 		if canCreate && len(m.SidebarHostIDs) == 0 {
+-			if tok, span, ok := sidebarHeaderAdd(sidebarRowNewSession, cw, sidebarHeaderLabelW(label, &m.Settings),
++			if tok, span, ok := sidebarHeaderAdd(sidebarRowNewSession, cw, m.sidebarHeaderLabelW(label, &m.Settings),
+ 				pal, headerHoverX[sidebarSectionSessions], isCursor(sidebarRowNewSession, "", ""), &m.Settings, nil); ok {
+ 				add = tok
+ 				recordToken(span, "")
+ 			}
+ 		}
+-		lines = append(lines, compose(sidebarHeaderRowRuled(label, add, cw, pal, &m.Settings)))
++		lines = append(lines, compose(m.sidebarHeaderRowRuled(label, add, cw, pal, &m.Settings)))
+ 		// lazygit's excludeBlankColumns, on the rail's right spine. A one-window
+ 		// session is the common case, so a column that prints "1" against every
+ 		// row is a column of identical digits carrying nothing. It is dropped
+@@ -2067,7 +2148,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// A space's heading. It names the rows under it and is not a
  				// row to act on, so it records no hit and no nav row: the
  				// pointer and the cursor pass over it.
@@ -2415,7 +2622,7 @@ index 9e06237..925409c 100644
  				continue
  			}
  			if s.Kind == sessiontree.KindRepo {
-@@ -2078,18 +2163,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2078,18 +2159,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// cursor has to tell them apart.
  				st := m.railRowState(idx == hoverRow[sidebarSectionSessions], isCursor(sidebarRowRepo, s.ID, s.Space))
  				recordHit(sidebarRowRepo, s.ID, s.Space, -1, 1)
@@ -2437,7 +2644,85 @@ index 9e06237..925409c 100644
  		}
  		if h := hidden[sidebarSectionSessions]; h > 0 {
  			lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
-@@ -2326,6 +2411,90 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2102,7 +2183,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		// coexist with a pointer on this header, so the two never compete for the
+ 		// same cells in practice; the arithmetic holds either way.
+ 		termAdd, termSpan, hasTermAdd := sidebarHeaderAdd(sidebarRowNewWindow, cw,
+-			sidebarHeaderLabelW("terminals", &m.Settings), pal, headerHoverX[sidebarSectionTerminals],
++			m.sidebarHeaderLabelW("terminals", &m.Settings), pal, headerHoverX[sidebarSectionTerminals],
+ 			isCursor(sidebarRowNewWindow, shown, ""), &m.Settings, nil)
+ 		right := termAdd
+ 		if peeking {
+@@ -2123,7 +2204,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 			// label, the gap after it, the inset, and the control with the
+ 			// blank in front of it. Half the rail, which this used to take,
+ 			// ignored the label and on a narrow rail ran the name into it.
+-			room := sidebarHeaderRightRoom(cw, sidebarHeaderLabelW("terminals", &m.Settings))
++			room := sidebarHeaderRightRoom(cw, m.sidebarHeaderLabelW("terminals", &m.Settings))
+ 			if hasTermAdd {
+ 				room -= lipgloss.Width(sidebarAddGlyph(&m.Settings)) + 1
+ 			}
+@@ -2140,7 +2221,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		if hasTermAdd {
+ 			recordToken(termSpan, shown)
+ 		}
+-		lines = append(lines, compose(sidebarHeaderRowRuled("terminals", right, cw, pal, &m.Settings)))
++		lines = append(lines, compose(m.sidebarHeaderRowRuled("terminals", right, cw, pal, &m.Settings)))
+ 		// A peek shorter than the section it is held in fills the rest with
+ 		// blank lines, so whatever is below it stays where it was.
+ 		end := len(lines) + place[sidebarSectionTerminals].lines
+@@ -2157,7 +2238,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 				lines = append(lines, compose(sidebarFit(
+ 					sidebarStyle(nil, nil).Render(" ")+sidebarQuietDot(nil, pal, &m.Settings)+
+ 						sidebarStyle(nil, nil).Render(" ")+
+-						sidebarStyle(nil, pal.FgMute).Render(overlay.Truncate(hint, sidebarNameAvail(cw, 0))), cw, nil)))
++						sidebarStyle(nil, pal.FgMute).Render(overlay.Truncate(hint, m.sidebarNameAvail(cw, 0))), cw, nil)))
+ 			}
+ 			return
+ 		}
+@@ -2202,7 +2283,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	}
+ 
+ 	drawGit := func() {
+-		lines = append(lines, compose(sidebarHeaderRowRuled("git", "", cw, pal, &m.Settings)))
++		lines = append(lines, compose(m.sidebarHeaderRowRuled("git", "", cw, pal, &m.Settings)))
+ 		for i := range count[sidebarSectionGit] {
+ 			idx := start[sidebarSectionGit] + i
+ 			if idx >= len(gitRows) {
+@@ -2220,7 +2301,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	}
+ 
+ 	drawCustom := func() {
+-		lines = append(lines, compose(sidebarHeaderRowRuled(m.railCustomTitle(), "", cw, pal, &m.Settings)))
++		lines = append(lines, compose(m.sidebarHeaderRowRuled(m.railCustomTitle(), "", cw, pal, &m.Settings)))
+ 		if len(customRows) == 0 {
+ 			// The title over an empty section: the one notional row draws
+ 			// as a blank line, so the heading is not the last thing on the
+@@ -2251,12 +2332,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		// The count is the Inbox's while it is connected, narrowed to this
+ 		// session when the filter is, and over the rows the section lists
+ 		// otherwise. See sidebarHeaderCounts.
+-		controls, tokens := m.sidebarAgentsControls(cw, sidebarHeaderLabelW("agents", &m.Settings), pal,
++		controls, tokens := m.sidebarAgentsControls(cw, m.sidebarHeaderLabelW("agents", &m.Settings), pal,
+ 			headerHoverX[sidebarSectionAgents], m.sidebarHeaderCounts(parents))
+ 		for _, tk := range tokens {
+ 			recordToken(tk, "")
+ 		}
+-		lines = append(lines, compose(sidebarHeaderRowRuled("agents", controls, cw, pal, &m.Settings)))
++		lines = append(lines, compose(m.sidebarHeaderRowRuled("agents", controls, cw, pal, &m.Settings)))
+ 		if emptyFilter {
+ 			// The hint is about the attached session ("here"), so it carries that
+ 			// identity: it is a second filter control, and without something to tell
+@@ -2311,7 +2392,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 			// only for that state, so a rail with no working agent records
+ 			// nothing and the motion clock never starts. See shimmer.go.
+ 			if e.State == "working" && bodyW > 0 {
+-				x0 := contentX0 + sidebarNameCol
++				x0 := contentX0 + m.sidebarNameColumn()
+ 				m.motion.rail = append(m.motion.rail, shimmerSpan{
+ 					y: topMargin + len(lines), x0: x0, x1: min(x0+bodyW, contentX0+cw),
+ 				})
+@@ -2326,6 +2407,91 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  	}
  
@@ -2448,7 +2733,7 @@ index 9e06237..925409c 100644
 +			hasAdd := false
 +			const label = "overview"
 +			if canCreate && len(m.SidebarHostIDs) == 0 {
-+				if tok, span, ok := sidebarHeaderAdd(sidebarRowNewSession, cw, sidebarHeaderLabelW(label, &m.Settings),
++				if tok, span, ok := sidebarHeaderAdd(sidebarRowNewSession, cw, m.sidebarHeaderLabelW(label, &m.Settings),
 +					pal, headerHoverX[sidebarSectionOverview], isCursor(sidebarRowNewSession, "", ""), &m.Settings, nil); ok {
 +					add, addSpan, hasAdd = tok, span, true
 +					recordToken(span, "")
@@ -2456,6 +2741,7 @@ index 9e06237..925409c 100644
 +			}
 +			if m.sidebarUIElementConfigured(sidebarUIOverviewHeader) {
 +				style := m.sidebarUIResolved(sidebarUIOverviewHeader, false, pal, pal.FgMute, nil, false, true)
++				style.paddingLeft = m.sidebarAdjustedPadding(style.paddingLeft)
 +				labelWidth := cw
 +				if hasAdd {
 +					labelWidth = max(addSpan.X0-1, 1)
@@ -2466,7 +2752,7 @@ index 9e06237..925409c 100644
 +				}
 +				lines = append(lines, compose(sidebarFit(header, cw, style.rowBackground(nil))))
 +			} else {
-+				lines = append(lines, compose(sidebarHeaderRowRuled(label, add, cw, pal, &m.Settings)))
++				lines = append(lines, compose(m.sidebarHeaderRowRuled(label, add, cw, pal, &m.Settings)))
 +			}
 +		}
 +
@@ -2528,7 +2814,7 @@ index 9e06237..925409c 100644
  	draw := [sidebarSectionCount]func(){
  		sidebarSectionSessions:  drawSessions,
  		sidebarSectionTerminals: drawTerminals,
-@@ -2333,6 +2502,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2333,6 +2499,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		sidebarSectionFiles:     drawFiles,
  		sidebarSectionGit:       drawGit,
  		sidebarSectionCustom:    drawCustom,
@@ -2536,7 +2822,7 @@ index 9e06237..925409c 100644
  	}
  	drawnAt := 0
  	for i, p := range plans {
-@@ -2346,19 +2516,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2346,19 +2513,28 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawnAt++
@@ -2573,7 +2859,7 @@ index 9e06237..925409c 100644
  			}
  		}
  		draw[p.Section]()
-@@ -2368,11 +2547,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2368,11 +2544,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		lines = append(lines, blank)
  	}
  
@@ -2589,7 +2875,7 @@ index 9e06237..925409c 100644
  		y := footerTop + z.Line
  		m.SidebarHits = append(m.SidebarHits, sidebarRowHit{
  			X0: contentX0 + z.X0, X1: contentX0 + z.X1,
-@@ -2382,12 +2561,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2382,12 +2558,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: z.Kind, WindowIndex: -1})
  	}
@@ -2622,7 +2908,7 @@ index 9e06237..925409c 100644
  	// that the chrome alone overruns it produced a rail taller than its own band:
  	// the extra rows painted over the dock, and the hit rectangles recorded on
  	// them made a row outside the band clickable.
-@@ -2577,7 +2773,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
+@@ -2577,7 +2770,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
  // others from the cached listing, so agents elsewhere surface here marked
  // Foreign.
  func (m *OS) sidebarAgents(sessions []sessiontree.Node) []sidebarAgentEntry {
@@ -2631,7 +2917,7 @@ index 9e06237..925409c 100644
  		return nil
  	}
  	return m.agentEntries(sessions)
-@@ -2590,6 +2786,7 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2590,6 +2783,7 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  	if !m.agentsOn() {
  		return nil
  	}
@@ -2639,7 +2925,15 @@ index 9e06237..925409c 100644
  	var agents []sidebarAgentEntry
  	for _, s := range sessions {
  		pr := ""
-@@ -2638,7 +2835,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2609,6 +2803,7 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+ 				SessionLabel: s.Title,
+ 				WindowID:     win.ID,
+ 				Title:        win.Title,
++				BaseTitle:    win.BaseTitle,
+ 				State:        win.AgentState,
+ 				DoneSeen:     win.DoneSeen,
+ 				StateAt:      win.StateAt,
+@@ -2638,7 +2833,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  // auto-scroll knows which offset to move and by how much.
  func (m *OS) sidebarCursorIndex(target sidebarNavRow, sessions []sessiontree.Node,
  	terminals []sidebarTerminalEntry, agents []sidebarAgentEntry, files []fileRowSpec,
@@ -2653,7 +2947,7 @@ index 9e06237..925409c 100644
  	switch target.Kind {
  	case sidebarRowSession:
  		for i, s := range sessions {
-@@ -2812,13 +3015,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2812,13 +3013,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  	slices.SortFunc(items, func(a, b placed) int { return a.zone.X0 - b.zone.X0 })
  
  	zones := make([]sidebarFooterZone, 0, len(items))
@@ -2674,7 +2968,7 @@ index 9e06237..925409c 100644
  		for c := it.zone.X0 + 1; c < it.zone.X1 && c < cw; c++ {
  			row[c] = ""
  		}
-@@ -2827,7 +3033,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2827,7 +3031,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  
  	lines := make([]string, len(cells))
  	for i, row := range cells {
@@ -2683,7 +2977,7 @@ index 9e06237..925409c 100644
  	}
  	return lines, zones
  }
-@@ -2838,6 +3044,14 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2838,6 +3042,14 @@ func (m *OS) windowIndexByID(id string) int {
  	return slices.IndexFunc(m.Windows, func(w *terminal.Window) bool { return w != nil && w.ID == id })
  }
  
@@ -2698,7 +2992,7 @@ index 9e06237..925409c 100644
  // sidebarSessionRow renders one session row.
  //
  //	▎● name              3
-@@ -2850,16 +3064,27 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2850,16 +3062,27 @@ func (m *OS) windowIndexByID(id string) int {
  // accent gutter mark and a full-strength name; pointer or keyboard cursor a
  // Surface band; a state wanting a human a severity gutter mark, a coloured
  // glyph and the rail's one bold. No standing fill, so the only band on a
@@ -2728,7 +3022,7 @@ index 9e06237..925409c 100644
  
  	// The session's colour takes whichever of the row's two marks the louder
  	// signals have not claimed. The quiet dot first, which costs the rail
-@@ -2871,7 +3096,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2871,7 +3094,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	stated := agentStateIndicator(node.AgentState) != ""
  
  	glyph := sidebarQuietDotTinted(dotTint(tint, pal, stated), rowBg, pal, &m.Settings)
@@ -2739,7 +3033,7 @@ index 9e06237..925409c 100644
  		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
  	}
  
-@@ -2896,28 +3123,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2896,28 +3121,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// the thing on the rail you act on, so emphasis drains down from it: the
  	// machine heading over it is a step quieter, and the counts and marks
  	// quieter still.
@@ -2776,7 +3070,7 @@ index 9e06237..925409c 100644
  	// The branch rides after the name in muted ink, and only when the two fit
  	// together: a name that has to scroll wants every column, and a branch
  	// with its name cut from under it says nothing. So it is context for the
-@@ -2945,33 +3163,39 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2945,36 +3161,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// name a key that opens something else.
  	mark, markW := "", 0
  	if m.Settings.SidebarShowNumbers && sessionIdx > 0 && sessionIdx <= 9 {
@@ -2792,7 +3086,7 @@ index 9e06237..925409c 100644
  		capsW = 0
  	}
 -	keep, avail := railRowFitInto(s.keep, titleW, railNameKeep(titleW), s.tokens, sidebarNameAvailIn(cw, 0, indent)-markW-capsW)
-+	nameBudget := sidebarNameAvailIn(cw, 0, indent)
++	nameBudget := m.sidebarNameAvailIn(cw, 0, indent)
 +	if presentation == sidebarSessionPresentationOverview {
 +		nameBudget++
 +	}
@@ -2823,7 +3117,130 @@ index 9e06237..925409c 100644
 +	if presentation != sidebarSessionPresentationOverview && tint != nil && stated && !node.IsCurrent && !sidebarAttention(node.AgentState) {
  		gutter = sidebarStyle(rowBg, tint).Render(accentMark())
  	}
- 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+-	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
++	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+ }
+ 
+ // sidebarTerminalRow renders one pane of the session the terminals section is
+@@ -3045,9 +3267,9 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+ 	// command typed into it does, so when only one of them fits it is this one.
+ 	// They are shown together when there is room for both.
+ 	right, rightW := "", 0
+-	host := sidebarTerminalHostLabel(e, cw)
++	host := sidebarTerminalHostLabel(e, cw-m.sidebarUIPaddingShift())
+ 	switch {
+-	case host != "" && e.Tag != "" && sidebarNameAvail(cw, lipgloss.Width(host+" "+e.Tag)) >= sidebarHostTagFloor:
++	case host != "" && e.Tag != "" && m.sidebarNameAvail(cw, lipgloss.Width(host+" "+e.Tag)) >= sidebarHostTagFloor:
+ 		label := host + " " + e.Tag
+ 		right = sidebarStyle(rowBg, pal.AccentBright).Render(host) +
+ 			sidebarStyle(rowBg, pal.FgMute).Render(" "+e.Tag)
+@@ -3079,12 +3301,12 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+ 	if !nameMarked {
+ 		capsW = 0
+ 	}
+-	shown := m.sidebarMarquee("t:"+e.WindowID, title, max(sidebarNameAvail(cw, rightW)-capsW, 1), st.lit())
++	shown := m.sidebarMarquee("t:"+e.WindowID, title, max(m.sidebarNameAvail(cw, rightW)-capsW, 1), st.lit())
+ 	name := sidebarStyle(rowBg, fg).Bold(sidebarAttention(e.State)).Render(shown)
+ 	if nameMarked {
+ 		name = railCurrentName(shown, m.terminalRowTint(e, rowBg), rowBg, pal, &m.Settings)
+ 	}
+-	return sidebarComposeRow(gutter, sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), name, right, cw, rowBg)
++	return m.sidebarComposeRow(gutter, sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), name, right, cw, rowBg)
+ }
+ 
+ // sidebarTerminalHostLabel is what a pane row says about its machine: the
+@@ -3140,8 +3362,8 @@ func (m *OS) sidebarAgentsEmptyRow(total, cw int, pal overlay.Palette, st sideba
+ 		sep = " . "
+ 	}
+ 	text := "none here" + sep + strconv.Itoa(total) + " all"
+-	return sidebarFit(sidebarStyle(rowBg, nil).Render(strings.Repeat(" ", sidebarNameCol))+
+-		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, sidebarNameAvail(cw, 0))), cw, rowBg)
++	return sidebarFit(sidebarStyle(rowBg, nil).Render(strings.Repeat(" ", m.sidebarNameColumn()))+
++		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, m.sidebarNameAvail(cw, 0))), cw, rowBg)
+ }
+ 
+ // sidebarHarnessMax caps a harness label so the agent it names can never crowd
+@@ -3186,8 +3408,8 @@ func sidebarAgentName(e sidebarAgentEntry) string {
+ // sentence.
+ func (m *OS) sidebarAgentNoteRow(e sidebarAgentEntry, variant, cw int, pal overlay.Palette, st sidebarRowState) string {
+ 	rowBg := sidebarRowBg(st, pal)
+-	indent := sidebarNameCol + 1
+-	avail := sidebarNameAvail(cw, 0) - 1
++	indent := m.sidebarNameColumn() + 1
++	avail := m.sidebarNameAvail(cw, 0) - 1
+ 	plan := m.sidebarAgentTokensFor(e, variant, true, time.Now())
+ 	quiet := sidebarStyle(rowBg, pal.FgMute)
+ 	note := plan.Note
+@@ -3430,7 +3652,7 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+ 	// while nothing else on the row says which agent it is.
+ 	sep := sidebarAgentSep()
+ 	nameW := lipgloss.Width(name)
+-	label, keep, nameRoom := sidebarAgentFit(&m.railFit, plan.Prefix, plan.After, nameW, label, queued, mail, sep, sidebarNameAvail(cw, 0))
++	label, keep, nameRoom := sidebarAgentFit(&m.railFit, plan.Prefix, plan.After, nameW, label, queued, mail, sep, m.sidebarNameAvail(cw, 0))
+ 	labelAt, mailAt := len(plan.Prefix)+len(plan.After), len(plan.Prefix)+len(plan.After)+1
+ 	nameRoom = max(nameRoom, 1)
+ 	shown := m.sidebarAgentPrefixRun(plan.Prefix, keep[:len(plan.Prefix)], quiet, pal)
+@@ -3481,6 +3703,6 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+ 	body := shown +
+ 		m.sidebarTokenStyle(nameStyle, plan.Name, pal).Render(m.sidebarMarquee("a:"+e.SessionID+"/"+e.WindowID, name, nameRoom, st.Cursor)) +
+ 		after
+-	return sidebarComposeRow(gutter,
++	return m.sidebarComposeRow(gutter,
+ 		sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), body, right, cw, rowBg), lipgloss.Width(body)
+ }
+diff --git i/internal/app/render_sidebar_files.go w/internal/app/render_sidebar_files.go
+index d112791..66341a1 100644
+--- i/internal/app/render_sidebar_files.go
++++ w/internal/app/render_sidebar_files.go
+@@ -164,7 +164,7 @@ func (m *OS) sidebarFilesHeaderCd(cw int, pal overlay.Palette, hoverX int, curso
+ 	}
+ 	tw := lipgloss.Width(fileTokenCd)
+ 	x0 := cw - 1 - tw
+-	if x0 < sidebarHeaderLabelW(sidebarFilesLabel, &m.Settings)+sidebarHeaderGap {
++	if x0 < m.sidebarHeaderLabelW(sidebarFilesLabel, &m.Settings)+sidebarHeaderGap {
+ 		return "", sidebarTokenSpan{}, false
+ 	}
+ 	span := sidebarTokenSpan{Kind: sidebarRowFileCd, X0: x0, X1: x0 + tw}
+@@ -192,7 +192,7 @@ func (m *OS) sidebarFilesHeaderCd(cw int, pal overlay.Palette, hoverX int, curso
+ // there is nothing to correct, but a remote viewer is not looking at their own
+ // disk.
+ func (m *OS) sidebarFilesHeaderRow(cdTok string, hasCd bool, cw int, pal overlay.Palette) string {
+-	room := sidebarHeaderRightRoom(cw, sidebarHeaderLabelW(sidebarFilesLabel, &m.Settings))
++	room := sidebarHeaderRightRoom(cw, m.sidebarHeaderLabelW(sidebarFilesLabel, &m.Settings))
+ 	if hasCd {
+ 		room -= lipgloss.Width(fileTokenCd) + 1
+ 	}
+@@ -208,7 +208,7 @@ func (m *OS) sidebarFilesHeaderRow(cdTok string, hasCd bool, cw int, pal overlay
+ 		}
+ 		right += cdTok
+ 	}
+-	return sidebarHeaderRowRuled(sidebarFilesLabel, right, cw, pal, &m.Settings)
++	return m.sidebarHeaderRowRuled(sidebarFilesLabel, right, cw, pal, &m.Settings)
+ }
+ 
+ // sidebarFilesEmptyRow says why the section is listing nothing.
+@@ -237,8 +237,8 @@ func (m *OS) sidebarFileRow(row fileRowSpec, cw int, pal overlay.Palette, st sid
+ 		if row.Warn {
+ 			ink = pal.Warning
+ 		}
+-		return sidebarFit(sidebarStyle(bg, nil).Render(strings.Repeat(" ", sidebarNameCol))+
+-			sidebarStyle(bg, ink).Render(overlay.Truncate(row.Name, sidebarNameAvail(cw, 0))), cw, bg)
++		return sidebarFit(sidebarStyle(bg, nil).Render(strings.Repeat(" ", m.sidebarNameColumn()))+
++			sidebarStyle(bg, ink).Render(overlay.Truncate(row.Name, m.sidebarNameAvail(cw, 0))), cw, bg)
+ 	}
+ 
+ 	// A name off a filesystem is foreign data in the same sense a window title
+@@ -273,8 +273,8 @@ func (m *OS) sidebarFileRow(row fileRowSpec, cw int, pal overlay.Palette, st sid
+ 		glyphInk = theme.FileIconInkOn(mark.Hex, m.sidebarGroundOr(bg))
+ 	}
+ 	glyph := sidebarStyle(bg, glyphInk).Render(mark.Glyph)
+-	body := sidebarStyle(bg, ink).Render(overlay.Truncate(shown, sidebarNameAvail(cw, 0)))
+-	return sidebarComposeRow(gutter, glyph, body, "", cw, bg)
++	body := sidebarStyle(bg, ink).Render(overlay.Truncate(shown, m.sidebarNameAvail(cw, 0)))
++	return m.sidebarComposeRow(gutter, glyph, body, "", cw, bg)
+ }
+ 
+ // shortenHome writes a path under the home directory as ~/..., which is how the
 diff --git i/internal/app/render_splash_test.go w/internal/app/render_splash_test.go
 index fff3937..082c0a5 100644
 --- i/internal/app/render_splash_test.go
@@ -3055,10 +3472,10 @@ index 04a8d1b..94f02e2 100644
  
 diff --git i/internal/app/sidebar_agent_focus.go w/internal/app/sidebar_agent_focus.go
 new file mode 100644
-index 0000000..d1eb567
+index 0000000..2fa1aa2
 --- /dev/null
 +++ w/internal/app/sidebar_agent_focus.go
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,85 @@
 +package app
 +
 +import "github.com/Gaurav-Gosain/tuios/internal/sessiontree"
@@ -3115,6 +3532,8 @@ index 0000000..d1eb567
 +		key := m.sidebarAgentFocusKey(node.ID)
 +		remembered := m.sidebarAgentFocus.windows[key]
 +		found := false
++		latestWindow := ""
++		var latestSeen int64
 +		for _, win := range node.Children {
 +			if win.AgentState == "" {
 +				continue
@@ -3124,9 +3543,12 @@ index 0000000..d1eb567
 +				remembered = win.ID
 +			}
 +			found = found || win.ID == remembered
++			if at := m.SidebarAgentSeenAt[win.ID]; at > latestSeen {
++				latestWindow, latestSeen = win.ID, at
++			}
 +		}
 +		if node.Children != nil && !found {
-+			m.sidebarAgentFocus.remember(key, "")
++			m.sidebarAgentFocus.remember(key, latestWindow)
 +		}
 +	}
 +	for key := range m.sidebarAgentFocus.windows {
@@ -3138,6 +3560,125 @@ index 0000000..d1eb567
 +
 +func (m *OS) sidebarAgentWasLastFocused(e sidebarAgentEntry) bool {
 +	return e.Host == "" && e.WindowID != "" && m.sidebarAgentFocus.windows[m.sidebarAgentFocusKey(e.SessionID)] == e.WindowID
++}
+diff --git i/internal/app/sidebar_agent_focus_restore_test.go w/internal/app/sidebar_agent_focus_restore_test.go
+new file mode 100644
+index 0000000..a7ee128
+--- /dev/null
++++ w/internal/app/sidebar_agent_focus_restore_test.go
+@@ -0,0 +1,113 @@
++package app
++
++import (
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func TestOverviewAgentHighlightReturnsAfterClientReopen(t *testing.T) {
++	oldDir := sidebarStateDir
++	directory := t.TempDir()
++	sidebarStateDir = func() string { return directory }
++	t.Cleanup(func() { sidebarStateDir = oldDir })
++
++	before, _ := sectionsTestOS(t, 120, 40)
++	before.SidebarAgentSeenAt = map[string]int64{
++		"bbbbbbbb2222": 10,
++		"cccccccc3333": 20,
++		"dddddddd4444": 30,
++		"aaaaaaaa1111": 40,
++		"closed-agent": 50,
++	}
++	sidebarStateDir = func() string { return directory }
++	before.saveSidebarState()
++
++	for _, current := range []string{"main", "api"} {
++		sidebarStateDir = func() string { return directory }
++		fresh, tree := sectionsTestOS(t, 120, 40)
++		cfg, err := config.ParseUserConfig([]byte(`
++[appearance.sidebar.ui.agent]
++active_background = "panel"
++active_foreground = "accent"
++bold = false
++active_bold = false
++italic = true
++`))
++		if err != nil {
++			t.Fatal(err)
++		}
++		fresh.UserConfig = cfg
++		if len(fresh.sidebarAgentFocus.windows) != 0 {
++			t.Fatal("new client unexpectedly retained the old in-memory focus map")
++		}
++		shell := "aaaaaaaa1111"
++		if current == "api" {
++			shell = "eeeeeeee5555"
++		}
++		focusOverviewSession(&tree, current, shell)
++		signature := fresh.sidebarSignature()
++		entries := fresh.agentEntries(tree.Sessions)
++		if signature == fresh.sidebarSignature() {
++			t.Fatal("restoring agent highlights did not invalidate the rail cache")
++		}
++		for sessionID, want := range map[string]string{"main": "cccccccc3333", "api": "dddddddd4444"} {
++			if got := fresh.sidebarAgentFocus.windows[fresh.sidebarAgentFocusKey(sessionID)]; got != want {
++				t.Fatalf("reopened into %s: session %s highlights %q, want %q", current, sessionID, got, want)
++			}
++		}
++		pal := fresh.groundUI()
++		for _, entry := range entries {
++			if !fresh.sidebarAgentWasLastFocused(entry) {
++				continue
++			}
++			row := fresh.sidebarOverviewAgentRow(entry, 2, 36, pal, sidebarRowState{})
++			plain := stripANSIForTrace(row)
++			col := lipgloss.Width(plain[:strings.Index(plain, entry.Title)])
++			canvas := overviewRowCanvas(row)
++			cell := canvas.CellAt(col, 0)
++			if !samePaneColor(cell.Style.Fg, pal.Accent) || cell.Style.Attrs&uv.AttrItalic == 0 || cell.Style.Attrs&uv.AttrBold != 0 {
++				t.Fatalf("restored agent lost accent/italic styling: %+v", cell.Style)
++			}
++			if entry.Foreign && canvas.CellAt(0, 0).Style.Bg != nil {
++				t.Fatal("restoring a foreign session's highlight enabled its background")
++			}
++		}
++	}
++}
++
++func TestOverviewAgentHighlightWaitsForForeignWindowListing(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.SidebarAgentSeenAt = map[string]int64{"dddddddd4444": 30}
++	children := tree.Sessions[1].Children
++	tree.Sessions[1].Children = nil
++	m.agentEntries(tree.Sessions)
++	key := m.sidebarAgentFocusKey("api")
++	if m.sidebarAgentFocus.windows[key] != "" {
++		t.Fatal("coarse session listing invented an agent highlight")
++	}
++	tree.Sessions[1].Children = children
++	m.agentEntries(tree.Sessions)
++	if m.sidebarAgentFocus.windows[key] != "dddddddd4444" {
++		t.Fatal("agent highlight was not restored when the foreign listing arrived")
++	}
++}
++
++func TestOverviewSavedVisitsNeverOverrideLiveAgentSelection(t *testing.T) {
++	m, tree := sectionsTestOS(t, 120, 40)
++	m.SidebarAgentSeenAt = map[string]int64{"bbbbbbbb2222": 10, "cccccccc3333": 20}
++	key := m.sidebarAgentFocusKey("main")
++	m.sidebarAgentFocus.remember(key, "bbbbbbbb2222")
++	m.agentEntries(tree.Sessions)
++	if m.sidebarAgentFocus.windows[key] != "bbbbbbbb2222" {
++		t.Fatal("saved visit history overrode an existing client selection")
++	}
++	focusOverviewSession(&tree, "main", "cccccccc3333")
++	m.agentEntries(tree.Sessions)
++	if m.sidebarAgentFocus.windows[key] != "cccccccc3333" {
++		t.Fatal("restoration overrode the currently focused agent")
++	}
 +}
 diff --git i/internal/app/sidebar_agent_focus_test.go w/internal/app/sidebar_agent_focus_test.go
 new file mode 100644
@@ -3332,22 +3873,148 @@ index 0000000..ecc6852
 +		}
 +	}
 +}
+diff --git i/internal/app/sidebar_agent_presentation_test.go w/internal/app/sidebar_agent_presentation_test.go
+new file mode 100644
+index 0000000..1dca959
+--- /dev/null
++++ w/internal/app/sidebar_agent_presentation_test.go
+@@ -0,0 +1,100 @@
++package app
++
++import (
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func TestOverviewAgentLabelsOmitDuplicateNumbersAndUseItalic(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	yes, no := true, false
++	m.UserConfig = config.DefaultConfig()
++	m.UserConfig.Appearance.Sidebar.UI.Agent = config.SidebarElementStyle{
++		Italic: &yes, Bold: &no, ActiveBold: &no,
++	}
++	tree := sessiontree.Build([]sessiontree.SessionInput{{
++		Name: "dots", IsCurrent: true,
++		Windows: []sessiontree.WindowInput{
++			{ID: "one", Title: "pi", AgentState: "working", Focused: true},
++			{ID: "shell", Title: "zsh"},
++			{ID: "custom", Title: "release 1", AgentState: "idle"},
++			{ID: "numbered", Title: "pi 2", AgentState: "idle"},
++			{ID: "five", Title: "pi", AgentState: "done"},
++		},
++	}})
++	if tree.Sessions[0].Children[0].Title != "pi 1" || tree.Sessions[0].Children[4].Title != "pi 5" {
++		t.Fatal("shared tree lost duplicate numbering")
++	}
++	for _, entry := range m.agentEntries(tree.Sessions) {
++		for _, foreign := range []bool{false, true} {
++			for _, focused := range []bool{false, true} {
++				for _, state := range []string{"idle", "working", "needs_input", "done"} {
++					e := entry
++					e.Foreign, e.Focused, e.State = foreign, focused, state
++					row := m.sidebarOverviewAgentRow(e, 2, 36, m.groundUI(), sidebarRowState{})
++					plain := stripANSIForTrace(row)
++					if strings.Contains(plain, "pi 1") || strings.Contains(plain, "pi 5") {
++						t.Fatalf("generated number leaked: %q", plain)
++					}
++					at := strings.Index(plain, e.BaseTitle)
++					if at < 0 {
++						t.Fatalf("base label %q missing: %q", e.BaseTitle, plain)
++					}
++					canvas := overviewRowCanvas(row)
++					col := lipgloss.Width(plain[:at])
++					for x := col; x < col+lipgloss.Width(e.BaseTitle); x++ {
++						cell := canvas.CellAt(x, 0)
++						if cell == nil || cell.Style.Attrs&uv.AttrItalic == 0 || cell.Style.Attrs&uv.AttrBold != 0 {
++							t.Fatalf("agent typography for foreign=%t focused=%t state=%s: %+v", foreign, focused, state, cell)
++						}
++					}
++				}
++			}
++		}
++	}
++}
++
++func TestOverviewRepositoryUppercaseReloadPreservesIdentity(t *testing.T) {
++	m, tree := worktreeRailOS(t, 120, 30)
++	m.ConfigReadOnly = true
++	t.Cleanup(m.StopDockComponents)
++	id, title := tree.Sessions[0].ID, tree.Sessions[0].Title
++	repoIDs := make(map[string]bool)
++	for _, node := range tree.Sessions {
++		if node.Worktree != nil {
++			repoIDs[node.Worktree.Repo] = true
++		}
++	}
++	for _, upper := range []bool{true, false} {
++		cfg := config.DefaultConfig()
++		cfg.Appearance.Sidebar.Sections = "overview"
++		cfg.Appearance.Sidebar.UI.Repository.Uppercase = &upper
++		cfg.Appearance.Sidebar.UI.Agent.Italic = &upper
++		m.ApplyReloadedConfig(cfg)
++		want := "tuios"
++		if upper {
++			want = "TUIOS"
++		}
++		row := styledRow(t, railStyled(t, m, tree), want)
++		if !strings.Contains(stripANSIForTrace(row), want) {
++			t.Fatalf("repository label did not reload: %q", row)
++		}
++		style := m.sidebarUIResolved(sidebarUIAgent, true, m.groundUI(), nil, nil, false, false)
++		if style.italic != upper {
++			t.Fatalf("agent italics did not reload: %+v", style)
++		}
++		if tree.Sessions[0].ID != id || tree.Sessions[0].Title != title {
++			t.Fatal("display styling changed session identity")
++		}
++		for _, hit := range m.SidebarHits {
++			if hit.Kind == sidebarRowRepo && !repoIDs[hit.SessionID] {
++				t.Fatal("display styling changed repository routing")
++			}
++		}
++	}
++}
+diff --git i/internal/app/sidebar_agents.go w/internal/app/sidebar_agents.go
+index 9e4ce61..3909517 100644
+--- i/internal/app/sidebar_agents.go
++++ w/internal/app/sidebar_agents.go
+@@ -281,12 +281,12 @@ func (m *OS) sidebarAgentFoldRow(e sidebarAgentEntry, cw int, pal overlay.Palett
+ 	if st.lit() {
+ 		fg = pal.Fg
+ 	}
+-	indent := sidebarNameCol
++	indent := m.sidebarNameColumn()
+ 	text := "+" + strconv.Itoa(e.Fold) + " at rest"
+ 	if names {
+ 		indent++
+ 		text, fg = e.FoldNames, pal.FgMute
+ 	}
+ 	return sidebarFit(sidebarStyle(rowBg, nil).Render(strings.Repeat(" ", indent))+
+-		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(sidebarNameAvail(cw, 0)-(indent-sidebarNameCol), 1))), cw, rowBg)
++		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(m.sidebarNameAvail(cw, 0)-(indent-m.sidebarNameColumn()), 1))), cw, rowBg)
+ }
 diff --git i/internal/app/sidebar_cache.go w/internal/app/sidebar_cache.go
-index e72a9fd..fa2ef8b 100644
+index e72a9fd..0824dd3 100644
 --- i/internal/app/sidebar_cache.go
 +++ w/internal/app/sidebar_cache.go
-@@ -124,8 +124,8 @@ func (m *OS) sidebarSignature() uint64 {
+@@ -124,8 +124,9 @@ func (m *OS) sidebarSignature() uint64 {
  
  	// Geometry and layout knobs.
  	mixI(m.GetSidebarWidth())
 -	mixI(m.ViewUsableHeight())
 -	mixI(m.viewReserve().Top)
++	mixI(m.sidebarUIPaddingLeft())
 +	mixI(m.sidebarHeight())
 +	mixI(m.sidebarTop())
  	mixI(m.GetRenderWidth())
  	mixS(m.Settings.SidebarPosition)
  	// The layout: which sections are stacked, in what order, with what share,
-@@ -162,6 +162,7 @@ func (m *OS) sidebarSignature() uint64 {
+@@ -162,6 +163,7 @@ func (m *OS) sidebarSignature() uint64 {
  	mixI(m.SidebarScrollS)
  	mixI(m.SidebarScrollT)
  	mixI(m.SidebarScrollA)
@@ -3355,7 +4022,7 @@ index e72a9fd..fa2ef8b 100644
  	// The agents offset is derived from the anchor on any frame whose sort has
  	// moved, so the anchor picks the rows that are drawn just as directly as the
  	// offset does, and a frame drawn under one anchor cannot be served from an
-@@ -171,6 +172,8 @@ func (m *OS) sidebarSignature() uint64 {
+@@ -171,6 +173,8 @@ func (m *OS) sidebarSignature() uint64 {
  	mixS(m.sidebarAgentAnchor.SessionID)
  	mixS(m.sidebarAgentAnchor.WindowID)
  	mixI(m.FocusedWindow)
@@ -3727,10 +4394,22 @@ index 0000000..93ea150
 +	}
 +}
 diff --git i/internal/app/sidebar_custom.go w/internal/app/sidebar_custom.go
-index 38e5351..65dff57 100644
+index 38e5351..72862cd 100644
 --- i/internal/app/sidebar_custom.go
 +++ w/internal/app/sidebar_custom.go
-@@ -220,7 +220,7 @@ func (m *OS) railContextNow() railContext {
+@@ -117,8 +117,9 @@ func (m *OS) railCustomRows() []string {
+ // left open cannot run into the padding or the row below.
+ func (m *OS) sidebarCustomRow(text string, cw int, pal overlay.Palette, st sidebarRowState) string {
+ 	rowBg := sidebarRowBg(st, pal)
+-	body := overlay.Truncate(strings.TrimRight(text, " "), max(cw-1, 0)) + "\x1b[0m"
+-	return sidebarFit(sidebarStyle(rowBg, nil).Render(" ")+body, cw, rowBg)
++	padding := m.sidebarUIPaddingLeft()
++	body := overlay.Truncate(strings.TrimRight(text, " "), max(cw-padding, 0)) + "\x1b[0m"
++	return sidebarFit(sidebarStyle(rowBg, nil).Render(strings.Repeat(" ", padding))+body, cw, rowBg)
+ }
+ 
+ // railCustomRunnable reports whether the config gives the section something
+@@ -220,7 +221,7 @@ func (m *OS) railContextNow() railContext {
  		return ctx
  	}
  	ctx.Width = max(w-2, 0)
@@ -3739,7 +4418,7 @@ index 38e5351..65dff57 100644
  	for _, p := range sidebarLayoutPlans(&m.Settings) {
  		if !p.Spacer && p.Section == sidebarSectionCustom && p.Share > 0 {
  			lines = lines * p.Share / 100
-@@ -266,7 +266,7 @@ func (m *OS) secondaryRailContextNow() railContext {
+@@ -266,7 +267,7 @@ func (m *OS) secondaryRailContextNow() railContext {
  		return ctx
  	}
  	ctx.Width = max(w-2, 0)
@@ -3750,10 +4429,10 @@ index 38e5351..65dff57 100644
  		if m.legacySidebarEdge() == sidebarLeft {
 diff --git i/internal/app/sidebar_dock.go w/internal/app/sidebar_dock.go
 new file mode 100644
-index 0000000..65c146b
+index 0000000..4a3ddf3
 --- /dev/null
 +++ w/internal/app/sidebar_dock.go
-@@ -0,0 +1,485 @@
+@@ -0,0 +1,488 @@
 +package app
 +
 +import (
@@ -3807,6 +4486,7 @@ index 0000000..65c146b
 +	if cfg.PaddingRight == nil {
 +		style.paddingRight = 1
 +	}
++	style.paddingLeft = m.sidebarAdjustedPadding(style.paddingLeft)
 +	rowBg := style.rowBackground(nil)
 +	marker := sidebarStyle(rowBg, nil).Render(" ")
 +	if tab.Active {
@@ -3888,6 +4568,7 @@ index 0000000..65c146b
 +		if cfg := m.sidebarUIElementConfig(element); cfg.PaddingLeft == nil {
 +			style.paddingLeft = defaultPaddingLeft
 +		}
++		style.paddingLeft = m.sidebarAdjustedPadding(style.paddingLeft)
 +		fitBg := color.Color(nil)
 +		if style.fullWidth {
 +			fitBg = style.rowBackground(bg)
@@ -3919,6 +4600,7 @@ index 0000000..65c146b
 +		headerVisible := m.sidebarUIVisible(sidebarUIDockHeader, false)
 +		if headerVisible {
 +			style := m.sidebarUIResolved(sidebarUIDockHeader, false, pal, pal.Accent, nil, true, true)
++			style.paddingLeft = m.sidebarAdjustedPadding(style.paddingLeft)
 +			label := printableTitle(m.sessionTitle(m.SessionName))
 +			add := ""
 +			for _, tab := range tabs {
@@ -4031,7 +4713,7 @@ index 0000000..65c146b
 +			return
 +		}
 +		base := m.sidebarUIResolved(sidebarUISessionControl, false, pal, pal.FgDim, nil, false, true)
-+		start := min(base.paddingLeft, cw)
++		start := min(m.sidebarAdjustedPadding(base.paddingLeft), cw)
 +		end := max(cw-base.paddingRight, start)
 +		inside := end - start
 +		if inside <= 0 {
@@ -4819,6 +5501,22 @@ index a34b66d..0428fc0 100644
  func TestSectionEditorKeepsOneSection(t *testing.T) {
  	m := editorOS(t)
  	for _, name := range []string{"files", "terminals", "agents"} {
+diff --git i/internal/app/sidebar_git.go w/internal/app/sidebar_git.go
+index 0dd36a2..83ff752 100644
+--- i/internal/app/sidebar_git.go
++++ w/internal/app/sidebar_git.go
+@@ -231,9 +231,9 @@ func (m *OS) sidebarGitRow(row gitRowSpec, cw int, pal overlay.Palette, st sideb
+ 		indent = m.sidebarRowIndent()
+ 	}
+ 	name := sidebarStyle(rowBg, ink).Render(
+-		overlay.Truncate(printableTitle(row.Name), sidebarNameAvailIn(cw, rightW, indent)))
++		overlay.Truncate(printableTitle(row.Name), m.sidebarNameAvailIn(cw, rightW, indent)))
+ 	gutter := sidebarGutter(false, "", rowBg, pal, &m.Settings)
+-	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
++	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+ }
+ 
+ // gitDivergenceToken colours the two halves of the figure separately: commits
 diff --git i/internal/app/sidebar_host_agents_test.go w/internal/app/sidebar_host_agents_test.go
 index 8f9be0f..aebf52a 100644
 --- i/internal/app/sidebar_host_agents_test.go
@@ -4833,7 +5531,7 @@ index 8f9be0f..aebf52a 100644
  	if strings.Contains(row, agentStateIndicator("needs_input")) {
  		t.Errorf("a machine that is not answering still draws an alarm: %q", row)
 diff --git i/internal/app/sidebar_hosts.go w/internal/app/sidebar_hosts.go
-index 5332bb6..d6f6dc4 100644
+index 5332bb6..743db4c 100644
 --- i/internal/app/sidebar_hosts.go
 +++ w/internal/app/sidebar_hosts.go
 @@ -774,6 +774,7 @@ func (m *OS) setSidebarSessionOrder(host string, order []string) {
@@ -4844,6 +5542,33 @@ index 5332bb6..d6f6dc4 100644
  	isCursor func(kind sidebarRowKind, sessionID, windowID string) bool,
  	recordHit func(kind sidebarRowKind, sessionID, windowID string, windowIndex, h int),
  	recordToken func(tk sidebarTokenSpan, sessionID string),
+@@ -788,7 +789,7 @@ func (m *OS) drawHostRow(
+ 		st.Cursor = st.Cursor || isCursor(sidebarRowHost, GlobalSessionName, "")
+ 		add := ""
+ 		if !collapsed {
+-			labelW := sidebarHeaderLabelW(m.Settings.GetRailFoldOpenGlyph()+" "+node.Title, nil)
++			labelW := m.sidebarHeaderLabelW(m.Settings.GetRailFoldOpenGlyph()+" "+node.Title, nil)
+ 			if tok, span, ok := sidebarHeaderAdd(sidebarRowGlobalNew, cw, labelW, pal,
+ 				headerHoverX, isCursor(sidebarRowGlobalNew, GlobalSessionName, ""), &m.Settings,
+ 				sidebarRowBg(st, pal)); ok {
+@@ -812,7 +813,7 @@ func (m *OS) drawHostRow(
+ 			if node.Host == m.attachedMachine() {
+ 				kind, id = sidebarRowNewSession, ""
+ 			}
+-			labelW := sidebarHeaderLabelW(m.Settings.GetRailFoldOpenGlyph()+" "+node.Title, nil)
++			labelW := m.sidebarHeaderLabelW(m.Settings.GetRailFoldOpenGlyph()+" "+node.Title, nil)
+ 			if kind != sidebarRowNewSession || canCreate {
+ 				if tok, span, ok := sidebarHeaderAdd(kind, cw, labelW, pal,
+ 					headerHoverX, isCursor(kind, id, ""), &m.Settings,
+@@ -827,7 +828,7 @@ func (m *OS) drawHostRow(
+ 			// The "sign in" label is a control of its own, as the "+" is on
+ 			// a host that is up: it opens the sign-in page, and the rest of
+ 			// the header still folds the group.
+-			figure, _ := hostDownFigure(node, lipgloss.Width(printableTitle(node.Title)), cw)
++			figure, _ := hostDownFigure(node, lipgloss.Width(printableTitle(node.Title)), cw-m.sidebarUIPaddingShift())
+ 			if w := lipgloss.Width(figure); w > 0 && cw-1-w > 0 {
+ 				span := sidebarTokenSpan{Kind: sidebarRowHostSignIn, X0: cw - 1 - w, X1: cw - 1}
+ 				lit = isCursor(sidebarRowHostSignIn, node.Host, "") || (headerHoverX >= span.X0 && headerHoverX < span.X1)
 @@ -844,7 +845,7 @@ func (m *OS) drawHostRow(
  	// up. See host_open.go.
  	st.Cursor = st.Cursor || isCursor(sidebarRowHostSession, node.Host, remoteSessionName(node))
@@ -4853,6 +5578,32 @@ index 5332bb6..d6f6dc4 100644
  }
  
  // createRemoteSession creates a session on another machine and attaches it in
+@@ -1022,7 +1023,7 @@ func (m *OS) sidebarHostRowLit(node sessiontree.Node, cw int, pal overlay.Palett
+ 		// An unreachable machine has nothing to add a session to. See
+ 		// hostDownFigure for how the word gives way on a narrow rail.
+ 		var label string
+-		label, nameRoom = hostDownFigure(node, lipgloss.Width(title), cw)
++		label, nameRoom = hostDownFigure(node, lipgloss.Width(title), cw-m.sidebarUIPaddingShift())
+ 		ink := pal.FgMute
+ 		if node.HostStatus == string(federation.StatusApproval) {
+ 			// A sign-in waits for the person, so it wears the colour of an
+@@ -1100,14 +1101,14 @@ func (m *OS) sidebarHostRowLit(node sessiontree.Node, cw int, pal overlay.Palett
+ 				right, rightW = fig, w
+ 			}
+ 		}
+-		nameRoom = sidebarNameAvail(cw, rightW)
++		nameRoom = m.sidebarNameAvail(cw, rightW)
+ 	}
+ 	name := sidebarStyle(rowBg, ink).Render(overlay.Truncate(title, nameRoom))
+ 	// A folded group hides the session row that wears the focus mark, so the
+ 	// header takes it: the fold must not make the attached session vanish from
+ 	// the rail without a trace.
+ 	gutter := sidebarGutter(here && collapsed, "", rowBg, pal, &m.Settings)
+-	return sidebarComposeRuledRow(0, gutter, glyph, name, right, cw, rowBg, pal, &m.Settings)
++	return m.sidebarComposeRuledRow(0, gutter, glyph, name, right, cw, rowBg, pal)
+ }
+ 
+ // sidebarRemoteSessionRow draws one session that lives on a machine the client
 @@ -1124,7 +1125,7 @@ func (m *OS) sidebarHostRowLit(node sessiontree.Node, cw int, pal overlay.Palett
  //
  // The count takes the same gate a local session row's count takes: a rail too
@@ -4862,7 +5613,16 @@ index 5332bb6..d6f6dc4 100644
  	rowBg := sidebarRowBg(st, pal)
  	right, rightW := "", 0
  	if m.Settings.SidebarShowCounts && showCounts && node.WindowCount > 0 && variant == sidebarVariantFull {
-@@ -1159,7 +1160,9 @@ func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal
+@@ -1143,7 +1144,7 @@ func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal
+ 	}
+ 	indent := m.sidebarRowIndent()
+ 	title := printableTitle(node.Title)
+-	keepCount, nameRoom := railRowFitRight(lipgloss.Width(title), rightW, sidebarNameAvailIn(cw, 0, indent))
++	keepCount, nameRoom := railRowFitRight(lipgloss.Width(title), rightW, m.sidebarNameAvailIn(cw, 0, indent))
+ 	if !keepCount {
+ 		right = ""
+ 	}
+@@ -1159,8 +1160,10 @@ func (m *OS) sidebarRemoteSessionRow(node sessiontree.Node, cw, variant int, pal
  	// last listing said, because its rows are a cached listing rather than
  	// sessions you can reach.
  	glyph := sidebarStyle(rowBg, pal.FgMute).Render(m.Settings.GetRailBullet())
@@ -4872,7 +5632,9 @@ index 5332bb6..d6f6dc4 100644
 +	} else if m.hostIsUp(node.Host) && agentStateIndicator(node.AgentState) != "" {
  		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
  	}
- 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+-	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
++	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+ }
 diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
 index 09a44b7..985543b 100644
 --- i/internal/app/sidebar_keyboard.go
@@ -5107,10 +5869,10 @@ index 738c0e2..2fac524 100644
  		m.sidebarFocusWindow(hit)
 diff --git i/internal/app/sidebar_overview.go w/internal/app/sidebar_overview.go
 new file mode 100644
-index 0000000..76ab75d
+index 0000000..13a9ab0
 --- /dev/null
 +++ w/internal/app/sidebar_overview.go
-@@ -0,0 +1,279 @@
+@@ -0,0 +1,282 @@
 +package app
 +
 +import (
@@ -5346,22 +6108,25 @@ index 0000000..76ab75d
 +	figure := overviewAgentFigure(e, overlay.UseASCII(), time.Now())
 +	right := ""
 +	rightW := lipgloss.Width(figure)
-+	nameRoom := sidebarNameAvailIn(cw, rightW, indent)
++	nameRoom := m.sidebarNameAvailIn(cw, rightW, indent)
 +	if nameRoom < 4 {
 +		figure = ""
-+		nameRoom = sidebarNameAvailIn(cw, 0, indent)
++		nameRoom = m.sidebarNameAvailIn(cw, 0, indent)
 +	}
 +	nameRoom = max(nameRoom, 1)
 +	if figure != "" {
 +		right = sidebarStyle(rowBg, pal.FgMute).Render(figure)
 +	}
-+	title := printableTitle(e.Title)
++	title := printableTitle(e.BaseTitle)
++	if title == "" {
++		title = printableTitle(e.Title)
++	}
 +	if title == "" {
 +		title = "agent"
 +	}
 +	name := style.render(m.sidebarMarquee("o:"+e.SessionID+"/"+e.WindowID, title, nameRoom, st.Cursor), nameRoom)
 +	gutter := m.sidebarOverviewGutter(!e.Foreign, rowBg, pal)
-+	return sidebarComposeGroupRow(indent, gutter,
++	return m.sidebarComposeGroupRow(indent, gutter,
 +		sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), name, right, cw, rowBg)
 +}
 +
@@ -6137,7 +6902,7 @@ index 7d8ea5e..ebedddd 100644
  	}
  	for _, side := range []sidebarEdge{sidebarLeft, sidebarRight} {
 diff --git i/internal/app/sidebar_spaces.go w/internal/app/sidebar_spaces.go
-index bcc71d4..3c3ddc9 100644
+index bcc71d4..fcff5d0 100644
 --- i/internal/app/sidebar_spaces.go
 +++ w/internal/app/sidebar_spaces.go
 @@ -35,11 +35,18 @@ func (m *OS) sidebarNodeIndent(node sessiontree.Node) int {
@@ -6159,12 +6924,70 @@ index bcc71d4..3c3ddc9 100644
 +	}
 +	style := m.sidebarUIResolved(sidebarUISpace, false, pal, fg, nil, highlighted, false)
 +	indent = style.rowIndent(indent)
-+	name := style.render(printableTitle(node.Title), sidebarNameAvailIn(cw, 0, indent))
++	name := style.render(printableTitle(node.Title), m.sidebarNameAvailIn(cw, 0, indent))
 +	rowBg := style.rowBackground(nil)
 +	gutter := sidebarGutter(false, "", rowBg, pal, &m.Settings)
 +	glyph := sidebarStyle(rowBg, nil).Render(" ")
-+	return sidebarComposeRuledRow(indent, gutter, glyph, name, "", cw, rowBg, pal, &m.Settings)
++	return m.sidebarComposeRuledRow(indent, gutter, glyph, name, "", cw, rowBg, pal)
  }
+diff --git i/internal/app/sidebar_spacing.go w/internal/app/sidebar_spacing.go
+new file mode 100644
+index 0000000..f9ab463
+--- /dev/null
++++ w/internal/app/sidebar_spacing.go
+@@ -0,0 +1,52 @@
++package app
++
++import (
++	"image/color"
++
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++	"github.com/Gaurav-Gosain/tuios/internal/overlay"
++)
++
++func (m *OS) sidebarUIPaddingLeft() int {
++	return sidebarUIInt(m.sidebarUIConfig().PaddingLeft, config.DefaultSidebarPaddingLeft, 0, config.MaxSidebarPaddingLeft)
++}
++
++func (m *OS) sidebarUIPaddingShift() int {
++	return m.sidebarUIPaddingLeft() - config.DefaultSidebarPaddingLeft
++}
++
++func (m *OS) sidebarAdjustedPadding(padding int) int {
++	return max(padding+m.sidebarUIPaddingShift(), 0)
++}
++
++func (m *OS) sidebarNameColumn() int {
++	return sidebarNameCol + m.sidebarUIPaddingShift()
++}
++
++func (m *OS) sidebarNameAvail(cw, rightW int) int {
++	return m.sidebarNameAvailIn(cw, rightW, 0)
++}
++
++func (m *OS) sidebarNameAvailIn(cw, rightW, indent int) int {
++	return sidebarNameAvailIn(cw-m.sidebarUIPaddingShift(), rightW, indent)
++}
++
++func (m *OS) sidebarComposeRow(gutter, glyph, name, right string, cw int, bg color.Color) string {
++	return m.sidebarComposeGroupRow(0, gutter, glyph, name, right, cw, bg)
++}
++
++func (m *OS) sidebarComposeGroupRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color) string {
++	return sidebarComposePaddedGroupRow(indent, gutter, glyph, name, right, cw, bg, m.sidebarUIPaddingLeft())
++}
++
++func (m *OS) sidebarComposeRuledRow(indent int, gutter, glyph, name, right string, cw int, bg color.Color, pal overlay.Palette) string {
++	return sidebarComposePaddedRuledRow(indent, gutter, glyph, name, right, cw, bg, pal, &m.Settings, m.sidebarUIPaddingLeft())
++}
++
++func (m *OS) sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, settings *config.Settings) string {
++	return sidebarHeaderPaddedRow(label, right, cw, pal, settings, m.sidebarUIPaddingLeft())
++}
++
++func (m *OS) sidebarHeaderLabelW(label string, settings *config.Settings) int {
++	return sidebarHeaderLabelW(label, settings) + m.sidebarUIPaddingShift()
++}
 diff --git i/internal/app/sidebar_split.go w/internal/app/sidebar_split.go
 index 093cd01..f4c3678 100644
 --- i/internal/app/sidebar_split.go
@@ -6229,12 +7052,169 @@ index 4829467..27c01e7 100644
  					note(sidebarStripSession, s.ID, "", sidebarTooltipSessionLabel(s), y)
  					record(sidebarRowSession, s.ID, "", y)
  					// The row being dragged wears the band wherever it has been
+diff --git i/internal/app/sidebar_text_alignment_test.go w/internal/app/sidebar_text_alignment_test.go
+new file mode 100644
+index 0000000..897500d
+--- /dev/null
++++ w/internal/app/sidebar_text_alignment_test.go
+@@ -0,0 +1,151 @@
++package app
++
++import (
++	"fmt"
++	"strings"
++	"testing"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/config"
++)
++
++func setSidebarTestPadding(t *testing.T, m *OS, padding int, styles string) {
++	t.Helper()
++	cfg, err := config.ParseUserConfig([]byte(fmt.Sprintf("[appearance.sidebar.ui]\npadding_left = %d\n%s", padding, styles)))
++	if err != nil {
++		t.Fatal(err)
++	}
++	m.UserConfig = cfg
++}
++
++func TestSidebarTextPaddingControlsNameSpine(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	for _, padding := range []int{0, 1, 3} {
++		setSidebarTestPadding(t, m, padding, "")
++		for _, tc := range []struct {
++			name   string
++			indent int
++			glyph  string
++			column int
++		}{
++			{"flat", 0, "o", 2},
++			{"group", 2, "o", 4},
++			{"repository", 0, "", 1},
++			{"branch", 2, "", 3},
++			{"agent", 3, "o", 5},
++		} {
++			t.Run(fmt.Sprintf("%s/padding=%d", tc.name, padding), func(t *testing.T) {
++				const width = 28
++				rows := []string{
++					m.sidebarComposeGroupRow(tc.indent, "|", tc.glyph, "label", "3", width, nil),
++					m.sidebarComposeRuledRow(tc.indent, "|", tc.glyph, "label", "3", width, nil, m.groundUI()),
++				}
++				for _, row := range rows {
++					plain := stripANSIForTrace(row)
++					if got, want := strings.Index(plain, "label"), tc.column+padding; got != want {
++						t.Fatalf("name column = %d, want %d: %q", got, want, plain)
++					}
++					if lipgloss.Width(row) != width || !strings.HasPrefix(plain, "|") || !strings.Contains(plain, "3") {
++						t.Fatalf("row lost its width, gutter, or figure: %q", plain)
++					}
++				}
++			})
++		}
++	}
++}
++
++func TestSidebarTextPaddingUpdatesOverviewAndCacheLive(t *testing.T) {
++	m, tree := worktreeRailOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview"
++	setSidebarTestPadding(t, m, config.DefaultSidebarPaddingLeft, "")
++	before := railPlain(t, m, tree)
++	beforeSignature := m.sidebarSignature()
++	for _, padding := range []int{0, 3, 1} {
++		setSidebarTestPadding(t, m, padding, "")
++		after := railPlain(t, m, tree)
++		for _, label := range []string{"main", "tuios", "feat/one", "claude"} {
++			oldRow, newRow := lineOf(before, label), lineOf(after, label)
++			if oldRow < 0 || newRow < 0 {
++				t.Fatalf("missing label %q", label)
++			}
++			oldColumn := strings.Index(before[oldRow], label)
++			newColumn := strings.Index(after[newRow], label)
++			if newColumn-oldColumn != padding-config.DefaultSidebarPaddingLeft {
++				t.Fatalf("%s moved from %d to %d with padding %d", label, oldColumn, newColumn, padding)
++			}
++		}
++		if changed := m.sidebarSignature() != beforeSignature; changed != (padding != config.DefaultSidebarPaddingLeft) {
++			t.Fatalf("cache invalidation = %t with padding %d", changed, padding)
++		}
++	}
++}
++
++func TestSidebarTextPaddingMovesDockLabelsWithoutChangingElementSettings(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	m.Settings.SidebarSections = "overview,dock"
++	m.SessionName = "repo-heading"
++	m.WorkspaceNames = map[int]string{m.CurrentWorkspace: "tabname"}
++	const styles = `
++[appearance.sidebar.ui.dock_header]
++visible = true
++padding_left = 2
++[appearance.sidebar.ui.workspace]
++padding_left = 1
++`
++	setSidebarTestPadding(t, m, config.DefaultSidebarPaddingLeft, styles)
++	before, _ := m.sidebarDockFooter(28, 0, m.groundUI(), -1, -1)
++	setSidebarTestPadding(t, m, 0, styles)
++	after, _ := m.sidebarDockFooter(28, 0, m.groundUI(), -1, -1)
++	for _, label := range []string{"repo-heading", "tabname"} {
++		oldColumn, newColumn := -1, -1
++		for _, row := range before {
++			if col := strings.Index(stripANSIForTrace(row), label); col >= 0 {
++				oldColumn = col
++			}
++		}
++		for _, row := range after {
++			if col := strings.Index(stripANSIForTrace(row), label); col >= 0 {
++				newColumn = col
++			}
++		}
++		if oldColumn < 0 || newColumn != oldColumn-1 {
++			t.Fatalf("%s columns before=%d after=%d", label, oldColumn, newColumn)
++		}
++	}
++	if *m.UserConfig.Appearance.Sidebar.UI.DockHeader.PaddingLeft != 2 || *m.UserConfig.Appearance.Sidebar.UI.Workspace.PaddingLeft != 1 {
++		t.Fatal("global padding changed element settings")
++	}
++}
++
++func TestSidebarTextPaddingMovesSectionAndCustomLabels(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	for _, padding := range []int{0, 1, 3} {
++		setSidebarTestPadding(t, m, padding, "")
++		rows := []string{
++			m.sidebarHeaderRowRuled("label", "", 28, m.groundUI(), &m.Settings),
++			m.sidebarCustomRow("label", 28, m.groundUI(), sidebarRowState{}),
++		}
++		for _, row := range rows {
++			if column := strings.Index(stripANSIForTrace(row), "label"); column != padding {
++				t.Fatalf("label starts at %d, want %d: %q", column, padding, row)
++			}
++		}
++		if m.railRowState(false, true).nameColumn != m.sidebarNameColumn() {
++			t.Fatal("keyboard cursor did not follow text padding")
++		}
++	}
++}
++
++func TestSidebarTextPaddingDefaultsAndBounds(t *testing.T) {
++	m, _ := sectionsTestOS(t, 120, 40)
++	m.UserConfig = nil
++	if m.sidebarNameColumn() != sidebarNameCol || m.sidebarUIPaddingLeft() != config.DefaultSidebarPaddingLeft {
++		t.Fatal("unset padding changed the default layout")
++	}
++	for _, tc := range []struct{ value, want int }{{-1, 0}, {config.MaxSidebarPaddingLeft + 1, config.MaxSidebarPaddingLeft}} {
++		setSidebarTestPadding(t, m, tc.value, "")
++		if got := m.sidebarUIPaddingLeft(); got != tc.want {
++			t.Fatalf("padding %d resolved to %d, want %d", tc.value, got, tc.want)
++		}
++	}
++}
 diff --git i/internal/app/sidebar_ui.go w/internal/app/sidebar_ui.go
 new file mode 100644
-index 0000000..92969da
+index 0000000..675a2bf
 --- /dev/null
 +++ w/internal/app/sidebar_ui.go
-@@ -0,0 +1,258 @@
+@@ -0,0 +1,266 @@
 +package app
 +
 +import (
@@ -6274,6 +7254,8 @@ index 0000000..92969da
 +	fg           color.Color
 +	bg           color.Color
 +	bold         bool
++	italic       bool
++	uppercase    bool
 +	fullWidth    bool
 +	paddingLeft  int
 +	paddingRight int
@@ -6346,6 +7328,7 @@ index 0000000..92969da
 +	cfg := m.sidebarUIElementConfig(element)
 +	return cfg.Visible != nil || cfg.Align != "" || cfg.Foreground != "" || cfg.Background != "" ||
 +		cfg.ActiveForeground != "" || cfg.ActiveBackground != "" || cfg.Bold != nil || cfg.ActiveBold != nil ||
++		cfg.Italic != nil || cfg.Uppercase != nil ||
 +		cfg.FullWidth != nil || cfg.PaddingLeft != nil || cfg.PaddingRight != nil || cfg.Indent != nil ||
 +		cfg.BottomOffsetPercent != nil
 +}
@@ -6392,6 +7375,8 @@ index 0000000..92969da
 +		fg:           fg,
 +		bg:           bg,
 +		bold:         bold,
++		italic:       sidebarUIBool(cfg.Italic, false),
++		uppercase:    sidebarUIBool(cfg.Uppercase, false),
 +		fullWidth:    sidebarUIBool(cfg.FullWidth, fallbackFullWidth),
 +		paddingLeft:  sidebarUIInt(cfg.PaddingLeft, 0, 0, 12),
 +		paddingRight: sidebarUIInt(cfg.PaddingRight, 0, 0, 12),
@@ -6416,6 +7401,9 @@ index 0000000..92969da
 +func (style sidebarUIResolvedStyle) render(text string, width int) string {
 +	width = max(width, 0)
 +	inside := max(width-style.paddingLeft-style.paddingRight, 0)
++	if style.uppercase {
++		text = strings.ToUpper(text)
++	}
 +	text = overlay.Truncate(text, inside)
 +	textWidth := lipgloss.Width(text)
 +	left, right := style.paddingLeft, style.paddingRight
@@ -6432,7 +7420,7 @@ index 0000000..92969da
 +		}
 +	}
 +	body := strings.Repeat(" ", left) + text + strings.Repeat(" ", right)
-+	ui := lipgloss.NewStyle().Bold(style.bold)
++	ui := lipgloss.NewStyle().Bold(style.bold).Italic(style.italic)
 +	if style.fg != nil {
 +		ui = ui.Foreground(style.fg)
 +	}
@@ -6514,7 +7502,7 @@ index c88164c..86eeb61 100644
  	m.sidebarAgentsUnfolded, s.agentsUnfolded = s.agentsUnfolded, m.sidebarAgentsUnfolded
  	m.sidebarSubagentFold, s.subagentFold = s.subagentFold, m.sidebarSubagentFold
 diff --git i/internal/app/sidebar_worktrees.go w/internal/app/sidebar_worktrees.go
-index 02a3628..79abcf0 100644
+index 02a3628..23c9213 100644
 --- i/internal/app/sidebar_worktrees.go
 +++ w/internal/app/sidebar_worktrees.go
 @@ -120,27 +120,29 @@ func (m *OS) SidebarToggleRepoCollapsed(repo string) {
@@ -6616,14 +7604,99 @@ index 02a3628..79abcf0 100644
 -	name := sidebarStyle(rowBg, fg).Bold(sidebarAttention(state)).
 -		Render(overlay.Truncate(printableTitle(node.Title), sidebarNameAvailIn(cw, rightW, indent)))
 +	indent := style.rowIndent(m.sidebarNodeIndent(node))
-+	nameWidth := sidebarNameAvailIn(cw, rightW, indent)
++	nameWidth := m.sidebarNameAvailIn(cw, rightW, indent)
 +	if highlighted {
 +		nameWidth++
 +	}
 +	name := style.render(printableTitle(node.Title), nameWidth)
  	gutter := sidebarGutter(false, state, rowBg, pal, &m.Settings)
- 	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
+-	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
++	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
  }
+diff --git i/internal/app/subagents.go w/internal/app/subagents.go
+index a538e50..6a30f1c 100644
+--- i/internal/app/subagents.go
++++ w/internal/app/subagents.go
+@@ -553,6 +553,10 @@ func sidebarWithChildren(parents []sidebarAgentEntry, info []sidebarChildParent,
+ // parent's entry.
+ const sidebarChildIndent = sidebarNameCol + 1
+ 
++func (m *OS) sidebarChildIndent() int {
++	return sidebarChildIndent + m.sidebarUIPaddingShift()
++}
++
+ // sidebarChildLead is the indent in front of a child row's mark, and on its
+ // second line in front of the note: blanks for the rows as a list, and tree
+ // lines from the parent's mark column for subagent_rows = "tree". It is
+@@ -561,7 +565,7 @@ const sidebarChildIndent = sidebarNameCol + 1
+ func (m *OS) sidebarChildLead(e sidebarAgentEntry, rowBg color.Color, pal overlay.Palette, second bool) string {
+ 	pad := sidebarStyle(rowBg, nil)
+ 	if !m.Settings.SidebarSubagents.Tree {
+-		return pad.Render(strings.Repeat(" ", sidebarChildIndent))
++		return pad.Render(strings.Repeat(" ", m.sidebarChildIndent()))
+ 	}
+ 	branch := m.Settings.GetRailTreeBranch()
+ 	if e.Last {
+@@ -575,11 +579,11 @@ func (m *OS) sidebarChildLead(e sidebarAgentEntry, rowBg color.Color, pal overla
+ 	}
+ 	lead := " " + branch
+ 	w := lipgloss.Width(lead)
+-	if w > sidebarChildIndent {
+-		lead = overlay.Truncate(lead, sidebarChildIndent)
++	if w > m.sidebarChildIndent() {
++		lead = overlay.Truncate(lead, m.sidebarChildIndent())
+ 		w = lipgloss.Width(lead)
+ 	}
+-	return sidebarStyle(rowBg, pal.FgMute).Render(lead) + pad.Render(strings.Repeat(" ", sidebarChildIndent-w))
++	return sidebarStyle(rowBg, pal.FgMute).Render(lead) + pad.Render(strings.Repeat(" ", m.sidebarChildIndent()-w))
+ }
+ 
+ // sidebarTreePipe is the line a tree branch continues down with: │ under ├,
+@@ -625,7 +629,7 @@ func (m *OS) sidebarChildRow(e sidebarAgentEntry, cw int, pal overlay.Palette, s
+ 			if e.Open || len(e.HeadKids) == 0 {
+ 				return sidebarFit(lead, cw, rowBg)
+ 			}
+-			indent := sidebarChildIndent + 2
++			indent := m.sidebarChildIndent() + 2
+ 			return sidebarFit(lead+pad.Render("  ")+
+ 				sidebarStyle(rowBg, pal.FgMute).Render(overlay.Truncate(sidebarSubagentNames(e.HeadKids), max(cw-indent, 1))), cw, rowBg)
+ 		}
+@@ -637,7 +641,7 @@ func (m *OS) sidebarChildRow(e sidebarAgentEntry, cw int, pal overlay.Palette, s
+ 		if st.lit() {
+ 			fg = pal.Fg
+ 		}
+-		avail := max(cw-sidebarChildIndent-2, 1)
++		avail := max(cw-m.sidebarChildIndent()-2, 1)
+ 		return sidebarFit(lead+sidebarStyle(rowBg, pal.FgMute).Render(mark)+pad.Render(" ")+
+ 			sidebarStyle(rowBg, fg).Render(overlay.Truncate(session.SubagentsText(len(e.HeadKids)), avail)), cw, rowBg)
+ 	}
+@@ -654,7 +658,7 @@ func (m *OS) sidebarChildRow(e sidebarAgentEntry, cw int, pal overlay.Palette, s
+ 			fg = pal.Fg
+ 		}
+ 		return sidebarFit(lead+pad.Render("  ")+
+-			sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(cw-sidebarChildIndent-2, 1))), cw, rowBg)
++			sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(cw-m.sidebarChildIndent()-2, 1))), cw, rowBg)
+ 	}
+ 	s := *e.Child
+ 	ended := !s.Running()
+@@ -662,7 +666,7 @@ func (m *OS) sidebarChildRow(e sidebarAgentEntry, cw int, pal overlay.Palette, s
+ 		if !fields.Note {
+ 			return sidebarFit(lead, cw, rowBg)
+ 		}
+-		indent := sidebarChildIndent + 2
++		indent := m.sidebarChildIndent() + 2
+ 		return sidebarFit(lead+pad.Render("  ")+
+ 			sidebarStyle(rowBg, pal.FgMute).Render(overlay.Truncate(subagentNote(s), max(cw-indent, 1))), cw, rowBg)
+ 	}
+@@ -701,7 +705,7 @@ func (m *OS) sidebarChildRow(e sidebarAgentEntry, cw int, pal overlay.Palette, s
+ 	if rightW > 0 {
+ 		rightW++
+ 	}
+-	avail := max(cw-sidebarChildIndent-2-rightW, 1)
++	avail := max(cw-m.sidebarChildIndent()-2-rightW, 1)
+ 	name, kind := "", ""
+ 	if fields.Name {
+ 		name = subagentName(s)
 diff --git i/internal/app/tick_deadline.go w/internal/app/tick_deadline.go
 index 74e4a7d..9904149 100644
 --- i/internal/app/tick_deadline.go
@@ -7036,7 +8109,7 @@ index 6115323..e4a7c0b 100644
  		target.SetBool(v)
  	case string:
 diff --git i/internal/config/options.go w/internal/config/options.go
-index bfeb88f..e885cbf 100644
+index bfeb88f..803eb37 100644
 --- i/internal/config/options.go
 +++ w/internal/config/options.go
 @@ -155,7 +155,7 @@ const (
@@ -7078,7 +8151,7 @@ index bfeb88f..e885cbf 100644
  	// [paste_buffers]. The daemon reads it when it starts and when the file
  	// changes, and so does a client with no daemon.
  	{
-@@ -1519,6 +1535,48 @@ var optionSpecs = []Option{
+@@ -1519,6 +1535,55 @@ var optionSpecs = []Option{
  		Description: "When you switch to a workspace with no panes, open a new pane there. It starts in the folder of the pane you came from",
  		Default:     "false",
  	},
@@ -7086,6 +8159,11 @@ index bfeb88f..e885cbf 100644
 +
 +func sidebarUIOptionSpecs() []Option {
 +	out := []Option{
++		{
++			Path: "appearance.sidebar.ui.padding_left", Type: OptionInt, Section: "sidebar",
++			Description: "Base left spacing for sidebar text; preserves relative element indentation",
++			Default:     strconv.Itoa(DefaultSidebarPaddingLeft), Min: 0, Max: MaxSidebarPaddingLeft,
++		},
 +		{
 +			Path: "appearance.sidebar.ui.section_gap", Type: OptionInt, Section: "sidebar",
 +			Description: "Blank rows between sidebar sections", Default: "0", Min: 0, Max: 6,
@@ -7116,6 +8194,8 @@ index bfeb88f..e885cbf 100644
 +			Option{Path: prefix + "active_background", Type: OptionString, Section: "sidebar", Description: "Background colour while active", Default: "", Color: true},
 +			Option{Path: prefix + "bold", Type: OptionBool, Section: "sidebar", Description: "Draw the element in bold", Default: "false"},
 +			Option{Path: prefix + "active_bold", Type: OptionBool, Section: "sidebar", Description: "Draw the active element in bold", Default: "false"},
++			Option{Path: prefix + "italic", Type: OptionBool, Section: "sidebar", Description: "Draw the element in italics", Default: "false"},
++			Option{Path: prefix + "uppercase", Type: OptionBool, Section: "sidebar", Description: "Uppercase the displayed label without renaming it", Default: "false"},
 +			Option{Path: prefix + "full_width", Type: OptionBool, Section: "sidebar", Description: "Extend the element styling across its available row", Default: "false"},
 +			Option{Path: prefix + "padding_left", Type: OptionInt, Section: "sidebar", Description: "Left padding in cells", Default: "0", Min: 0, Max: 12},
 +			Option{Path: prefix + "padding_right", Type: OptionInt, Section: "sidebar", Description: "Right padding in cells", Default: "0", Min: 0, Max: 12},
@@ -7226,6 +8306,104 @@ index 671d70a..f0669e6 100644
  // TestSectionProblemsSaySpacerIsFine is the validator's half of the same rule:
  // a repeated spacer is not a problem and a repeated section still is.
  //
+diff --git i/internal/config/sidebar_spacing_test.go w/internal/config/sidebar_spacing_test.go
+new file mode 100644
+index 0000000..b610ae1
+--- /dev/null
++++ w/internal/config/sidebar_spacing_test.go
+@@ -0,0 +1,54 @@
++package config
++
++import (
++	"fmt"
++	"strconv"
++	"strings"
++	"testing"
++)
++
++func TestSidebarGlobalPaddingOption(t *testing.T) {
++	const path = "appearance.sidebar.ui.padding_left"
++	option, ok := LookupOption(path)
++	if !ok || option.Type != OptionInt || option.Default != strconv.Itoa(DefaultSidebarPaddingLeft) || option.Min != 0 || option.Max != MaxSidebarPaddingLeft {
++		t.Fatalf("invalid padding option: %+v", option)
++	}
++	cfg := DefaultConfig()
++	for _, value := range []string{"0", "1", "3"} {
++		if err := SetOptionValue(cfg, path, value); err != nil {
++			t.Fatal(err)
++		}
++		if got, ok := GetOptionValue(cfg, path); !ok || got != value {
++			t.Fatalf("padding value = %q, want %q", got, value)
++		}
++	}
++}
++
++func TestSidebarGlobalPaddingParsesZero(t *testing.T) {
++	cfg, err := ParseUserConfig([]byte("[appearance.sidebar.ui]\npadding_left = 0\n"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	ui := cfg.Appearance.Sidebar.UI
++	if ui.PaddingLeft == nil || *ui.PaddingLeft != 0 || ui.Repository.PaddingLeft != nil {
++		t.Fatalf("zero padding was not preserved independently: %+v", ui)
++	}
++}
++
++func TestSidebarGlobalPaddingRejectsInvalidRange(t *testing.T) {
++	for _, value := range []int{-1, MaxSidebarPaddingLeft + 1} {
++		cfg, err := ParseUserConfig([]byte(fmt.Sprintf("[appearance.sidebar.ui]\npadding_left = %d\n", value)))
++		if err != nil {
++			t.Fatal(err)
++		}
++		found := false
++		for _, warning := range ValidateConfig(cfg).Warnings {
++			if warning.Field == "appearance.sidebar.ui" && warning.Key == "padding_left" && strings.Contains(warning.Message, "clamped") {
++				found = true
++			}
++		}
++		if !found {
++			t.Fatalf("invalid padding %d produced no range warning", value)
++		}
++	}
++}
+diff --git i/internal/config/sidebar_typography_test.go w/internal/config/sidebar_typography_test.go
+new file mode 100644
+index 0000000..daeee70
+--- /dev/null
++++ w/internal/config/sidebar_typography_test.go
+@@ -0,0 +1,32 @@
++package config
++
++import "testing"
++
++func TestSidebarUITypographyParsesAndRegisters(t *testing.T) {
++	cfg, err := ParseUserConfig([]byte(`
++[appearance.sidebar.ui.repository]
++uppercase = true
++
++[appearance.sidebar.ui.agent]
++italic = true
++bold = false
++active_bold = false
++`))
++	if err != nil {
++		t.Fatal(err)
++	}
++	repo, agent := cfg.Appearance.Sidebar.UI.Repository, cfg.Appearance.Sidebar.UI.Agent
++	if repo.Uppercase == nil || !*repo.Uppercase || agent.Italic == nil || !*agent.Italic ||
++		agent.Bold == nil || *agent.Bold || agent.ActiveBold == nil || *agent.ActiveBold {
++		t.Fatalf("typography not parsed: repository=%+v agent=%+v", repo, agent)
++	}
++	for _, path := range []string{"appearance.sidebar.ui.repository.uppercase", "appearance.sidebar.ui.agent.italic"} {
++		option, ok := LookupOption(path)
++		if !ok || option.Type != OptionBool {
++			t.Fatalf("typography option missing: %s", path)
++		}
++		if err := option.checkValue("true"); err != nil {
++			t.Fatal(err)
++		}
++	}
++}
 diff --git i/internal/config/sidebar_ui_test.go w/internal/config/sidebar_ui_test.go
 new file mode 100644
 index 0000000..4aedae8
@@ -7297,7 +8475,7 @@ index 0000000..4aedae8
 +	}
 +}
 diff --git i/internal/config/userconfig.go w/internal/config/userconfig.go
-index 8163e60..15988f9 100644
+index 8163e60..568c977 100644
 --- i/internal/config/userconfig.go
 +++ w/internal/config/userconfig.go
 @@ -333,29 +333,30 @@ var WindowSizeModes = []string{WindowSizeSmallest, WindowSizeLargest, WindowSize
@@ -7354,7 +8532,7 @@ index 8163e60..15988f9 100644
  	AutoEnterTerminalOnFocus AutoEnterTerminalPolicy `toml:"auto_enter_terminal_on_focus"` // When a keyboard focus command should start typing in that pane: off, targeted, all (default: off)
  	ClickToType              string                  `toml:"click_to_type"`                // What a click on a pane's content does in window-management mode: single, double, off (default: double)
  	WordCharacters           *string                 `toml:"word_characters"`              // Punctuation that counts as part of a word for double-click selection (default: "@-./_~?&=%+#")
-@@ -806,6 +807,48 @@ type SelectionConfig struct {
+@@ -806,6 +807,54 @@ type SelectionConfig struct {
  	CopyCommand string `toml:"copy_command,omitempty"`
  }
  
@@ -7370,6 +8548,8 @@ index 8163e60..15988f9 100644
 +	ActiveBackground    string `toml:"active_background,omitempty"`
 +	Bold                *bool  `toml:"bold,omitempty"`
 +	ActiveBold          *bool  `toml:"active_bold,omitempty"`
++	Italic              *bool  `toml:"italic,omitempty"`
++	Uppercase           *bool  `toml:"uppercase,omitempty"`
 +	FullWidth           *bool  `toml:"full_width,omitempty"`
 +	PaddingLeft         *int   `toml:"padding_left,omitempty"`
 +	PaddingRight        *int   `toml:"padding_right,omitempty"`
@@ -7377,10 +8557,14 @@ index 8163e60..15988f9 100644
 +	BottomOffsetPercent *int   `toml:"bottom_offset_percent,omitempty"`
 +}
 +
++const DefaultSidebarPaddingLeft = 1
++const MaxSidebarPaddingLeft = 12
++
 +// SidebarUIConfig is the live stylesheet for the whole sidebar. Section and
 +// component order remain in appearance.sidebar.sections and the dock lists;
 +// these rules control presentation without rebuilding tuios.
 +type SidebarUIConfig struct {
++	PaddingLeft  *int `toml:"padding_left,omitempty"`
 +	SectionGap   *int `toml:"section_gap,omitempty"`
 +	DockGroupGap *int `toml:"dock_group_gap,omitempty"`
 +
@@ -7403,7 +8587,7 @@ index 8163e60..15988f9 100644
  // SidebarConfig holds the [appearance.sidebar] table: everything about the
  // vertical session rail. Each toggle is a pointer so nil can mean "unset, use
  // the default" and an explicit false survives a reload.
-@@ -893,6 +936,7 @@ type SidebarConfig struct {
+@@ -893,6 +942,7 @@ type SidebarConfig struct {
  	// output the custom section draws, its heading, and when it runs. Read
  	// from the file only; see SidebarCustomConfig for why.
  	Custom SidebarCustomConfig `toml:"custom"`
@@ -7411,7 +8595,7 @@ index 8163e60..15988f9 100644
  	// Left and Right independently configure rails on the two screen edges.
  	// When absent, the existing rail still lives at Position with its existing
  	// settings. A new edge must be explicitly enabled; see sidebar_edges.go.
-@@ -2843,6 +2887,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+@@ -2843,6 +2893,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
  	s.KeyboardLayout = cfg.Keybindings.KeyboardLayout
  	s.OptionGlyphs = cfg.Keybindings.OptionGlyphs
  	s.Lock = cfg.Keybindings.Lock != nil && *cfg.Keybindings.Lock
@@ -7420,7 +8604,7 @@ index 8163e60..15988f9 100644
  	// The motion level. A config that was not run through the load path (one
  	// built in code) can still carry the old boolean, so it is folded here as
 diff --git i/internal/config/validation.go w/internal/config/validation.go
-index 21fc5de..93a00b7 100644
+index 21fc5de..9701d39 100644
 --- i/internal/config/validation.go
 +++ w/internal/config/validation.go
 @@ -386,6 +386,7 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
@@ -7431,7 +8615,7 @@ index 21fc5de..93a00b7 100644
  	if cfg.Appearance.Sidebar.Workspaces != "" {
  		result.Warnings = append(result.Warnings, ValidationError{
  			Field:   "appearance.sidebar.workspaces",
-@@ -435,6 +436,40 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
+@@ -435,6 +436,41 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
  // keyword nor a colour, and about theme asked for with no theme to take it
  // from. Either way that surface is left transparent, which is the default, so
  // the frame stays drawable and the warning says why nothing was painted.
@@ -7444,6 +8628,7 @@ index 21fc5de..93a00b7 100644
 +			})
 +		}
 +	}
++	warnRange("padding_left", ui.PaddingLeft, 0, MaxSidebarPaddingLeft)
 +	warnRange("section_gap", ui.SectionGap, 0, 6)
 +	warnRange("dock_group_gap", ui.DockGroupGap, 0, 6)
 +	styles := []struct {
@@ -8404,3 +9589,24 @@ index ee9f01e..2f4f38d 100644
  	incoming.WorkspaceMasterRatio = maps.Clone(canonical.WorkspaceMasterRatio)
  	incoming.WorkspaceStackRatio = maps.Clone(canonical.WorkspaceStackRatio)
  	incoming.WorkspaceMasterSplits = cloneMasterSplits(canonical.WorkspaceMasterSplits)
+diff --git i/internal/sessiontree/sessiontree.go w/internal/sessiontree/sessiontree.go
+index 0b15f73..1c2ecd4 100644
+--- i/internal/sessiontree/sessiontree.go
++++ w/internal/sessiontree/sessiontree.go
+@@ -61,6 +61,8 @@ type Node struct {
+ 	// ID is the session name for a session node, or the window ID for a window.
+ 	ID    string
+ 	Title string
++	// BaseTitle preserves a window label before duplicate numbering.
++	BaseTitle string
+ 	// AgentState is the raw agent-state string (matching session.AgentState:
+ 	// "", "working", "needs_input", "idle", "done", "errored"). For a session
+ 	// node it is the rolled-up state of its windows.
+@@ -371,6 +373,7 @@ func BuildSession(s SessionInput) Node {
+ 			Kind:         KindWindow,
+ 			ID:           w.ID,
+ 			Title:        w.Title,
++			BaseTitle:    w.Title,
+ 			AgentState:   w.AgentState,
+ 			DoneSeen:     w.DoneSeen,
+ 			StateAt:      w.StateAt,

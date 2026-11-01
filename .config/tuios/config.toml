@@ -170,12 +170,13 @@ sections = "overview"
 
 # Live sidebar stylesheet. Elements support visible, align, foreground,
 # background, active_foreground, active_background, bold, active_bold,
-# full_width, padding_left, padding_right, indent, and bottom_offset_percent.
+# italic, uppercase, full_width, padding_left, padding_right, indent, and bottom_offset_percent.
 # Elements: overview_header,
 # space, repository, session, branch, agent, dock_header, mode, workspace, status,
 # window, info, session_control, footer. Reorder overview/dock with sections;
 # reorder dock components in [dock].
 [appearance.sidebar.ui]
+padding_left = 0
 section_gap = 0
 dock_group_gap = 1
 
@@ -188,29 +189,28 @@ background = "panel"
 padding_left = 2
 
 [appearance.sidebar.ui.repository]
-background = "surface"
 active_background = "surface"
+uppercase = true
 
 [appearance.sidebar.ui.branch]
-background = "panel"
 foreground = "fg"
 active_background = "panel"
 full_width = true
 
 [appearance.sidebar.ui.session]
-background = "panel"
 foreground = "fg"
 active_background = "panel"
 full_width = true
 
 [appearance.sidebar.ui.agent]
-background = "panel"
 foreground = "fg"
 bold = false
+italic = true
 active_background = "panel"
 active_foreground = "accent"
-active_bold = true
+active_bold = false
 full_width = true
+padding_left = 1
 
 [appearance.sidebar.ui.mode]
 visible = false

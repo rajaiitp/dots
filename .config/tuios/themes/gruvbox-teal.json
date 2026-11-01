@@ -9,6 +9,9 @@
   "chrome": {
     "accent": "#7daea3",
     "surface": "#504945",
-    "panel": "#3c3836"
+    "panel": "#3c3836",
+    "status": {
+      "busy": "green"
+    }
   }
 }

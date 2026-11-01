@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "cdaab3f5-f111-4292-8363-c84dde788a94",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-31T13:00:31.988Z",
+  "updatedAt": "2026-10-31T13:00:32.662Z",
+  "runs": [
+    {
+      "runId": "6fcfe00d-20c0-4f0c-9e03-cee65405ece7",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fcfe00d-20c0-4f0c-9e03-cee65405ece7",
+      "status": "failed",
+      "startedAt": "2026-10-31T13:00:32.005Z",
+      "completedAt": "2026-10-31T13:00:32.662Z"
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fcfe00d-20c0-4f0c-9e03-cee65405ece7/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fcfe00d-20c0-4f0c-9e03-cee65405ece7/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/subagent-artifacts/6fcfe00d-20c0-4f0c-9e03-cee65405ece7_claude-code_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/bootloader-unlock",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132.jsonl",
+  "summary": "claude-code:\nExternal CLI binary 'claude' was not found on PATH."
+}

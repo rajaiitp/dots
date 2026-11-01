@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "cdaab3f5-f111-4292-8363-c84dde788a94",
+  "projectRoot": "/home/raja/Projects/bootloader-unlock",
+  "recordPath": "/home/raja/.pi/agent/missions/projects/bdbb8901375d11d43399ef28d2918fef1eac463a3bff41e0e9615440aebc8f42/cdaab3f5-f111-4292-8363-c84dde788a94.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-10-31T13:00:32.662Z",
+  "lastRunId": "6fcfe00d-20c0-4f0c-9e03-cee65405ece7"
+}

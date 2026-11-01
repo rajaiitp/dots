@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "id": "1d05d2af-7a3d-4d19-b17a-c2a7401cb193",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-31T13:52:10.082Z",
+  "updatedAt": "2026-10-31T13:53:16.797Z",
+  "runs": [
+    {
+      "runId": "5f6fca26-5633-473d-aae0-b03ed1a45bc9",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "failed",
+      "startedAt": "2026-10-31T13:53:16.797Z",
+      "completedAt": "2026-10-31T13:53:16.797Z",
+      "usage": {
+        "tokens": 40848
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/5f6fca26-5633-473d-aae0-b03ed1a45bc9_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/5f6fca26-5633-473d-aae0-b03ed1a45bc9_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nRequest was aborted\n\nOutput artifact: /home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/5f6fca26-5633-473d-aae0-b03ed1a45bc9_plan-reviewer_0_output.md",
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  }
+}

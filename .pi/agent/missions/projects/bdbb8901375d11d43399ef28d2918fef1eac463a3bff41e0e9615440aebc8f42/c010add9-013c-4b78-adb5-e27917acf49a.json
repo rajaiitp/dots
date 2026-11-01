@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "id": "c010add9-013c-4b78-adb5-e27917acf49a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-31T12:42:46.431Z",
+  "updatedAt": "2026-10-31T12:49:14.365Z",
+  "runs": [
+    {
+      "runId": "901e593a-842f-48b8-9842-c84131631012",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/901e593a-842f-48b8-9842-c84131631012",
+      "status": "complete",
+      "startedAt": "2026-10-31T12:42:46.442Z",
+      "completedAt": "2026-10-31T12:49:14.365Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "901e593a-842f-48b8-9842-c84131631012",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-10-31T12:42:46.499Z",
+      "updatedAt": "2026-10-31T12:45:44.820Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4a3ee0c7-77c8-45fd-afcc-7d9df148967e",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132/4a3ee0c7-77c8-45fd-afcc-7d9df148967e/run-0/session.jsonl"
+      ],
+      "runId": "4a3ee0c7-77c8-45fd-afcc-7d9df148967e",
+      "agent": "reviewer",
+      "completedAt": "2026-10-31T12:45:44.820Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132/4a3ee0c7-77c8-45fd-afcc-7d9df148967e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-31T12:45:44.820Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "901e593a-842f-48b8-9842-c84131631012",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-10-31T12:42:46.542Z",
+      "updatedAt": "2026-10-31T12:49:14.185Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/37df7435-8820-4ba9-9866-3d98bfe1964e",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/subagent-artifacts/outputs/901e593a-842f-48b8-9842-c84131631012/research.md",
+        "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132/37df7435-8820-4ba9-9866-3d98bfe1964e/run-0/session.jsonl"
+      ],
+      "runId": "37df7435-8820-4ba9-9866-3d98bfe1964e",
+      "agent": "researcher",
+      "completedAt": "2026-10-31T12:49:14.185Z",
+      "sessionPath": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132/37df7435-8820-4ba9-9866-3d98bfe1964e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-31T12:49:14.185Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/901e593a-842f-48b8-9842-c84131631012/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/901e593a-842f-48b8-9842-c84131631012/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/subagent-artifacts/4a3ee0c7-77c8-45fd-afcc-7d9df148967e_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/subagent-artifacts/37df7435-8820-4ba9-9866-3d98bfe1964e_researcher_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/bootloader-unlock",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-bootloader-unlock--/2026-10-31T12-08-10-667Z_01a191dc-36aa-735c-ad73-9a3fcc2ce132.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"## Review\\n\\n- **Correct: the raw-name/lookup mismatch is genuine at the dispatcher boundary.** Static disassembly corroborates the harness:\\n  - Resolver searches for `.` at `0x8782c65c–0x8782c66c` (file `0x30688–0x30698`), compares only the preceding prefix, and accepts a unique abbreviation at `0x8782c6d0–0x8782c6dc` (`0x306fc–0x30708`).\\n  - Dispatcher resolves first, then reloads **original `argv[0]`**, not the resolved table name, at `0x8782cea4`; it calls the blacklist at `0x8782cea8` (`0x30ed0`, `0x30ed4`).\\n  - Blacklist performs full-string comparison at `0x87817d70` (`0x1bd9c`), calling the bytewise `strcmp` implementation at `0x878471ec` (`0x4b218`).\\n  - Consequently, canonical-denial versus suffix/abbreviation-dispatch tests are appropriate controls (`tests/test_uboot_policy.py:119–138`). Neither resolver nor blacklist is mocked.\\n\\n- **Correct: `go`/… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/901e593a-842f-48b8-9842-c84131631012/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}
