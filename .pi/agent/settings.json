@@ -22,7 +22,7 @@
   "powerline": {
     "welcome": false
   },
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "xhigh",
   "lastChangelogVersion": "1.4.0",
   "hideThinkingBlock": false,
   "defaultProvider": "openai-codex",

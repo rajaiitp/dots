@@ -74,9 +74,10 @@ fi
 export EDITOR=nvim
 export FZF_DEFAULT_OPTS='--layout=reverse'
 
-# Let Pi's tuiMode setting control inline versus alternate-screen mode.
+# npm corrupts lockfile paths when Pi's agent directory contains symlinks.
 pi() {
-  command pi "$@"
+  local agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+  PI_CODING_AGENT_DIR="${agent_dir:A}" command pi "$@"
 }
 export BLINKA_FT232H=1
 path=(
