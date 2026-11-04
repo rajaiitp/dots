@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "b3e338cd-16a0-41e7-8a9b-2da4bd7ecb4e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-29T02:16:40.013Z",
+  "updatedAt": "2026-10-29T09:08:30.328Z",
+  "runs": [
+    {
+      "runId": "3b121deb-1f89-4c6f-8c51-f489a64578a7",
+      "mode": "workflow",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/3b121deb-1f89-4c6f-8c51-f489a64578a7",
+      "status": "failed",
+      "startedAt": "2026-10-29T02:16:40.033Z",
+      "completedAt": "2026-10-29T09:08:26.977Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "3b121deb-1f89-4c6f-8c51-f489a64578a7",
+      "key": "teardown-fencing",
+      "status": "failed",
+      "startedAt": "2026-10-29T02:16:40.279Z",
+      "updatedAt": "2026-10-29T09:08:30.328Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/d5fb999e-6e95-4f8f-98cf-5ef777b778b0",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/a2be7c63-c6cd-4f61-8ae1-024232563256/run-0/session.jsonl"
+      ],
+      "runId": "d5fb999e-6e95-4f8f-98cf-5ef777b778b0",
+      "agent": "worker",
+      "completedAt": "2026-10-29T09:08:30.328Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/a2be7c63-c6cd-4f61-8ae1-024232563256/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-29T09:08:30.328Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/3b121deb-1f89-4c6f-8c51-f489a64578a7/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/3b121deb-1f89-4c6f-8c51-f489a64578a7/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/raja.selvarajan@fortaegis.com/Dev/atomic-agent-worktrees/hw-test-python",
+  "ownerSessionId": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a.jsonl",
+  "summary": "Workflow script timed out after 14400000ms. Preflight advisory: declared lane 'collector-contracts' was not launched. Preflight advisory: declared lane 'harness-equivalence' was not launched. Preflight advisory: declared lane 'atomic-cutover' was not launched."
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "0e8afd60-edf5-48e3-996d-a5f3d61820cb",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-28T19:38:51.450Z",
+  "updatedAt": "2026-10-28T20:16:41.887Z",
+  "runs": [
+    {
+      "runId": "bc0ddeed-2f5b-4864-89b0-1ddca5671ab3",
+      "mode": "workflow",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/bc0ddeed-2f5b-4864-89b0-1ddca5671ab3",
+      "status": "failed",
+      "startedAt": "2026-10-28T19:38:51.472Z",
+      "completedAt": "2026-10-28T20:16:41.887Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "bc0ddeed-2f5b-4864-89b0-1ddca5671ab3",
+      "key": "complete-approved-migration",
+      "status": "failed",
+      "startedAt": "2026-10-28T19:38:51.723Z",
+      "updatedAt": "2026-10-28T20:16:41.844Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/15057e1c-402e-49a6-8ba1-8adb031eb534",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/bc0ddeed-2f5b-4864-89b0-1ddca5671ab3/implementation/completion.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/b5794801-bfd4-4862-aaa4-cdc6388c58fe/run-0/session.jsonl"
+      ],
+      "runId": "15057e1c-402e-49a6-8ba1-8adb031eb534",
+      "agent": "worker",
+      "completedAt": "2026-10-28T20:16:41.844Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/b5794801-bfd4-4862-aaa4-cdc6388c58fe/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T20:16:41.844Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/bc0ddeed-2f5b-4864-89b0-1ddca5671ab3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/bc0ddeed-2f5b-4864-89b0-1ddca5671ab3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/15057e1c-402e-49a6-8ba1-8adb031eb534"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/raja.selvarajan@fortaegis.com/Dev/atomic-agent-worktrees/hw-test-python",
+  "ownerSessionId": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a.jsonl",
+  "summary": "Error: Run 'complete-approved-migration' failed: Run fan-out: 1/12 used, 11 remaining\nAcceptance rejected: Required criterion 'criterion-1' was reported as not-satisfied.\nSaved output: /Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/bc0ddeed-2f5b-4864-89b0-1ddca5671ab3/implementation/completion.txt\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: declared lane 'safety-1' was not launched. Preflight advisory: declared lane 'compatibility-1' was not launched."
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "id": "bedad9e6-72b2-4d26-954a-e977fcc3da88",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-29T14:47:40.165Z",
+  "updatedAt": "2026-10-29T14:47:46.558Z",
+  "runs": [
+    {
+      "runId": "2088d59e-4511-4658-a67f-f0bdb71ff593",
+      "mode": "workflow",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/2088d59e-4511-4658-a67f-f0bdb71ff593",
+      "status": "failed",
+      "startedAt": "2026-10-29T14:47:40.174Z",
+      "completedAt": "2026-10-29T14:47:46.557Z"
+    },
+    {
+      "runId": "427b1bae-6b9d-494b-8cdf-af87269ce679",
+      "mode": "single",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/427b1bae-6b9d-494b-8cdf-af87269ce679",
+      "status": "failed",
+      "completedAt": "2026-10-29T14:47:45.272Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "2088d59e-4511-4658-a67f-f0bdb71ff593",
+      "key": "plan-review",
+      "status": "failed",
+      "startedAt": "2026-10-29T14:47:40.393Z",
+      "updatedAt": "2026-10-29T14:47:46.488Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/427b1bae-6b9d-494b-8cdf-af87269ce679"
+      ],
+      "runId": "427b1bae-6b9d-494b-8cdf-af87269ce679",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-10-29T14:47:46.487Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-dots--/2026-10-29T09-38-09-091Z_01a18706-2443-75cb-8d2e-e19b67732d99/27b9a595-5feb-47b2-abc4-f14537e9c92c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-29T14:47:46.488Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/2088d59e-4511-4658-a67f-f0bdb71ff593/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/2088d59e-4511-4658-a67f-f0bdb71ff593/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/427b1bae-6b9d-494b-8cdf-af87269ce679/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/427b1bae-6b9d-494b-8cdf-af87269ce679/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/427b1bae-6b9d-494b-8cdf-af87269ce679"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/raja.selvarajan@fortaegis.com/dots",
+  "ownerSessionId": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-dots--/2026-10-29T09-38-09-091Z_01a18706-2443-75cb-8d2e-e19b67732d99.jsonl",
+  "summary": "Error: Run 'plan-review' failed: Run fan-out: 1/64 used, 63 remaining\nAsync runner process 48473 exited or disappeared before writing a result. Marked run failed by stale-run reconciliation.\n\nRunner stderr tail:\nnode:internal/modules/cjs/loader:1569\n  const err = new Error(message);\n              ^\n\nError: Cannot find module '/Users/raja.selvarajan@fortaegis.com/dots/.pi/agent/npm/node_modules/pi-subagents/src/runs/background/subagent-runner.ts'\nRequire stack:\n- /Users/raja.selvarajan@fortaegis.com/dots/_index.js\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1569:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)\n    at require.resolve (node:internal/modules/helpers:214:31)\n    at jitiResolve (/Users/raja.selvarajan@fortaegis.com/dots/.pi/agent/npm/node_modules/jiti/dist/jiti.cjs:1:176713)\n    at Object.assign.resolve.Object.assign.paths [as resolve] (/Users/raja.selvarajan@fortaegis.com/dots/.pi/agent/npm/node_modules/jiti/dist/jiti.cjs:1:187564)\n    at file:///Users/raja.selvarajan@fortaegis.com/dots/.pi/agent/npm/node_modules/jiti/lib/jiti-cli.mjs:29:42 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: [ '/Users/raja.selvarajan@fortaegis.com/dots/_index.js' ]\n}\n\nNode.js v26.7.0\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)"
+}

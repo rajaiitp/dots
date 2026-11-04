@@ -242,6 +242,8 @@ toggle_pip = []
 toggle_tiling = []
 
 [keybindings.prefix_mode]
+last_session = ["tab"]
+prefix_next_window = ["n"]
 prefix_session_switcher = []
 prefix_toggle_tiling = []
 prefix_close_session = []

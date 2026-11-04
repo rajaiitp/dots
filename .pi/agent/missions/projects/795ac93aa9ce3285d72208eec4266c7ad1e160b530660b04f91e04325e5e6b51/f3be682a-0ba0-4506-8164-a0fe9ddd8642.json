@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "id": "f3be682a-0ba0-4506-8164-a0fe9ddd8642",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-10-28T11:02:03.261Z",
+  "updatedAt": "2026-10-28T11:02:03.798Z",
+  "runs": [
+    {
+      "runId": "533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9",
+      "mode": "workflow",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9",
+      "status": "complete",
+      "startedAt": "2026-10-28T11:02:03.279Z",
+      "completedAt": "2026-10-28T11:02:03.798Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9",
+      "key": "config",
+      "status": "failed",
+      "startedAt": "2026-10-28T11:02:03.521Z",
+      "updatedAt": "2026-10-28T11:02:03.612Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-10-28T11:02:03.612Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/a082256b-cf5c-4bc6-b539-da244ada91d7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T11:02:03.612Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9",
+      "key": "pool",
+      "status": "failed",
+      "startedAt": "2026-10-28T11:02:03.619Z",
+      "updatedAt": "2026-10-28T11:02:03.678Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-10-28T11:02:03.678Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/b1e5b161-d4b4-4576-a0c0-987b0611572b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T11:02:03.678Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9",
+      "key": "hardware",
+      "status": "failed",
+      "startedAt": "2026-10-28T11:02:03.684Z",
+      "updatedAt": "2026-10-28T11:02:03.745Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "completedAt": "2026-10-28T11:02:03.745Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/81a959f9-14ce-4f25-8090-3f5f2599c3aa/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T11:02:03.745Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/533ba8c0-5e7d-44fd-9ccd-9cf64ac7c6f9/events.jsonl",
+      "description": "Lifecycle events"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/raja.selvarajan@fortaegis.com/Dev/atomic-agent-worktrees/hw-test-python",
+  "ownerSessionId": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: null Emitted: {\n  \"lane\": \"config\",\n  \"result\": {\n    \"key\": \"config\",\n    \"ok\": false,\n    \"output\": \"Run fan-out: 3/3 used, 0 remaining\\nFailed to start async run '7f735a80-a4b9-4c5e-94cb-f9882242f4ac': Background children require pi installed as the npm package (@earendil-works/pi-coding-agent) with its dependencies; /Users/raja.selvarajan@fortaegis.com/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent does not provide @earendil-works/chord, @earendil-works/chord/context, so the async runner cannot create child sessions. A standalone pi binary cannot run background children.\",\n    \"error\": \"Run fan-out: 3/3 used, 0 remaining\\nFailed to start async run '7f735a80-a4b9-4c5e-94cb-f9882242f4ac': Background children require pi installed as the npm package (@earendil-works/pi-coding-agent) with its dependencies; /Users/raja.selvarajan@fortaegis.com/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent does not provide @earendil-works/chord, @earendil-works/chord/context, so the async r Trace: 6 event(s)."
+}

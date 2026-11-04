@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "id": "99dd411d-33eb-4426-a689-1296c581f3f3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-10-28T20:22:51.395Z",
+  "updatedAt": "2026-10-28T22:22:15.942Z",
+  "runs": [
+    {
+      "runId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "mode": "workflow",
+      "asyncDir": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "status": "failed",
+      "startedAt": "2026-10-28T20:22:51.420Z",
+      "completedAt": "2026-10-28T22:22:15.942Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "audit-partial-lifecycle",
+      "status": "completed",
+      "startedAt": "2026-10-28T20:22:51.713Z",
+      "updatedAt": "2026-10-28T20:28:06.094Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/7659779c-e3fb-4d60-b326-0d22ae73977d",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/reviews/partial-lifecycle.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/d866b6e0-feff-499a-a650-539803b6c3e5/run-0/session.jsonl"
+      ],
+      "runId": "7659779c-e3fb-4d60-b326-0d22ae73977d",
+      "agent": "reviewer",
+      "completedAt": "2026-10-28T20:28:06.094Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/d866b6e0-feff-499a-a650-539803b6c3e5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T20:28:06.094Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "recovery",
+      "status": "completed",
+      "startedAt": "2026-10-28T20:28:06.110Z",
+      "updatedAt": "2026-10-28T20:56:06.392Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/c530841b-e38f-4dd7-87a0-1b94b1ce8ba1",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/recovery.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/de16ba27-fa6b-4aa6-817a-f580aebbf3e8/run-0/session.jsonl"
+      ],
+      "runId": "c530841b-e38f-4dd7-87a0-1b94b1ce8ba1",
+      "agent": "worker",
+      "completedAt": "2026-10-28T20:56:06.391Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/de16ba27-fa6b-4aa6-817a-f580aebbf3e8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T20:56:06.392Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "configure",
+      "status": "completed",
+      "startedAt": "2026-10-28T20:56:06.427Z",
+      "updatedAt": "2026-10-28T21:19:28.798Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/df714e94-8cb9-4a91-b20c-4173c2925ca2",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/configure.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/2715d94a-50c1-4db6-8268-a8752d832974/run-0/session.jsonl"
+      ],
+      "runId": "df714e94-8cb9-4a91-b20c-4173c2925ca2",
+      "agent": "worker",
+      "completedAt": "2026-10-28T21:19:28.798Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/2715d94a-50c1-4db6-8268-a8752d832974/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T21:19:28.798Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "setup",
+      "status": "completed",
+      "startedAt": "2026-10-28T21:19:28.822Z",
+      "updatedAt": "2026-10-28T21:39:28.746Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/cc2c3889-db57-4584-b3e5-d0c49081718e",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/setup.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/b2989b14-54e6-44bd-b79e-91a39cd3d857/run-0/session.jsonl"
+      ],
+      "runId": "cc2c3889-db57-4584-b3e5-d0c49081718e",
+      "agent": "worker",
+      "completedAt": "2026-10-28T21:39:28.745Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/b2989b14-54e6-44bd-b79e-91a39cd3d857/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T21:39:28.746Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "access-diagnostics",
+      "status": "completed",
+      "startedAt": "2026-10-28T21:39:28.773Z",
+      "updatedAt": "2026-10-28T22:03:19.219Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/64571dbd-00b0-4c54-86c8-39f3f1f11f54",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/access-diagnostics.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/a1c2720d-1fd0-4aed-ba64-7a97142bf5be/run-0/session.jsonl"
+      ],
+      "runId": "64571dbd-00b0-4c54-86c8-39f3f1f11f54",
+      "agent": "worker",
+      "completedAt": "2026-10-28T22:03:19.219Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/a1c2720d-1fd0-4aed-ba64-7a97142bf5be/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T22:03:19.219Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "deployment",
+      "status": "completed",
+      "startedAt": "2026-10-28T22:03:19.260Z",
+      "updatedAt": "2026-10-28T22:20:21.548Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/13e7e080-a29a-4f58-987f-6f4780219ce2",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/deployment.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/e5f3d25b-f6b1-4ad1-8182-67d5178f43c7/run-0/session.jsonl"
+      ],
+      "runId": "13e7e080-a29a-4f58-987f-6f4780219ce2",
+      "agent": "worker",
+      "completedAt": "2026-10-28T22:20:21.548Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/e5f3d25b-f6b1-4ad1-8182-67d5178f43c7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T22:20:21.548Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "65aa9fbf-ec5d-4253-b76f-0f123113808d",
+      "key": "traffic",
+      "status": "failed",
+      "startedAt": "2026-10-28T22:20:21.575Z",
+      "updatedAt": "2026-10-28T22:22:15.904Z",
+      "artifactPaths": [
+        "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/aa7b2721-c48f-40c2-8b6f-c69052ef9acd",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/traffic.txt",
+        "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/70219465-e450-479b-b26d-b5bd8cf76208/run-0/session.jsonl"
+      ],
+      "runId": "aa7b2721-c48f-40c2-8b6f-c69052ef9acd",
+      "agent": "worker",
+      "completedAt": "2026-10-28T22:22:15.904Z",
+      "sessionPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a/70219465-e450-479b-b26d-b5bd8cf76208/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-10-28T22:22:15.904Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/65aa9fbf-ec5d-4253-b76f-0f123113808d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/65aa9fbf-ec5d-4253-b76f-0f123113808d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/7659779c-e3fb-4d60-b326-0d22ae73977d"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/c530841b-e38f-4dd7-87a0-1b94b1ce8ba1"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/df714e94-8cb9-4a91-b20c-4173c2925ca2"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/cc2c3889-db57-4584-b3e5-d0c49081718e"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/64571dbd-00b0-4c54-86c8-39f3f1f11f54"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/13e7e080-a29a-4f58-987f-6f4780219ce2"
+    },
+    {
+      "kind": "output",
+      "path": "/var/folders/4j/hcjsx3nx09n0c2dbm_26yrd40000gp/T/pi-subagents-uid-502/async-subagent-runs/aa7b2721-c48f-40c2-8b6f-c69052ef9acd"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/Users/raja.selvarajan@fortaegis.com/Dev/atomic-agent-worktrees/hw-test-python",
+  "ownerSessionId": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/2026-10-28T10-56-17-943Z_01a18227-5416-7eb4-8e16-bed4a287fa2a.jsonl",
+  "summary": "Error: Run 'traffic' failed: Run fan-out: 7/30 used, 23 remaining\nAcceptance rejected: Required criterion 'criterion-1' was reported as not-satisfied.\nSaved output: /Users/raja.selvarajan@fortaegis.com/.pi/agent/sessions/--Users-raja.selvarajan@fortaegis.com-Dev-atomic-agent-worktrees-hw-test-python--/subagent-artifacts/outputs/65aa9fbf-ec5d-4253-b76f-0f123113808d/stages/traffic.txt\n    at MessagePort.<anonymous> ([worker eval]:873:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:856:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) Preflight advisory: workflow key 'configure' launched without a declared lane. Preflight advisory: workflow key 'setup' launched without a declared lane. Preflight advisory: workflow key 'access-diagnostics' launched without a declared lane. Preflight advisory: workflow key 'deployment' launched without a declared lane. Preflight advisory: workflow key 'traffic' launched without a declared lane. Preflight advisory: declared lane 'atomic-cutover' was not launched."
+}

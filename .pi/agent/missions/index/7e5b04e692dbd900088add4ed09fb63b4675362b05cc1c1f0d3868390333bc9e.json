@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "0e8afd60-edf5-48e3-996d-a5f3d61820cb",
+  "projectRoot": "/Users/raja.selvarajan@fortaegis.com/Dev/atomic-agent-worktrees/hw-test-python",
+  "recordPath": "/Users/raja.selvarajan@fortaegis.com/.pi/agent/missions/projects/795ac93aa9ce3285d72208eec4266c7ad1e160b530660b04f91e04325e5e6b51/0e8afd60-edf5-48e3-996d-a5f3d61820cb.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-10-28T20:16:41.887Z",
+  "lastRunId": "bc0ddeed-2f5b-4864-89b0-1ddca5671ab3"
+}

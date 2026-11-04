@@ -9610,3 +9610,87 @@ index 0b15f73..1c2ecd4 100644
  			AgentState:   w.AgentState,
  			DoneSeen:     w.DoneSeen,
  			StateAt:      w.StateAt,
+diff --git a/e2e/tui/shared_border_junction_test.go b/e2e/tui/shared_border_junction_test.go
+new file mode 100644
+index 0000000..4400503
+--- /dev/null
++++ b/e2e/tui/shared_border_junction_test.go
+@@ -0,0 +1,57 @@
++package tuie2e
++
++import (
++	"fmt"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSharedBorderJunctionArms(t *testing.T) {
++	for _, tc := range []struct {
++		name, position, style, layout, extra string
++		panes                                int
++		want                                 rune
++	}{
++		{name: "master-left", position: "left", style: "normal", layout: "master-stack", panes: 3, want: '├'},
++		{name: "master-right", position: "right", style: "normal", layout: "master-stack", panes: 3, want: '┤'},
++		{name: "master-top", position: "top", style: "normal", layout: "master-stack", panes: 3, want: '┬'},
++		{name: "master-bottom", position: "bottom", style: "normal", layout: "master-stack", panes: 3, want: '┴'},
++		{name: "thick", position: "left", style: "thick", layout: "master-stack", panes: 3, want: '┣'},
++		{name: "double", position: "right", style: "double", layout: "master-stack", panes: 3, want: '╣'},
++		{name: "ascii", position: "left", style: "ascii", layout: "master-stack", panes: 3, want: '+'},
++		{name: "cross", position: "left", style: "normal", layout: "master-stack", extra: "master_count = 2\nmaster_grid = false\n", panes: 4, want: '┼'},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			base := t.TempDir()
++			const session = "junction"
++			appearance := fmt.Sprintf("shared_borders = true\nmotion = \"none\"\ngap = 1\nborder_style = %q\nmaster_position = %q\n%s", tc.style, tc.position, tc.extra)
++			term := layoutSession(t, base, session, tc.layout, appearance, tc.panes)
++			dir := artifactDir(t)
++			t.Cleanup(func() { saveArtifact(t, term, dir, "junction") })
++			rects := waitForSettledGeometryIn(t, base, session, tc.panes)
++			master, stack := rects[0], rects[1]
++			var x, y int
++			switch tc.position {
++			case "left":
++				x, y = master.X+master.Width, stack.Y+stack.Height
++				if tc.panes == 4 {
++					y = master.Y + master.Height
++				}
++			case "right":
++				x, y = master.X-1, stack.Y+stack.Height
++			case "top":
++				x, y = stack.X+stack.Width, master.Y+master.Height
++			case "bottom":
++				x, y = stack.X+stack.Width, master.Y-1
++			default:
++				t.Fatalf("unsupported master position %q", tc.position)
++			}
++			if err := term.WaitFor(func(s tuitest.Screen) bool {
++				return s.Cell(x, y).Rune == tc.want
++			}, uiTimeout); err != nil {
++				t.Fatalf("junction (%d,%d) is %q, want %q: %v\n%s\n%s", x, y, term.Screen().Cell(x, y).Rune, tc.want, err, describeRects(rects), term.Snapshot())
++			}
++		})
++	}
++}
+diff --git a/internal/app/render_border_grid.go b/internal/app/render_border_grid.go
+index c68ac13..977af77 100644
+--- a/internal/app/render_border_grid.go
++++ b/internal/app/render_border_grid.go
+@@ -559,7 +559,15 @@ func (m *OS) buildSeparatorLayers(splits []dividerLine, stack []paneLayer, key s
+ 		case c.join == joinRight:
+ 			ch = chTLeft
+ 		case c.vert && c.horiz:
+-			ch = chCross
++			r, ok := junctionGlyph(
++				grid[[2]int{x - 1, y}].isHoriz(), grid[[2]int{x + 1, y}].isHoriz(),
++				grid[[2]int{x, y - 1}].isVert(), grid[[2]int{x, y + 1}].isVert(),
++				g,
++			)
++			if !ok {
++				continue
++			}
++			ch = r
+ 		case c.vert:
+ 			// Check horizontal neighbors for T-junctions. An arm is only grown
+ 			// toward a neighbour carrying a line that runs into this one: two
