@@ -139,8 +139,9 @@ confirm_close = false
 [appearance]
 theme = "gruvbox-teal"
 dockbar_position = "top"
-border_focused_color = "accent"
-border_unfocused_color = "bright_black"
+dock_background = "#1c302d"
+border_focused_color = "#65988c"
+border_unfocused_color = "#65988c"
 border_focused_gradient = ""
 session_border = false
 hide_window_buttons = true
@@ -151,8 +152,12 @@ gap = 1
 dock_compact = true
 dock_workspace_label_max = 0
 dim_unfocused = 8
+focused_pane_tint = "#504945"
+focused_pane_tint_percent = 35
 window_title_position = "hidden"
-border_style = "normal"
+border_style = "glyphs"
+window_chrome_background = "#1c302d"
+glyphs = "horizontal-lines"
 session_colors = false
 focus_follows_mouse = true
 master_position = "left"
@@ -167,6 +172,9 @@ drop_preview = "off"
 [appearance.sidebar]
 position = "left"
 sections = "overview"
+background = "#1c302d"
+show_separator = false
+session_controls = true
 
 # Live sidebar stylesheet. Elements support visible, align, foreground,
 # background, active_foreground, active_background, bold, active_bold,

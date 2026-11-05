@@ -22,6 +22,7 @@ try {
 			extension,
 			directory,
 			join(directory, "..", "tuios"),
+			join(directory, "..", "fork-pane"),
 		],
 		{ stdio: "inherit" },
 	);
@@ -62,6 +63,7 @@ try {
 				join(directory, "handoff.ts"),
 				join(directory, "..", "tuios", "index.ts"),
 				join(directory, "..", "tuios", "runtime.ts"),
+				join(directory, "..", "fork-pane", "index.ts"),
 			],
 		}),
 	);

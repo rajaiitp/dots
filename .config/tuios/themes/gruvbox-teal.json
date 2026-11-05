@@ -10,6 +10,7 @@
     "accent": "#7daea3",
     "surface": "#504945",
     "panel": "#3c3836",
+    "rule": "accent",
     "status": {
       "busy": "green"
     }

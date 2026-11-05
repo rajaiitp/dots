@@ -4,7 +4,7 @@ set -euo pipefail
 readonly SOURCE_URL="https://github.com/Gaurav-Gosain/tuios.git"
 readonly BASE_COMMIT="3638a6f2093edfa7396b6233515786de4dbda683"
 readonly VERSION="0.11.0"
-readonly PATCH_SHA256="4f4afa9f1701d8a29280675a4f782842dd6e4367d0ab27b510fa8dfa7bc20d5f"
+readonly PATCH_SHA256="6b004aca8dc8ce35dabb274f7fae4293de555a6cd7bf9ff54a4da88b8374fcd5"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PATCH_FILE="$SCRIPT_DIR/sidebar-unified-agents.patch"
 readonly STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tuios-unified-sidebar"
@@ -200,7 +200,7 @@ stage() {
     cd "$source"
     run_limited go test ./internal/config/...
     run_limited go test ./internal/session/... -run 'Test.*Workspace|Test.*ForegroundCommand' -count=1
-    run_limited go test ./internal/app/... -run 'TestSharedBorder|TestTerminalPrefixOnly|TestOverview|TestCollapsedOverview|TestSidebarText|TestSidebarDock|TestCloseWorkspace|TestWorkspaceCloseSetting|TestSplash|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
+    run_limited go test ./internal/app/... -run 'TestFocusedPaneTint|TestBackgrounds|TestPaneBackground|TestEachSurface|TestFastPathPaint|TestDim|TestSharedBorder|TestTerminalPrefixOnly|TestOverview|TestCollapsedOverview|TestSidebarText|TestSidebarDock|TestCloseWorkspace|TestWorkspaceCloseSetting|TestSplash|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
     run_limited go test ./internal/input/... -count=1
     run_limited go vet ./internal/config/... ./internal/app/... ./internal/session/... ./internal/input/...
     CGO_ENABLED=0 run_limited go build -trimpath \
@@ -209,7 +209,7 @@ stage() {
     (
       cd e2e/tui
       TUIOS_E2E=1 TUIOS_E2E_BIN="$built" run_limited go test \
-        -run '^Test(SharedBorderJunctionArms|TerminalPrefixOnlyInteraction|TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels|SidebarCheckoutTracksHeadWithoutFollowingPaneCaches|SidebarPaddingReloadsWithoutRestart|WorkspaceAutoNameRetainsProgramAcrossSplitsReattachAndRestart|WorkspaceCloseWithoutConfirmation|PendingConsoleDoesNotFlashWelcome|WorkspaceTabCloseClosesThatTabsWorkspace|CloseWorkspaceFromAKeyClosesTheCurrentOne)$' -count=1 -timeout 180s .
+        -run '^Test(SharedBorderHiddenSidebarEndpoints|SidebarSessionControlsFooter|SidebarReclaimedDividerColumn|FocusedPaneTintFollowsFocus|SharedBorderJunctionArms|TerminalPrefixOnlyInteraction|TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels|SidebarCheckoutTracksHeadWithoutFollowingPaneCaches|SidebarPaddingReloadsWithoutRestart|WorkspaceAutoNameRetainsProgramAcrossSplitsReattachAndRestart|WorkspaceCloseWithoutConfirmation|PendingConsoleDoesNotFlashWelcome|WorkspaceTabCloseClosesThatTabsWorkspace|CloseWorkspaceFromAKeyClosesTheCurrentOne)$' -count=1 -timeout 180s .
     )
   )
   validate_binary "$built"
