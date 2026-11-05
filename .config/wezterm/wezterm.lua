@@ -1,7 +1,7 @@
 local wezterm = require("wezterm")
 local config = {}
 
--- Plain outer terminal: Herdr and other workflows are started explicitly.
+-- tuios is started explicitly in this outer terminal.
 config.color_scheme = "GruvboxDark"
 config.font = wezterm.font_with_fallback({
     { family = "JetBrains Mono", weight = "Light" },
@@ -53,7 +53,7 @@ config.enable_tab_bar = false
 
 -- Do not enable Kitty keyboard protocol in this older WezTerm release: its
 -- enhanced encoding can prevent Escape from reaching terminal applications.
--- Ctrl+Tab below sends the required CSI-u sequences only for Herdr.
+-- Forward modified keys below without enabling the protocol globally.
 config.audible_bell = "Disabled"
 config.automatically_reload_config = true
 
@@ -67,21 +67,15 @@ config.mouse_bindings = {
 
 local act = wezterm.action
 config.keys = {
-    -- WezTerm's defaults reserve Ctrl-Tab for native tab switching. Forward
-    -- these keys so Herdr can cycle agents while keeping other defaults,
-    -- including the built-in font-size shortcuts.
-    -- Bypass WezTerm's native tab switching and send Herdr's Ctrl+Tab keys
-    -- without globally enabling the Kitty keyboard protocol.
+    -- Hand modified Tab keys to tuios rather than WezTerm's hidden tabs.
     { key = "Tab", mods = "CTRL",       action = act.SendString("\x1b[9;5u") },
     { key = "Tab", mods = "CTRL|SHIFT", action = act.SendString("\x1b[9;6u") },
     { key = "c",   mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
     { key = "v",   mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
-    -- Let Herdr receive Ctrl+Shift+P for its workspace/pane picker.
     { key = "p",   mods = "CTRL|SHIFT", action = act.DisableDefaultAssignment },
 }
 
 -- WezTerm reserves Ctrl+1..9 for its own tabs even when its tab bar is hidden.
--- Forward CSI-u sequences so Herdr's indexed tab bindings receive them.
 for index = 1, 9 do
     local key = tostring(index)
     table.insert(config.keys, {

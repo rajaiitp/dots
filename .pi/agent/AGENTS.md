@@ -53,6 +53,11 @@ These rules apply everywhere: chat, plans, tool arguments, delegated prompts, fi
 - Add code comments, docstrings, or TODOs only when needed to explain a non-obvious invariant, constraint, or reason the code cannot express. Never describe obvious behavior, restate code, narrate an edit, or leave commentary that naming or structure can replace.
 - Before finishing, remove redundant prose, comments, docstrings, TODOs, and documentation.
 
+## Terminal workflow
+
+- Use the native `tuios` tool for sessions, numbered workspaces, and panes. Read `tuios --skill` when the CLI contract is needed.
+- Keep `/branch-workspace` and `branch_workspace_handoff` on the native tuios backend.
+
 ## Planning and review
 
 For architecture or complex implementation work:

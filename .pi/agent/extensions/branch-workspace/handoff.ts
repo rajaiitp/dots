@@ -8,6 +8,15 @@ import type {
 	SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { TuiosClient, TuiosError, tuiosBinary } from "../tuios/client.ts";
+import {
+	getTuiosState,
+	type NativeDestination,
+	type NativeState,
+	openTuiosDestination,
+	startForkedAgent,
+	submitHandoff,
+} from "../tuios/runtime.ts";
 
 const TOOL_NAME = "branch_workspace_handoff";
 const JOURNAL_TYPE = "branch-workspace-handoff";
@@ -55,7 +64,7 @@ enum HandoffErrorKind {
 	Invalid = 0,
 	Validation,
 	Git,
-	Herdr,
+	Tuios,
 	Snapshot,
 	Agent,
 	Journal,
@@ -107,8 +116,8 @@ function errorKindValue(kind: HandoffErrorKind): string {
 			return "validation";
 		case HandoffErrorKind.Git:
 			return "git";
-		case HandoffErrorKind.Herdr:
-			return "herdr";
+		case HandoffErrorKind.Tuios:
+			return "tuios";
 		case HandoffErrorKind.Snapshot:
 			return "snapshot";
 		case HandoffErrorKind.Agent:
@@ -138,19 +147,7 @@ export type HandoffDirectory = {
 	branchRef?: string;
 };
 
-type Destination = { workspaceId: string; tabId: string; paneId: string };
-type Pane = {
-	pane_id?: string;
-	workspace_id?: string;
-	tab_id?: string;
-	cwd?: string;
-	foreground_cwd?: string;
-};
-type Workspace = {
-	workspace_id?: string;
-	worktree?: { checkout_path?: string };
-};
-type HerdrState = { panes: Pane[]; workspaces: Workspace[] };
+type Destination = NativeDestination;
 type AgentConfig = {
 	model: string;
 	thinkingLevel: string;
@@ -164,12 +161,7 @@ type HandoffDependencies = {
 		agentName: string,
 		config: AgentConfig,
 		signal?: AbortSignal,
-	) => Promise<void>;
-	focusDestination: (
-		bin: string,
-		destination: Destination,
-		signal?: AbortSignal,
-	) => Promise<void>;
+	) => Promise<NativeDestination>;
 };
 
 type CommandResult = {
@@ -216,13 +208,13 @@ async function checkedCommand(
 		result = await command(pi, binary, args, cwd, signal);
 	} catch (error) {
 		throw new HandoffError(
-			binary === "git" ? HandoffErrorKind.Git : HandoffErrorKind.Herdr,
+			binary === "git" ? HandoffErrorKind.Git : HandoffErrorKind.Tuios,
 			errorText(error),
 		);
 	}
 	if (result.code !== 0 || result.killed) {
 		throw new HandoffError(
-			binary === "git" ? HandoffErrorKind.Git : HandoffErrorKind.Herdr,
+			binary === "git" ? HandoffErrorKind.Git : HandoffErrorKind.Tuios,
 			`${binary} ${args.slice(0, 2).join(" ")} failed: ${(result.stderr || result.stdout || `exit ${result.code}`).trim()}`,
 		);
 	}
@@ -467,164 +459,22 @@ export async function writeHandoffSnapshot(
 	return path;
 }
 
-async function herdr<T>(
-	pi: ExtensionAPI,
-	bin: string,
-	args: string[],
-	signal?: AbortSignal,
-): Promise<T> {
-	const result = await checkedCommand(pi, bin, args, undefined, signal);
-	let envelope: { result?: T; error?: { message?: string; code?: string } };
-	try {
-		envelope = JSON.parse(result.stdout) as typeof envelope;
-	} catch {
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			"Herdr returned malformed JSON.",
-		);
-	}
-	if (envelope.error)
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			envelope.error.message || envelope.error.code || "Herdr command failed.",
-		);
-	if (envelope.result === undefined)
-		throw new HandoffError(HandoffErrorKind.Herdr, "Herdr returned no result.");
-	return envelope.result;
-}
-
-async function herdrState(
-	pi: ExtensionAPI,
-	bin: string,
-	signal?: AbortSignal,
-): Promise<HerdrState> {
-	const [panes, workspaces] = await Promise.all([
-		herdr<{ panes?: Pane[] }>(pi, bin, ["pane", "list"], signal),
-		herdr<{ workspaces?: Workspace[] }>(pi, bin, ["workspace", "list"], signal),
-	]);
-	return { panes: panes.panes ?? [], workspaces: workspaces.workspaces ?? [] };
-}
-
-async function pathMatches(
-	path: string | undefined,
-	expected: string,
-): Promise<boolean> {
-	if (!path) return false;
-	try {
-		return (await realpath(path)) === expected;
-	} catch (error) {
-		if (
-			["ENOENT", "ENOTDIR"].includes(
-				(error as NodeJS.ErrnoException).code || "",
-			)
-		)
-			return false;
-		throw error;
-	}
-}
-
-async function matchingWorkspace(
-	state: HerdrState,
-	path: string,
-): Promise<string | undefined> {
-	for (const workspace of state.workspaces) {
-		if (!workspace.workspace_id) continue;
-		if (workspace.worktree?.checkout_path) {
-			if (await pathMatches(workspace.worktree.checkout_path, path))
-				return workspace.workspace_id;
-			continue;
-		}
-		for (const pane of state.panes) {
-			if (pane.workspace_id !== workspace.workspace_id) continue;
-			if (
-				(await pathMatches(pane.cwd, path)) ||
-				(await pathMatches(pane.foreground_cwd, path))
-			)
-				return workspace.workspace_id;
-		}
-	}
-	return undefined;
-}
-
 export async function openHandoffDestination(
 	pi: ExtensionAPI,
 	bin: string,
 	target: HandoffDirectory,
-	state: HerdrState,
+	_state: NativeState,
 	requestId: string,
 	signal?: AbortSignal,
 ): Promise<Destination> {
-	const workspaceId = await matchingWorkspace(state, target.path);
-	const args = workspaceId
-		? [
-				"tab",
-				"create",
-				"--workspace",
-				workspaceId,
-				"--cwd",
-				target.path,
-				"--label",
-				`pi-handoff-${requestId}`,
-				"--no-focus",
-			]
-		: [
-				"workspace",
-				"create",
-				"--cwd",
-				target.path,
-				"--label",
-				target.name,
-				"--no-focus",
-			];
-	const result = await herdr<{
-		workspace?: Workspace;
-		tab?: { tab_id?: string; workspace_id?: string };
-		root_pane?: Pane;
-	}>(pi, bin, args, signal);
-	const pane = result.root_pane;
-	const destination = {
-		workspaceId:
-			workspaceId || result.workspace?.workspace_id || pane?.workspace_id,
-		tabId: result.tab?.tab_id || pane?.tab_id,
-		paneId: pane?.pane_id,
-	};
-	if (!destination.workspaceId || !destination.tabId || !destination.paneId) {
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			`Herdr returned an incomplete destination: ${JSON.stringify(destination)}`,
-		);
-	}
-	if (
-		(pane?.workspace_id && pane.workspace_id !== destination.workspaceId) ||
-		(result.tab?.workspace_id &&
-			result.tab.workspace_id !== destination.workspaceId) ||
-		(pane?.tab_id && pane.tab_id !== destination.tabId)
-	) {
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			"Herdr returned contradictory destination identifiers.",
-		);
-	}
-	if (state.panes.some((existing) => existing.pane_id === destination.paneId)) {
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			"Herdr returned an existing pane instead of a new destination.",
-		);
-	}
-	if (
-		!(await pathMatches(pane?.cwd, target.path)) &&
-		!(await pathMatches(pane?.foreground_cwd, target.path))
-	) {
-		throw new HandoffError(
-			HandoffErrorKind.Herdr,
-			"Herdr did not create the destination in the selected directory.",
-		);
-	}
-	return {
-		workspaceId: destination.workspaceId,
-		tabId: destination.tabId,
-		paneId: destination.paneId,
-	};
+	return openTuiosDestination(
+		new TuiosClient(pi, bin),
+		target.path,
+		target.name,
+		requestId,
+		undefined,
+		signal,
+	);
 }
 
 function agentName(name: string, requestId: string): string {
@@ -634,13 +484,23 @@ function agentName(name: string, requestId: string): string {
 
 export function registerDirectoryHandoff(
 	pi: ExtensionAPI,
-	dependencies: HandoffDependencies,
+	dependencies: HandoffDependencies = {
+		startAgent: (bin, destination, snapshot, name, config, signal) =>
+			startForkedAgent(
+				new TuiosClient(pi, bin),
+				destination,
+				snapshot,
+				name,
+				config,
+				signal,
+			),
+	},
 ): void {
 	pi.registerTool({
 		name: TOOL_NAME,
 		label: "Workspace Handoff",
 		description:
-			"Fork this Pi session into any existing directory in a Herdr workspace, submit the task, and return without monitoring destination progress.",
+			"Fork this Pi session into any existing directory in a native tuios session, queue the task once, and return without monitoring destination progress.",
 		promptSnippet:
 			"Hand off a task to an independent Pi session in any existing directory",
 		promptGuidelines: [
@@ -653,11 +513,13 @@ export function registerDirectoryHandoff(
 			const requestId = randomUUID()
 				.replaceAll("-", "")
 				.slice(0, REQUEST_ID_LENGTH);
-			const bin = process.env.HERDR_BIN?.trim() || "herdr";
+			const bin = tuiosBinary();
+			const client = new TuiosClient(pi, bin);
 			let target: HandoffDirectory | undefined;
 			let destination: Destination | undefined;
 			let snapshot: string | undefined;
 			let name: string | undefined;
+			let queueId: string | undefined;
 			let stage = LaunchStage.Prepared;
 			const journal = (outcome: HandoffOutcome, message: string) => {
 				try {
@@ -672,7 +534,7 @@ export function registerDirectoryHandoff(
 						agentName: name,
 						snapshot,
 						location: destination,
-						tabLabel: `pi-handoff-${requestId}`,
+						queueId,
 					});
 				} catch (error) {
 					throw new HandoffError(HandoffErrorKind.Journal, errorText(error));
@@ -692,7 +554,7 @@ export function registerDirectoryHandoff(
 					input.worktree,
 					signal,
 				);
-				const state = await herdrState(pi, bin, signal);
+				const state = await getTuiosState(client, signal);
 				try {
 					snapshot = await writeHandoffSnapshot(ctx, toolCallId, requestId);
 				} catch (error) {
@@ -719,7 +581,7 @@ export function registerDirectoryHandoff(
 				);
 				stage = LaunchStage.DestinationCreated;
 				try {
-					await dependencies.startAgent(
+					destination = await dependencies.startAgent(
 						bin,
 						destination,
 						snapshot,
@@ -735,15 +597,10 @@ export function registerDirectoryHandoff(
 					throw new HandoffError(HandoffErrorKind.Agent, errorText(error));
 				}
 				stage = LaunchStage.Submitting;
-				await herdr(
-					pi,
-					bin,
-					[
-						"agent",
-						"prompt",
-						name,
-						`Continue this task in ${target.path}:\n\n${task}`,
-					],
+				queueId = await submitHandoff(
+					client,
+					destination,
+					`Continue this task in ${target.path}:\n\n${task}`,
 					signal,
 				);
 				stage = LaunchStage.Submitted;
@@ -751,19 +608,11 @@ export function registerDirectoryHandoff(
 					HandoffOutcome.Submitted,
 					"Task submitted; destination progress is not monitored.",
 				);
-				let warning: string | undefined;
-				if (ctx.mode === "tui" && ctx.hasUI) {
-					try {
-						await dependencies.focusDestination(bin, destination, signal);
-					} catch (error) {
-						warning = `Destination focus failed: ${errorText(error)}`;
-					}
-				}
 				return {
 					content: [
 						{
 							type: "text",
-							text: `Task submitted to Pi ${name} in ${target.path}.${warning ? ` ${warning}` : ""}`,
+							text: `Task queued for Pi ${name} in ${target.path}; queue ${queueId}.`,
 						},
 					],
 					details: {
@@ -774,7 +623,7 @@ export function registerDirectoryHandoff(
 						targetPath: target.path,
 						agentName: name,
 						...destination,
-						warning,
+						queueId,
 					},
 				};
 			} catch (error) {
@@ -792,7 +641,7 @@ export function registerDirectoryHandoff(
 				}
 				const destinationMayExist = stage !== LaunchStage.Prepared;
 				const location = destination
-					? ` Destination: ${destination.workspaceId}/${destination.tabId}/${destination.paneId}; agent ${name}.`
+					? ` Destination: ${destination.sessionName}/${destination.paneId || "not-started"}; agent ${name}.`
 					: "";
 				const recovery = destinationMayExist
 					? " Destination creation was attempted; do not resubmit blindly."
@@ -819,7 +668,9 @@ export function registerDirectoryHandoff(
 							kind: errorKindValue(
 								error instanceof HandoffError
 									? error.kind
-									: HandoffErrorKind.Unknown,
+									: error instanceof TuiosError
+										? HandoffErrorKind.Tuios
+										: HandoffErrorKind.Unknown,
 							),
 							message,
 						},

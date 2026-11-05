@@ -61,7 +61,7 @@ git_prompt_info() {
 setopt prompt_subst
 PROMPT='%(?..%F{red}[%?] %f)%F{cyan}$(short_pwd)%f$(git_prompt_info) '
 
-if [[ -n ${HERDR_PANE_ID:-} && -r ${GHOSTTY_RESOURCES_DIR:-}/shell-integration/zsh/ghostty-integration ]]; then
+if [[ -n ${TUIOS_PANE_ID:-} && -r ${GHOSTTY_RESOURCES_DIR:-}/shell-integration/zsh/ghostty-integration ]]; then
   unsetopt prompt_sp
   source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
 fi
@@ -99,13 +99,6 @@ fi
 HISTSIZE=10000
 SAVEHIST=10000
 HISTFILE="${ZDOTDIR:-$HOME}/.zsh_history"
-
-# Herdr app-tab commands are passed through a pane's environment.
-if [[ -n ${HERDR_APP_TAB_COMMAND:-} ]]; then
-  herdr_app_tab_command=$HERDR_APP_TAB_COMMAND
-  unset HERDR_APP_TAB_COMMAND
-  eval "$herdr_app_tab_command"
-fi
 
 # Zimfw initializes Zsh completion. Load it before SDKMAN so SDKMAN reuses the
 # existing completion system instead of calling compinit a second time.

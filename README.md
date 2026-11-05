@@ -5,7 +5,7 @@ Curated user configuration for the current Omarchy setup.
 Tracked configuration:
 
 - Hyprland and Omarchy shell
-- Neovim (`vim.pack`), Herdr, Sesh, WezTerm, and Zsh
+- Neovim (`vim.pack`), tuios, WezTerm, and Zsh
 - Git
 - Aerospace, Karabiner, and Tuxedo placeholders for cross-platform use
 

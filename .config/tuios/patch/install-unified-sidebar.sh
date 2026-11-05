@@ -16,6 +16,10 @@ readonly ORIGINAL_NONE="$BACKUP_DIR/original-none"
 readonly BIN_DIR="${HOME}/.local/bin"
 readonly TARGET="$BIN_DIR/tuios"
 readonly LOCK_FILE="$STATE_DIR/install.lock"
+readonly LOCK_DIRECTORY="$STATE_DIR/install.lock.d"
+readonly MAX_BUILD_CPUS=6
+readonly BUILD_NICE_LEVEL=10
+LOCK_DIRECTORY_HELD=0
 
 usage() {
   printf 'usage: %s [--install|--stage-only|--activate|--rollback|--status]\n' "$0"
@@ -29,7 +33,31 @@ require() {
 }
 
 sha256_file() {
-  sha256sum "$1" | awk '{print $1}'
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+release_lock() {
+  if [[ $LOCK_DIRECTORY_HELD == 1 ]]; then
+    rmdir "$LOCK_DIRECTORY"
+    LOCK_DIRECTORY_HELD=0
+  fi
+}
+
+run_limited() {
+  local cpus
+  cpus="$(getconf _NPROCESSORS_ONLN 2>/dev/null || printf '2')"
+  cpus=$((cpus / 2))
+  (( cpus > 0 )) || cpus=1
+  (( cpus <= MAX_BUILD_CPUS )) || cpus=$MAX_BUILD_CPUS
+  if command -v taskset >/dev/null 2>&1; then
+    nice -n "$BUILD_NICE_LEVEL" taskset -c "0-$((cpus - 1))" "$@"
+  else
+    GOMAXPROCS="$cpus" GOFLAGS="${GOFLAGS:-} -p=$cpus" nice -n "$BUILD_NICE_LEVEL" "$@"
+  fi
 }
 
 validate_patch() {
@@ -106,8 +134,11 @@ ensure_original_backup() {
   fi
   [[ -e "$ORIGINAL_BACKUP" || -e "$ORIGINAL_NONE" ]] && return
 
-  local legacy legacy_name temp
-  legacy="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'tuios-*' -printf '%T@ %p\n' | sort -n | head -1 | cut -d' ' -f2-)"
+  local legacy="" legacy_name temp file
+  for file in "$BACKUP_DIR"/tuios-*; do
+    [[ -f "$file" ]] || continue
+    if [[ -z "$legacy" || "$file" -ot "$legacy" ]]; then legacy="$file"; fi
+  done
   if [[ -n "$legacy" ]]; then
     legacy_name="$(basename "$legacy")"
     if [[ "$legacy_name" == tuios-none-* ]]; then
@@ -137,14 +168,12 @@ stage() {
   require git
   require go
   require gofmt
-  require sha256sum
   require nice
-  require taskset
   validate_patch
 
   local work source built date
   work="$(mktemp -d "$STATE_DIR/build.XXXXXX")"
-  trap "rm -rf -- '$work'" EXIT
+  trap "rm -rf -- '$work'; release_lock" EXIT
   source="$work/source"
   built="$work/tuios"
   date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -160,26 +189,26 @@ stage() {
   git -C "$source" apply --check "$PATCH_FILE"
   git -C "$source" apply "$PATCH_FILE"
 
-  mapfile -t go_files < <(git -C "$source" diff --name-only -- '*.go')
-  if ((${#go_files[@]})); then
-    (cd "$source" && gofmt -w "${go_files[@]}")
-  fi
+  local go_file
+  while IFS= read -r go_file; do
+    [[ -n "$go_file" ]] && gofmt -w "$source/$go_file"
+  done < <(git -C "$source" diff --name-only -- '*.go'; git -C "$source" ls-files --others --exclude-standard -- '*.go')
   git -C "$source" diff --check
   git -C "$source" apply --check --reverse "$PATCH_FILE"
 
   (
     cd "$source"
-    nice -n 10 taskset -c 0-5 go test ./internal/config/...
-    nice -n 10 taskset -c 0-5 go test ./internal/session/... -run 'Test.*Workspace|Test.*ForegroundCommand' -count=1
-    nice -n 10 taskset -c 0-5 go test ./internal/app/... -run 'TestSharedBorder|TestTerminalPrefixOnly|TestOverview|TestCollapsedOverview|TestSidebarText|TestSidebarDock|TestCloseWorkspace|TestWorkspaceCloseSetting|TestSplash|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
-    nice -n 10 taskset -c 0-5 go test ./internal/input/... -count=1
-    nice -n 10 taskset -c 0-5 go vet ./internal/config/... ./internal/app/... ./internal/session/... ./internal/input/...
-    CGO_ENABLED=0 nice -n 10 taskset -c 0-5 go build -trimpath \
+    run_limited go test ./internal/config/...
+    run_limited go test ./internal/session/... -run 'Test.*Workspace|Test.*ForegroundCommand' -count=1
+    run_limited go test ./internal/app/... -run 'TestSharedBorder|TestTerminalPrefixOnly|TestOverview|TestCollapsedOverview|TestSidebarText|TestSidebarDock|TestCloseWorkspace|TestWorkspaceCloseSetting|TestSplash|TestClosingTheLastPane|TestTheNextSession|TestSectionEditorSwitches|TestCompactRail|TestSidebarFitsNarrowScreens|TestRailSectionsNeverOverlapAtAnyHeight|TestRailAddressingHoldsAcrossEveryCombination|TestTheRailKeepsItsWidthAcrossSessions|TestDraggedInactiveFlatWorkspaceTabUsesAccent|TestDetachConsumesKeyboardResetReply|TestDetachKeyboardResetWaitTimesOut' -count=1
+    run_limited go test ./internal/input/... -count=1
+    run_limited go vet ./internal/config/... ./internal/app/... ./internal/session/... ./internal/input/...
+    CGO_ENABLED=0 run_limited go build -trimpath \
       -ldflags "-s -w -X main.version=$VERSION -X main.commit=$BASE_COMMIT -X main.date=$date -X main.builtBy=pi-overview-patch" \
       -o "$built" ./cmd/tuios
     (
       cd e2e/tui
-      TUIOS_E2E=1 TUIOS_E2E_BIN="$built" nice -n 10 taskset -c 0-5 go test \
+      TUIOS_E2E=1 TUIOS_E2E_BIN="$built" run_limited go test \
         -run '^Test(SharedBorderJunctionArms|TerminalPrefixOnlyInteraction|TopDockStaysBetweenSidebars|DockFlatTabsGrowWithLabels|SidebarCheckoutTracksHeadWithoutFollowingPaneCaches|SidebarPaddingReloadsWithoutRestart|WorkspaceAutoNameRetainsProgramAcrossSplitsReattachAndRestart|WorkspaceCloseWithoutConfirmation|PendingConsoleDoesNotFlashWelcome|WorkspaceTabCloseClosesThatTabsWorkspace|CloseWorkspaceFromAKeyClosesTheCurrentOne)$' -count=1 -timeout 180s .
     )
   )
@@ -195,7 +224,7 @@ stage() {
   } >"$META.tmp"
   mv -f "$META.tmp" "$META"
   rm -rf -- "$work"
-  trap - EXIT
+  trap release_lock EXIT
   printf 'staged %s\n' "$CANDIDATE"
 }
 
@@ -214,7 +243,7 @@ activate() {
 
   local incoming
   incoming="$(mktemp "$BIN_DIR/.tuios.new.XXXXXX")"
-  trap "rm -f -- '$incoming' '$STATE_DIR/active.meta.tmp'" EXIT
+  trap "rm -f -- '$incoming' '$STATE_DIR/active.meta.tmp'; release_lock" EXIT
   install -m 0755 "$CANDIDATE" "$incoming"
   validate_binary "$incoming"
   [[ "$(sha256_file "$incoming")" == "$(sha256_file "$CANDIDATE")" ]] || {
@@ -224,7 +253,7 @@ activate() {
   install -m 0644 "$META" "$STATE_DIR/active.meta.tmp"
   mv -f "$incoming" "$TARGET"
   mv -f "$STATE_DIR/active.meta.tmp" "$STATE_DIR/active.meta"
-  trap - EXIT
+  trap release_lock EXIT
   printf 'activated %s\n' "$TARGET"
   printf 'the running daemon was not restarted\n'
 }
@@ -240,10 +269,10 @@ rollback() {
   else
     validate_runnable_binary "$ORIGINAL_BACKUP"
     incoming="$(mktemp "$BIN_DIR/.tuios.rollback.XXXXXX")"
-    trap "rm -f -- '$incoming'" EXIT
+    trap "rm -f -- '$incoming'; release_lock" EXIT
     install -m 0755 "$ORIGINAL_BACKUP" "$incoming"
     mv -f "$incoming" "$TARGET"
-    trap - EXIT
+    trap release_lock EXIT
     printf 'restored %s from %s\n' "$TARGET" "$ORIGINAL_BACKUP"
   fi
   rm -f -- "$STATE_DIR/active.meta"
@@ -273,10 +302,15 @@ main() {
     exit 2
   }
   mkdir -p "$STATE_DIR" "$BACKUP_DIR"
-  require flock
-  require sha256sum
-  exec 9>"$LOCK_FILE"
-  flock 9
+  if ! command -v sha256sum >/dev/null 2>&1; then require shasum; fi
+  if command -v flock >/dev/null 2>&1; then
+    exec 9>"$LOCK_FILE"
+    flock 9
+  else
+    mkdir "$LOCK_DIRECTORY" || { printf 'another installation holds %s\n' "$LOCK_DIRECTORY" >&2; exit 1; }
+    LOCK_DIRECTORY_HELD=1
+  fi
+  trap release_lock EXIT
 
   case "$mode" in
     --install) stage; activate ;;

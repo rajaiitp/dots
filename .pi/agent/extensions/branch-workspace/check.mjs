@@ -21,6 +21,7 @@ try {
 			"check",
 			extension,
 			directory,
+			join(directory, "..", "tuios"),
 		],
 		{ stdio: "inherit" },
 	);
@@ -59,7 +60,8 @@ try {
 			files: [
 				extension,
 				join(directory, "handoff.ts"),
-				join(directory, "agent-start.ts"),
+				join(directory, "..", "tuios", "index.ts"),
+				join(directory, "..", "tuios", "runtime.ts"),
 			],
 		}),
 	);

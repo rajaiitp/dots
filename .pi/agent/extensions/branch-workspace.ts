@@ -21,40 +21,31 @@ import {
 	SelectList,
 	Text,
 } from "@earendil-works/pi-tui";
-import { runAgentStart } from "./branch-workspace/agent-start.ts";
 import {
 	registerDirectoryHandoff,
 	resolveHandoffDirectory,
 } from "./branch-workspace/handoff.ts";
+import { TuiosClient, tuiosBinary } from "./tuios/client.ts";
+import {
+	classifyWorktreeSession,
+	DestinationKind,
+	focusDestination as focusTuiosDestination,
+	startForkedAgent as launchForkedAgent,
+	type NativeDestination,
+	openTuiosDestination as prepareTuiosDestination,
+	getTuiosState as readTuiosState,
+	SessionRegistrationKind,
+	submitHandoff,
+} from "./tuios/runtime.ts";
 
 const COMMAND_NAME = "branch-workspace";
-const HERDR_DEFAULT_BIN = "herdr";
+
 const GIT_BIN = "git";
 const EXTERNAL_COMMAND_TIMEOUT_MS = 30_000;
 const WORKTREE_CREATE_TIMEOUT_MS = 120_000;
-const AGENT_START_TIMEOUT_MS = 120_000;
 const REMOTE_FETCH_TIMEOUT_MS = 180_000;
 const MAX_AGENT_NAME_LENGTH = 32;
 const WORKTREE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-
-const HERDR_COMMAND = {
-	AGENT: "agent",
-	PANE: "pane",
-	TAB: "tab",
-	WORKSPACE: "workspace",
-	WORKTREE: "worktree",
-} as const;
-
-const HERDR_SUBCOMMAND = {
-	CREATE: "create",
-	CURRENT: "current",
-	FOCUS: "focus",
-	GET: "get",
-	LIST: "list",
-	OPEN: "open",
-	PROMPT: "prompt",
-	START: "start",
-} as const;
 
 const PICKER_LABEL = {
 	NEW_BRANCH: "Create a new branch",
@@ -95,19 +86,7 @@ enum WipOutcome {
 	Failed,
 }
 
-export enum DestinationKind {
-	Invalid = 0,
-	NewWorktreeWorkspace,
-	ExistingWorkspaceTab,
-}
-
-export enum WorkspaceRegistrationKind {
-	Invalid = 0,
-	Absent,
-	Registered,
-	Conflict,
-	Ambiguous,
-}
+export { DestinationKind, SessionRegistrationKind } from "./tuios/runtime.ts";
 
 type CommandResult = {
 	stdout: string;
@@ -188,61 +167,6 @@ type TargetPlan =
 	| RemoteTrackingTarget
 	| ExistingWorktreeTarget;
 
-type HerdrPane = {
-	pane_id?: string;
-	workspace_id?: string;
-	tab_id?: string;
-	cwd?: string;
-	foreground_cwd?: string;
-	agent?: string;
-	agent_session?: { kind?: string; value?: string; agent?: string };
-};
-
-type HerdrWorktreeMetadata = {
-	checkout_path?: string;
-	is_linked_worktree?: boolean;
-	repo_key?: string;
-	repo_name?: string;
-	repo_root?: string;
-};
-
-type HerdrWorkspace = {
-	workspace_id?: string;
-	active_tab_id?: string;
-	label?: string;
-	worktree?: HerdrWorktreeMetadata;
-};
-
-type HerdrTab = {
-	tab_id?: string;
-	workspace_id?: string;
-	label?: string;
-};
-
-type HerdrState = {
-	panes: HerdrPane[];
-	workspaces: HerdrWorkspace[];
-	tabs: HerdrTab[];
-};
-
-type WorkspaceMatch = {
-	workspaceId: string;
-	label: string;
-};
-
-type WorkspaceRegistration = {
-	kind: WorkspaceRegistrationKind;
-	registered?: WorkspaceMatch;
-	details?: string;
-};
-
-type HerdrDestination = {
-	kind: DestinationKind;
-	workspaceId: string;
-	tabId: string;
-	paneId: string;
-};
-
 type RecoveryStash = {
 	objectId: string;
 	marker: string;
@@ -255,14 +179,8 @@ type WipResult = {
 
 type TargetPreparation = {
 	plan: TargetPlan;
-	preferredWorkspaceId?: string;
+	preferredSessionName?: string;
 	initialTargetStatus?: string;
-};
-
-type ForkedAgentConfig = {
-	model: string;
-	thinkingLevel: string;
-	sessionName: string;
 };
 
 export function isValidWorktreeName(value: string): boolean {
@@ -290,13 +208,6 @@ export function isPathContained(
 			`..${process.platform === "win32" ? "\\" : "/"}`,
 		) &&
 		!isAbsolute(pathFromParent)
-	);
-}
-
-function isSameOrContained(parentPath: string, candidatePath: string): boolean {
-	return (
-		resolve(parentPath) === resolve(candidatePath) ||
-		isPathContained(parentPath, candidatePath)
 	);
 }
 
@@ -356,24 +267,6 @@ async function runChecked(
 		throw commandFailure(command, args, result);
 	}
 	return result;
-}
-
-export function parseHerdrResult<T>(output: string): T {
-	let envelope: { result?: T; error?: { code?: string; message?: string } };
-	try {
-		envelope = JSON.parse(output) as typeof envelope;
-	} catch {
-		throw new Error("Herdr returned malformed JSON.");
-	}
-	if (envelope.error) {
-		throw new Error(
-			envelope.error.message || envelope.error.code || "Herdr command failed.",
-		);
-	}
-	if (envelope.result === undefined) {
-		throw new Error("Herdr response did not contain a result.");
-	}
-	return envelope.result;
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -844,7 +737,7 @@ async function promptWorktreeDestination(
 	const suggestedName = defaultWorktreeName(branch);
 	while (true) {
 		const entered = await ctx.ui.input(
-			"Worktree and Herdr workspace name",
+			"Worktree and tuios session name",
 			suggestedName,
 		);
 		if (entered === undefined) return undefined;
@@ -1235,124 +1128,6 @@ async function chooseWipBehavior(
 		: WipChoice.Skip;
 }
 
-async function getHerdrState(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	signal?: AbortSignal,
-): Promise<HerdrState> {
-	const [paneResult, workspaceResult, tabResult] = await Promise.all([
-		runChecked(pi, herdrBin, [HERDR_COMMAND.PANE, HERDR_SUBCOMMAND.LIST], {
-			signal,
-		}),
-		runChecked(pi, herdrBin, [HERDR_COMMAND.WORKSPACE, HERDR_SUBCOMMAND.LIST], {
-			signal,
-		}),
-		runChecked(pi, herdrBin, [HERDR_COMMAND.TAB, HERDR_SUBCOMMAND.LIST], {
-			signal,
-		}),
-	]);
-	const panes =
-		parseHerdrResult<{ panes?: HerdrPane[] }>(paneResult.stdout).panes ?? [];
-	const workspaces =
-		parseHerdrResult<{ workspaces?: HerdrWorkspace[] }>(workspaceResult.stdout)
-			.workspaces ?? [];
-	const tabs =
-		parseHerdrResult<{ tabs?: HerdrTab[] }>(tabResult.stdout).tabs ?? [];
-	return { panes, workspaces, tabs };
-}
-
-export async function classifyWorktreeWorkspace(
-	state: HerdrState,
-	worktreePath: string,
-	repoKey: string,
-	expectedLinkedWorktree = true,
-): Promise<WorkspaceRegistration> {
-	const expectedCheckout = await canonicalPath(worktreePath);
-	const expectedRepoKey = await canonicalPath(repoKey);
-	const registered = new Map<string, WorkspaceMatch>();
-	const conflicts = new Set<string>();
-
-	for (const workspace of state.workspaces) {
-		if (!workspace.workspace_id || !workspace.worktree?.checkout_path) continue;
-		const checkoutPath = await canonicalPath(workspace.worktree.checkout_path);
-		if (checkoutPath !== expectedCheckout) continue;
-		const metadataRepoKey = workspace.worktree.repo_key
-			? await canonicalPath(workspace.worktree.repo_key)
-			: undefined;
-		if (
-			metadataRepoKey === expectedRepoKey &&
-			workspace.worktree.is_linked_worktree === expectedLinkedWorktree
-		) {
-			registered.set(workspace.workspace_id, {
-				workspaceId: workspace.workspace_id,
-				label: workspace.label || workspace.workspace_id,
-			});
-		} else {
-			conflicts.add(workspace.workspace_id);
-		}
-	}
-
-	for (const pane of state.panes) {
-		if (!pane.workspace_id || registered.has(pane.workspace_id)) continue;
-		const panePaths = [pane.cwd, pane.foreground_cwd].filter(
-			(value): value is string => Boolean(value),
-		);
-		for (const panePath of panePaths) {
-			const canonicalPanePath = await canonicalPath(panePath);
-			if (isSameOrContained(expectedCheckout, canonicalPanePath)) {
-				conflicts.add(pane.workspace_id);
-				break;
-			}
-		}
-	}
-
-	const matches = [...registered.values()].sort((left, right) =>
-		left.workspaceId.localeCompare(right.workspaceId),
-	);
-	if (matches.length === 1 && conflicts.size === 0) {
-		return {
-			kind: WorkspaceRegistrationKind.Registered,
-			registered: matches[0],
-		};
-	}
-	if (matches.length > 1 || (matches.length > 0 && conflicts.size > 0)) {
-		return {
-			kind: WorkspaceRegistrationKind.Ambiguous,
-			details: `registered=${matches.map((match) => match.workspaceId).join(",") || "none"}; conflicting=${[...conflicts].sort().join(",") || "none"}`,
-		};
-	}
-	if (conflicts.size > 0) {
-		return {
-			kind: WorkspaceRegistrationKind.Conflict,
-			details: [...conflicts].sort().join(", "),
-		};
-	}
-	return { kind: WorkspaceRegistrationKind.Absent };
-}
-
-function registrationError(
-	registration: WorkspaceRegistration,
-	worktreePath: string,
-): Error {
-	switch (registration.kind) {
-		case WorkspaceRegistrationKind.Conflict:
-			return new Error(
-				`Herdr workspace(s) ${registration.details} use ${worktreePath} without the expected linked-worktree registration. Close them and reopen the worktree through Herdr before retrying.`,
-			);
-		case WorkspaceRegistrationKind.Ambiguous:
-			return new Error(
-				`Herdr has ambiguous workspaces for ${worktreePath} (${registration.details}). Close the duplicates and retry.`,
-			);
-		case WorkspaceRegistrationKind.Invalid:
-			return new Error("Invalid Herdr workspace registration state.");
-		case WorkspaceRegistrationKind.Absent:
-		case WorkspaceRegistrationKind.Registered:
-			return new Error("Herdr workspace registration is not an error.");
-		default:
-			return assertNever(registration.kind);
-	}
-}
-
 function targetKindLabel(plan: TargetPlan): string {
 	switch (plan.kind) {
 		case TargetKind.NewBranch:
@@ -1388,10 +1163,10 @@ async function confirmMutation(
 	preparation: TargetPreparation,
 	wipChoice: WipChoice,
 ): Promise<boolean> {
-	const { plan, preferredWorkspaceId, initialTargetStatus } = preparation;
-	const destination = preferredWorkspaceId
-		? `Reuse registered Herdr worktree workspace ${preferredWorkspaceId} and create a new tab.`
-		: "Open a registered Herdr worktree workspace grouped beneath its repository.";
+	const { plan, preferredSessionName, initialTargetStatus } = preparation;
+	const destination = preferredSessionName
+		? `Open a new Pi pane in tuios session ${preferredSessionName}.`
+		: "Create a detached tuios session in the target worktree.";
 	const targetState = initialTargetStatus
 		? `Existing target has ${countStatusEntries(initialTargetStatus)} changed path(s).`
 		: undefined;
@@ -1476,24 +1251,8 @@ async function createRecoveryStash(
 	return { objectId, marker };
 }
 
-async function preflightHerdr(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	signal?: AbortSignal,
-): Promise<void> {
-	const paneResult = await runChecked(
-		pi,
-		herdrBin,
-		[HERDR_COMMAND.PANE, HERDR_SUBCOMMAND.CURRENT, "--current"],
-		{ signal },
-	);
-	const paneEnvelope = parseHerdrResult<{ pane?: HerdrPane }>(
-		paneResult.stdout,
-	);
-	if (!paneEnvelope.pane?.workspace_id) {
-		throw new Error("Herdr did not report the current workspace ID.");
-	}
-	await getHerdrState(pi, herdrBin, signal);
+async function preflightTuios(client: TuiosClient): Promise<void> {
+	await client.call("session-info", { session: process.env.TUIOS_SESSION });
 }
 
 async function revalidateTarget(
@@ -1687,422 +1446,6 @@ async function applyWipToTarget(
 	};
 }
 
-async function paneUsesWorktree(
-	pane: HerdrPane,
-	worktreePath: string,
-): Promise<boolean> {
-	for (const panePath of [pane.cwd, pane.foreground_cwd]) {
-		if (!panePath) continue;
-		if (
-			isSameOrContained(
-				await canonicalPath(worktreePath),
-				await canonicalPath(panePath),
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-}
-
-type HerdrDestinationExpectation = {
-	beforePaneIds?: ReadonlySet<string>;
-	expectedTabLabel?: string;
-};
-
-async function verifyHerdrDestination(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	git: GitContext,
-	plan: TargetPlan,
-	destination: HerdrDestination,
-	signal?: AbortSignal,
-	expectation: HerdrDestinationExpectation = {},
-): Promise<void> {
-	const state = await getHerdrState(pi, herdrBin, signal);
-	const registration = await classifyWorktreeWorkspace(
-		state,
-		plan.worktreePath,
-		git.commonDir,
-		plan.isLinkedWorktree,
-	);
-	if (
-		registration.kind !== WorkspaceRegistrationKind.Registered ||
-		registration.registered?.workspaceId !== destination.workspaceId
-	) {
-		throw new Error(
-			`Herdr destination ${destination.workspaceId} is not the sole registered worktree workspace for ${plan.worktreePath}.`,
-		);
-	}
-	const pane = state.panes.find(
-		(candidate) => candidate.pane_id === destination.paneId,
-	);
-	if (expectation.beforePaneIds?.has(destination.paneId)) {
-		throw new Error(
-			"Herdr destination pane existed before this destination operation.",
-		);
-	}
-	if (expectation.expectedTabLabel) {
-		const tab = state.tabs.find(
-			(candidate) => candidate.tab_id === destination.tabId,
-		);
-		if (
-			!tab ||
-			tab.workspace_id !== destination.workspaceId ||
-			tab.label !== expectation.expectedTabLabel
-		) {
-			throw new Error(
-				"Herdr destination tab does not have the operation's unique label.",
-			);
-		}
-	}
-	if (
-		!pane ||
-		pane.workspace_id !== destination.workspaceId ||
-		pane.tab_id !== destination.tabId ||
-		!(await paneUsesWorktree(pane, plan.worktreePath))
-	) {
-		throw new Error(
-			"Herdr destination pane does not match the expected workspace, tab, and worktree path.",
-		);
-	}
-}
-
-async function createHerdrTab(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	git: GitContext,
-	workspaceId: string,
-	plan: TargetPlan,
-	tabLabel = `pi-${plan.worktreeName}`,
-	signal?: AbortSignal,
-): Promise<HerdrDestination> {
-	const before = await getHerdrState(pi, herdrBin, signal);
-	const beforePaneIds = new Set(
-		before.panes
-			.map((pane) => pane.pane_id)
-			.filter((paneId): paneId is string => Boolean(paneId)),
-	);
-	const result = await runCommand(
-		pi,
-		herdrBin,
-		[
-			HERDR_COMMAND.TAB,
-			HERDR_SUBCOMMAND.CREATE,
-			"--workspace",
-			workspaceId,
-			"--cwd",
-			plan.worktreePath,
-			"--label",
-			tabLabel,
-			"--no-focus",
-		],
-		{ timeout: WORKTREE_CREATE_TIMEOUT_MS, signal },
-	);
-	let destination: HerdrDestination | undefined;
-	let responseError: string | undefined;
-	if (result.code === 0 && !result.killed) {
-		try {
-			const created = parseHerdrResult<{
-				tab?: HerdrTab;
-				root_pane?: HerdrPane;
-			}>(result.stdout);
-			const tabId = created.tab?.tab_id ?? created.root_pane?.tab_id;
-			const paneId = created.root_pane?.pane_id;
-			if (!tabId || !paneId) {
-				throw new Error(
-					"Herdr created a tab but did not return its tab and root pane IDs.",
-				);
-			}
-			destination = {
-				kind: DestinationKind.ExistingWorkspaceTab,
-				workspaceId,
-				tabId,
-				paneId,
-			};
-		} catch (error) {
-			responseError = formatError(error);
-		}
-	}
-	if (!destination) {
-		const after = await getHerdrState(pi, herdrBin, signal);
-		const expectedTabIds = new Set(
-			after.tabs
-				.filter(
-					(tab) => tab.workspace_id === workspaceId && tab.label === tabLabel,
-				)
-				.map((tab) => tab.tab_id)
-				.filter((tabId): tabId is string => Boolean(tabId)),
-		);
-		const candidates: HerdrPane[] = [];
-		for (const pane of after.panes) {
-			if (
-				pane.workspace_id === workspaceId &&
-				pane.pane_id &&
-				!beforePaneIds.has(pane.pane_id) &&
-				pane.tab_id &&
-				expectedTabIds.has(pane.tab_id) &&
-				(await paneUsesWorktree(pane, plan.worktreePath))
-			) {
-				candidates.push(pane);
-			}
-		}
-		const tabIds = new Set(candidates.map((pane) => pane.tab_id));
-		const candidate = candidates.length === 1 ? candidates[0] : undefined;
-		if (candidate?.tab_id && candidate.pane_id && tabIds.size === 1) {
-			destination = {
-				kind: DestinationKind.ExistingWorkspaceTab,
-				workspaceId,
-				tabId: candidate.tab_id,
-				paneId: candidate.pane_id,
-			};
-		} else {
-			const failure =
-				result.code !== 0 || result.killed
-					? commandFailure(
-							herdrBin,
-							[HERDR_COMMAND.TAB, HERDR_SUBCOMMAND.CREATE],
-							result,
-						).message
-					: (responseError ?? "Herdr returned an incomplete tab response.");
-			throw new Error(`${failure} Unable to reconcile the new tab safely.`);
-		}
-	}
-	await verifyHerdrDestination(pi, herdrBin, git, plan, destination, signal, {
-		beforePaneIds,
-		expectedTabLabel: tabLabel,
-	});
-	return destination;
-}
-
-async function openRegisteredWorktreeWorkspace(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	git: GitContext,
-	plan: TargetPlan,
-	before: HerdrState,
-	tabLabel = `pi-${plan.worktreeName}`,
-	signal?: AbortSignal,
-): Promise<HerdrDestination> {
-	const args = [
-		HERDR_COMMAND.WORKTREE,
-		HERDR_SUBCOMMAND.OPEN,
-		"--cwd",
-		git.primaryWorktreePath,
-		"--path",
-		plan.worktreePath,
-		"--label",
-		plan.worktreeName,
-		"--no-focus",
-	];
-	const result = await runCommand(pi, herdrBin, args, {
-		timeout: WORKTREE_CREATE_TIMEOUT_MS,
-		signal,
-	});
-	let responseError: string | undefined;
-	if (result.code === 0 && !result.killed) {
-		try {
-			const opened = parseHerdrResult<{
-				already_open?: unknown;
-				root_pane?: HerdrPane;
-				workspace?: HerdrWorkspace;
-			}>(result.stdout);
-			if (typeof opened.already_open !== "boolean") {
-				throw new Error(
-					"Herdr worktree open did not return a valid already_open flag.",
-				);
-			}
-			const workspaceId = opened.workspace?.workspace_id;
-			if (!workspaceId)
-				throw new Error("Herdr worktree open did not return a workspace ID.");
-			const after = await getHerdrState(pi, herdrBin, signal);
-			const registration = await classifyWorktreeWorkspace(
-				after,
-				plan.worktreePath,
-				git.commonDir,
-				plan.isLinkedWorktree,
-			);
-			if (
-				registration.kind !== WorkspaceRegistrationKind.Registered ||
-				registration.registered?.workspaceId !== workspaceId
-			) {
-				throw new Error(
-					"Herdr worktree open returned a workspace without the expected repository registration.",
-				);
-			}
-			if (opened.already_open) {
-				return createHerdrTab(
-					pi,
-					herdrBin,
-					git,
-					workspaceId,
-					plan,
-					tabLabel,
-					signal,
-				);
-			}
-			const rootPane = opened.root_pane;
-			if (
-				!rootPane?.pane_id ||
-				!rootPane.tab_id ||
-				rootPane.workspace_id !== workspaceId ||
-				!(await paneUsesWorktree(rootPane, plan.worktreePath))
-			) {
-				throw new Error(
-					"Herdr worktree open returned a contradictory or incomplete root pane.",
-				);
-			}
-			const destination: HerdrDestination = {
-				kind: DestinationKind.NewWorktreeWorkspace,
-				workspaceId,
-				tabId: rootPane.tab_id,
-				paneId: rootPane.pane_id,
-			};
-			const beforePaneIds = new Set(
-				before.panes
-					.map((pane) => pane.pane_id)
-					.filter((paneId): paneId is string => Boolean(paneId)),
-			);
-			await verifyHerdrDestination(
-				pi,
-				herdrBin,
-				git,
-				plan,
-				destination,
-				signal,
-				{ beforePaneIds },
-			);
-			return destination;
-		} catch (error) {
-			responseError = formatError(error);
-		}
-	}
-
-	const after = await getHerdrState(pi, herdrBin, signal);
-	const registration = await classifyWorktreeWorkspace(
-		after,
-		plan.worktreePath,
-		git.commonDir,
-		plan.isLinkedWorktree,
-	);
-	if (
-		registration.kind === WorkspaceRegistrationKind.Registered &&
-		registration.registered
-	) {
-		const beforePaneIds = new Set(
-			before.panes
-				.map((pane) => pane.pane_id)
-				.filter((paneId): paneId is string => Boolean(paneId)),
-		);
-		const candidates: HerdrPane[] = [];
-		for (const pane of after.panes) {
-			if (
-				pane.workspace_id === registration.registered.workspaceId &&
-				pane.pane_id &&
-				!beforePaneIds.has(pane.pane_id) &&
-				pane.tab_id &&
-				(await paneUsesWorktree(pane, plan.worktreePath))
-			) {
-				candidates.push(pane);
-			}
-		}
-		const candidate = candidates.length === 1 ? candidates[0] : undefined;
-		if (candidate?.tab_id && candidate.pane_id) {
-			const beforeWorkspaceIds = new Set(
-				before.workspaces
-					.map((workspace) => workspace.workspace_id)
-					.filter(Boolean),
-			);
-			const reconciled: HerdrDestination = {
-				kind: beforeWorkspaceIds.has(registration.registered.workspaceId)
-					? DestinationKind.ExistingWorkspaceTab
-					: DestinationKind.NewWorktreeWorkspace,
-				workspaceId: registration.registered.workspaceId,
-				tabId: candidate.tab_id,
-				paneId: candidate.pane_id,
-			};
-			await verifyHerdrDestination(
-				pi,
-				herdrBin,
-				git,
-				plan,
-				reconciled,
-				signal,
-				{ beforePaneIds },
-			);
-			return reconciled;
-		}
-	}
-	const failure =
-		result.code !== 0 || result.killed
-			? commandFailure(herdrBin, args, result).message
-			: (responseError ??
-				"Herdr returned an incomplete worktree-open response.");
-	throw new Error(
-		`${failure} The Git worktree remains at ${plan.worktreePath}.`,
-	);
-}
-
-export async function openHerdrDestination(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	git: GitContext,
-	plan: TargetPlan,
-	preferredWorkspaceId: string | undefined,
-	tabLabel = `pi-${plan.worktreeName}`,
-	signal?: AbortSignal,
-): Promise<HerdrDestination> {
-	const before = await getHerdrState(pi, herdrBin, signal);
-	const registration = await classifyWorktreeWorkspace(
-		before,
-		plan.worktreePath,
-		git.commonDir,
-		plan.isLinkedWorktree,
-	);
-	switch (registration.kind) {
-		case WorkspaceRegistrationKind.Registered: {
-			if (!registration.registered)
-				throw new Error("Herdr registration has no workspace.");
-			const workspaceId = registration.registered.workspaceId;
-			if (preferredWorkspaceId && preferredWorkspaceId !== workspaceId) {
-				throw new Error(
-					`Preferred Herdr workspace disappeared or changed: ${preferredWorkspaceId}`,
-				);
-			}
-			return createHerdrTab(
-				pi,
-				herdrBin,
-				git,
-				workspaceId,
-				plan,
-				tabLabel,
-				signal,
-			);
-		}
-		case WorkspaceRegistrationKind.Absent:
-			if (preferredWorkspaceId) {
-				throw new Error(
-					`Preferred Herdr workspace disappeared or changed: ${preferredWorkspaceId}`,
-				);
-			}
-			return openRegisteredWorktreeWorkspace(
-				pi,
-				herdrBin,
-				git,
-				plan,
-				before,
-				tabLabel,
-				signal,
-			);
-		case WorkspaceRegistrationKind.Conflict:
-		case WorkspaceRegistrationKind.Ambiguous:
-		case WorkspaceRegistrationKind.Invalid:
-			throw registrationError(registration, plan.worktreePath);
-		default:
-			return assertNever(registration.kind);
-	}
-}
-
 export function makeAgentName(worktreeName: string): string {
 	const suffix = Date.now().toString(36).slice(-5);
 	const base = `bw-${worktreeName.toLowerCase()}`
@@ -2137,16 +1480,16 @@ function wipResultDescription(
 
 function buildHandoffPrompt(
 	preparation: TargetPreparation,
-	destination: HerdrDestination,
+	destination: NativeDestination,
 	wipChoice: WipChoice,
 	wipResult: WipResult,
 	stash: RecoveryStash | undefined,
 ): string {
 	const { plan, initialTargetStatus } = preparation;
 	const destinationText =
-		destination.kind === DestinationKind.NewWorktreeWorkspace
-			? "a repository-grouped Herdr worktree workspace"
-			: "a new tab in an existing registered Herdr worktree workspace";
+		destination.kind === DestinationKind.NewSession
+			? "a new tuios session in the target worktree"
+			: "a new Pi pane in the worktree's existing tuios session";
 	return [
 		`Handoff notice: this Pi session was forked into ${destinationText}.`,
 		`Target mode: ${targetKindLabel(plan)}`,
@@ -2154,7 +1497,7 @@ function buildHandoffPrompt(
 		`Expected starting commit: ${plan.expectedCommit}`,
 		`Current branch: ${plan.branchName}`,
 		`Worktree path: ${plan.worktreePath}`,
-		`Herdr workspace/tab: ${destination.workspaceId} / ${destination.tabId}`,
+		`tuios session/pane: ${destination.sessionName} / ${destination.paneId}`,
 		initialTargetStatus
 			? `The reused target already had ${countStatusEntries(initialTargetStatus)} changed path(s) before this handoff.`
 			: "The target had no pre-existing reported changes.",
@@ -2163,132 +1506,13 @@ function buildHandoffPrompt(
 	].join("\n");
 }
 
-async function startForkedAgent(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	destination: Pick<HerdrDestination, "paneId">,
-	sessionFile: string,
-	agentName: string,
-	config: ForkedAgentConfig,
-	signal?: AbortSignal,
-): Promise<void> {
-	await runAgentStart(
-		pi,
-		herdrBin,
-		[
-			HERDR_COMMAND.AGENT,
-			HERDR_SUBCOMMAND.START,
-			agentName,
-			"--kind",
-			"pi",
-			"--pane",
-			destination.paneId,
-			"--timeout",
-			String(AGENT_START_TIMEOUT_MS),
-			"--",
-			"--fork",
-			sessionFile,
-			"--model",
-			config.model,
-			"--thinking",
-			config.thinkingLevel,
-			"--name",
-			config.sessionName,
-		],
-		{ timeout: AGENT_START_TIMEOUT_MS + EXTERNAL_COMMAND_TIMEOUT_MS, signal },
-	);
-}
-
-async function getAgentInfo(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	agentName: string,
-	signal?: AbortSignal,
-): Promise<HerdrPane | undefined> {
-	const result = await runCommand(
-		pi,
-		herdrBin,
-		[HERDR_COMMAND.AGENT, HERDR_SUBCOMMAND.GET, agentName],
-		{ signal },
-	);
-	if (result.code !== 0 || result.killed) return undefined;
-	try {
-		return parseHerdrResult<{ agent?: HerdrPane }>(result.stdout).agent;
-	} catch {
-		return undefined;
-	}
-}
-
-async function isAgentRunningInPane(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	agentName: string,
-	paneId: string,
-	signal?: AbortSignal,
-): Promise<boolean> {
-	const agent = await getAgentInfo(pi, herdrBin, agentName, signal);
-	return (
-		agent?.pane_id === paneId &&
-		(agent.agent === undefined || agent.agent === "pi") &&
-		(agent.agent_session?.agent === undefined ||
-			agent.agent_session.agent === "pi")
-	);
-}
-
-async function sendHandoff(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	agentName: string,
-	prompt: string,
-): Promise<void> {
-	await runChecked(
-		pi,
-		herdrBin,
-		[HERDR_COMMAND.AGENT, HERDR_SUBCOMMAND.PROMPT, agentName, prompt],
-		{ timeout: EXTERNAL_COMMAND_TIMEOUT_MS },
-	);
-}
-
-async function focusDestination(
-	pi: ExtensionAPI,
-	herdrBin: string,
-	destination: Pick<HerdrDestination, "workspaceId" | "tabId">,
-	signal?: AbortSignal,
-): Promise<void> {
-	await runChecked(
-		pi,
-		herdrBin,
-		[HERDR_COMMAND.WORKSPACE, HERDR_SUBCOMMAND.FOCUS, destination.workspaceId],
-		{ signal },
-	);
-	await runChecked(
-		pi,
-		herdrBin,
-		[HERDR_COMMAND.TAB, HERDR_SUBCOMMAND.FOCUS, destination.tabId],
-		{ signal },
-	);
-}
-
 export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 	let commandRunning = false;
-	registerDirectoryHandoff(pi, {
-		startAgent: (bin, destination, sessionFile, agentName, config, signal) =>
-			startForkedAgent(
-				pi,
-				bin,
-				destination,
-				sessionFile,
-				agentName,
-				config,
-				signal,
-			),
-		focusDestination: (bin, destination, signal) =>
-			focusDestination(pi, bin, destination, signal),
-	});
+	registerDirectoryHandoff(pi);
 
 	pi.registerCommand(COMMAND_NAME, {
 		description:
-			"Fork this Pi session into a repository-grouped Herdr worktree workspace",
+			"Fork this Pi session into a Git worktree and native tuios session",
 		handler: async (_args, ctx) => {
 			if (commandRunning) {
 				ctx.ui.notify(
@@ -2304,8 +1528,8 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 				);
 				return;
 			}
-			if (process.env.HERDR_ENV !== "1") {
-				ctx.ui.notify(`/${COMMAND_NAME} must run inside Herdr.`, "error");
+			if (process.env.TUIOS_ENV !== "1") {
+				ctx.ui.notify(`/${COMMAND_NAME} must run inside tuios.`, "error");
 				return;
 			}
 			if (!ctx.isIdle()) {
@@ -2333,10 +1557,10 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 			}
 
 			commandRunning = true;
-			const herdrBin = process.env.HERDR_BIN?.trim() || HERDR_DEFAULT_BIN;
+			const client = new TuiosClient(pi, tuiosBinary());
 			try {
 				const git = await inspectGitContext(pi, ctx.cwd);
-				await preflightHerdr(pi, herdrBin);
+				await preflightTuios(client);
 				const plan = await runTargetPicker(pi, ctx, git);
 				if (!plan) {
 					ctx.ui.notify("Branch workspace creation cancelled.", "info");
@@ -2363,40 +1587,36 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 				}
 
 				let initialTargetStatus: string | undefined;
-				let preferredWorkspaceId: string | undefined;
+				let preferredSessionName: string | undefined;
 				if (plan.kind === TargetKind.ExistingWorktree) {
 					initialTargetStatus = await readGitStatus(pi, plan.worktreePath);
 				}
-				const initialHerdrState = await getHerdrState(pi, herdrBin);
-				const initialRegistration = await classifyWorktreeWorkspace(
-					initialHerdrState,
+				const initialRegistration = await classifyWorktreeSession(
+					await readTuiosState(client),
 					plan.worktreePath,
-					git.commonDir,
-					plan.isLinkedWorktree,
 				);
 				switch (initialRegistration.kind) {
-					case WorkspaceRegistrationKind.Absent:
+					case SessionRegistrationKind.Absent:
 						break;
-					case WorkspaceRegistrationKind.Registered:
-						if (plan.kind !== TargetKind.ExistingWorktree) {
+					case SessionRegistrationKind.Registered:
+						if (plan.kind !== TargetKind.ExistingWorktree)
 							throw new Error(
-								`A registered Herdr worktree workspace already exists at the new target path: ${plan.worktreePath}`,
+								`A tuios session already uses the new target path: ${plan.worktreePath}`,
 							);
-						}
-						if (!initialRegistration.registered)
-							throw new Error("Herdr registration has no workspace.");
-						preferredWorkspaceId = initialRegistration.registered.workspaceId;
+						preferredSessionName = initialRegistration.registered?.name;
 						break;
-					case WorkspaceRegistrationKind.Conflict:
-					case WorkspaceRegistrationKind.Ambiguous:
-					case WorkspaceRegistrationKind.Invalid:
-						throw registrationError(initialRegistration, plan.worktreePath);
+					case SessionRegistrationKind.Ambiguous:
+						throw new Error(
+							`Multiple tuios sessions use ${plan.worktreePath}: ${initialRegistration.details}`,
+						);
+					case SessionRegistrationKind.Invalid:
+						throw new Error("Invalid session registration.");
 					default:
 						assertNever(initialRegistration.kind);
 				}
 				const preparation: TargetPreparation = {
 					plan,
-					preferredWorkspaceId,
+					preferredSessionName,
 					initialTargetStatus,
 				};
 
@@ -2468,26 +1688,24 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 					);
 				}
 
-				ctx.ui.setStatus(COMMAND_NAME, "Preparing Herdr destination…");
-				const destination = await openHerdrDestination(
-					pi,
-					herdrBin,
-					git,
-					plan,
-					preferredWorkspaceId,
+				ctx.ui.setStatus(COMMAND_NAME, "Preparing tuios destination…");
+				let destination = await prepareTuiosDestination(
+					client,
+					plan.worktreePath,
+					plan.worktreeName,
+					undefined,
+					preferredSessionName,
 				);
 				const agentName = makeAgentName(plan.worktreeName);
-				let startupError: string | undefined;
-				let startupReconciled = false;
-				let handoffError: string | undefined;
-
+				const recovery = stash
+					? ` Recovery stash retained: ${stash.objectId}. Locate it with git stash list --grep=${shellQuote(stash.marker)}.`
+					: "";
 				ctx.ui.setStatus(COMMAND_NAME, "Starting forked Pi agent…");
 				try {
 					const model = ctx.model;
 					if (!model) throw new Error("No active Pi model is selected.");
-					await startForkedAgent(
-						pi,
-						herdrBin,
+					destination = await launchForkedAgent(
+						client,
 						destination,
 						sessionFile,
 						agentName,
@@ -2498,61 +1716,38 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 						},
 					);
 				} catch (error) {
-					startupReconciled = await isAgentRunningInPane(
-						pi,
-						herdrBin,
-						agentName,
-						destination.paneId,
-					);
-					if (!startupReconciled) startupError = formatError(error);
-				}
-
-				if (!startupError) {
-					ctx.ui.setStatus(COMMAND_NAME, "Sending handoff…");
-					try {
-						await sendHandoff(
-							pi,
-							herdrBin,
-							agentName,
-							buildHandoffPrompt(
-								preparation,
-								destination,
-								wipChoice,
-								wipResult,
-								stash,
-							),
-						);
-					} catch (error) {
-						handoffError = formatError(error);
-					}
-				}
-
-				ctx.ui.setStatus(COMMAND_NAME, "Focusing new workspace/tab…");
-				let focusError: string | undefined;
-				try {
-					await focusDestination(pi, herdrBin, destination);
-				} catch (error) {
-					focusError = formatError(error);
-				}
-
-				const recovery = stash
-					? ` Recovery stash retained: ${stash.objectId}. Locate its selector with git stash list --grep=${shellQuote(stash.marker)} before dropping it.`
-					: "";
-				if (startupError) {
 					ctx.ui.notify(
-						`Worktree ${plan.worktreePath} and Herdr destination ${destination.workspaceId}/${destination.tabId} were prepared, but Pi failed to start: ${truncateMessage(startupError)}.${recovery}`,
+						`Worktree ${plan.worktreePath} and tuios session ${destination.sessionName} remain, but Pi startup was not confirmed: ${formatError(error)}. Inspect the destination before retrying.${recovery}`,
 						"error",
 					);
 					return;
 				}
-				if (handoffError) {
+				ctx.ui.setStatus(COMMAND_NAME, "Submitting handoff…");
+				try {
+					await submitHandoff(
+						client,
+						destination,
+						buildHandoffPrompt(
+							preparation,
+							destination,
+							wipChoice,
+							wipResult,
+							stash,
+						),
+					);
+				} catch (error) {
 					ctx.ui.notify(
-						`Pi agent ${agentName} started in ${destination.workspaceId}/${destination.tabId}, but the handoff failed: ${truncateMessage(handoffError)}.${recovery}`,
-						"warning",
+						`Pi is in ${destination.sessionName}/${destination.paneId}, but handoff submission was not confirmed: ${formatError(error)}. Do not resubmit blindly.${recovery}`,
+						"error",
 					);
 					return;
 				}
-
+				let focusError: string | undefined;
+				try {
+					await focusTuiosDestination(client, destination);
+				} catch (error) {
+					focusError = formatError(error);
+				}
 				const warnings = [
 					wipResult.outcome === WipOutcome.Conflicted
 						? "WIP application produced conflicts."
@@ -2560,17 +1755,12 @@ export default function branchWorkspaceExtension(pi: ExtensionAPI) {
 					wipResult.outcome === WipOutcome.Failed
 						? "WIP application failed and needs inspection."
 						: undefined,
-					startupReconciled
-						? "Agent startup returned an error, but Herdr confirmed it in the expected pane."
-						: undefined,
-					focusError
-						? `Destination focus failed: ${truncateMessage(focusError)}`
-						: undefined,
+					focusError ? `Destination focus failed: ${focusError}` : undefined,
 				]
 					.filter(Boolean)
 					.join(" ");
 				ctx.ui.notify(
-					`Ready: ${plan.branchName} at ${plan.worktreePath}; Pi agent ${agentName} is in ${destination.workspaceId}/${destination.tabId}. ${warnings}${recovery}`.trim(),
+					`Ready: ${plan.branchName} at ${plan.worktreePath}; Pi is in ${destination.sessionName}/${destination.paneId}. ${warnings}${recovery}`.trim(),
 					warnings ? "warning" : "info",
 				);
 			} catch (error) {

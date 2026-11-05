@@ -16,22 +16,21 @@
 #   1. Detect OS
 #   2. Symlink tracked configs into $HOME / $HOME/.config (done first so a
 #      later package/install failure never leaves configs unlinked)
-#   3. Per-file symlinks (herdr's config.toml — logs/sockets stay outside git)
-#   4. Install packages (pacman + AUR on Arch, APT on Debian/Ubuntu, or brew
+#   3. Install packages (pacman + AUR on Arch, APT on Debian/Ubuntu, or brew
 #      on macOS); bootstrap yay when needed
-#   5. Install language toolchains (rustup, node/bun, uv)
-#   6. Delegate to .pi/install.sh for the pi agent
-#   7. Install Herdr and its Sesh/Pi integrations
-#   8. Build and install the custom tuicr fork
-#   9. Install Zimfw and set Zsh as the default shell when selected
-#  10. Print a summary of anything that needs manual follow-up
+#   4. Install language toolchains (rustup, node/bun, uv)
+#   5. Delegate to .pi/install.sh for the pi agent
+#   6. Build tuios and install its native Pi integration
+#   7. Build and install the custom tuicr fork
+#   8. Install Zimfw and set Zsh as the default shell when selected
+#   9. Print a summary of anything that needs manual follow-up
 #
 # Existing config conflicts are backed up automatically with timestamps.
 # The only interactive choices are the application/component checklists.
 # ==============================================================================
 
 # Keep going after an independent command fails so later setup stages (notably
-# Herdr) still run. `run` records failures and main exits non-zero after the
+# tuios) still run. `run` records failures and main exits non-zero after the
 # summary, rather than aborting halfway through the bootstrap.
 set -uo pipefail
 
@@ -109,7 +108,7 @@ say "detected OS: ${BOLD}$OS${RESET}, dotfiles at ${BOLD}$DOTS${RESET}"
 # These are non-selectable headers. Each header presents exact package/tool
 # entries in its own checklist.
 declare -a APP_KEYS=(
-    shell core nvim terminals desktop network fonts development herdr pi tuicr tuxedo go cast
+    shell core nvim terminals desktop network fonts development tuios pi tuicr tuxedo go cast
 )
 # Indexed state keeps the installer compatible with the Bash 3.2 shipped by
 # older macOS releases; do not require associative arrays or namerefs here.
@@ -321,17 +320,17 @@ select_subselections() {
             labels=("base-devel/build-essential — compiler and build tools" "pkgconf/pkg-config — compiler dependency metadata" "libssl-dev — OpenSSL headers for APT builds" "Rust/Cargo — Rust compiler and package manager" "nodejs/node — JavaScript runtime" "npm — Node package manager" "python/python3 — Python runtime" "imagemagick — image processing" "ffmpeg — audio/video processing" "Bun — alternative JavaScript runtime/package manager" "uv — fast Python package/tool manager")
             defaults=(1 1 1 1 1 1 1 1 1 1 1)
             ;;
-        herdr)
-            title="Herdr integrations"
-            keys=(herdr_binary herdr_sesh herdr_pi_integration)
-            labels=("Herdr — persistent terminal multiplexer/session daemon" "fullerzz/herdr-plugin-sesh — session/workspace picker" "Herdr Pi integration — agent-state hooks for Pi panes")
+        tuios)
+            title="tuios"
+            keys=(tuios_binary tuios_config tuios_pi_integration)
+            labels=("tuios — build the pinned, patched terminal multiplexer" "tuios configuration — theme, keybindings and project-session picker" "tuios Pi integration — native agent-state hooks and skill")
             defaults=(1 1 1)
             ;;
         pi)
             title="Pi agent and extensions"
-            keys=(pi_agent pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_herdr pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access)
-            labels=("Pi configuration — install ~/.pi and tracked agent settings/skills" "@eko24ive/pi-ask — approval/requirements UI" "@hypabolic/pi-hypa — Hypa-compressed tools" "@juicesharp/rpiv-todo — todo integration" "@mystilleef/pi-subagent — subagent support" "@weshipwork/pi-herdr — Herdr integration tools" "@yeliu84/pi-model-router — model routing" "pi-observational-memory — persistent observations" "pi-powerline-footer — powerline status footer" "pi-quota-status — quota/status display" "pi-web-access — web access extension")
-            defaults=(1 1 1 1 1 1 1 1 1 1 1)
+            keys=(pi_agent pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access)
+            labels=("Pi configuration — native tuios tool, handoffs, settings and skills" "@eko24ive/pi-ask — approval/requirements UI" "@hypabolic/pi-hypa — Hypa-compressed tools" "@juicesharp/rpiv-todo — todo integration" "@mystilleef/pi-subagent — subagent support" "@yeliu84/pi-model-router — model routing" "pi-observational-memory — persistent observations" "pi-powerline-footer — powerline status footer" "pi-quota-status — quota/status display" "pi-web-access — web access extension")
+            defaults=(1 1 1 1 1 1 1 1 1 1)
             ;;
         tuicr)
             title="tuicr review tool"
@@ -375,8 +374,8 @@ sync_selected_apps() {
     any_component_selected network_networkmanager network_applet network_pipewire network_wireplumber network_pavucontrol network_brightnessctl network_playerctl network_tailscale network_firewalld && set_app_selected network 1
     any_component_selected fonts_jetbrains fonts_noto fonts_noto_emoji fonts_gtk3 fonts_gtk4 fonts_python_gobject fonts_adwaita_icons && set_app_selected fonts 1
     any_component_selected dev_base dev_pkgconf dev_libssl dev_rust dev_nodejs dev_npm dev_python dev_imagemagick dev_ffmpeg dev_bun dev_uv && set_app_selected development 1
-    any_component_selected herdr_binary herdr_sesh herdr_pi_integration && set_app_selected herdr 1
-    any_component_selected pi_agent pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_herdr pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access && set_app_selected pi 1
+    any_component_selected tuios_binary tuios_config tuios_pi_integration && set_app_selected tuios 1
+    any_component_selected pi_agent pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access && set_app_selected pi 1
     any_component_selected tuicr_binary tuicr_skill && set_app_selected tuicr 1
     any_component_selected tuxedo_binary && set_app_selected tuxedo 1
     any_component_selected go_binary && set_app_selected go 1
@@ -389,7 +388,7 @@ select_applications() {
     SELECTED_COMPONENT_KEYS=()
     SELECTED_COMPONENT_FLAGS=()
     if [[ $TUI_MODE -eq 1 && $UNINSTALL -eq 0 ]]; then
-        for app in shell core nvim development herdr pi tuicr tuxedo; do
+        for app in shell core nvim development tuios pi tuicr tuxedo; do
             select_subselections "$app"
         done
         # Terminal profile: keep runtime essentials, but omit GUI/media and
@@ -410,14 +409,18 @@ select_applications() {
 }
 
 resolve_selected_dependencies() {
-    if component_is_selected herdr_sesh || component_is_selected herdr_pi_integration; then
-        set_component_selected herdr_binary 1
+    if component_is_selected tuios_pi_integration; then
+        set_component_selected tuios_binary 1
+        set_component_selected pi_agent 1
     fi
-    if any_component_selected pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_herdr pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access || component_is_selected nvim_prettier; then
+    if component_is_selected tuios_binary; then
+        set_component_selected go_binary 1
+    fi
+    if any_component_selected pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access || component_is_selected nvim_prettier; then
         set_component_selected dev_nodejs 1
         set_component_selected dev_npm 1
     fi
-    if component_is_selected tuicr_skill || any_component_selected pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_herdr pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access; then
+    if component_is_selected tuicr_skill || any_component_selected pi_ext_pi_ask pi_ext_hypa pi_ext_rpiv_todo pi_ext_pi_subagent pi_ext_pi_model_router pi_ext_observational_memory pi_ext_powerline_footer pi_ext_quota_status pi_ext_web_access; then
         set_component_selected pi_agent 1
     fi
     if component_is_selected tuicr_binary || component_is_selected tuxedo_binary || component_is_selected core_worktrunk || component_is_selected core_worktrunk_shell; then
@@ -432,7 +435,7 @@ resolve_selected_dependencies() {
     if component_is_selected cast_catt; then
         set_component_selected dev_uv 1
     fi
-    if component_is_selected herdr_binary || component_is_selected tuicr_binary; then
+    if component_is_selected tuios_binary || component_is_selected tuicr_binary; then
         set_component_selected core_git 1
         set_component_selected core_curl 1
         set_component_selected core_ca_certs 1
@@ -525,7 +528,6 @@ build_selected_packages() {
     component_is_selected dev_imagemagick && { PKGS_ARCH_SELECTED+=(imagemagick); PKGS_APT_SELECTED+=(imagemagick); PKGS_MAC_SELECTED+=(imagemagick); }
     component_is_selected dev_ffmpeg && { PKGS_ARCH_SELECTED+=(ffmpeg); PKGS_APT_SELECTED+=(ffmpeg); PKGS_MAC_SELECTED+=(ffmpeg); }
 
-    component_is_selected herdr_binary && [[ $OS == macos ]] && PKGS_MAC_SELECTED+=(herdr)
     component_is_selected tuxedo_binary && [[ $OS == macos ]] && PKGS_MAC_SELECTED+=(tuxedo)
     component_is_selected go_binary && { PKGS_ARCH_SELECTED+=(go); PKGS_APT_SELECTED+=(golang-go); PKGS_MAC_SELECTED+=(go); }
 
@@ -650,32 +652,6 @@ install_packages_mac() {
     fi
     if [[ ${#failed[@]} -gt 0 ]]; then
         warn "brew items that need manual attention: ${failed[*]}"
-    fi
-}
-
-herdr_bin() {
-    if command -v herdr >/dev/null 2>&1; then
-        command -v herdr
-    elif [[ -x "$HOME/.local/bin/herdr" ]]; then
-        printf '%s\\n' "$HOME/.local/bin/herdr"
-    elif load_brew; then
-        local brew_herdr
-        brew_herdr="$(brew --prefix herdr 2>/dev/null || true)/bin/herdr"
-        [[ -x $brew_herdr ]] && printf '%s\\n' "$brew_herdr"
-    fi
-}
-
-install_herdr() {
-    if [[ -n "$(herdr_bin || true)" ]]; then
-        ok "Herdr already installed"
-        return
-    fi
-    if [[ $OS == macos ]] && command -v brew >/dev/null 2>&1; then
-        say "installing Herdr via Homebrew"
-        run "brew install herdr"
-    else
-        say "installing Herdr via the official installer"
-        run 'curl -fsSL https://herdr.dev/install.sh | sh'
     fi
 }
 
@@ -811,7 +787,7 @@ setup_symlinks() {
     fi
 
     step "symlinks: whole ~/.config/* directories"
-    # Everything under .config/ except herdr (per-file below).
+    # Link selected configuration directories; runtime state stays outside git.
     # opencode is intentionally excluded — the live version is a dev tree
     # with node_modules, not something to check in.
     #
@@ -823,7 +799,7 @@ setup_symlinks() {
     if app_is_selected desktop || app_is_selected network || app_is_selected cast; then
         dirs+=(scripts)
     fi
-    component_is_selected herdr_sesh && dirs+=(sesh)
+    component_is_selected tuios_config && dirs+=(tuios)
     component_is_selected tuicr_skill && dirs+=(tuicr)
     component_is_selected terminal_wezterm && dirs+=(wezterm)
     component_is_selected terminal_ghostty && dirs+=(ghostty)
@@ -858,27 +834,6 @@ setup_symlinks() {
         run "\"$DOTS/.config/scripts/desktop/fuzzel_theme.sh\" gruvbox-dark"
     fi
 
-    step "symlinks: single-file (herdr keeps runtime state outside git)"
-    # herdr's ~/.config/herdr/ has config.toml (tracked) + logs, session.json,
-    # and sockets (runtime, must NOT be under git). So we symlink just the file.
-    if app_is_selected herdr; then
-        if [[ -f "$DOTS/.config/herdr/config.toml" ]]; then
-            run "mkdir -p \"$HOME/.config/herdr\""
-            link "$DOTS/.config/herdr/config.toml" "$HOME/.config/herdr/config.toml"
-            # Notification sound assets referenced by config.toml (ui.sound.*).
-            [[ -d "$DOTS/.config/herdr/sounds" ]] && link "$DOTS/.config/herdr/sounds" "$HOME/.config/herdr/sounds"
-            # Keybinding helper scripts referenced by [[keys.command]].
-            [[ -d "$DOTS/.config/herdr/scripts" ]] && link "$DOTS/.config/herdr/scripts" "$HOME/.config/herdr/scripts"
-        else
-            warn "no $DOTS/.config/herdr/config.toml yet — skipping"
-        fi
-    fi
-
-    # fullerzz/herdr-plugin-sesh currently resolves this compatibility path;
-    # keep the tracked config available there as well as ~/.config/sesh.
-    if component_is_selected herdr_sesh && [[ -f "$DOTS/.config/sesh/sesh.toml" ]]; then
-        link "$DOTS/.config/sesh/sesh.toml" "$HOME/.config/herdr-sesh/sesh.toml"
-    fi
 }
 
 # =============================================================================
@@ -896,7 +851,6 @@ setup_pi_agent() {
         component_is_selected pi_ext_hypa && pi_packages+=("@hypabolic/pi-hypa")
         component_is_selected pi_ext_rpiv_todo && pi_packages+=("@juicesharp/rpiv-todo")
         component_is_selected pi_ext_pi_subagent && pi_packages+=("@mystilleef/pi-subagent")
-        component_is_selected pi_ext_pi_herdr && pi_packages+=("@weshipwork/pi-herdr")
         component_is_selected pi_ext_pi_model_router && pi_packages+=("@yeliu84/pi-model-router")
         component_is_selected pi_ext_observational_memory && pi_packages+=("pi-observational-memory")
         component_is_selected pi_ext_powerline_footer && pi_packages+=("pi-powerline-footer")
@@ -911,50 +865,25 @@ setup_pi_agent() {
 }
 
 # =============================================================================
-# 8. Herdr and integrations
+# 8. tuios and native integrations
 # =============================================================================
-setup_herdr() {
-    if ! app_is_selected herdr; then
-        warn "Herdr was not selected; skipping Herdr integrations"
-        return
-    fi
+setup_tuios() {
+    app_is_selected tuios || return 0
     if [[ $NO_PKGS -eq 1 ]]; then
-        warn "--no-pkgs: skipping Herdr binary and plugin installation"
-        return
+        warn "--no-pkgs: skipping tuios build and integration installation"
+        return 0
     fi
-    if component_is_selected herdr_binary; then
-        install_herdr
+    if component_is_selected tuios_binary; then
+        run "bash \"$DOTS/.config/tuios/patch/install-unified-sidebar.sh\" --install" || return 1
     fi
-    local bin
-    bin="$(herdr_bin || true)"
-    if [[ -z $bin ]]; then
-        warn "Herdr is unavailable; skipping selected Herdr integrations"
-        return
-    fi
-
-    if component_is_selected herdr_sesh; then
-        local plugin_status
-        plugin_status="$($bin plugin list 2>/dev/null || true)"
-        if grep -q 'fullerzz.sesh.*enabled' <<<"$plugin_status"; then
-            ok "Herdr Sesh plugin is installed and enabled"
-        elif grep -q 'fullerzz.sesh' <<<"$plugin_status"; then
-            say "enabling Herdr Sesh plugin"
-            run "$bin plugin enable fullerzz.sesh"
-        else
-            say "installing Herdr Sesh plugin"
-            run "$bin plugin install fullerzz/herdr-plugin-sesh --yes"
+    if component_is_selected tuios_pi_integration; then
+        local bin
+        bin="$(command -v tuios || true)"
+        if [[ -z $bin ]]; then
+            err "tuios is unavailable; native Pi integration was not installed"
+            return 1
         fi
-    fi
-
-    if component_is_selected herdr_pi_integration; then
-        local integration_status
-        integration_status="$($bin integration status 2>/dev/null || true)"
-        if grep -qE '^pi: current ' <<<"$integration_status"; then
-            ok "Herdr Pi integration is current"
-        else
-            say "installing/updating Herdr Pi integration"
-            run "$bin integration install pi"
-        fi
+        run "\"$bin\" integration install pi"
     fi
 }
 
@@ -1078,7 +1007,7 @@ uninstall_symlinks() {
     component_is_selected terminal_ghostty && dirs+=(ghostty)
     component_is_selected shell_zsh && dirs+=(zsh)
     component_is_selected tuicr_skill && dirs+=(tuicr)
-    component_is_selected herdr_sesh && dirs+=(sesh)
+    component_is_selected tuios_config && dirs+=(tuios)
     if app_is_selected network; then
         network=1
     fi
@@ -1095,33 +1024,24 @@ uninstall_symlinks() {
         done
     fi
 
-    if app_is_selected herdr && (component_is_selected herdr_binary || component_is_selected herdr_sesh || component_is_selected herdr_pi_integration); then
-        unlink_managed "$DOTS/.config/herdr/config.toml" "$HOME/.config/herdr/config.toml"
-        unlink_managed "$DOTS/.config/herdr/sounds" "$HOME/.config/herdr/sounds"
-        unlink_managed "$DOTS/.config/herdr/scripts" "$HOME/.config/herdr/scripts"
-    fi
-    if component_is_selected herdr_sesh; then
-        unlink_managed "$DOTS/.config/sesh/sesh.toml" "$HOME/.config/herdr-sesh/sesh.toml"
-    fi
     if component_is_selected pi_agent; then
         unlink_managed "$DOTS/.pi" "$HOME/.pi"
     fi
 }
 
-uninstall_herdr() {
+uninstall_tuios() {
     local bin
-    bin="$(herdr_bin || true)"
+    bin="$(command -v tuios || true)"
     [[ -n $bin ]] || return 0
-    if component_is_selected herdr_sesh; then
-        run "$bin plugin uninstall fullerzz.sesh"
+    if component_is_selected tuios_pi_integration; then
+        run "\"$bin\" integration uninstall pi"
     fi
-    if component_is_selected herdr_pi_integration; then
-        run "$bin integration uninstall pi"
-    fi
-    if component_is_selected herdr_binary && [[ $bin == "$HOME/.local/bin/herdr" ]]; then
-        run "rm -f \"$bin\""
-    elif component_is_selected herdr_binary; then
-        warn "Herdr is outside the managed user path ($bin); preserving it"
+    if component_is_selected tuios_binary; then
+        if [[ $bin == "$HOME/.local/bin/tuios" ]]; then
+            run "rm -f \"$bin\""
+        else
+            warn "Preserving tuios outside the managed user path: $bin"
+        fi
     fi
 }
 
@@ -1146,7 +1066,6 @@ uninstall_pi_extensions() {
     component_is_selected pi_ext_hypa && pi_remove+=("@hypabolic/pi-hypa")
     component_is_selected pi_ext_rpiv_todo && pi_remove+=("@juicesharp/rpiv-todo")
     component_is_selected pi_ext_pi_subagent && pi_remove+=("@mystilleef/pi-subagent")
-    component_is_selected pi_ext_pi_herdr && pi_remove+=("@weshipwork/pi-herdr")
     component_is_selected pi_ext_pi_model_router && pi_remove+=("@yeliu84/pi-model-router")
     component_is_selected pi_ext_observational_memory && pi_remove+=("pi-observational-memory")
     component_is_selected pi_ext_powerline_footer && pi_remove+=("pi-powerline-footer")
@@ -1230,8 +1149,8 @@ uninstall_selected() {
     step "uninstall: managed symlinks and integrations"
     # Remove Worktrunk's shell hook before unlinking the managed shell files.
     uninstall_worktrunk
+    uninstall_tuios
     uninstall_symlinks
-    uninstall_herdr
     uninstall_external_tools
     if [[ $NO_PKGS -eq 1 ]]; then
         warn "--no-pkgs: skipping package removal"
@@ -1264,7 +1183,7 @@ Some things this script cannot do for you:
     ~/Documents/wallpaper/ — copy your wallpaper collection there or adjust
   • Terminals: fully close and reopen WezTerm or Ghostty to pick up config changes
   • tuicr: the custom fork installs to ~/.local/bin/tuicr and is built from rajaiitp/tuicr
-  • Herdr Sesh: the installer adds fullerzz/herdr-plugin-sesh when Herdr is available
+  • tuios: the installer builds the pinned patch and installs native Pi hooks without restarting sessions
 
 If you hit issues, re-run with:
   ./install.sh --dry-run    # see what would happen
@@ -1333,8 +1252,8 @@ main() {
     step "5. pi agent"
     setup_pi_agent
 
-    step "6. Herdr and integrations"
-    setup_herdr
+    step "6. tuios and native integrations"
+    setup_tuios
 
     step "7. tuicr (custom fork)"
     setup_tuicr
