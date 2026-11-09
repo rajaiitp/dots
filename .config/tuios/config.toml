@@ -140,8 +140,8 @@ confirm_close = false
 theme = "gruvbox-teal"
 dockbar_position = "top"
 dock_background = "#1c302d"
-border_focused_color = "#65988c"
-border_unfocused_color = "#65988c"
+border_focused_color = "surface"
+border_unfocused_color = "surface"
 border_focused_gradient = ""
 session_border = false
 hide_window_buttons = true
@@ -156,7 +156,7 @@ focused_pane_tint = "#504945"
 focused_pane_tint_percent = 20
 window_title_position = "hidden"
 border_style = "glyphs"
-window_chrome_background = "#1c302d"
+window_chrome_background = "off"
 glyphs = "horizontal-lines"
 session_colors = false
 focus_follows_mouse = true
@@ -169,6 +169,11 @@ zen_mode = "mouse"
 tiling_scheme = "spiral"
 panel_padding = 1
 drop_preview = "off"
+
+[appearance.scrollbar]
+style = "thin"
+thumb = "█"
+track = "none"
 
 [appearance.sidebar]
 position = "left"
