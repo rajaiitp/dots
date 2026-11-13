@@ -2,6 +2,8 @@
   "id": "horizontal-lines",
   "display_name": "Lower-middle quarter pane bands",
   "rule": "═",
+  "focus": " ",
+  "attention": " ",
   "border": {
     "top": "𜴧",
     "bottom": "𜴧",

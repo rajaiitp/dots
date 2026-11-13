@@ -79,6 +79,14 @@ pi() {
   local agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
   PI_CODING_AGENT_DIR="${agent_dir:A}" command pi "$@"
 }
+
+tuios() {
+  if (( $# == 0 )); then
+    pi update --all || return $?
+  fi
+  command tuios "$@"
+}
+
 export BLINKA_FT232H=1
 path=(
   "$HOME/go/bin"
