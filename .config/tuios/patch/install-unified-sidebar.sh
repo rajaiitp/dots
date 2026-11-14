@@ -4,7 +4,7 @@ set -euo pipefail
 readonly SOURCE_URL="https://github.com/Gaurav-Gosain/tuios.git"
 readonly BASE_COMMIT="3638a6f2093edfa7396b6233515786de4dbda683"
 readonly VERSION="0.11.0"
-readonly PATCH_SHA256="1d56954c5bcbc18a8be97417203f9bdd2be93b8734f75060c65ea73adacd70fc"
+readonly PATCH_SHA256="3d177b753ec701c50c7a93af01f71de1f9df9b3bf8f63118c312757fa375a54a"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PATCH_FILE="$SCRIPT_DIR/sidebar-unified-agents.patch"
 readonly STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tuios-unified-sidebar"

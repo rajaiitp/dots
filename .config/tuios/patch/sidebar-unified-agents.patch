@@ -580,14 +580,15 @@ index 0000000000000000000000000000000000000000..4400503207b756aa933a043e103ea7c3
 +}
 diff --git c/e2e/tui/sidebar_attention_test.go w/e2e/tui/sidebar_attention_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92e18ef7db
+index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051fb4aee647
 --- /dev/null
 +++ w/e2e/tui/sidebar_attention_test.go
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,269 @@
 +package tuie2e
 +
 +import (
 +	"encoding/json"
++	"fmt"
 +	"os"
 +	"os/exec"
 +	"path/filepath"
@@ -649,6 +650,11 @@ index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92
 +		if out, err := exec.Command("git", "init", "--initial-branch=main", dir).CombinedOutput(); err != nil {
 +			t.Fatalf("initialize repository: %v\n%s", err, out)
 +		}
++		for i := range 40 {
++			if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("entry-%02d", i)), nil, 0o600); err != nil {
++				t.Fatal(err)
++			}
++		}
 +		cli("new", "-d", name, "--cwd", dir)
 +	}
 +	build := strings.TrimSpace(cli("new-window", "BUILD-TASK", "-s", "primary", "--print-id", "--workspace", "1"))
@@ -659,16 +665,37 @@ index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92
 +	cli("set-workspace-name", "2", "REV-TAB", "-s", "secondary")
 +	cli("set-agent-state", "working", "--harness", "pi", "-s", "primary", "-w", build)
 +	cli("set-agent-state", "needs_input", "--harness", "pi", "-s", "secondary", "-w", wait)
-+	term := startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"attach", "primary"}})
++	term := startIn(t, base, startOpts{cols: 120, rows: 64, args: []string{"attach", "primary"}})
 +	if err := term.WaitFor(func(s tuitest.Screen) bool {
 +		return !attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "BUILD-TASK [main]") >= 0 && attentionSidebarRow(s, "WAIT-TASK [main]") >= 0 && attentionSidebarRow(s, "primary") == attentionSidebarRow(s, "BUILD-TASK")+1 && attentionSidebarRow(s, "secondary") == attentionSidebarRow(s, "WAIT-TASK")+1
 +	}, bootTimeout); err != nil {
 +		t.Fatalf("attention groups did not appear: %v\n%s", err, term.Snapshot())
 +	}
 +
++	visibleFiles := func(s tuitest.Screen) int {
++		_, height := s.Size()
++		count := 0
++		for y := range height {
++			line := []rune(s.Line(y))
++			if strings.Contains(string(line[:min(len(line), attentionRailWidth-1)]), "entry-") {
++				count++
++			}
++		}
++		return count
++	}
++	if err := term.WaitFor(func(s tuitest.Screen) bool { return visibleFiles(s) > 0 }, uiTimeout); err != nil {
++		t.Fatal(err)
++	}
++	if count := visibleFiles(term.Screen()); count > 15 {
++		t.Fatalf("Files shows %d entries, want at most 15", count)
++	}
++
 +	for _, target := range []struct{ from, to, tab string }{{"primary [main]", "secondary [main]", "SEC-TAB"}, {"secondary [main]", "primary [main]", "PRIM-TAB"}} {
 +		if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, target.from) >= 0 }, uiTimeout); err != nil {
 +			t.Fatalf("project selector missing: %v\n%s", err, term.Snapshot())
++		}
++		if err := term.WaitStable(uiTimeout); err != nil {
++			t.Fatal(err)
 +		}
 +		mouseClick(t, term, 10, attentionSidebarRow(term.Screen(), target.from), tuitest.MouseLeft, 0)
 +		if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, target.to) >= 0 }, uiTimeout); err != nil {
@@ -679,6 +706,9 @@ index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92
 +			t.Fatalf("selected project tabs missing: %v\n%s", err, term.Snapshot())
 +		}
 +		if target.tab == "SEC-TAB" {
++			if err := term.WaitStable(uiTimeout); err != nil {
++				t.Fatal(err)
++			}
 +			for _, tab := range []struct {
 +				label     string
 +				workspace int
@@ -697,8 +727,8 @@ index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92
 +		}
 +	}
 +	buildRow := attentionSidebarRow(term.Screen(), "BUILD-TASK")
-+	if gap := attentionSidebarRow(term.Screen(), "projects") - buildRow - 2; gap < 3 {
-+		t.Fatalf("before Projects: %d blank rows, want at least 3\n%s", gap, term.Snapshot())
++	if gap := attentionSidebarRow(term.Screen(), "projects") - buildRow - 2; gap < 2 {
++		t.Fatalf("before Projects: %d blank rows, want at least 2\n%s", gap, term.Snapshot())
 +	}
 +	hoverRow := attentionSidebarRow(term.Screen(), "WAIT-TASK")
 +	beforeHover := term.Screen().Cell(10, hoverRow).Bg
@@ -795,8 +825,26 @@ index 0000000000000000000000000000000000000000..2cdb300fb820ed7616a90bc74a003a92
 +	}
 +	projectRow := attentionSidebarRow(term.Screen(), "projects")
 +	_, height := term.Screen().Size()
-+	if gitRow, filesRow := attentionSidebarRow(term.Screen(), "git"), attentionSidebarRow(term.Screen(), "files"); projectRow < 0 || filesRow <= projectRow || gitRow <= filesRow {
++	gitRow, filesRow := attentionSidebarRow(term.Screen(), " git "), attentionSidebarRow(term.Screen(), " files ")
++	if projectRow < 0 || filesRow <= projectRow || gitRow <= filesRow {
 +		t.Fatalf("sidebar sections are not Agents, Projects, Files, Git: %s", term.Snapshot())
++	}
++	for _, header := range []int{filesRow, gitRow} {
++		gap := 0
++		for y := header - 1; y >= 0; y-- {
++			line := []rune(term.Screen().Line(y))
++			if strings.TrimSpace(strings.Trim(strings.TrimSpace(string(line[:min(len(line), attentionRailWidth)])), "│┃")) != "" {
++				break
++			}
++			gap++
++		}
++		if gap != 2 {
++			t.Fatalf("section at row %d has %d blank rows above, want 2; preceding=%q\n%s", header, gap, term.Screen().Line(header-1), term.Snapshot())
++		}
++	}
++	wheelAt(t, term, 10, filesRow+2, tuitest.MouseWheelDown, 40)
++	if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, "entry-39") >= 0 && visibleFiles(s) == 15 }, uiTimeout); err != nil {
++		t.Fatalf("Files overflow did not scroll: %v\n%s", err, term.Snapshot())
 +	}
 +	for y := projectRow; y < height; y++ {
 +		line := term.Screen().Line(y)
@@ -3500,7 +3548,7 @@ index dc361bae653914c973c80a1be5287e0587564a14..1f1d2952cff42e694d7df980d857e74b
  		},
  	})
 diff --git c/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
-index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040afd9ce2b5 100644
+index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c4e955a7a 100644
 --- c/internal/app/render_sidebar.go
 +++ w/internal/app/render_sidebar.go
 @@ -134,6 +134,18 @@ const (
@@ -3912,7 +3960,15 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	}
  	// The last section in the configured layout is the one pinned to the rail's
  	// bottom: the slack rides above it, and it wears a blank line of its own so
-@@ -1673,12 +1739,32 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1661,6 +1727,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	if sidebarLayoutPins(plans) {
+ 		pinned = plans[len(plans)-1].Section
+ 	}
++	pinnedBlockStart := sidebarPinnedBlockStart(plans, pinned)
+ 	// The dragged split, written over the pinned section's share.
+ 	plans = m.sidebarApplySplit(plans, pinned)
+ 
+@@ -1673,12 +1740,32 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	agentRowH := 1
  	// Row heights per section, which is what turns a section's line budget into
  	// the rows it can show and a st.lit() line back into the row under it.
@@ -3946,7 +4002,14 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	chrome := 0
  	drawn := 0
  	for i, p := range plans {
-@@ -1694,15 +1780,16 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1690,19 +1777,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 			continue
+ 		}
+ 		planRows[i], planRowH[i] = rowsIn[p.Section], rowH[p.Section]
++		if p.Section == sidebarSectionFiles {
++			planRows[i] = min(planRows[i], sidebarFilesVisibleLimit)
++		}
+ 		if planRows[i] == 0 {
  			continue
  		}
  		drawn++
@@ -3970,16 +4033,16 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	// The rows under the agent rows, one per subagent, fitted to the lines
  	// the section's budget gives it (see sidebarAgentChildren). They are rows
  	// of the section like any other, so the tall test and the viewport below
-@@ -1758,7 +1845,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1758,7 +1849,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// when something is drawn above it to split from. What the drag needs to
  	// turn a pointer row into a share is written down here, in this frame's
  	// numbers.
 -	hasDivider := pinned != sidebarSectionCount && rowsIn[pinned] > 0 && drawn > 1
-+	hasDivider := pinned != sidebarSectionCount && pinned != sidebarSectionProjects && rowsIn[pinned] > 0 && drawn > 1 && sectionGap > 0
++	hasDivider := pinnedBlockStart == pinned && pinned != sidebarSectionCount && pinned != sidebarSectionProjects && rowsIn[pinned] > 0 && drawn > 1 && sectionGap > 0
  	pinnedAt := -1
  	for i, p := range plans {
  		if !p.Spacer && p.Section == pinned {
-@@ -1778,7 +1865,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1778,7 +1869,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	for s := range place {
  		place[s] = sectionPlace{header: -1}
  	}
@@ -3988,14 +4051,16 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	placed := 0
  	// The last section placed above the current entry, so a spacer's lines can
  	// be given to its band. Empty space draws nothing and so has no band of its
-@@ -1803,20 +1890,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1802,41 +1893,45 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		}
  		y0 := line
  		placed++
- 		if p.Section == pinned {
+-		if p.Section == pinned {
 -			// The slack belongs to the band of the section above, so a wheel over
 -			// the empty middle of the rail scrolls that one. The single blank
 -			// that floats the pinned block is this section's own, which is what
 -			// keeps the gap between the two bands from belonging to neither.
++		if p.Section == pinnedBlockStart {
 +			// Slack belongs to the band above; the configured section gap belongs
 +			// to this section, so pointer scrolling still has an owner everywhere.
  			line += slack
@@ -4023,7 +4088,22 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		prev = p.Section
  	}
  	// With nothing pinned the slack falls where it always did, under the last
-@@ -1834,9 +1924,9 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	// drawn section and above the footer, and nothing below reads past it.
+ 	// The band above the pinned block belongs to the section over it, so the
+ 	// wheel keeps working on the gap the block floats in.
+-	if drawn > 1 && pinned != sidebarSectionCount {
+-		for i, plan := range slices.Backward(plans) {
+-			if plan.Spacer || planRows[i] == 0 || plan.Section == pinned {
++	pinnedBlockAt := slices.IndexFunc(plans, func(plan sidebarSectionPlan) bool { return !plan.Spacer && plan.Section == pinnedBlockStart })
++	if drawn > 1 && pinnedBlockAt > 0 {
++		for i, plan := range slices.Backward(plans[:pinnedBlockAt]) {
++			if plan.Spacer || planRows[i] == 0 {
+ 				continue
+ 			}
+ 			above := place[plan.Section]
+-			above.y1 = max(above.y1, place[pinned].y0)
++			above.y1 = max(above.y1, place[pinnedBlockStart].y0)
+ 			place[plan.Section] = above
  			break
  		}
  	}
@@ -4036,7 +4116,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	// the draw below cuts the lines and the rectangles to fit, and a band left
  	// past the cut would hand the wheel to a section with nothing on screen.
  	for s := range m.sidebarSectionY {
-@@ -1869,9 +1959,16 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1869,9 +1964,16 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// anchor above and before the cursor's auto-scroll below, so the three
  	// mechanisms agree on what is on screen and the cursor keeps the last word.
  	// See sidebar_reveal.go.
@@ -4055,7 +4135,18 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			if rows := capRows[sec]; rows > 0 {
  				if idx < *scroll[sec] {
  					*scroll[sec] = idx
-@@ -1920,7 +2017,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1884,6 +1986,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	var start, count, hidden [sidebarSectionCount]int
+ 	for s := range rowsIn {
+ 		start[s], count[s], hidden[s] = sidebarWindowSection(*scroll[s], rowsIn[s], capRows[s])
++		if sidebarSection(s) == sidebarSectionFiles && capRows[s] > 0 && rowsIn[s] > 0 {
++			start[s] = min(max(*scroll[s], 0), max(rowsIn[s]-capRows[s], 0))
++			count[s], hidden[s] = min(capRows[s], rowsIn[s]-start[s]), 0
++		}
+ 		*scroll[s] = start[s]
+ 	}
+ 	m.sidebarRecordAgentAnchor(agents, start[sidebarSectionAgents], count[sidebarSectionAgents])
+@@ -1920,7 +2026,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  		if barCell == nil {
  			barCell = make([]string, height)
@@ -4064,7 +4155,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			thumb = sidebarStyle(nil, pal.ScrollThumb).Render(glyph)
  		}
  		for i := top; i < top+size && place[s].top+i < height; i++ {
-@@ -1935,6 +2032,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1935,6 +2041,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		hoverRow[s] = -1
  	}
  	footerHoverLine, footerHoverX := -1, -1
@@ -4072,7 +4163,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	dividerHover := false
  	// Every header now carries click targets of its own (the add controls, the
  	// agents section's filter and sort, the files section's cd), so the
-@@ -1946,6 +2044,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1946,6 +2053,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if !m.SidebarDrag.Dragging && m.SidebarHoverActive && m.SidebarBandContains(m.SidebarHoverX, m.SidebarHoverY) {
  		delta := m.SidebarHoverY - topMargin
  		footerTop := height - footerH
@@ -4083,7 +4174,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		onHeader := -1
  		for s := range place {
  			if place[s].header >= 0 && delta == place[s].header {
-@@ -1953,7 +2055,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1953,7 +2064,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			}
  		}
  		switch {
@@ -4096,7 +4187,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			footerHoverLine, footerHoverX = delta-footerTop, m.SidebarHoverX-contentX0
  		case onHeader >= 0:
  			headerHoverX[onHeader] = m.SidebarHoverX - contentX0
-@@ -1961,7 +2067,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1961,7 +2076,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			dividerHover = true
  		default:
  			for s := range place {
@@ -4105,7 +4196,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  					continue
  				}
  				if d := delta - place[s].top; d >= 0 && d < count[s]*rowH[s] {
-@@ -1972,11 +2078,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1972,11 +2087,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  	// Re-rendered now the pointer is resolved; the first pass only measured how
  	// many lines the footer takes so the sections could be sized.
@@ -4123,7 +4214,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	// recordHit publishes a drawn row's rectangle and its nav row together, in
  	// drawn order, so the mouse and the keyboard address one target set. Hits
  	// only ever come from the renderer as it draws; nothing recomputes them.
-@@ -2013,7 +2122,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2013,7 +2131,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	overflowRow := func(n, indent int) string {
  		// Stands in for the rows it hides, so it starts where their names do.
  		more := overlay.Ellipsis() + " +" + strconv.Itoa(n)
@@ -4132,7 +4223,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			sidebarStyle(nil, pal.FgMute).Render(more), cw, nil))
  	}
  	// recordToken publishes a header control's rectangle and its nav row, the
-@@ -2031,6 +2140,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2031,6 +2149,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: tk.Kind, SessionID: sessionID, WindowID: tk.WindowID, WindowIndex: -1})
  	}
@@ -4153,7 +4244,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  
  	drawSessions := func() {
  		add := ""
-@@ -2039,13 +2162,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2039,13 +2171,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// its own control and the section header none: two "+" for one
  		// machine would be one more than the rail can explain.
  		if canCreate && len(m.SidebarHostIDs) == 0 {
@@ -4169,7 +4260,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		// lazygit's excludeBlankColumns, on the rail's right spine. A one-window
  		// session is the common case, so a column that prints "1" against every
  		// row is a column of identical digits carrying nothing. It is dropped
-@@ -2067,7 +2190,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2067,7 +2199,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// A space's heading. It names the rows under it and is not a
  				// row to act on, so it records no hit and no nav row: the
  				// pointer and the cursor pass over it.
@@ -4178,7 +4269,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  				continue
  			}
  			if s.Kind == sessiontree.KindRepo {
-@@ -2078,18 +2201,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2078,18 +2210,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// cursor has to tell them apart.
  				st := m.railRowState(idx == hoverRow[sidebarSectionSessions], isCursor(sidebarRowRepo, s.ID, s.Space))
  				recordHit(sidebarRowRepo, s.ID, s.Space, -1, 1)
@@ -4200,7 +4291,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		}
  		if h := hidden[sidebarSectionSessions]; h > 0 {
  			lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
-@@ -2102,7 +2225,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2102,7 +2234,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// coexist with a pointer on this header, so the two never compete for the
  		// same cells in practice; the arithmetic holds either way.
  		termAdd, termSpan, hasTermAdd := sidebarHeaderAdd(sidebarRowNewWindow, cw,
@@ -4209,7 +4300,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			isCursor(sidebarRowNewWindow, shown, ""), &m.Settings, nil)
  		right := termAdd
  		if peeking {
-@@ -2123,7 +2246,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2123,7 +2255,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			// label, the gap after it, the inset, and the control with the
  			// blank in front of it. Half the rail, which this used to take,
  			// ignored the label and on a narrow rail ran the name into it.
@@ -4218,7 +4309,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			if hasTermAdd {
  				room -= lipgloss.Width(sidebarAddGlyph(&m.Settings)) + 1
  			}
-@@ -2140,7 +2263,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2140,7 +2272,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		if hasTermAdd {
  			recordToken(termSpan, shown)
  		}
@@ -4227,7 +4318,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		// A peek shorter than the section it is held in fills the rest with
  		// blank lines, so whatever is below it stays where it was.
  		end := len(lines) + place[sidebarSectionTerminals].lines
-@@ -2157,7 +2280,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2157,7 +2289,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				lines = append(lines, compose(sidebarFit(
  					sidebarStyle(nil, nil).Render(" ")+sidebarQuietDot(nil, pal, &m.Settings)+
  						sidebarStyle(nil, nil).Render(" ")+
@@ -4236,7 +4327,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			}
  			return
  		}
-@@ -2202,7 +2325,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2202,7 +2334,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  
  	drawGit := func() {
@@ -4245,7 +4336,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		for i := range count[sidebarSectionGit] {
  			idx := start[sidebarSectionGit] + i
  			if idx >= len(gitRows) {
-@@ -2220,7 +2343,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2220,7 +2352,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  
  	drawCustom := func() {
@@ -4254,7 +4345,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		if len(customRows) == 0 {
  			// The title over an empty section: the one notional row draws
  			// as a blank line, so the heading is not the last thing on the
-@@ -2251,12 +2374,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2251,12 +2383,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// The count is the Inbox's while it is connected, narrowed to this
  		// session when the filter is, and over the rows the section lists
  		// otherwise. See sidebarHeaderCounts.
@@ -4269,7 +4360,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		if emptyFilter {
  			// The hint is about the attached session ("here"), so it carries that
  			// identity: it is a second filter control, and without something to tell
-@@ -2311,7 +2434,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2311,7 +2443,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			// only for that state, so a rail with no working agent records
  			// nothing and the motion clock never starts. See shimmer.go.
  			if e.State == "working" && bodyW > 0 {
@@ -4278,7 +4369,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  				m.motion.rail = append(m.motion.rail, shimmerSpan{
  					y: topMargin + len(lines), x0: x0, x1: min(x0+bodyW, contentX0+cw),
  				})
-@@ -2326,6 +2449,139 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2326,6 +2458,139 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  	}
  
@@ -4418,7 +4509,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	draw := [sidebarSectionCount]func(){
  		sidebarSectionSessions:  drawSessions,
  		sidebarSectionTerminals: drawTerminals,
-@@ -2333,8 +2589,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2333,8 +2598,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		sidebarSectionFiles:     drawFiles,
  		sidebarSectionGit:       drawGit,
  		sidebarSectionCustom:    drawCustom,
@@ -4430,7 +4521,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	for i, p := range plans {
  		if p.Spacer {
  			for range budget[i] {
-@@ -2346,33 +2605,47 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2346,33 +2614,49 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawnAt++
@@ -4441,7 +4532,8 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
 +				lines = append(lines, blank)
 +			}
  		}
- 		if p.Section == pinned {
+-		if p.Section == pinned {
++		if p.Section == pinnedBlockStart {
  			for range slack {
  				lines = append(lines, blank)
  			}
@@ -4451,6 +4543,8 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
 -				lines = append(lines, compose(m.sidebarDividerRow(cw, pal, active)))
 -			} else {
 -				lines = append(lines, blank)
++		}
++		if p.Section == pinned {
 +			if drawnAt > 1 {
 +				if hasDivider {
 +					recordHit(sidebarRowDivider, "", "", -1, 1)
@@ -4490,7 +4584,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		y := footerTop + z.Line
  		m.SidebarHits = append(m.SidebarHits, sidebarRowHit{
  			X0: contentX0 + z.X0, X1: contentX0 + z.X1,
-@@ -2382,12 +2655,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2382,12 +2666,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: z.Kind, WindowIndex: -1})
  	}
@@ -4523,7 +4617,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	// that the chrome alone overruns it produced a rail taller than its own band:
  	// the extra rows painted over the dock, and the hit rectangles recorded on
  	// them made a row outside the band clickable.
-@@ -2577,7 +2867,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
+@@ -2577,7 +2878,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
  // others from the cached listing, so agents elsewhere surface here marked
  // Foreign.
  func (m *OS) sidebarAgents(sessions []sessiontree.Node) []sidebarAgentEntry {
@@ -4532,7 +4626,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		return nil
  	}
  	return m.agentEntries(sessions)
-@@ -2590,8 +2880,10 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2590,8 +2891,10 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  	if !m.agentsOn() {
  		return nil
  	}
@@ -4543,7 +4637,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		pr := ""
  		if s.Worktree != nil {
  			pr = s.Worktree.PR
-@@ -2605,26 +2897,32 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2605,26 +2908,32 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  				idx = m.windowIndexByID(win.ID)
  			}
  			agents = append(agents, sidebarAgentEntry{
@@ -4596,7 +4690,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  			})
  		}
  	}
-@@ -2638,7 +2936,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2638,7 +2947,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  // auto-scroll knows which offset to move and by how much.
  func (m *OS) sidebarCursorIndex(target sidebarNavRow, sessions []sessiontree.Node,
  	terminals []sidebarTerminalEntry, agents []sidebarAgentEntry, files []fileRowSpec,
@@ -4610,7 +4704,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	switch target.Kind {
  	case sidebarRowSession:
  		for i, s := range sessions {
-@@ -2731,7 +3035,7 @@ func (m *OS) sidebarCollapseGlyph(variant int) (glyph string, ok bool) {
+@@ -2731,7 +3046,7 @@ func (m *OS) sidebarCollapseGlyph(variant int) (glyph string, ok bool) {
  	if variant == sidebarVariantGlyph {
  		// Only offer to reopen when the screen has room to honour it; a control
  		// that provably cannot move is noise.
@@ -4619,7 +4713,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	}
  	return collapse, true
  }
-@@ -2812,13 +3116,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2812,13 +3127,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  	slices.SortFunc(items, func(a, b placed) int { return a.zone.X0 - b.zone.X0 })
  
  	zones := make([]sidebarFooterZone, 0, len(items))
@@ -4640,7 +4734,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		for c := it.zone.X0 + 1; c < it.zone.X1 && c < cw; c++ {
  			row[c] = ""
  		}
-@@ -2827,7 +3134,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2827,7 +3145,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  
  	lines := make([]string, len(cells))
  	for i, row := range cells {
@@ -4649,7 +4743,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	}
  	return lines, zones
  }
-@@ -2838,6 +3145,14 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2838,6 +3156,14 @@ func (m *OS) windowIndexByID(id string) int {
  	return slices.IndexFunc(m.Windows, func(w *terminal.Window) bool { return w != nil && w.ID == id })
  }
  
@@ -4664,7 +4758,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  // sidebarSessionRow renders one session row.
  //
  //	▎● name              3
-@@ -2850,16 +3165,27 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2850,16 +3176,27 @@ func (m *OS) windowIndexByID(id string) int {
  // accent gutter mark and a full-strength name; pointer or keyboard cursor a
  // Surface band; a state wanting a human a severity gutter mark, a coloured
  // glyph and the rail's one bold. No standing fill, so the only band on a
@@ -4694,7 +4788,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  
  	// The session's colour takes whichever of the row's two marks the louder
  	// signals have not claimed. The quiet dot first, which costs the rail
-@@ -2871,7 +3197,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2871,7 +3208,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	stated := agentStateIndicator(node.AgentState) != ""
  
  	glyph := sidebarQuietDotTinted(dotTint(tint, pal, stated), rowBg, pal, &m.Settings)
@@ -4705,7 +4799,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
  	}
  
-@@ -2896,28 +3224,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2896,28 +3235,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// the thing on the rail you act on, so emphasis drains down from it: the
  	// machine heading over it is a step quieter, and the counts and marks
  	// quieter still.
@@ -4742,7 +4836,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	// The branch rides after the name in muted ink, and only when the two fit
  	// together: a name that has to scroll wants every column, and a branch
  	// with its name cut from under it says nothing. So it is context for the
-@@ -2945,36 +3264,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2945,36 +3275,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// name a key that opens something else.
  	mark, markW := "", 0
  	if m.Settings.SidebarShowNumbers && sessionIdx > 0 && sessionIdx <= 9 {
@@ -4794,7 +4888,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  }
  
  // sidebarTerminalRow renders one pane of the session the terminals section is
-@@ -3045,9 +3370,9 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+@@ -3045,9 +3381,9 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
  	// command typed into it does, so when only one of them fits it is this one.
  	// They are shown together when there is room for both.
  	right, rightW := "", 0
@@ -4806,7 +4900,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  		label := host + " " + e.Tag
  		right = sidebarStyle(rowBg, pal.AccentBright).Render(host) +
  			sidebarStyle(rowBg, pal.FgMute).Render(" "+e.Tag)
-@@ -3079,12 +3404,12 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+@@ -3079,12 +3415,12 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
  	if !nameMarked {
  		capsW = 0
  	}
@@ -4821,7 +4915,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  }
  
  // sidebarTerminalHostLabel is what a pane row says about its machine: the
-@@ -3140,8 +3465,8 @@ func (m *OS) sidebarAgentsEmptyRow(total, cw int, pal overlay.Palette, st sideba
+@@ -3140,8 +3476,8 @@ func (m *OS) sidebarAgentsEmptyRow(total, cw int, pal overlay.Palette, st sideba
  		sep = " . "
  	}
  	text := "none here" + sep + strconv.Itoa(total) + " all"
@@ -4832,7 +4926,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  }
  
  // sidebarHarnessMax caps a harness label so the agent it names can never crowd
-@@ -3186,8 +3511,8 @@ func sidebarAgentName(e sidebarAgentEntry) string {
+@@ -3186,8 +3522,8 @@ func sidebarAgentName(e sidebarAgentEntry) string {
  // sentence.
  func (m *OS) sidebarAgentNoteRow(e sidebarAgentEntry, variant, cw int, pal overlay.Palette, st sidebarRowState) string {
  	rowBg := sidebarRowBg(st, pal)
@@ -4843,7 +4937,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	plan := m.sidebarAgentTokensFor(e, variant, true, time.Now())
  	quiet := sidebarStyle(rowBg, pal.FgMute)
  	note := plan.Note
-@@ -3430,7 +3755,7 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+@@ -3430,7 +3766,7 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
  	// while nothing else on the row says which agent it is.
  	sep := sidebarAgentSep()
  	nameW := lipgloss.Width(name)
@@ -4852,7 +4946,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..0627c611dfd2755688527a6c0750040a
  	labelAt, mailAt := len(plan.Prefix)+len(plan.After), len(plan.Prefix)+len(plan.After)+1
  	nameRoom = max(nameRoom, 1)
  	shown := m.sidebarAgentPrefixRun(plan.Prefix, keep[:len(plan.Prefix)], quiet, pal)
-@@ -3481,6 +3806,6 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+@@ -3481,6 +3817,6 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
  	body := shown +
  		m.sidebarTokenStyle(nameStyle, plan.Name, pal).Render(m.sidebarMarquee("a:"+e.SessionID+"/"+e.WindowID, name, nameRoom, st.Cursor)) +
  		after
@@ -5895,7 +5989,7 @@ index 9e4ce6121c87943ca599adf7872bcfbac8a64ca3..3909517f7a795a6e582eefa885a9e521
  }
 diff --git c/internal/app/sidebar_attention.go w/internal/app/sidebar_attention.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..735a45b5b8e61eb6ab4fd152efc7d7c3ac7ca2fd
+index 0000000000000000000000000000000000000000..d7f0e19d958f10ee157169b0c3b2ebe4790f5e17
 --- /dev/null
 +++ w/internal/app/sidebar_attention.go
 @@ -0,0 +1,214 @@
@@ -5911,7 +6005,7 @@ index 0000000000000000000000000000000000000000..735a45b5b8e61eb6ab4fd152efc7d7c3
 +)
 +
 +const (
-+	sidebarAttentionProjectsGap           = 3
++	sidebarAttentionProjectsGap           = 2
 +	sidebarAttentionProjectsBottomPadding = 3
 +)
 +
@@ -9172,10 +9266,33 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  		return
  	}
 diff --git c/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
-index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fdf227c996a40266199d4c1820d52ced052ddc9e 100644
+index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8352d4832 100644
 --- c/internal/app/sidebar_layout.go
 +++ w/internal/app/sidebar_layout.go
-@@ -73,29 +73,30 @@ type sidebarSectionPlan struct {
+@@ -51,6 +51,22 @@ import (
+ // lines than its rows can fill and the total is never more than the rail has,
+ // so two sections cannot land on the same line at any height.
+ 
++const sidebarFilesVisibleLimit = 15
++
++func sidebarPinnedBlockStart(plans []sidebarSectionPlan, pinned sidebarSection) sidebarSection {
++	block := [...]sidebarSection{sidebarSectionProjects, sidebarSectionFiles, sidebarSectionGit}
++	if len(plans) < len(block) || pinned != block[len(block)-1] {
++		return pinned
++	}
++	for i, section := range block {
++		plan := plans[len(plans)-len(block)+i]
++		if plan.Spacer || plan.Section != section {
++			return pinned
++		}
++	}
++	return block[0]
++}
++
+ // sidebarSectionPlan is one entry of the rail's layout.
+ type sidebarSectionPlan struct {
+ 	// Section is which list this entry draws, or sidebarSectionCount for a
+@@ -73,29 +89,30 @@ type sidebarSectionPlan struct {
  // The spacer is not in it: it is not a section, it may appear more than once,
  // and sidebarLayoutFor turns it into a plan entry of its own.
  var sidebarSectionByName = map[string]sidebarSection{
@@ -9219,7 +9336,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fdf227c996a40266199d4c1820d52ced
  }
  
  // The parsed layout, cached against the string it came from. The rail parses it
-@@ -113,13 +114,20 @@ var (
+@@ -113,13 +130,20 @@ var (
  // sidebarLayoutPlans is the rail's layout, in the order the sections are
  // stacked from the top.
  func sidebarLayoutPlans(s *config.Settings) []sidebarSectionPlan {
@@ -9241,7 +9358,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fdf227c996a40266199d4c1820d52ced
  	return has[section]
  }
  
-@@ -413,5 +421,7 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
+@@ -413,5 +437,7 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
  		sidebarSectionFiles:     &m.SidebarScrollF,
  		sidebarSectionGit:       &m.SidebarScrollG,
  		sidebarSectionCustom:    &m.SidebarScrollC,
