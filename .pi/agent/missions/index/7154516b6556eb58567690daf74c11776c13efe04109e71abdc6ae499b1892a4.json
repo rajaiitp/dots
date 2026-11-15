@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "4755828e-8dd8-4bf2-8b0c-3abea8180a7a",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/vlc-playback",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/f37da49b989059f01c36fa6e11ea66edc7c292d4e3646919bcc00df658809e04/4755828e-8dd8-4bf2-8b0c-3abea8180a7a.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-11T14:12:18.105Z",
+  "lastRunId": "8ed24876-caf3-4517-aed9-be6c3d33ba0e"
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "46cba2fc-a83c-4881-a9d6-c32f2d626827",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T21:08:10.568Z",
+  "updatedAt": "2026-11-09T21:13:26.343Z",
+  "runs": [
+    {
+      "runId": "9819dfb0-d6af-499a-9d29-edbbe78620e1",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9819dfb0-d6af-499a-9d29-edbbe78620e1",
+      "status": "complete",
+      "startedAt": "2026-11-09T21:08:10.597Z",
+      "completedAt": "2026-11-09T21:13:26.343Z",
+      "usage": {
+        "tokens": 31585
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9819dfb0-d6af-499a-9d29-edbbe78620e1/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/9819dfb0-d6af-499a-9d29-edbbe78620e1/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/9819dfb0-d6af-499a-9d29-edbbe78620e1_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/native-sharedmem",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private Linux shared-memory candidate; changed files: ownstate/work/src/atl/{meson.build,src/libandroid/sharedmem.c}; exact patch: sharedmem.patch.\nAll relative evidence paths below are under /home/raja/Projects/andux/.andux/tasks/native-sharedmem. Validation: full private Meson compile/install and strict C/C++ ABI + actual-library dlsym tests passed; build.log, test.log, hashes.txt.\nContract: getSize accepts unlinked regular files (including ordinary files), rejects linked/nonregular with ENOTTY, invalid FD with EBADF, invalid result zero, returns full size_t without FD mutation; successful query leaves errno unchanged.\nProtection: only RWX and RX supported; literal READ-only/read-or-execute removal returns ENOTSUP; unknown bits EINVAL; write re-enabling EINVAL. FUTURE_WRITE preserves old writable maps but blocks future shared writable maps and write/pwrite; kernel failure propagates, never skips.\nOpen risks/questions: bounded approximation, not full NDK/ashmem identity; no registry; app compatibility unproven, especially PROT_READ callers. Recommended next step: required independent review before any app launch; private memchr candidate not merged here.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/9819dfb0-d6af-499a-9d29-edbbe78620e1/.andux/tasks/native-sharedmem-candidate.txt (1.2 KB, 5 lines). Read this file if needed."
+}

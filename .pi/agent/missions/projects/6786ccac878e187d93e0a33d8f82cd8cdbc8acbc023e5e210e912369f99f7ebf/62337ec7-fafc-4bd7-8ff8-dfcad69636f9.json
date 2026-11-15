@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "62337ec7-fafc-4bd7-8ff8-dfcad69636f9",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T09:20:06.612Z",
+  "updatedAt": "2026-11-12T09:23:13.472Z",
+  "runs": [
+    {
+      "runId": "0c905b5c-b48e-4e77-b49e-4eccf835bc29",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0c905b5c-b48e-4e77-b49e-4eccf835bc29",
+      "status": "complete",
+      "startedAt": "2026-11-12T09:20:06.629Z",
+      "completedAt": "2026-11-12T09:23:13.472Z",
+      "usage": {
+        "tokens": 45765
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0c905b5c-b48e-4e77-b49e-4eccf835bc29/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0c905b5c-b48e-4e77-b49e-4eccf835bc29/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0c905b5c-b48e-4e77-b49e-4eccf835bc29_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented blocker evidence and compile-ready fixture only; no candidate patch.\n\nChanged files: only `.andux/tasks/editorinfo-surrounding-candidate/`.\n\nValidation: five characterization tests passed; strict javac compilation passed; baseline failed as expected.\n\nOpen risk: API-36 span copying requires missing text/parcel semantics.\n\nRecommended next step: independent blocker review before approving prerequisite work or narrower semantics."
+}

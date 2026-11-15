@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "03781050-7ae9-4f8d-ab6e-fe0d84f10116",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/patch-stack",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/b7ea991a9ea1da6d030981bcd78646cbdc96764ce3870f3ecdb8bc56f117eb21/03781050-7ae9-4f8d-ab6e-fe0d84f10116.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-09T22:04:17.821Z",
+  "lastRunId": "6a53f154-2911-4717-8bc4-bfb20ae7500f"
+}

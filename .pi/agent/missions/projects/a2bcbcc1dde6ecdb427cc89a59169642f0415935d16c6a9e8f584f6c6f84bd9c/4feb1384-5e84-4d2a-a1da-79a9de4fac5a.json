@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "4feb1384-5e84-4d2a-a1da-79a9de4fac5a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T00:19:46.716Z",
+  "updatedAt": "2026-11-10T00:20:17.165Z",
+  "runs": [
+    {
+      "runId": "e8c131c6-ee17-44b2-9670-784b4f11d670",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e8c131c6-ee17-44b2-9670-784b4f11d670",
+      "status": "complete",
+      "startedAt": "2026-11-10T00:19:46.746Z",
+      "completedAt": "2026-11-10T00:20:17.165Z",
+      "usage": {
+        "tokens": 13572
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e8c131c6-ee17-44b2-9670-784b4f11d670/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e8c131c6-ee17-44b2-9670-784b4f11d670/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e8c131c6-ee17-44b2-9670-784b4f11d670_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-save-reopen",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Acceptance gates are sound, but targeting, persistence evidence and log containment remain underspecified.\n## Critical gaps\nExisting input tooling selects the largest PID-matching surface; keyboard injection does not verify focus. Require an unambiguous surface identity and matching keyboard focus before every input batch.\n## Important improvements\nSpecify the real save/close controls and bounded acknowledgements; distinguish natural exit 0 from cleanup termination. Never launch process two before process one and its descendants have exited.\n## Validation gaps\nRequire baseline→expected bytes before close, identical bytes after exit, and authoritative editor-content readback after reopen—not merely surface content or marker presence. Observer code must have no target-write path. Enforce live aggregate log limits despite unlimited FSIZE; missing/redirected fatal-log coverage must prevent PASS.\n## Recommended revision\nPin fixture/runtime/tool identities; create isolated profile/document; establish exact surface/focus; edit/save and verify bytes; close naturally and verify bytes/exit; reopen/read back/close naturally; enforce deadlines, fatal/log gates, unchanged hashes and scoped cleanup throughout.\n## Acceptance Contract\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e8c131c6-ee17-44b2-9670-784b4f11d670/.andux/tasks/markor-save-plan-review.txt (1.2 KB, 11 lines). Read this file if needed."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "f041906b-dc06-4be5-8033-b70191d823e8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:49:22.549Z",
+  "updatedAt": "2026-11-12T17:54:04.142Z",
+  "runs": [
+    {
+      "runId": "b7674127-a085-4b41-bdf8-8dd5269a29a9",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b7674127-a085-4b41-bdf8-8dd5269a29a9",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:49:22.593Z",
+      "completedAt": "2026-11-12T17:54:04.141Z",
+      "usage": {
+        "tokens": 43292
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b7674127-a085-4b41-bdf8-8dd5269a29a9/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b7674127-a085-4b41-bdf8-8dd5269a29a9/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/b7674127-a085-4b41-bdf8-8dd5269a29a9_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented independent delta review: B1 closed; READY for narrow intra-ATL integration only.\nChanged files: review `report.json` and `evidence.json`.\nValidation: boundary regressions and independent differential tests pass.\nOpen risks: 13 codecs remain missing; no full API36 or ART-runtime acceptance.\nRecommended next step: narrow integration."
+}

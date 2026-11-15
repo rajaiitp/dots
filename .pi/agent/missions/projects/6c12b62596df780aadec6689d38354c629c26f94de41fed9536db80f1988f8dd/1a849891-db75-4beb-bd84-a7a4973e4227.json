@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "1a849891-db75-4beb-bd84-a7a4973e4227",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T22:50:49.293Z",
+  "updatedAt": "2026-11-09T22:51:17.244Z",
+  "runs": [
+    {
+      "runId": "e010b7a0-9f4e-4f52-9a4c-7469917340ae",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e010b7a0-9f4e-4f52-9a4c-7469917340ae",
+      "status": "complete",
+      "startedAt": "2026-11-09T22:50:49.341Z",
+      "completedAt": "2026-11-09T22:51:17.244Z",
+      "usage": {
+        "tokens": 9879
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e010b7a0-9f4e-4f52-9a4c-7469917340ae/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e010b7a0-9f4e-4f52-9a4c-7469917340ae/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e010b7a0-9f4e-4f52-9a4c-7469917340ae_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/desktop-media",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Boundary intent is sound, but injection, forwarding supervision, and completion evidence need explicit contracts.\n## Critical gaps\nSpecify test-only injection through app_command/audio_commands while leaving launch/services intact; launch currently discards output and returns normally on deadline, so neither return nor probe success proves app exit zero before cleanup.\n## Important improvements\nRequire GTK-thread execution, exact pinned WrapperWidget header/library/layout plus g_type_query, checked NewLocalRef promotion and release; forbid old compositor injection. Count only bytes successfully forwarded, handle partial writes, and propagate pacat failure with explicit descriptor ownership and child reaping.\n## Validation gaps\nTest ABI mismatch, expired weak refs/JNI exceptions, broken pipes, blocked writes, early child exits and deadline expiry; verify mute from stream creation, expected-name-only MPRIS operations, Secret Service/microphone isolation, and no hostname/unrelated-media evidence leakage.\n## Recommended revision\nDefine scoped hooks and independent pre-cleanup exit evidence; implement fail-closed controller and supervised muted counter; run failure guards, then the bounded real-launch attempt; verify targeted stream/bridge teardown without global enumeration.\n## Acceptance Contract — Acceptance level: attested\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e010b7a0-9f4e-4f52-9a4c-7469917340ae/.andux/tasks/desktop-media-plan-review.txt (1.3 KB, 11 lines). Read this file if needed."
+}

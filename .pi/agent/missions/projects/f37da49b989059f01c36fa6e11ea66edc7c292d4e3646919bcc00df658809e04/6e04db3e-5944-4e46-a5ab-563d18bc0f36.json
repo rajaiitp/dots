@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "6e04db3e-5944-4e46-a5ab-563d18bc0f36",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:05:17.362Z",
+  "updatedAt": "2026-11-11T14:07:38.484Z",
+  "runs": [
+    {
+      "runId": "74b33492-952b-49ea-a75a-c5351c2013d3",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/74b33492-952b-49ea-a75a-c5351c2013d3",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:05:17.406Z",
+      "completedAt": "2026-11-11T14:07:38.484Z",
+      "usage": {
+        "tokens": 20847
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/74b33492-952b-49ea-a75a-c5351c2013d3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/74b33492-952b-49ea-a75a-c5351c2013d3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/74b33492-952b-49ea-a75a-c5351c2013d3_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/vlc-playback",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private synthetic-WAV harness preparation; no runtime launched. Full acceptance remains explicitly unproven.\n\nChanged files: `probe.py`, `prepare.py`.\nValidation: Python compilation passed.\nOpen risks: Runtime behavior and descendant/service cleanup require parent review.\nRecommended next step: Review invocation in `prepare.py`, then run serially."
+}

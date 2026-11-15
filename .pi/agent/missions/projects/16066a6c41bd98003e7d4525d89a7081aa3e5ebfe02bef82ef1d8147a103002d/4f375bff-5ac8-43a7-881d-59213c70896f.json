@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "4f375bff-5ac8-43a7-881d-59213c70896f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T09:34:28.438Z",
+  "updatedAt": "2026-11-11T09:38:20.740Z",
+  "runs": [
+    {
+      "runId": "0046cf24-05b5-4e61-aad3-3ea35398d73a",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-11T09:38:20.740Z",
+      "completedAt": "2026-11-11T09:38:20.740Z",
+      "usage": {
+        "tokens": 71967
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/0046cf24-05b5-4e61-aad3-3ea35398d73a_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/0046cf24-05b5-4e61-aad3-3ea35398d73a_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Explicit-state provenance is missing, and row geometry, freeze removal, and cache reconciliation need tighter contracts.\n\n## Critical gaps\n- `session_tree.go:76,133` already normalizes states through `railAgentState`, which converts idle/unknown with unseen completions into `done`. Therefore `sidebarAgentEntry.State` cannot establish **explicit** completion. Carry reported state separately without changing legacy tree semantics. Also resolve sequence-aware `DoneSeen` for foreign cached panes: explicit `done` currently reads the persisted boolean, potentially retaining “seen” across another completion.\n\n## Important improvements\n- Define one physical-row projection covering primary/context rows, headers, gaps, and Projects. Derive budgeting, scrolling, overflow counts, reveal, hover, hits, and keyboard identity from it. Existing overview arithmetic assumes one line per row; new row kinds also need `sidebarUIFilterOverview` handling.\n- Freeze occupied slots and headers, not merely agent order. A removed target must become inert without shifting subsequent rows until reconciliation. Keep frozen storage independent of the UI filter’s in-place compaction. Reconcile only when **both** hover and keyboard ownership end; specify reset behavior for hiding, mode changes, and reattachment.\n- Include mode, Projects fold, and presentation/reconciliation generation in each rail’s cache contract. Reconciliation must not depend on a render path that a cache hit can bypass; restored hits/nav must match the same projection.\n\n## Validation gaps\n- Exercise actual local/foreign extraction, not only classifier fixtures: raw idle/unknown with advanced sequence; persisted seen at sequence N followed by explicit done at N+1; unresolved/resolved asks; unchanged tree output.\n- Compare cold and cached renders across one-line remaining budgets, context-row viewport boundaries, and Projects toggles.\n…\nFull output: /home/raja/dots/.pi/age...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with source-backed completion-provenance findings and bounded geometry/lifecycle additions."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection of protected source and canonical installer; no runtime validation performed."
+      ],
+      "residualRisks": [
+        "Implementation, test results, regenerated patch applicability, and installation provenance remain unverified."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Review only; no changes made.",
+      "reviewFindings": [
+        "blocker: attention inputs currently lose explicit reported-state provenance",
+        "blocker: foreign explicit-done seen handling needs sequence-aware resolution"
+      ],
+      "manualNotes": "Used only read/search tools. No files edited or staged, commands executed, or live sessions touched; existing index status was not inspected."
+    }
+  }
+}

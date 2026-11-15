@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "06538cd7-b92f-46ef-ae10-087a4d4f5710",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T20:14:00.035Z",
+  "updatedAt": "2026-11-09T20:15:39.856Z",
+  "runs": [
+    {
+      "runId": "cf11fa1a-d44a-48e1-b26c-3476ff28bd6e",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cf11fa1a-d44a-48e1-b26c-3476ff28bd6e",
+      "status": "complete",
+      "startedAt": "2026-11-09T20:14:00.063Z",
+      "completedAt": "2026-11-09T20:15:39.856Z",
+      "usage": {
+        "tokens": 24582
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cf11fa1a-d44a-48e1-b26c-3476ff28bd6e/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cf11fa1a-d44a-48e1-b26c-3476ff28bd6e/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/cf11fa1a-d44a-48e1-b26c-3476ff28bd6e_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-batch-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nOne fresh unchanged Markor 2026.10.0 synthetic-document probe: document-open-observed; exit 0, 32.80s (58s outer timeout).\nReal text-batch-integration/state/prefix mounted read-only; build.exit=0; full file SHA256 maps before/after equal; integration workspace untouched.\nAPK SHA256 c29412e02d03e4f0511746a1bcef48c6b73fc1f70c1024fbf04903b0b3f4c485 equals artifact and remains unchanged.\nReused read-only scout setup/command/recipes; replaced prefix/work mounts; own setup enables existing incremental 8MiB cap (41,468 bytes captured, not truncated), no RLIMIT_FSIZE.\nUID/GID 1000/1000, core=0, unshare-all/cap-drop/clearenv/offline, private bus, headless pixman/cairo/software/dummy audio; all six private app/home/cache/config/runtime/data dirs verified before Java.\nDocument marker ANDUX_MARKOR_DOCUMENT_6e71c2 seen in editable widget for app PID 21; synthetic file unchanged; content mapped; app survived full 30s.\nFatal classifier false; missing API observations empty; captured-output classifier cannot prove absence of all fatal errors.\nFirst app diagnostic: app.log:101 GTK theme parser error default-stylesheet.css:21:2-12: No property named text-align.\nFirst concrete Java error: app.log:210 PlaintextSyntaxHighlighter RuntimeException/FileNotFoundException: highlight/languages/null.json (nonfatal during observation); outer portal also reports missing /dev/fuse.\nCleanup recorded app PID21 reaped exit -15 and compositor PID17 reaped exit 0; sandbox exited 0. No edit/save/reopen claim; batch lease/rollback edges remain unverified.\nEvidence: /home/raja/Projects/andux/.andux/tasks/markor-batch-probe/{probe.py,run/}; result.json, cleanup.json, status.json, command.json, prefix-before/after.json, preflight.json, app.log, outer.log. No screenshots/profiles/network/product edits; no staged files.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/cf11fa1a-d44a-48e1-b26c-3476ff28bd6e/.andux/tasks/markor-batch-current-res"
+}

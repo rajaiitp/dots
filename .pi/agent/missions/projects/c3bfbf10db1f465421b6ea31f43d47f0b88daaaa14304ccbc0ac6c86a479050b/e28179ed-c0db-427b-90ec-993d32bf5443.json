@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "e28179ed-c0db-427b-90ec-993d32bf5443",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-11-09T19:49:23.632Z",
+  "updatedAt": "2026-11-09T19:49:23.634Z",
+  "runs": [],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/fortify-memchr",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\nFailed to start async run 'a1836531-8e75-4729-bd8f-e62a5376810b': Subagent launch aborted: cwd does not exist: /home/raja/Projects/andux/.andux/tasks/fortify-memchr"
+}

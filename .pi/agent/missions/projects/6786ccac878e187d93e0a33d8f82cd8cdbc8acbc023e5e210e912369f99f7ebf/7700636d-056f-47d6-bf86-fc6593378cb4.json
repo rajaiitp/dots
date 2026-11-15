@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "7700636d-056f-47d6-bf86-fc6593378cb4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:21:31.044Z",
+  "updatedAt": "2026-11-11T12:24:19.314Z",
+  "runs": [
+    {
+      "runId": "f2b91602-af8e-413b-820e-75474b0cf6ad",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f2b91602-af8e-413b-820e-75474b0cf6ad",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:21:31.071Z",
+      "completedAt": "2026-11-11T12:24:19.314Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "f2b91602-af8e-413b-820e-75474b0cf6ad",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:21:31.218Z",
+      "updatedAt": "2026-11-11T12:24:19.133Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c44594ad-1140-4dc2-95b2-8373e7977d64",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c44594ad-1140-4dc2-95b2-8373e7977d64/run-0/session.jsonl"
+      ],
+      "runId": "c44594ad-1140-4dc2-95b2-8373e7977d64",
+      "agent": "worker",
+      "completedAt": "2026-11-11T12:24:19.133Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c44594ad-1140-4dc2-95b2-8373e7977d64/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:24:19.133Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "f2b91602-af8e-413b-820e-75474b0cf6ad",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:21:31.281Z",
+      "updatedAt": "2026-11-11T12:23:06.515Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/e0a16a21-c11c-489a-915c-bc708006a808",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e0a16a21-c11c-489a-915c-bc708006a808/run-0/session.jsonl"
+      ],
+      "runId": "e0a16a21-c11c-489a-915c-bc708006a808",
+      "agent": "worker",
+      "completedAt": "2026-11-11T12:23:06.515Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e0a16a21-c11c-489a-915c-bc708006a808/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:23:06.515Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "f2b91602-af8e-413b-820e-75474b0cf6ad",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:21:31.305Z",
+      "updatedAt": "2026-11-11T12:23:18.042Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/5e9f4a0c-634a-4210-bdfb-3fe384a557e4",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5e9f4a0c-634a-4210-bdfb-3fe384a557e4/run-0/session.jsonl"
+      ],
+      "runId": "5e9f4a0c-634a-4210-bdfb-3fe384a557e4",
+      "agent": "worker",
+      "completedAt": "2026-11-11T12:23:18.042Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5e9f4a0c-634a-4210-bdfb-3fe384a557e4/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:23:18.042Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f2b91602-af8e-413b-820e-75474b0cf6ad/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f2b91602-af8e-413b-820e-75474b0cf6ad/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/c44594ad-1140-4dc2-95b2-8373e7977d64_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e0a16a21-c11c-489a-915c-bc708006a808_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/5e9f4a0c-634a-4210-bdfb-3fe384a557e4_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"{\\n  \\\"implemented\\\": \\\"Private partial legacy-control candidate; not ready for integration.\\\",\\n  \\\"changed_files\\\": [\\\"candidate.patch\\\", \\\"evidence.json\\\", \\\"fixtures/LegacyMediaControlsFixture.java\\\", \\\"candidate/atl/\\\", \\\"original/atl/\\\"],\\n  \\\"validation\\\": \\\"Patch syntax inspected; no builds or runtime tests run. Nothing staged.\\\",\\n  \\\"open_risks\\\": \\\"Native speed semantics, session ownership isolation, callback cleanup, and verified AOSP derivation remain incomplete.\\\",\\n  \\\"recommended_next_step\\\": \\\"Parent review before serialized compilation or integration.\\\"\\n}\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented blocker/design report only; no product edits or candidate patch. Process ownership requires an approved hidden-window/reopen policy.\\n\\nChanged files: three JSON reports.\\nValidation: JSON … (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/f2b91602-af8e-413b-820e-75474b0cf6ad/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

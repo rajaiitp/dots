@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "306e55b7-fa83-4ae4-9a72-11964399cfc1",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T13:16:56.090Z",
+  "updatedAt": "2026-11-11T13:18:27.851Z",
+  "runs": [
+    {
+      "runId": "4e27dabf-42cf-4369-9743-1d5a6128fd64",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4e27dabf-42cf-4369-9743-1d5a6128fd64",
+      "status": "complete",
+      "startedAt": "2026-11-11T13:16:56.112Z",
+      "completedAt": "2026-11-11T13:18:27.851Z",
+      "usage": {
+        "tokens": 14620
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4e27dabf-42cf-4369-9743-1d5a6128fd64/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4e27dabf-42cf-4369-9743-1d5a6128fd64/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4e27dabf-42cf-4369-9743-1d5a6128fd64_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private Bitmap render provenance propagation; no runtime verdict changed.\n\nChanged files: `ui_observer.c`, `ui_observer_test.c`.\nValidation: strict C compilation, headless graph tests, source checks passed.\nRisks: runtime workflow remains UNPROVEN pending parent run.\nNext step: parent review, compile and run."
+}

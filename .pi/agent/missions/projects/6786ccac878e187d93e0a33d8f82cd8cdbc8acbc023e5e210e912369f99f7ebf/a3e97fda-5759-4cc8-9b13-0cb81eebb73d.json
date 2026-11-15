@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "a3e97fda-5759-4cc8-9b13-0cb81eebb73d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T10:29:35.396Z",
+  "updatedAt": "2026-11-12T10:37:07.183Z",
+  "runs": [
+    {
+      "runId": "031e3731-dd78-4473-85ab-752bd34b872b",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/031e3731-dd78-4473-85ab-752bd34b872b",
+      "status": "complete",
+      "startedAt": "2026-11-12T10:29:35.414Z",
+      "completedAt": "2026-11-12T10:37:07.183Z",
+      "usage": {
+        "tokens": 61587
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/031e3731-dd78-4473-85ab-752bd34b872b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/031e3731-dd78-4473-85ab-752bd34b872b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/031e3731-dd78-4473-85ab-752bd34b872b_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented the packaging-only candidate in `.andux/tasks/api-audit-packaging/`.\nChanged files: six package sources, four test modules, four JSON evidence files.\nValidation: 70 tests pass; canonical Ruff format/lint pass with `/project` read-only.\nOpen risks/questions: independent review pending; approved filesystem limitations retained.\nRecommended next step: parent reviews and integrates the proposed files."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "4e1848df-cac6-47e7-8426-1943d1f54c33",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T20:10:47.249Z",
+  "updatedAt": "2026-11-09T20:15:08.270Z",
+  "runs": [
+    {
+      "runId": "8c2de413-788a-4ced-ab60-19e007eda676",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8c2de413-788a-4ced-ab60-19e007eda676",
+      "status": "complete",
+      "startedAt": "2026-11-09T20:10:47.270Z",
+      "completedAt": "2026-11-09T20:15:08.270Z",
+      "usage": {
+        "tokens": 54479
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8c2de413-788a-4ced-ab60-19e007eda676/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8c2de413-788a-4ced-ab60-19e007eda676/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/8c2de413-788a-4ced-ab60-19e007eda676_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/text-batch-integration",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented real private GTK/ART regression in integration workspace only; no product semantics changed, Root/canonical source and prefixes not edited.\nChanged: project/build copied Root recipes; added GtkBatchFixtureActivity.java, gtk_batch_runtime.py, gtk_batch_sink.c, gtk_batch_sink.sh, gtk_batch_bus.conf; added run_private.py.\nFixture: default package; Handler.post after setContentView; rooted requestFocus=true and hasFocus required before successful showSoftInput; reflected actual active GtkEditableInputConnection and IMM context.\nPASS: live commitText and deleteSurroundingText changed dummy Editable with synchronous TextWatcher callbacks, including watchers inside nested batches.\nMeasured LD_PRELOAD sink delegates real gtk_im_context_set_surrounding_with_selection; logs only context pointer, byte count, cursor, anchor; assertions filter actual IMM context.\nObserved nested direct+connection: zero GTK deliveries before/at inner end; exactly one at direct outer end, (bytes,cursor,anchor)=(2,2,2); unchanged nested batches delivered zero.\nObserved reversed emoji selection: Java UTF-16 anchor=3,cursor=1 preserved; final GTK (bytes,cursor,anchor)=(6,1,5); intermediate (6,0,5) also observed, not concealed.\nFinal python3 run_private.py exit=0, LIVE_GTK_BATCH_PASS; logs: runtime.log, state/work/gtk-batch-run/app.log and weston.log; command: runtime-command.json; all paths relative to integration workspace.\nIsolation: core=0, offline rootless bwrap/unshare-all/capdrop/clearenv; headless Weston pixman, GTK cairo/software, dummy audio/input, private no-activation dbus; no host display/audio/profile/network/SecretService; fresh private caches; parent preflight; 80s run deadline, log caps, namespace/process cleanup; no RLIMIT_FSIZE.\nRuntime prefix RO snapshot SHA256 before=after=775eb4c0d651fd6c490e804389e07b6ab207677b313ad079e76d13b208a1b2ae; original private prefix matched afterward; runtime-fingerprints.json retained.\nValidation: javac -Xlint:all -Werror --release"
+}

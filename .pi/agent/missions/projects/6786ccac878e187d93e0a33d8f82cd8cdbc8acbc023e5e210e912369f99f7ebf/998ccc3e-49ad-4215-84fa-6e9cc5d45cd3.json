@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "998ccc3e-49ad-4215-84fa-6e9cc5d45cd3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:52:38.754Z",
+  "updatedAt": "2026-11-11T12:53:30.241Z",
+  "runs": [
+    {
+      "runId": "2883ea9b-206d-4a9e-add9-982e324a449c",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2883ea9b-206d-4a9e-add9-982e324a449c",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:52:38.772Z",
+      "completedAt": "2026-11-11T12:53:30.241Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "2883ea9b-206d-4a9e-add9-982e324a449c",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:52:38.884Z",
+      "updatedAt": "2026-11-11T12:53:30.055Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/099636dc-5924-4895-8d17-bc5102c1f540",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/099636dc-5924-4895-8d17-bc5102c1f540/run-0/session.jsonl"
+      ],
+      "runId": "099636dc-5924-4895-8d17-bc5102c1f540",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:53:30.055Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/099636dc-5924-4895-8d17-bc5102c1f540/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:53:30.055Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "2883ea9b-206d-4a9e-add9-982e324a449c",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:52:38.917Z",
+      "updatedAt": "2026-11-11T12:53:29.054Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/2e2c97d8-74ea-46ca-bb5a-431a21f91d34",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/2e2c97d8-74ea-46ca-bb5a-431a21f91d34/run-0/session.jsonl"
+      ],
+      "runId": "2e2c97d8-74ea-46ca-bb5a-431a21f91d34",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:53:29.054Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/2e2c97d8-74ea-46ca-bb5a-431a21f91d34/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:53:29.054Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2883ea9b-206d-4a9e-add9-982e324a449c/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/2883ea9b-206d-4a9e-add9-982e324a449c/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/099636dc-5924-4895-8d17-bc5102c1f540_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/2e2c97d8-74ea-46ca-bb5a-431a21f91d34_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"## Review\\n- Correct: Direct `MediaSession.release()` now commits Java teardown only after native acceptance and bypasses metadata conversion (`native-session/candidate/atl/src/api-impl/android/media/session/MediaSession.java:155–171`; native counterpart `android_media_session_MediaSession.c:400–434`). Release admission is FIFO and bounded to 144 pending operations (`media-owner-queue.h:4–6,55–85`).\\n- Correct: NotificationManager forwards MPRIS operations; cancellation preserves active owners (`android_app_NotificationManager.c:176–190`; `android_media_session_MediaSession.c:306–312`). Composed startup/shutdown hooks exist (`runtime-lifetime/copies/atl/src/main-executable/main.c:887–897`).\\n- **Finding: P1 — Legacy unregister still destroys retry state before release succeeds.** `legacy-repair/candidate.patch:89–91` removes the receiver entry before deactivation/r… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/2883ea9b-206d-4a9e-add9-982e324a449c/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

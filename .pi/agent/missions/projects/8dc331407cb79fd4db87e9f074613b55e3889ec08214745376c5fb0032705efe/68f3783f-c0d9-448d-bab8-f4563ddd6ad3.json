@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "68f3783f-c0d9-448d-bab8-f4563ddd6ad3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T17:26:03.409Z",
+  "updatedAt": "2026-11-05T17:28:52.865Z",
+  "runs": [
+    {
+      "runId": "1f9beabb-eb8e-413c-8642-b3b33faa426b",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T17:28:52.865Z",
+      "completedAt": "2026-11-05T17:28:52.865Z",
+      "usage": {
+        "tokens": 30523
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/1f9beabb-eb8e-413c-8642-b3b33faa426b_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/1f9beabb-eb8e-413c-8642-b3b33faa426b_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Freeze the selection contract and ensure longer-window comparisons use genuinely matched contacts.\n\n## Critical gaps\n- “Coverage first” leaves case/copy weighting, final ties, and held-out winner qualification unspecified. Explicitly forbid promotion from unequal surviving cohorts when rows are incomplete.\n\n## Important improvements\n- `community_contacts.py:152` makes restart timing—and subsequent RNG consumption—depend on horizon. Generate one maximal trace and truncate it for common-window comparisons. Also predeclare the common lifetime: the default 3,600-second TTL limits what longer windows can demonstrate.\n\n## Validation gaps\n- Selection fixtures covering missing/duplicate rows, budget failures, exact ties, and unequal denominators.\n- Verify contact/restart prefix equality across window lengths and identical workloads across matched policies; distinguish expiry from window censoring.\n\n## Recommended revision\n1. Freeze aggregation, eligibility, tie-breaking, qualification, and complete evaluation manifests.\n2. Construct prefix-matched window cases with explicit lifetime semantics.\n3. Add the checks above, then retain the planned implementation, staged sweeps, and canonical validation sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned two material experimental-design findings and identified unverified implementation risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection confirmed horizon-dependent restart generation and the default 3600-second publication lifetime."
+      ],
+      "residualRisks": [
+        "Implementation correctness and experimental outcomes remain unverified."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "Promotion and winner-selection rules require complete predeclaration.",
+        "tools/routing_sim/community_contacts.py:152 - independently regenerated horizons do not preserve contact/restart prefixes."
+      ],
+      "manualNotes": "Inspected policy, store, tournament, study, tests, and contact-generation code. No commands, edits, or staging performed; pre-existing index state was not inspected."
+    }
+  }
+}

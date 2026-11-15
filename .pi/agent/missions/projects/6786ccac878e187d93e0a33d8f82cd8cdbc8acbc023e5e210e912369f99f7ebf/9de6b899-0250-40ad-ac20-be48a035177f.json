@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "9de6b899-0250-40ad-ac20-be48a035177f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:43:31.214Z",
+  "updatedAt": "2026-11-11T12:44:42.650Z",
+  "runs": [
+    {
+      "runId": "dcc25931-cea6-4a62-b9b3-90618fb6f4e5",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dcc25931-cea6-4a62-b9b3-90618fb6f4e5",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:43:31.228Z",
+      "completedAt": "2026-11-11T12:44:42.650Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "dcc25931-cea6-4a62-b9b3-90618fb6f4e5",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:43:31.330Z",
+      "updatedAt": "2026-11-11T12:44:42.470Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa29574e-7412-41c5-bc5a-db959f538c2c",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa29574e-7412-41c5-bc5a-db959f538c2c/run-0/session.jsonl"
+      ],
+      "runId": "fa29574e-7412-41c5-bc5a-db959f538c2c",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:44:42.470Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa29574e-7412-41c5-bc5a-db959f538c2c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:44:42.470Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "dcc25931-cea6-4a62-b9b3-90618fb6f4e5",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:43:31.363Z",
+      "updatedAt": "2026-11-11T12:44:25.495Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/f47a32a1-f2af-48e0-9036-0ef05801898e",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/f47a32a1-f2af-48e0-9036-0ef05801898e/run-0/session.jsonl"
+      ],
+      "runId": "f47a32a1-f2af-48e0-9036-0ef05801898e",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:44:25.495Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/f47a32a1-f2af-48e0-9036-0ef05801898e/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:44:25.495Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dcc25931-cea6-4a62-b9b3-90618fb6f4e5/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dcc25931-cea6-4a62-b9b3-90618fb6f4e5/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fa29574e-7412-41c5-bc5a-db959f538c2c_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/f47a32a1-f2af-48e0-9036-0ef05801898e_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"## Review — REVISE\\n\\n- **Correct:** Revised patches contain structurally coherent Java/C text; the previous corrupted quoting is absent. Shared `MediaMetadata` getters and `MediaSession` setters match. Native snapshots retain independent session state, select by activation edge, and restore eligible predecessors. Metadata publication replaces the complete dictionary, including clearing. Transport dispatch covers the advertised action mask; exact seek requires known position. PendingIntent routing sends DOWN/UP without cancellation fallback to another owner.\\n- **P1 — Lifecycle integration is still missing.** Authoritative `atl/src/main-executable/main.c:866–872` neither starts nor shuts down the owner queue. Consequently, candidate publication is rejected. `atl/src/api-impl-jni/app/android_app_NotificationManager.c:176–231` still independently owns/exports MPRIS a… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/dcc25931-cea6-4a62-b9b3-90618fb6f4e5/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

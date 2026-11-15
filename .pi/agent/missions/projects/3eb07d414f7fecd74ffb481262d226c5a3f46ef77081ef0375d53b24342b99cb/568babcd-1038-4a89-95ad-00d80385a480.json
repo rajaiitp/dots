@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "568babcd-1038-4a89-95ad-00d80385a480",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T10:20:14.063Z",
+  "updatedAt": "2026-11-10T10:35:15.767Z",
+  "runs": [
+    {
+      "runId": "efe7626d-bf6c-462e-8e7c-3cf51c8dcd26",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe7626d-bf6c-462e-8e7c-3cf51c8dcd26",
+      "status": "complete",
+      "startedAt": "2026-11-10T10:20:14.107Z",
+      "completedAt": "2026-11-10T10:35:15.767Z",
+      "usage": {
+        "tokens": 73463
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe7626d-bf6c-462e-8e7c-3cf51c8dcd26/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe7626d-bf6c-462e-8e7c-3cf51c8dcd26/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/efe7626d-bf6c-462e-8e7c-3cf51c8dcd26_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/mpris-position-clock",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nPRIVATE CANDIDATE — BLOCKED / UNVALIDATED / NOT APPROVED FOR INTEGRATION\n\nWorking directory: /home/raja/Projects/andux/.andux/tasks/mpris-position-clock\nRead the complete position-clock-plan.txt and current-repair-plans-review.txt (A READY). Followed Parent mid-run steering: no ART/application JVM launched; no slot grant received. javac and fixture build stages were never reached either.\n\nResult\nImplemented a private source candidate and supplied tests/fixtures, but stopped after the two permitted failed validation cycles. No model/unit/concurrency/D-Bus test binary executed. No strict candidate compilation, JNI header identity check, bridge exclusion check, fixture compilation/link/dex, or ART runtime check completed. This is not a ready-for-integration result and not evidence that ATL/Antenna supports the repaired behavior.\n\nArtifacts (relative to working directory)\n- mpris-position-clock.patch: 880-line unified source patch against the current source; SHA256 e5303562ba725672f85f6b037ca251f85ff379f33dead31650433cfdea4dece7.\n- candidate/: one private copy of each changed source file, with three new internal headers.\n- source-pins.json: 74 SHA256 pins including five original changed files, original JNI header/generated D-Bus C/header, compile commands/upcalls, util/handle-cache sources, Root/build markers, locked inputs, all 53 patch layers, recipe, class and installed dex artifacts.\n- artifact-manifest.json: hashes of patch, candidate files, tests, fixtures, logs and generated D-Bus fixture source/header.\n- logs/validation-1.log and .exit; logs/validation-2.log and .exit; logs/sandbox-command.txt (exact second-cycle sandbox invocation).\n- output/generated/mpris-dbus.c and .h: actual gdbus-codegen output from candidate XML; not edited. No shared generated C was edited.\n\nChanged source paths\nsrc/api-impl/android/media/session/MediaSession.java\nsrc/api-impl-jni/app/android_app_NotificationManager.c\nsrc/api-impl-jni/media/android_media_session_MediaSession.c\nsr"
+}

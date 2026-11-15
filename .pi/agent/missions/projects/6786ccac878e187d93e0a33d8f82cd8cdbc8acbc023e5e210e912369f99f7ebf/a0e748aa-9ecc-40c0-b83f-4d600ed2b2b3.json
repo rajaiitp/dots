@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "a0e748aa-9ecc-40c0-b83f-4d600ed2b2b3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T08:53:45.691Z",
+  "updatedAt": "2026-11-12T09:01:59.043Z",
+  "runs": [
+    {
+      "runId": "72915c92-f6b0-4eb8-a6a1-5fe6c63e6744",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/72915c92-f6b0-4eb8-a6a1-5fe6c63e6744",
+      "status": "complete",
+      "startedAt": "2026-11-12T08:53:45.700Z",
+      "completedAt": "2026-11-12T09:01:59.043Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "72915c92-f6b0-4eb8-a6a1-5fe6c63e6744",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T08:53:45.790Z",
+      "updatedAt": "2026-11-12T09:01:58.845Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/dd5421c5-ff2a-43b2-8109-61fd1e03ac55",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/dd5421c5-ff2a-43b2-8109-61fd1e03ac55/run-0/session.jsonl"
+      ],
+      "runId": "dd5421c5-ff2a-43b2-8109-61fd1e03ac55",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:01:58.845Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/dd5421c5-ff2a-43b2-8109-61fd1e03ac55/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:01:58.845Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "72915c92-f6b0-4eb8-a6a1-5fe6c63e6744",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T08:53:45.814Z",
+      "updatedAt": "2026-11-12T08:57:52.841Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1adf7413-35dc-4ffb-ba89-2e1b2df503da",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1adf7413-35dc-4ffb-ba89-2e1b2df503da/run-0/session.jsonl"
+      ],
+      "runId": "1adf7413-35dc-4ffb-ba89-2e1b2df503da",
+      "agent": "worker",
+      "completedAt": "2026-11-12T08:57:52.841Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1adf7413-35dc-4ffb-ba89-2e1b2df503da/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T08:57:52.841Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/72915c92-f6b0-4eb8-a6a1-5fe6c63e6744/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/72915c92-f6b0-4eb8-a6a1-5fe6c63e6744/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/dd5421c5-ff2a-43b2-8109-61fd1e03ac55_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/1adf7413-35dc-4ffb-ba89-2e1b2df503da_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented the private candidate, exact patch, Activity fixture and tests. All writes are confined to `.andux/tasks/playbackstate-candidate/`.\\n\\nValidation passed; parent review, integration and real runtime validation remain mandatory.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Reviewed both candidates: **READY for narrow patch integration**, not compatibility acceptance.\\n\\nChanged files: review `report.json` and `validation.json` only.\\nValidation: 8 supplied tests, 7 independent checks, patch applicability and unchanged-input checks passed. No staged files.\\nRisks: runtime validation pending; Fragment manager identity/timing and headless limitations remain.\\nNext: parent integrates exact patches and runs authoritative regressions.\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

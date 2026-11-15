@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "c392e966-3dee-4bd9-b661-67e03d5ec1ac",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:57:44.266Z",
+  "updatedAt": "2026-11-11T12:58:58.292Z",
+  "runs": [
+    {
+      "runId": "37668eec-3ca2-4ec0-a9ec-916e8c717e2b",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/37668eec-3ca2-4ec0-a9ec-916e8c717e2b",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:57:44.295Z",
+      "completedAt": "2026-11-11T12:58:58.292Z",
+      "usage": {
+        "tokens": 27251
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/37668eec-3ca2-4ec0-a9ec-916e8c717e2b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/37668eec-3ca2-4ec0-a9ec-916e8c717e2b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/37668eec-3ca2-4ec0-a9ec-916e8c717e2b_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private MMR texture identity observation.\nChanged files: `ui_observer.c`, `case_probe.py`, `evidence.json`.\nValidation: Python AST and evidence JSON checks passed; no compilation or runtime launch.\nOpen risks: wrappers without exact tagged current-image identity remain UNPROVEN.\nRecommended next step: parent review, compile, and run the invocation recorded in evidence."
+}

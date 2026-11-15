@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "3366c39e-759c-472e-8314-42f092c3fe11",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T16:53:22.861Z",
+  "updatedAt": "2026-11-10T16:56:07.996Z",
+  "runs": [
+    {
+      "runId": "e94ceb58-c247-4be8-a3c2-a41e8860d63d",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e94ceb58-c247-4be8-a3c2-a41e8860d63d",
+      "status": "complete",
+      "startedAt": "2026-11-10T16:53:22.963Z",
+      "completedAt": "2026-11-10T16:56:07.996Z",
+      "usage": {
+        "tokens": 35812
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e94ceb58-c247-4be8-a3c2-a41e8860d63d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e94ceb58-c247-4be8-a3c2-a41e8860d63d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e94ceb58-c247-4be8-a3c2-a41e8860d63d_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Dump prevention, lock ordering, and descendant cleanup need explicit safeguards.\n## Critical gaps\nPreserve online_spotify.py’s RLIMIT_CORE=0 before secrets; acquire the shared build lock before marker validation; avoid inherited stop helpers’ leader-poll guard, which can skip surviving process-group members.\n## Important improvements\nFail closed on getpass.GetPassWarning; canonical checks exclude .andux, so explicitly lint/test the private adapter.\n## Validation gaps\nAdd credential-free tests for inherited core limits, concurrent-build gating, echoed-getpass fallback rejection, and leader-exits-first descendant cleanup.\n## Recommended revision\nRetain the plan with these safeguards → expanded tests/preflight → independent review → user-owned terminal launch.\n## Acceptance Contract\nAcceptance level: attested\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e94ceb58-c247-4be8-a3c2-a41e8860d63d/.andux/tasks/spotify-login-plan-review.txt (849 B, 12 lines). Read this file if needed."
+}

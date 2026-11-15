@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "3bd44ce2-6dc8-4e8f-bc8d-e4c24563485d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T15:10:17.023Z",
+  "updatedAt": "2026-11-09T15:13:19.548Z",
+  "runs": [
+    {
+      "runId": "5d287069-f2bf-4c58-be08-654a0c66d76f",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5d287069-f2bf-4c58-be08-654a0c66d76f",
+      "status": "complete",
+      "startedAt": "2026-11-09T15:10:17.094Z",
+      "completedAt": "2026-11-09T15:13:19.548Z",
+      "usage": {
+        "tokens": 65423
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5d287069-f2bf-4c58-be08-654a0c66d76f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5d287069-f2bf-4c58-be08-654a0c66d76f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/5d287069-f2bf-4c58-be08-654a0c66d76f_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — The scope is sound, but temporal attribution and audit-specific validation need tightening.\n\n## Critical gaps\nNone.\n\n## Important improvements\n- The P&L formula assumes zero opening holdings. For calendar-era attribution, subtract opening marked inventory, preserve existing entitlements and FIFO lots, and reconcile every era—not merely the full run—to its equity change.\n- Define any medium/high-volatility groups from training-only or decision-known volatility. Old/new membership and full-evaluation volatility must not substitute for volatility-state definitions.\n\n## Validation gaps\n- Add workspace-only, hand-calculated fixtures covering unpaid dividends, PAY after sale, partial FIFO exits, terminal lots, and fee refunds that receive same-day carry but no preceding overnight accrual.\n- Bind evaluation predictions to the decision-year model; verify training-label exits against its cutoff, reproduce saved forecasts, and check H3 entry/exit indexing and immature-tail exclusions. Report **distinct**, not independent, dates; overlapping labels and cross-asset dependence remain.\n- Before importing frozen implementation snapshots, disable bytecode writes. Compare file inventories and hashes for **every** sealed input/run/model root afterward, detecting added files as well as modified ones.\n\n## Recommended revision\nSpecify the two attribution/grouping contracts, add the listed checks, then execute the remaining plan unchanged.\n\n## Acceptance Contract\nAcceptance level: attested"
+}

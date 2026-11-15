@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "08d3be27-8c63-4d4c-b567-c9a68df53508",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:47:19.258Z",
+  "updatedAt": "2026-11-12T17:50:52.436Z",
+  "runs": [
+    {
+      "runId": "75e2d286-da0e-4334-9e36-3ab6b6f8b30f",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75e2d286-da0e-4334-9e36-3ab6b6f8b30f",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:47:19.303Z",
+      "completedAt": "2026-11-12T17:50:52.436Z",
+      "usage": {
+        "tokens": 30945
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75e2d286-da0e-4334-9e36-3ab6b6f8b30f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75e2d286-da0e-4334-9e36-3ab6b6f8b30f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/75e2d286-da0e-4334-9e36-3ab6b6f8b30f_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented C1 only in `.andux/tasks/api36-editorinfo-v2/`.\n\nChanged files: concat proposal/materializer, new regression tests, validation/evidence scripts, exact diffs and reports.\nValidation: 222 EditorInfo + 217 text + 22 new checks passed; strict Java 8, unchanged v1 ABI, both patch gates passed.\nOpen risks: B1 remains explicitly pinned and unresolved here; independent review required.\nRecommended next step: Review C1, then parent rebase onto independently accepted B1."
+}

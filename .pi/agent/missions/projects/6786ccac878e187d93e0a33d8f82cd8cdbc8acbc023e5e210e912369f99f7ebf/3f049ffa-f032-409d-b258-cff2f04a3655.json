@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "3f049ffa-f032-409d-b258-cff2f04a3655",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T18:01:32.709Z",
+  "updatedAt": "2026-11-12T18:08:50.690Z",
+  "runs": [
+    {
+      "runId": "6b75b128-7687-4897-bf8a-5b2683614ac3",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6b75b128-7687-4897-bf8a-5b2683614ac3",
+      "status": "complete",
+      "startedAt": "2026-11-12T18:01:32.736Z",
+      "completedAt": "2026-11-12T18:08:50.690Z",
+      "usage": {
+        "tokens": 61201
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6b75b128-7687-4897-bf8a-5b2683614ac3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6b75b128-7687-4897-bf8a-5b2683614ac3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6b75b128-7687-4897-bf8a-5b2683614ac3_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented review: **READY narrow increment**, no blockers.\nChanged files: three review JSON files only.\nValidation: 45 checks; six runtime/ABI commands passed.\nOpen risks: parent must transplant only the three codec branches and allowlist changes—not replace TextUtils wholesale.\nRecommended next step: surgical parent integration preserving accepted concat."
+}

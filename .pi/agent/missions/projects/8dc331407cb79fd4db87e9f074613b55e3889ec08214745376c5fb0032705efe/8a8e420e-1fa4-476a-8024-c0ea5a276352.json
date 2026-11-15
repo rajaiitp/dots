@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "8a8e420e-1fa4-476a-8024-c0ea5a276352",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-08T21:07:30.459Z",
+  "updatedAt": "2026-11-08T21:09:28.493Z",
+  "runs": [
+    {
+      "runId": "10462cf5-cad2-40bc-9cf1-83bc9f1b229f",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-08T21:09:28.493Z",
+      "completedAt": "2026-11-08T21:09:28.493Z",
+      "usage": {
+        "tokens": 47194
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/10462cf5-cad2-40bc-9cf1-83bc9f1b229f_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/10462cf5-cad2-40bc-9cf1-83bc9f1b229f_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Interrupted-run accounting and validation of the new controller need explicit coverage.\n\n## Critical gaps\n- Prefix wire diagnostics are not automatically trustworthy: `PacketTransport._start()` books transmission bytes before emission, while `TimedCustodySimulation._round()` starts its cleanup protection only after discovery/setup (`timed_custody.py:818–835`). A simulator limit during setup can bypass cleanup. Finalize interrupted transport accounting in the adapter, or omit affected counters rather than presenting them as actual transmitted bytes.\n\n## Important improvements\n- Start the global deadline before shared trace realization and archiving; include worker termination and publication within the 30-minute cap.\n\n## Validation gaps\n- Inject simulator limits during setup and drain; verify trustworthy prefix counters, incomplete status, and absent delivery percentages/comparisons.\n- Test the custom controller’s deadline, two-worker ceiling, incomplete-cohort stopping, sensitivity gating, and rejection of late or mismatched results.\n- Test bypassed constructor invariants explicitly: duplicate identifiers, invalid participants, recipients differing from `members − {source}`, and the 4096-bundle boundary.\n- Verify exact 900-second contact-prefix identity and deterministic publisher/workload matching across capacity profiles.\n\n## Recommended revision\n1. Retain the proposed adapter, capacity profiles, and parity/rollback tests.\n2. Define safe interrupted-prefix accounting without changing reference sources.\n3. Add the controller, input-invariant, and matching tests above.\n4. Freeze/archive inputs, start the deadline before preparation, execute, and publish only completed matched comparisons.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Concise repository-backed review identifies interrupted-prefix accounting and specific missing validation."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read timed simulator setup/cleanup and transport transmission-booking paths; no execution performed."
+      ],
+      "residualRisks": [
+        "Completed matched cohorts may remain unavailable within simulator and host limits."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made.",
+      "reviewFindings": [
+        "blocker: tools/routing_sim/timed_custody.py:818-835 - setup exceptions can bypass transport cleanup, affecting proposed prefix wire diagnostics."
+      ],
+      "manualNotes": "Inspected relevant simulator, store, controller, and test sources using read-only tools; no shell commands, writes, or agents."
+    }
+  }
+}

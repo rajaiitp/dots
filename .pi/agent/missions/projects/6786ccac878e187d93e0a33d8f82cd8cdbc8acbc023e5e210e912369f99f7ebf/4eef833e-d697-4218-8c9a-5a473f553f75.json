@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "4eef833e-d697-4218-8c9a-5a473f553f75",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T18:09:57.327Z",
+  "updatedAt": "2026-11-09T18:18:04.205Z",
+  "runs": [
+    {
+      "runId": "adc26bf8-4bd7-4ab1-aaec-4306ce3121ee",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee",
+      "status": "complete",
+      "startedAt": "2026-11-09T18:09:57.347Z",
+      "completedAt": "2026-11-09T18:18:04.205Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "adc26bf8-4bd7-4ab1-aaec-4306ce3121ee",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:09:57.410Z",
+      "updatedAt": "2026-11-09T18:18:04.035Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/60c7fbae-e601-430f-aa26-c86bd2a0b150",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/.andux/tasks/editor-integration-and-bootstrap-plan.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/60c7fbae-e601-430f-aa26-c86bd2a0b150/run-0/session.jsonl"
+      ],
+      "runId": "60c7fbae-e601-430f-aa26-c86bd2a0b150",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:18:04.035Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/60c7fbae-e601-430f-aa26-c86bd2a0b150/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:18:04.035Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "adc26bf8-4bd7-4ab1-aaec-4306ce3121ee",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:09:57.440Z",
+      "updatedAt": "2026-11-09T18:10:38.040Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b979f166-4388-4b98-a448-929ab8a59305",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/.andux/tasks/editor-integration-and-bootstrap-plan.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/b979f166-4388-4b98-a448-929ab8a59305/run-0/session.jsonl"
+      ],
+      "runId": "b979f166-4388-4b98-a448-929ab8a59305",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T18:10:38.040Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/b979f166-4388-4b98-a448-929ab8a59305/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:10:38.040Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "adc26bf8-4bd7-4ab1-aaec-4306ce3121ee",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:09:57.482Z",
+      "updatedAt": "2026-11-09T18:11:15.670Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/0886dba8-5904-4368-9f24-7f2de83d8db9",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/.andux/tasks/editor-integration-and-bootstrap-plan.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0886dba8-5904-4368-9f24-7f2de83d8db9/run-0/session.jsonl"
+      ],
+      "runId": "0886dba8-5904-4368-9f24-7f2de83d8db9",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:11:15.670Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0886dba8-5904-4368-9f24-7f2de83d8db9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:11:15.670Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/60c7fbae-e601-430f-aa26-c86bd2a0b150_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/b979f166-4388-4b98-a448-929ab8a59305_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0886dba8-5904-4368-9f24-7f2de83d8db9_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented verified editor/focus integration and isolated test bridge.\\nChanged files: 16 canonical recipe/test files (listed below).\\nValidation: format/check/build, 78 tests, sync/async/fail-closed and physical passed.\\nOpen risk: exact private header hashes conflict with preserved Root selected constant; headers otherwise identical.\\nRecommended next step: reviewer resolves hash exception; parent runs full smoke.\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/.andux/tasks/editor-integration-and-bootstrap-plan.task-1.txt (416 B, 5 lines). Read this file if needed.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREADY — inspected native_updateConfig calls monitor/settings helpers without primary loo… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/adc26bf8-4bd7-4ab1-aaec-4306ce3121ee/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

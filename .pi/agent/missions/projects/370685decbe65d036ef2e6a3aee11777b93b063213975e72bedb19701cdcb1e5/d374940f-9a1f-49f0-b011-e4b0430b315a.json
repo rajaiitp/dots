@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "d374940f-9a1f-49f0-b011-e4b0430b315a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T22:30:07.715Z",
+  "updatedAt": "2026-11-09T22:31:36.089Z",
+  "runs": [
+    {
+      "runId": "6fbcd246-6bdb-4364-89d0-fa271dea3d1e",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fbcd246-6bdb-4364-89d0-fa271dea3d1e",
+      "status": "complete",
+      "startedAt": "2026-11-09T22:30:07.760Z",
+      "completedAt": "2026-11-09T22:31:36.089Z",
+      "usage": {
+        "tokens": 11903
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fbcd246-6bdb-4364-89d0-fa271dea3d1e/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6fbcd246-6bdb-4364-89d0-fa271dea3d1e/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6fbcd246-6bdb-4364-89d0-fa271dea3d1e_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-batch-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nPASS: one unchanged synthetic-document retest; observed BUG022 absence only; no edit/save/reopen claim.\nEvidence: /home/raja/Projects/andux/.andux/tasks/markor-batch-probe/root-run-jd72l0gg/{status,result,cleanup,command,prefix-before}.json\nCurrent Root prefix copied with cp --reflink=always; full SHA256 maps matched Root before/after clone and snapshot; Root/snapshot unchanged after run; snapshot mounted read-only.\nVerified APK SHA256 c29412e02d03e4f0511746a1bcef48c6b73fc1f70c1024fbf04903b0b3f4c485 unchanged; prior probe/template read-only, private baseline untouched.\nFresh unshare-all namespaces/profile/cache/appdir parents; offline headless pixman/cairo/software/dummy audio/private bus; no host display/audio/SecretService/profiles/screenshots.\nRLIMIT_FSIZE explicitly asserted unlimited/unlimited on host and guest, never set; CORE=0; outer 32.515s (<58s cap), observation 30s, monitored 8MiB log caps; captured 41470 bytes, untruncated.\nDocument marker + editable widget observed; 960x540 mapped surface with committed content; app survived 30s; synthetic contents unchanged.\nCaptured fatal_runtime_error=false; missing APIs=[]; known syntax-highlighter null.json/theme warnings remain nonfatal (portal warnings likewise not classified fatal).\nApp and compositor reaped (exit -15/0); sandbox exited 0; no probe processes retained; unrelated parent smoke processes untouched.\nLimit: captured-output fatal scan only; stderr was sampled as pipe (reported redirected); this is not proof of universal error absence.\nNo product/Root/other workspace edits, network, Markdown/SDK changes, commits, or staged files; reviewer gate remains required.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/6fbcd246-6bdb-4364-89d0-fa271dea3d1e/.andux/tasks/markor-root-batch-result.txt (1.6 KB, 11 lines). Read this file if needed."
+}

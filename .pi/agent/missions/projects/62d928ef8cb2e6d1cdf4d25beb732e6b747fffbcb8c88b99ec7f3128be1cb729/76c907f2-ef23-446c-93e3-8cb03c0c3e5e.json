@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "76c907f2-ef23-446c-93e3-8cb03c0c3e5e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T17:34:03.660Z",
+  "updatedAt": "2026-11-09T17:36:59.454Z",
+  "runs": [
+    {
+      "runId": "feda5d63-6f51-4d21-a5ab-b06b3128d412",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/feda5d63-6f51-4d21-a5ab-b06b3128d412",
+      "status": "complete",
+      "startedAt": "2026-11-09T17:34:03.681Z",
+      "completedAt": "2026-11-09T17:36:59.454Z",
+      "usage": {
+        "tokens": 52342
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/feda5d63-6f51-4d21-a5ab-b06b3128d412/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/feda5d63-6f51-4d21-a5ab-b06b3128d412/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/feda5d63-6f51-4d21-a5ab-b06b3128d412_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/view-focus",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private attached-only requestFocus acceptance; Java eligibility retained, native boolean/header (JI)Z propagated; verified wrapper/logical-root ownership unchanged.\nChanged files: own View.java, android_view_View.c, generated View header, snapshot/EditTextStateSmoke.java, ViewFocusSmoke.c, check.sh, final-run.py; api-limits.txt and rooted-* evidence artifacts.\nRooted StateSmoke assertions moved to Handler.post after decor attachment; retained selection/text assertions and added unrooted/zero request negatives; anonymous Runnable compiles/dexes.\nValidation: private ninja install passed; reverse patch dry-run passed (rooted-focus.patch); API diff only adds ViewGroup.hasFocus override, requestFocus public signatures unchanged.\nExactly two <=90s offline bwrap/dbus/headless/dummy/core0 runs: first failed harness apk_path linkage; own-source data exports fixed; second native own/wrapper/child/sibling/inactive tests PASS.\nFull StateSmoke runtime NOT VERIFIED: second run hit lambda dx failure; anonymous Runnable correction statically validated afterward, no third runtime run.\nCleanup: compositor trap and sandbox teardown; no host/Root/original-runtime edits, staged files, commits or network. Portal warnings remained private.\nOpen risk: full retained StateSmoke needs execution; recommended next step: reviewer checks patch and authorizes another bounded run, not acceptance yet.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/feda5d63-6f51-4d21-a5ab-b06b3128d412/.andux/tasks/view-focus/rooted-result.txt (1.4 KB, 8 lines). Read this file if needed."
+}

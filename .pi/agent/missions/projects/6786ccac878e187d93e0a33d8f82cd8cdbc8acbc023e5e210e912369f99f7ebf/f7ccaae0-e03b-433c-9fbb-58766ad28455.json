@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "f7ccaae0-e03b-433c-9fbb-58766ad28455",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T10:00:42.158Z",
+  "updatedAt": "2026-11-12T10:06:42.037Z",
+  "runs": [
+    {
+      "runId": "17aacf92-9054-40bc-bc1e-9fd577ac0829",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/17aacf92-9054-40bc-bc1e-9fd577ac0829",
+      "status": "complete",
+      "startedAt": "2026-11-12T10:00:42.177Z",
+      "completedAt": "2026-11-12T10:06:42.037Z",
+      "usage": {
+        "tokens": 51194
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/17aacf92-9054-40bc-bc1e-9fd577ac0829/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/17aacf92-9054-40bc-bc1e-9fd577ac0829/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/17aacf92-9054-40bc-bc1e-9fd577ac0829_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented independent review: **BLOCKED** by unbudgeted JSON output amplification at `bytecode_audit.py:662–671,722`.\nChanged files: four JSON files under `.andux/tasks/api-counter-v2-review/`.\nValidation: 42 tests passed; exact historical JAR/APK replay passed; candidate/history unchanged.\nOpen risks/questions: bounded witness expands 71KB classfile into 19.8MB JSON without budget charges.\nRecommended next step: repair output budgeting in a new revision before integration."
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "b3bf8b2e-d516-4c17-9268-ea40e58c8024",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:10:05.593Z",
+  "updatedAt": "2026-11-09T23:13:42.957Z",
+  "runs": [
+    {
+      "runId": "077a637c-537d-4e05-95ed-068f6982a79d",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/077a637c-537d-4e05-95ed-068f6982a79d",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:10:05.606Z",
+      "completedAt": "2026-11-09T23:13:42.957Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "077a637c-537d-4e05-95ed-068f6982a79d",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:10:05.691Z",
+      "updatedAt": "2026-11-09T23:12:42.590Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/eafb938c-c29e-4654-bb40-bc5fd1090e5c",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/077a637c-537d-4e05-95ed-068f6982a79d/.andux/tasks/desktop-media-guard-repairs.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/eafb938c-c29e-4654-bb40-bc5fd1090e5c/run-0/session.jsonl"
+      ],
+      "runId": "eafb938c-c29e-4654-bb40-bc5fd1090e5c",
+      "agent": "worker",
+      "completedAt": "2026-11-09T23:12:42.589Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/eafb938c-c29e-4654-bb40-bc5fd1090e5c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:12:42.590Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "077a637c-537d-4e05-95ed-068f6982a79d",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:10:05.715Z",
+      "updatedAt": "2026-11-09T23:13:42.783Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6c066c83-c08a-4b2a-ab0f-e55767fcf38d",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/077a637c-537d-4e05-95ed-068f6982a79d/.andux/tasks/desktop-media-guard-repairs.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6c066c83-c08a-4b2a-ab0f-e55767fcf38d/run-0/session.jsonl"
+      ],
+      "runId": "6c066c83-c08a-4b2a-ab0f-e55767fcf38d",
+      "agent": "worker",
+      "completedAt": "2026-11-09T23:13:42.783Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6c066c83-c08a-4b2a-ab0f-e55767fcf38d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:13:42.783Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/077a637c-537d-4e05-95ed-068f6982a79d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/077a637c-537d-4e05-95ed-068f6982a79d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/eafb938c-c29e-4654-bb40-bc5fd1090e5c_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6c066c83-c08a-4b2a-ab0f-e55767fcf38d_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private prelaunch controller repairs only; no APK/appRun, preview/service changes, or Driver edits.\\nChanged files: controller.c, test_controller.c, build.sh; rebuilt controller.so/test-controller, pins.h, fingerprints.txt, build-test.log; added build-manifest.txt.\\nRemoved C log drain/thread/pipe2/dup2/logfile open/cap; inherited stderr remains normal; DRIVERDIRECTCAPTURE assigns 8388608-byte exhaustion failure to Driver.\\nRetained weak qualified GtkWindow identity and label root ancestry; NPR context required through Stream, with public episode context at phase 3; unrelated windows cannot activate or receive close-request.\\nRetained JNI weak NewLocalRef/error checks and GTK-thread/context checks.\\nValidation: sh build.sh passed Root-guest -std=c11 -Wall -Wextra -Werror builds, shfmt -d, shellcheck, protocol/source log-owner checks, JNI tests and inert r… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/077a637c-537d-4e05-95ed-068f6982a79d/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "c9a437dd-08e1-467d-8ee9-00fb63c33a99",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T16:46:09.756Z",
+  "updatedAt": "2026-11-09T16:49:02.140Z",
+  "runs": [
+    {
+      "runId": "f71c9726-41df-4fd0-93c8-527fe352cf8c",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f71c9726-41df-4fd0-93c8-527fe352cf8c",
+      "status": "complete",
+      "startedAt": "2026-11-09T16:46:09.776Z",
+      "completedAt": "2026-11-09T16:49:02.140Z",
+      "usage": {
+        "tokens": 35268
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f71c9726-41df-4fd0-93c8-527fe352cf8c/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f71c9726-41df-4fd0-93c8-527fe352cf8c/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/f71c9726-41df-4fd0-93c8-527fe352cf8c_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented SCOUT002 canonical integration; status implemented_unverified.\nChanged files: build/patches/atl-view-content-description.patch, build/ViewContentDescriptionSmoke.java, build/smoke.py, andux/pipeline.py.\nValidation: format/check/build and targeted native Activity PASS; exact zero-fuzz apply/replay PASS.\nOpen risks: parent full canonical smoke pending; Task23 and other records unchanged.\nRecommended next step: make smoke (native TUI andux-validation pane).\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/f71c9726-41df-4fd0-93c8-527fe352cf8c/.andux/tasks/view-description/integration-result.txt (470 B, 5 lines). Read this file if needed."
+}

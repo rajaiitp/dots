@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "c928b6f4-7fd1-49e5-838e-023552d3730f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:05:47.048Z",
+  "updatedAt": "2026-11-12T17:28:51.630Z",
+  "runs": [
+    {
+      "runId": "46a934f6-15a0-4404-a1cf-6800d5a3ceba",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/46a934f6-15a0-4404-a1cf-6800d5a3ceba",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:05:47.069Z",
+      "completedAt": "2026-11-12T17:28:51.630Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "46a934f6-15a0-4404-a1cf-6800d5a3ceba",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T17:05:47.296Z",
+      "updatedAt": "2026-11-12T17:28:51.265Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/9bf6b202-1720-4142-b2cb-18d1fd6e5c2a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/9bf6b202-1720-4142-b2cb-18d1fd6e5c2a/run-0/session.jsonl"
+      ],
+      "runId": "9bf6b202-1720-4142-b2cb-18d1fd6e5c2a",
+      "agent": "worker",
+      "completedAt": "2026-11-12T17:28:51.265Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/9bf6b202-1720-4142-b2cb-18d1fd6e5c2a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T17:28:51.265Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "46a934f6-15a0-4404-a1cf-6800d5a3ceba",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T17:05:47.355Z",
+      "updatedAt": "2026-11-12T17:24:24.093Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/e52e29fa-8bc9-4c3a-8ebd-7b968dea343b",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e52e29fa-8bc9-4c3a-8ebd-7b968dea343b/run-0/session.jsonl"
+      ],
+      "runId": "e52e29fa-8bc9-4c3a-8ebd-7b968dea343b",
+      "agent": "worker",
+      "completedAt": "2026-11-12T17:24:24.093Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e52e29fa-8bc9-4c3a-8ebd-7b968dea343b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T17:24:24.093Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/46a934f6-15a0-4404-a1cf-6800d5a3ceba/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/46a934f6-15a0-4404-a1cf-6800d5a3ceba/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/9bf6b202-1720-4142-b2cb-18d1fd6e5c2a_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e52e29fa-8bc9-4c3a-8ebd-7b968dea343b_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented bounded private candidate: 18 span codecs, complete 31-ID registry, explicit unsupported-contract errors.\\n\\nChanged files: only `.andux/tasks/api36-text-parcel/`; see `candidate.diff` and `artifact-manifest.json`.\\n\\nValidation: strict Java 8 compilation, 217 JVM assertions, ABI checks, patch dry-run. Activity compiled, not launched.\\n\\nOpen risks: 13 unsupported IDs and existing Parcel wire/string limitations. Full API36 prerequisite completion is not claimed.\\n\\nRecommended next step: independent parent review.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented task-local inventory research and plan review—not framework code.\\nChanged files: only `.andux/tasks/api36-target-inventory/`; see `summary.txt` and `file-manifest.json`.\\nValidation: 10 evidence tests passed; no staged files.\\nOpen risks… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/46a934f6-15a0-4404-a1cf-6800d5a3ceba/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

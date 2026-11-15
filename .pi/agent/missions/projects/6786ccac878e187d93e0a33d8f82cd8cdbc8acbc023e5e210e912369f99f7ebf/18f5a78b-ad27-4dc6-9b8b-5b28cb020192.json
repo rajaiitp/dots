@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "18f5a78b-ad27-4dc6-9b8b-5b28cb020192",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T09:14:16.270Z",
+  "updatedAt": "2026-11-12T09:19:24.223Z",
+  "runs": [
+    {
+      "runId": "764c4af2-5c50-45fa-8a38-eaaa0da9bdfb",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/764c4af2-5c50-45fa-8a38-eaaa0da9bdfb",
+      "status": "complete",
+      "startedAt": "2026-11-12T09:14:16.281Z",
+      "completedAt": "2026-11-12T09:19:24.223Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "764c4af2-5c50-45fa-8a38-eaaa0da9bdfb",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:14:16.396Z",
+      "updatedAt": "2026-11-12T09:19:24.017Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/89b73020-f86d-485b-be0e-c2dccd61132b",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/89b73020-f86d-485b-be0e-c2dccd61132b/run-0/session.jsonl"
+      ],
+      "runId": "89b73020-f86d-485b-be0e-c2dccd61132b",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:19:24.017Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/89b73020-f86d-485b-be0e-c2dccd61132b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:19:24.017Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "764c4af2-5c50-45fa-8a38-eaaa0da9bdfb",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:14:16.426Z",
+      "updatedAt": "2026-11-12T09:17:42.337Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/a3648ce0-e5db-4505-af97-34b37db4637f",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a3648ce0-e5db-4505-af97-34b37db4637f/run-0/session.jsonl"
+      ],
+      "runId": "a3648ce0-e5db-4505-af97-34b37db4637f",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:17:42.337Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a3648ce0-e5db-4505-af97-34b37db4637f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:17:42.337Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/764c4af2-5c50-45fa-8a38-eaaa0da9bdfb/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/764c4af2-5c50-45fa-8a38-eaaa0da9bdfb/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/89b73020-f86d-485b-be0e-c2dccd61132b_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a3648ce0-e5db-4505-af97-34b37db4637f_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented independent review: **READY for narrow integration**, no blockers.\\nChanged files: review `report.json` and `validation.json` only.\\nValidation: 7 tests; exact diff, 79 artifact hashes, ABI and consumers checked.\\nOpen risks/questions: runtime acceptance pending; unsupported APIs remain deferred.\\nRecommended next step: parent-controlled integration and serialized fixture validation.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented wrapper, serial-warning-only fixture copy, integration contract, and source hashes.\\nChanged files: five files under `.andux/tasks/fragment-accessors-runtime/`.\\nValidation: three static tests passed; shared sources unchanged; nothing staged.\\nOpen risks/questions: helper requires ATL’s defining ClassLoader; APK-only packaging is insufficient. Compilation/runtime not e… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/764c4af2-5c50-45fa-8a38-eaaa0da9bdfb/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

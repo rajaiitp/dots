@@ -10,6 +10,31 @@ NEVER push or force-push unless the user explicitly requests it for the current 
 
 Prior authorization to commit or push does not carry over to later refinements. An implementation request is not authorization to commit or push. Leave completed changes uncommitted until the user explicitly asks.
 
+## Coding approach
+
+Adapted from [Karpathy-inspired coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md). Scale planning to the task's size and risk.
+
+### Think before coding
+
+- State material assumptions and surface uncertainty before implementing. Clarify competing interpretations instead of silently choosing one.
+- Explain relevant tradeoffs and suggest simpler approaches when they meet the request. Push back on unnecessary complexity.
+
+### Simplicity first
+
+- Write the minimum code that solves the requested problem. Do not add speculative features, configurability, or abstractions without a current need.
+- Avoid failure handling for scenarios that cannot occur. If a straightforward solution is substantially shorter, prefer it.
+
+### Surgical changes
+
+- Every changed line should serve the request. Match surrounding style; avoid unrelated manual formatting, refactors, and adjacent improvements.
+- Remove imports, variables, and functions made unused by your changes. Report unrelated dead code rather than deleting it.
+
+### Goal-driven execution
+
+- Define verifiable success criteria before implementing. For multi-step work, pair each planned step with its verification check.
+- Reproduce bugs before fixing them and add or adjust regression coverage when appropriate. For refactors, verify behavior before and after.
+- Iterate until the success criteria pass. Distinguish verified results from unresolved blockers; do not report unverified work as complete.
+
 ## Separation of concerns
 
 Promote separation of concerns. Keep transport handling, static validation, stateful domain logic, persistence, and external integrations in their appropriate layers rather than combining them in one function or component.

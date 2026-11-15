@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "12f28936-758c-4e70-ad80-14699eb4b22e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T09:49:41.558Z",
+  "updatedAt": "2026-11-12T10:00:29.300Z",
+  "runs": [
+    {
+      "runId": "7b50a3e3-f83a-4f89-a050-68f9318e7d91",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b50a3e3-f83a-4f89-a050-68f9318e7d91",
+      "status": "complete",
+      "startedAt": "2026-11-12T09:49:41.576Z",
+      "completedAt": "2026-11-12T10:00:29.300Z",
+      "usage": {
+        "tokens": 80368
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b50a3e3-f83a-4f89-a050-68f9318e7d91/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b50a3e3-f83a-4f89-a050-68f9318e7d91/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/7b50a3e3-f83a-4f89-a050-68f9318e7d91_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented bounded input/expansion budgets and iterative hierarchy traversal in v2 only.\nChanged files: five Python files plus validation evidence under `.andux/tasks/api-counter-candidate-v2/`.\nValidation: 49 tests pass; formatter/linter pass; v1 hashes unchanged.\nOpen risks/questions: Independent review pending; no compatibility claims.\nRecommended next step: Review `revision-report.json` and `evidence.sha256`."
+}

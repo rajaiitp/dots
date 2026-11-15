@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "c2882433-12ae-4199-a7ec-fa14854d81ba",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T22:08:43.009Z",
+  "updatedAt": "2026-11-09T22:21:30.873Z",
+  "runs": [
+    {
+      "runId": "43657425-25b1-4f16-a3c4-f80dcb9b2e7e",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/43657425-25b1-4f16-a3c4-f80dcb9b2e7e",
+      "status": "complete",
+      "startedAt": "2026-11-09T22:08:43.048Z",
+      "completedAt": "2026-11-09T22:21:30.873Z",
+      "usage": {
+        "tokens": 70654
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/43657425-25b1-4f16-a3c4-f80dcb9b2e7e/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/43657425-25b1-4f16-a3c4-f80dcb9b2e7e/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/43657425-25b1-4f16-a3c4-f80dcb9b2e7e_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented archive-derived, exact-coordinate ordered staging/reverse/forward validation and crash-recoverable atomic publication; independent compile.sh patch loop removed.\nFiles: build/patch_stack.py, build/jni_headers.py, build/compile.sh, andux/pipeline.py, tests/test_patch_stack.py, tests/test_jni_headers.py.\nGenerated JNI header diffs removed from atl-view-focus.patch, atl-edittext-state.patch, atl-zz-gtk-batch-input.patch; no generated-output verification exemptions added.\nCoordinate-only rebasing: art-gcm-parameters, atl-activity-results, atl-application-lifecycle, atl-fragment-tag-lookup, atl-hit-test-allocations, atl-keyboard-device, atl-range.\nCoordinate-only rebasing also: atl-view-activated, atl-view-click-presence, atl-view-content-description, atl-view-focus, atl-view-has-focusable, atl-view-selected, atl-view-window-observer (all build/patches/*.patch; 28 hunk coordinates total).\nPublication validates full-file known content/absence states, rejects links/unsafe paths/drift, rechecks preimages, preserves modes, persists pending records and fsyncs files/directories; restart repairs validated mixed states.\nJNI: compile hax.jar/javac -h before native compilation; missing relevant headers invalidate generated jar; strict compiled-native/header signature comparison includes nested-class spelling; existing strict contract checks unchanged.\nBoth helpers are bound into BUILD/SMOKE recipe fingerprints; schema/source-validation exit 2 is distinct from I/O exit 3.\nTests: 20 new focused tests cover overlap, fresh/repeated/mixed states, creates/deletes, offsets/fuzz, tampering, archive bounds/schema, links, drift, rechecks, replace/delete/fsync failures/restart, JNI signatures and fingerprints.\nValidation: make format and make check PASS; final suite 104 tests, no lint/test weakening. Early lint findings and nested-class JNI spelling mismatch were corrected.\nReal pinned validation: 52 ordered layers, 77 touched paths, 1,041,595 archive-baseline bytes; arch"
+}

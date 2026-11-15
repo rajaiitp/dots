@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "8c33518a-943b-40cb-8d6f-acb0ee7022f2",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:36:12.604Z",
+  "updatedAt": "2026-11-11T12:39:30.936Z",
+  "runs": [
+    {
+      "runId": "4622dc26-5415-454e-ab4e-f4ff65113632",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4622dc26-5415-454e-ab4e-f4ff65113632",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:36:12.634Z",
+      "completedAt": "2026-11-11T12:39:30.936Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "4622dc26-5415-454e-ab4e-f4ff65113632",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:36:12.782Z",
+      "updatedAt": "2026-11-11T12:39:09.121Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/9e303856-0d4c-4fbe-956f-450a1caa4b56",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/9e303856-0d4c-4fbe-956f-450a1caa4b56/run-0/session.jsonl"
+      ],
+      "runId": "9e303856-0d4c-4fbe-956f-450a1caa4b56",
+      "agent": "worker",
+      "completedAt": "2026-11-11T12:39:09.121Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/9e303856-0d4c-4fbe-956f-450a1caa4b56/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:39:09.121Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "4622dc26-5415-454e-ab4e-f4ff65113632",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:36:12.843Z",
+      "updatedAt": "2026-11-11T12:39:30.739Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/25d13983-3168-4420-8a99-ef5da5fb03ab",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/25d13983-3168-4420-8a99-ef5da5fb03ab/run-0/session.jsonl"
+      ],
+      "runId": "25d13983-3168-4420-8a99-ef5da5fb03ab",
+      "agent": "worker",
+      "completedAt": "2026-11-11T12:39:30.739Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/25d13983-3168-4420-8a99-ef5da5fb03ab/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:39:30.739Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4622dc26-5415-454e-ab4e-f4ff65113632/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/4622dc26-5415-454e-ab4e-f4ff65113632/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/9e303856-0d4c-4fbe-956f-450a1caa4b56_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/25d13983-3168-4420-8a99-ef5da5fb03ab_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented concrete service-registry candidate and lifecycle delegation.\\n\\nChanged files: six Java sources, `candidate.patch`, fixture, `evidence.json`.\\nValidation: patch applicability passed; no staged files.\\nRisks: runtime untested; binder cache lacks per-intent/rebind semantics; legacy GCM unbind unsupported.\\nNext: required reviewer and native integration validation.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented focused native lifetime candidate.\\nChanged files: cwd copies, `candidate.patch`, tests, `evidence.json`.\\nValidation: four source-invariant tests passed.\\nOpen risks: C/JNI linkage and runtime behavior untested.\\nRecommended next step: parent integration and required review.\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

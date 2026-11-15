@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "d1d94cca-3a0a-4c7f-9218-88a4a7d69d3d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T21:21:09.956Z",
+  "updatedAt": "2026-11-09T21:22:30.077Z",
+  "runs": [
+    {
+      "runId": "ba447232-602f-4cfb-bff6-77dcafcf1464",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ba447232-602f-4cfb-bff6-77dcafcf1464",
+      "status": "complete",
+      "startedAt": "2026-11-09T21:21:09.970Z",
+      "completedAt": "2026-11-09T21:22:30.077Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "ba447232-602f-4cfb-bff6-77dcafcf1464",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:21:10.096Z",
+      "updatedAt": "2026-11-09T21:22:10.327Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/fe520ed6-52c5-4ecd-af66-2a9121e38534",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ba447232-602f-4cfb-bff6-77dcafcf1464/.andux/tasks/final-private-contract-repairs.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fe520ed6-52c5-4ecd-af66-2a9121e38534/run-0/session.jsonl"
+      ],
+      "runId": "fe520ed6-52c5-4ecd-af66-2a9121e38534",
+      "agent": "worker",
+      "completedAt": "2026-11-09T21:22:10.327Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fe520ed6-52c5-4ecd-af66-2a9121e38534/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:22:10.327Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "ba447232-602f-4cfb-bff6-77dcafcf1464",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:21:10.129Z",
+      "updatedAt": "2026-11-09T21:22:29.891Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4b92a908-ec57-4826-90cd-7454f7c0bd62",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ba447232-602f-4cfb-bff6-77dcafcf1464/.andux/tasks/final-private-contract-repairs.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4b92a908-ec57-4826-90cd-7454f7c0bd62/run-0/session.jsonl"
+      ],
+      "runId": "4b92a908-ec57-4826-90cd-7454f7c0bd62",
+      "agent": "worker",
+      "completedAt": "2026-11-09T21:22:29.891Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4b92a908-ec57-4826-90cd-7454f7c0bd62/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:22:29.891Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ba447232-602f-4cfb-bff6-77dcafcf1464/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ba447232-602f-4cfb-bff6-77dcafcf1464/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fe520ed6-52c5-4ecd-af66-2a9121e38534_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4b92a908-ec57-4826-90cd-7454f7c0bd62_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented: none; blocked on the approved private workspace location.\\nChanged files: this findings artifact only; no source, Root, or other workspace edits.\\nValidation: requested ownstate/work/src/atl and ownstate/work/build_private.py do not exist under the supplied cwd.\\nThe available candidate and builder are instead at state/work/src/atl and state/work/build_private.py; the builder explicitly selects text-batch-integration/state.\\nOpen risks/questions: using state instead of the explicitly authorized ownstate would silently change the execution contract; no supervisor-contact tool is available.\\nRecommended next step: supervisor must confirm the authorized private source/build paths or provision ownstate before implementation resumes.\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ba447232-602f-4c… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/ba447232-602f-4cfb-bff6-77dcafcf1464/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

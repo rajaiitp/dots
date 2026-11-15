@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "64d2e5bd-7fcf-4fd4-948f-6ba53bf87b3a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T00:08:05.313Z",
+  "updatedAt": "2026-11-10T00:08:41.334Z",
+  "runs": [
+    {
+      "runId": "e09e9808-f253-4fca-8182-fbbd1bd0f4d3",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e09e9808-f253-4fca-8182-fbbd1bd0f4d3",
+      "status": "complete",
+      "startedAt": "2026-11-10T00:08:05.344Z",
+      "completedAt": "2026-11-10T00:08:41.334Z",
+      "usage": {
+        "tokens": 21648
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e09e9808-f253-4fca-8182-fbbd1bd0f4d3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e09e9808-f253-4fca-8182-fbbd1bd0f4d3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e09e9808-f253-4fca-8182-fbbd1bd0f4d3_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/element-app-crypto/framing-v2",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — source fixes and successful-run evidence support the boundary, but original-evidence immutability remains unverified.\n## Critical gaps\nNone.\n## Important improvements\nNone.\n## Validation gaps\nThe preservation manifest records baseline hashes, but no inspected evidence establishes that original files still match; test definitions were inspected, not the reported 20-test execution output.\n## Recommended revision\nProvide read-only digest-comparison results against preserved-originals.json and the existing test-run output; do not rerun the runtime.\n## Acceptance Contract\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e09e9808-f253-4fca-8182-fbbd1bd0f4d3/.andux/tasks/element-app-crypto-final-review.txt (595 B, 11 lines). Read this file if needed."
+}

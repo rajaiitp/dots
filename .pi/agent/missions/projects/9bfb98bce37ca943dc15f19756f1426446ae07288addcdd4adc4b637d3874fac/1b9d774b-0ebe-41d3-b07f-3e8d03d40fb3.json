@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "1b9d774b-0ebe-41d3-b07f-3e8d03d40fb3",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T13:36:30.509Z",
+  "updatedAt": "2026-11-09T13:38:17.433Z",
+  "runs": [
+    {
+      "runId": "d88990c9-2393-4701-afeb-b65c6ce6c791",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d88990c9-2393-4701-afeb-b65c6ce6c791",
+      "status": "complete",
+      "startedAt": "2026-11-09T13:36:30.535Z",
+      "completedAt": "2026-11-09T13:38:17.433Z",
+      "usage": {
+        "tokens": 19101
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d88990c9-2393-4701-afeb-b65c6ce6c791/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d88990c9-2393-4701-afeb-b65c6ce6c791/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/d88990c9-2393-4701-afeb-b65c6ce6c791_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-document",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented bounded unchanged-APK document-open diagnostic; no runtime execution or Android correction claimed.\nChanged files: /home/raja/Projects/andux/.andux/tasks/markor-document/markor_document.py and markor_metadata.c.\nParent integration: after the shared interpolation build, copy these two files to .andux/probes/corpus/ (leave shared startup.py and immutable APK/receipt unchanged). Ensure existing /recipes/app.apk and artifact.json are the verified Markor fixtures.\nExact command from /home/raja/Projects/andux:\nPYTHONPATH=. python3 .andux/probes/run_sandbox.py --recipes corpus dbus-run-session -- python3 /recipes/markor_document.py\nNo --online option. No main helper/build/prefix invoked by worker.\nThe driver reuses startup compositor observer, APK digest/signature-receipt gate, bounded 30-second observation, fatal scanning and process cleanup. It creates only /work/note.txt as document input, with synthetic marker ANDUX_MARKOR_DOCUMENT_6e71c2. Launch: android-translation-layer /recipes/app.apk --launch-activity net.gsantner.markor.activity.DocumentActivity --uri=file:///work/note.txt. Existing runtime API uses --launch-activity, not --activity.\nManifest evidence: existing verified inspection output .andux/probes/runs/corpus-9ri0ef0m/manifest.log declares exported DocumentActivity with VIEW/EDIT and file/content text intent filters. APK SHA256 independently matched c29412e02d03e4f0511746a1bcef48c6b73fc1f70c1024fbf04903b0b3f4c485.\nAcceptance: exit zero requires matching process compositor content, live app through observation, no captured fatal error, and mapped GTK label/editable/text-view containing the exact synthetic file marker. Window alone cannot pass. result.json reports marker evidence and editable_widget separately; document-open-observed is NOT edit/save/reopen acceptance. A label may prove loaded document display but not an editor. No arbitrary GTK text is exported, no screenshots are taken. No editing is attempted: safe GTK metadata cannot es"
+}

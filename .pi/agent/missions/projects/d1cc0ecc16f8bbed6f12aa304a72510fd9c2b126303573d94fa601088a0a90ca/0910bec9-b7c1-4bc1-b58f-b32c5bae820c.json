@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "0910bec9-b7c1-4bc1-b58f-b32c5bae820c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:30:08.901Z",
+  "updatedAt": "2026-11-09T23:30:53.693Z",
+  "runs": [
+    {
+      "runId": "81abef53-8258-42cf-b5fe-4e8e2ca11329",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/81abef53-8258-42cf-b5fe-4e8e2ca11329",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:30:08.936Z",
+      "completedAt": "2026-11-09T23:30:53.693Z",
+      "usage": {
+        "tokens": 13410
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/81abef53-8258-42cf-b5fe-4e8e2ca11329/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/81abef53-8258-42cf-b5fe-4e8e2ca11329/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/81abef53-8258-42cf-b5fe-4e8e2ca11329_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/acquisition-supervisor",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — integration and the controlled long test need the safety fixes below; runtime success remains unverified.\n## Critical gaps\n- `acquire()` rejects only leaf-directory symlinks; symlinked `.andux`, `corpus`, or `probes` ancestors redirect locks, staging and publication outside the intended tree.\n- `run_real_180.py` unconditionally removes its temporary root on failure, including unconfirmed reap, defeating staging retention while a downloader may remain alive.\n## Important improvements\n- `stop_and_reap()` confirms only leader exit; establish and validate the no-descendant invariant before claiming process-group cleanup.\n## Validation gaps\n- Add ancestor-symlink rejection, real TERM-resistant escalation/reap, repeated cancellation during cleanup, and long-harness unreaped-failure retention tests; mocked timers do not establish preservation of periodic delivery during signal blocking.\n## Recommended revision\nReject unsafe ancestor paths; make harness cleanup conditional on confirmed termination; add these focused tests, rerun short checks, then run the controlled fixture before integration.\n## Acceptance Contract\nAcceptance level: attested; read-only inspection only, with no commands or runtime validation performed.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/81abef53-8258-42cf-b5fe-4e8e2ca11329/.andux/tasks/acquisition-supervisor-review.txt (1.2 KB, 13 lines). Read this file if needed."
+}

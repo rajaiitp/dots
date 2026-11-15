@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "44ceba5b-4817-46c8-8b93-83651b93ee43",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T12:59:17.589Z",
+  "updatedAt": "2026-11-09T13:01:56.181Z",
+  "runs": [
+    {
+      "runId": "f9ce90e6-04d2-4293-97a7-d7b83038d61b",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f9ce90e6-04d2-4293-97a7-d7b83038d61b",
+      "status": "complete",
+      "startedAt": "2026-11-09T12:59:17.630Z",
+      "completedAt": "2026-11-09T13:01:56.181Z",
+      "usage": {
+        "tokens": 53559
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f9ce90e6-04d2-4293-97a7-d7b83038d61b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f9ce90e6-04d2-4293-97a7-d7b83038d61b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/f9ce90e6-04d2-4293-97a7-d7b83038d61b_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREADY — No material correctness, isolation, sequencing, or validation gaps found.\n\n## Critical gaps\nNone.\n\n## Important improvements\nNone.\n\n## Validation gaps\nNone in the planned coverage; tests and hash checks remain unexecuted.\n\n## Recommended revision\nNo revision required.\n\n## Acceptance Contract\nAcceptance level: attested"
+}

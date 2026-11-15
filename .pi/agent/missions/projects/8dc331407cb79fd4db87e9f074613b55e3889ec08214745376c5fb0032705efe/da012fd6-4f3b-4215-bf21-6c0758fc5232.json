@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "da012fd6-4f3b-4215-bf21-6c0758fc5232",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T09:48:52.927Z",
+  "updatedAt": "2026-11-09T09:53:40.782Z",
+  "runs": [
+    {
+      "runId": "75d6b127-6947-4c60-8c86-378fc025fc4d",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-09T09:53:40.782Z",
+      "completedAt": "2026-11-09T09:53:40.782Z",
+      "usage": {
+        "tokens": 89007
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/75d6b127-6947-4c60-8c86-378fc025fc4d_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/75d6b127-6947-4c60-8c86-378fc025fc4d_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Retained-feedback accounting and custody-candidate eligibility need explicit contracts before implementation.\n\n## Critical gaps\n- Per-action feedback lacks a stated storage charge and release lifecycle. Base `ACTION_BYTES=96` cannot cover 32 retained peer responses; base cleanup releases only that fixed reservation. Define bounded retention charges and cleanup on finish, expiry, contact end, and interruption.\n\n## Important improvements\n- Explicitly restrict custody selection to relay-willing noncustodians. Base `choose_peer` excludes custodians only; busy replies and member-missing requests without relay willingness must remain ineligible for grants while allowing DATA-only delivery.\n\n## Validation gaps\n- Test exact decay/rescaling behavior, float32-induced ranking ties, and rejection of nonfinite/out-of-range feedback scores.\n- Enforce the control-information boundary: forbidding `_snapshot` alone does not detect reads of `bundle.recipients`, remote stores, or remote `_missing`.\n- Match the historical **workload** fingerprint and full configuration, not merely contacts and six payload sizes. The original generator is `custody_bench.publications`; `natural_chat_study.workload` has different publication semantics.\n\n## Recommended revision\nFreeze original workload identity → specify the missing accounting/eligibility contracts → implement standalone overrides with complete cleanup → add focused tests → retain the planned bounded replay and archive sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with repository-grounded accounting and eligibility findings, specific validation additions, and residual uncertainty."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection confirmed fixed action reservations, cleanup behavior, custody candidate filtering, and differing workload generators."
+      ],
+      "residualRisks": [
+        "No implementation or runtime validation was performed."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes made.",
+      "reviewFindings": [
+        "blocker: retained per-action feedback has no explicit bounded accounting and cleanup contract",
+        "important: custody selection must exclude peers lacking relay willingness"
+      ],
+      "manualNotes": "Source-only review using read/search tools; no commands, writes, network requests, or agents. No files were staged by this review."
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "c7d5fd3d-f574-401e-88f4-7df2d40528f8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T12:07:45.668Z",
+  "updatedAt": "2026-11-09T12:12:08.393Z",
+  "runs": [
+    {
+      "runId": "dd3bd697-d4cf-4cd2-bd04-5bde97fd2468",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468",
+      "status": "complete",
+      "startedAt": "2026-11-09T12:07:45.682Z",
+      "completedAt": "2026-11-09T12:12:08.393Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "dd3bd697-d4cf-4cd2-bd04-5bde97fd2468",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T12:07:45.736Z",
+      "updatedAt": "2026-11-09T12:12:08.196Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/fe013841-97b6-4054-bcd2-eac78ab332a3",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468/.andux/tasks/adaptation-next.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fe013841-97b6-4054-bcd2-eac78ab332a3/run-0/session.jsonl"
+      ],
+      "runId": "fe013841-97b6-4054-bcd2-eac78ab332a3",
+      "agent": "worker",
+      "completedAt": "2026-11-09T12:12:08.196Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fe013841-97b6-4054-bcd2-eac78ab332a3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T12:12:08.196Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "dd3bd697-d4cf-4cd2-bd04-5bde97fd2468",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T12:07:45.782Z",
+      "updatedAt": "2026-11-09T12:10:19.041Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/71231bc5-8a97-484c-a914-b58ba87456c8",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468/.andux/tasks/adaptation-next.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/71231bc5-8a97-484c-a914-b58ba87456c8/run-0/session.jsonl"
+      ],
+      "runId": "71231bc5-8a97-484c-a914-b58ba87456c8",
+      "agent": "worker",
+      "completedAt": "2026-11-09T12:10:19.041Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/71231bc5-8a97-484c-a914-b58ba87456c8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T12:10:19.041Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fe013841-97b6-4054-bcd2-eac78ab332a3_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/71231bc5-8a97-484c-a914-b58ba87456c8_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented BUG-012 candidate in task-local source copies only. Deliverables: /home/raja/Projects/andux/.andux/tasks/path-measure/path-measure.patch, PathMeasureSmoke.java, report.txt. Parent must register distinct bridge src/api-impl-jni/graphics/android_graphics_PathMeasure.c in atl/meson.build. No forbidden overlapping source edits or shared build/install performed.\\nValidation: offline rootless bwrap native syntax check and straight-line native harness passed; javac --release 8 fixture and replacement passed; javap confirmed no invokedynamic. No staged files.\\nNot fully accepted: exploratory quadratic distance extraction exposed GSK get_point numerical discrepancy (documented exactly in report.txt); curve-distance precision and degenerate contour Android parity remain unverified. No Android runtime tests run. Review required before integration; do not claim compl… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/dd3bd697-d4cf-4cd2-bd04-5bde97fd2468/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

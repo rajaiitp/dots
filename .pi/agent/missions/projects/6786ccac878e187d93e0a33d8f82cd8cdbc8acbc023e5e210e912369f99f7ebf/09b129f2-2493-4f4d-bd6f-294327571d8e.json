@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "09b129f2-2493-4f4d-bd6f-294327571d8e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T18:37:50.278Z",
+  "updatedAt": "2026-11-09T18:40:11.813Z",
+  "runs": [
+    {
+      "runId": "f7fdcfe1-7368-444e-b5b6-8398dbe0565b",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b",
+      "status": "complete",
+      "startedAt": "2026-11-09T18:37:50.291Z",
+      "completedAt": "2026-11-09T18:40:11.813Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "f7fdcfe1-7368-444e-b5b6-8398dbe0565b",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:37:50.373Z",
+      "updatedAt": "2026-11-09T18:38:48.989Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/01855755-1aa3-4382-87c6-989cbb2c8851",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/.andux/tasks/native-prefix-and-batch-plan.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/01855755-1aa3-4382-87c6-989cbb2c8851/run-0/session.jsonl"
+      ],
+      "runId": "01855755-1aa3-4382-87c6-989cbb2c8851",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T18:38:48.989Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/01855755-1aa3-4382-87c6-989cbb2c8851/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:38:48.989Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "f7fdcfe1-7368-444e-b5b6-8398dbe0565b",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:37:50.414Z",
+      "updatedAt": "2026-11-09T18:40:11.631Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/aa9c4738-63ea-4ba5-8e6e-d085bfbb1bca",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/.andux/tasks/native-prefix-and-batch-plan.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/aa9c4738-63ea-4ba5-8e6e-d085bfbb1bca/run-0/session.jsonl"
+      ],
+      "runId": "aa9c4738-63ea-4ba5-8e6e-d085bfbb1bca",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:40:11.631Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/aa9c4738-63ea-4ba5-8e6e-d085bfbb1bca/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:40:11.631Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "f7fdcfe1-7368-444e-b5b6-8398dbe0565b",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:37:50.442Z",
+      "updatedAt": "2026-11-09T18:40:04.383Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/90f17b86-e35b-4331-adcb-410e89d1725a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/.andux/tasks/native-prefix-and-batch-plan.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/90f17b86-e35b-4331-adcb-410e89d1725a/run-0/session.jsonl"
+      ],
+      "runId": "90f17b86-e35b-4331-adcb-410e89d1725a",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:40:04.383Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/90f17b86-e35b-4331-adcb-410e89d1725a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:40:04.383Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/01855755-1aa3-4382-87c6-989cbb2c8851_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/aa9c4738-63ea-4ba5-8e6e-d085bfbb1bca_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/90f17b86-e35b-4331-adcb-410e89d1725a_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREVISE — approved GTK direction is viable, but the plan still stops at the required bridge.\\n## Critical gaps\\nSpecify the view-owned InputConnection, per-view depth/connection generation, and real identity-checked GtkIMContext sink; updateSelection is currently empty. Preserve BaseInputConnection’s signature and exclude ATLInputConnection.\\n## Important improvements\\nKeep live Editable/native storage and watchers synchronous; batch only outgoing dirty snapshots, clear before reentrant delivery, and prevent GTK/custom physical double delivery.\\n## Validation gaps\\nCover nested/unchanged batches, watcher reentry, restart/focus replacement, stale mutations, close balancing only connection-owned nesting, supplementary Unicode, reversed selections, and single physical delivery; retrieve_surrounding currently uses modified UTF-8 and collapses selection,… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/f7fdcfe1-7368-444e-b5b6-8398dbe0565b/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

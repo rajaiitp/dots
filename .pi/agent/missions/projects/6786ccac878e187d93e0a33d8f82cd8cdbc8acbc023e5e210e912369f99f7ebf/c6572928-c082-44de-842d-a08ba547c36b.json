@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "c6572928-c082-44de-842d-a08ba547c36b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:41:27.117Z",
+  "updatedAt": "2026-11-12T17:47:01.416Z",
+  "runs": [
+    {
+      "runId": "5af8775a-6599-4f4f-a87c-b503833b7f3e",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5af8775a-6599-4f4f-a87c-b503833b7f3e",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:41:27.147Z",
+      "completedAt": "2026-11-12T17:47:01.416Z",
+      "usage": {
+        "tokens": 68176
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5af8775a-6599-4f4f-a87c-b503833b7f3e/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5af8775a-6599-4f4f-a87c-b503833b7f3e/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/5af8775a-6599-4f4f-a87c-b503833b7f3e_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented independent review: found concat paragraph-endpoint blocker C1.\nChanged files: review JSON only.\nValidation: 439 supplied assertions and 118 independent checks passed; C1 reproduced.\nOpen risks: prerequisite B1 gate; 13 incomplete codecs.\nRecommended next step: repair C1, close B1, then re-review narrow integration."
+}

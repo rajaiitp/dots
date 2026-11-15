@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "68f7888e-2111-448b-a7a6-ad662203d085",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T21:46:48.262Z",
+  "updatedAt": "2026-11-09T21:48:06.874Z",
+  "runs": [
+    {
+      "runId": "166ba819-097c-4cba-a4ba-9013b10f91b3",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/166ba819-097c-4cba-a4ba-9013b10f91b3",
+      "status": "complete",
+      "startedAt": "2026-11-09T21:46:48.285Z",
+      "completedAt": "2026-11-09T21:48:06.874Z",
+      "usage": {
+        "tokens": 32369
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/166ba819-097c-4cba-a4ba-9013b10f91b3/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/166ba819-097c-4cba-a4ba-9013b10f91b3/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/166ba819-097c-4cba-a4ba-9013b10f91b3_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/blocker-scout",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nNEW finding, unassigned: AHardwareBuffer linkage is distinct from implementing shared CPU memory; no Root ID assigned, no product edits or app runs.\nVERIFIED existing evidence: /home/raja/Projects/andux/.andux/tasks/native-sharedmem/fennec-parent/run/result.txt ends cannot locate symbol AHardwareBuffer_allocate referenced by libxul.so, APK_EXIT code=10; fennec_parent.py:86-87 disables core and asserts unlimited RLIMIT_FSIZE (not an FSIZE failure).\nSTATIC existing evidence: native-sharedmem/undefined-imports.txt contains seven AHardwareBuffer imports: allocate, describe, lock, recvHandleFromUnixSocket, release, sendHandleToUnixSocket, unlock; this proves relocations, not executed buffer calls.\nSTATIC ABI [A]: opaque AHardwareBuffer; Desc fields uint32_t width,height,layers,format; uint64_t usage; uint32_t stride,rfu0; uint64_t rfu1 (48-byte descriptor on Android x86_64); stride is pixels, ignored on allocation; reserved fields zero; API 26.\nSTATIC signatures [A]: int allocate(const Desc*,Buffer**); void describe(const Buffer*,Desc*); void release(Buffer*); int lock(Buffer*,uint64_t,int32_t,const ARect*,void**); int unlock(Buffer*,int32_t*); int sendHandleToUnixSocket(const Buffer*,int); int recvHandleFromUnixSocket(int,Buffer**). Buffer/Desc abbreviate AHardwareBuffer/AHardwareBuffer_Desc; C linkage required.\nSTATIC contracts [A]: allocation returns 0 and reference count 1 on success, negative error/null output on failure; describe reports actual stride; release owns reference disposal; lock accepts only compatible CPU usage, waits acquire fence (-1 means none); unlock supplies release fence or waits when output is null; failures must not report success.\nSTATIC Mozilla [M]: AndroidHardwareBuffer.cpp:123-150 allocates one layer with CPU_READ_OFTEN=3, CPU_WRITE_OFTEN=0x30, GPU_SAMPLED_IMAGE=0x100, GPU_COLOR_OUTPUT=0x200 (combined 0x333); initializes nativeBuffer=null and returns nullptr on failed allocation, despite wrapper discarding integer status.\nINFERRED o"
+}

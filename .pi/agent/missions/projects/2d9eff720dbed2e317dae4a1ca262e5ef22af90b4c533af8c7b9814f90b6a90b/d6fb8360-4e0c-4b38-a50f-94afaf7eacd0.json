@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "d6fb8360-4e0c-4b38-a50f-94afaf7eacd0",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T23:31:14.873Z",
+  "updatedAt": "2026-11-05T23:33:22.547Z",
+  "runs": [
+    {
+      "runId": "3ddc6def-8931-4c14-9c6b-96fdf3c2371d",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T23:33:22.546Z",
+      "completedAt": "2026-11-05T23:33:22.546Z",
+      "usage": {
+        "tokens": 30198
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/3ddc6def-8931-4c14-9c6b-96fdf3c2371d_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/3ddc6def-8931-4c14-9c6b-96fdf3c2371d_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Lock cutover, interrupted rotation, and clock trust need explicit invariants before implementation.\n\n## Critical gaps\n- **Lock migration:** Stopping the broker does not establish collector quiescence: collectors deliberately release controller FDs. Installation and rollback must exclude holders of both the legacy directory lock and stable lock during script replacement.\n- **Interrupted rotation:** Atomic archive rename plus sequence allocation does not specify recovery after archiving but before publishing the fresh payload. Persist admission/rotation intent containing the transaction identity first; recovery must retain a failed-attempt diagnostic without recapturing that transaction.\n- **Clock trust:** Regression handling alone does not prevent premature deletion after a forward clock jump. Define a conservative trust predicate across clock adjustments and boots; uncertain elapsed time must prohibit age-based deletion.\n\n## Important improvements\n- Specify monitor-disable during an active session: stop future admissions while allowing the admitted session to finish or fail. Re-enabling must not start a baseline inside an existing policy transaction.\n- Give retention bounded work within the existing timeout budget; full-history scanning/deletion must not repeatedly starve endpoint capture.\n\n## Validation gaps\n- Exercise cutover and rollback while a standalone legacy collector or descendant holds its lock.\n- Inject termination between every rotation publication step; assert prior payload preservation, visible failed admission, and no duplicate capture.\n- Test large forward clock jumps, reboot with uncertain time, and recovery of clock trust.\n- Preflight actual device nanosecond-stat support and capture latency with history populated to its caps; test disable/re-enable during capture and sleep.\n\n## Recommended revision\n1. Finalize the missing migration, rotation, clock, and lifecycle invariants above.\n…\nFull ...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with concrete implementation gaps, targeted validation, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection covered collector, controller, installer, analyzer, service lifecycle, and relevant tests."
+      ],
+      "residualRisks": [
+        "Device shell/stat capabilities and populated-history capture timing remain unverified.",
+        "Actual unplugged-session validation remains user-driven."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes made by this reviewer.",
+      "reviewFindings": [
+        "Installer must enforce exclusion of both collector lock generations.",
+        "Interrupted rotation needs durable admission recovery.",
+        "Age-based retention needs an explicit clock-trust predicate."
+      ],
+      "manualNotes": "Used read-only file tools only; no commands, edits, or staging were performed. Existing repository index state was not inspected."
+    }
+  }
+}

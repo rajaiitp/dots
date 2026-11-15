@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "53860c4a-bc04-4234-bc76-0e7f24e16b93",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T13:40:46.379Z",
+  "updatedAt": "2026-11-05T13:46:26.137Z",
+  "runs": [
+    {
+      "runId": "f2789d2b-8912-4a48-8099-17e1d72f6c72",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T13:46:26.136Z",
+      "completedAt": "2026-11-05T13:46:26.136Z",
+      "usage": {
+        "tokens": 35155
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/f2789d2b-8912-4a48-8099-17e1d72f6c72_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/f2789d2b-8912-4a48-8099-17e1d72f6c72_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Installation startup races, cross-controller exclusion, and recovery-aware rollback need explicit guarantees.\n\n## Critical gaps\n- **Reading Mode exclusion is racy.** Its controller uses a separate lock and can capture standby-modified settings during wake restoration. Checking its snapshot before mutations is insufficient; both controllers need coordinated locking and bidirectional activation checks.\n- **APK replacement can restart the helper prematurely.** Unconditional `MY_PACKAGE_REPLACED` startup conflicts with APK-first installation. Establish a verified maintenance barrier covering installation and rollback before stopping the helper.\n- **Successful `recover` does not prove quiescence.** The current controller exits successfully when another broker holds `controller.lock`. Require verified broker shutdown and journal clearance before replacement. Rollback must recover any new mutations using the applicable controller before restoring older files; failed recovery must leave startup inhibited and evidence intact.\n\n## Important improvements\n- Make authorization verification explicit: selected Android user, installed signer, exclusive package-to-UID mapping, Magisk schema/multiuser behavior, policy readback, and actual helper-UID `su` execution. Restore only touched policy entries, including their prior absence.\n- Bound the entire transition—including construction, close, recovery, status and retries—not merely individual commands. Prevent construction-time, stale-channel or post-destruction EOF callbacks from creating repeated retries and effectively continuous wakelock acquisition.\n\n## Validation gaps\n- Deterministic Reading Mode activation versus standby apply/wake-restoration races.\n- Package-replacement broadcasts during installation/rollback; busy-broker recovery; failed rollback recovery; interrupted installation and safe retry.\n…\nFull output: /home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-pr...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with repository-grounded installation, exclusion, recovery and validation findings."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read installer scripts, controllers, manifest, service/channel implementation and existing tests.",
+        "Confirmed separate controller locks and recover's successful exit when the broker lock is held."
+      ],
+      "residualRisks": [
+        "Magisk authorization and Android startup behavior remain unverified on-device.",
+        "No unplugged, reboot or endurance validation was performed."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes produced.",
+      "reviewFindings": [
+        "blocker: cross-controller exclusion",
+        "blocker: package-replacement startup during installation",
+        "blocker: unproven quiescence and recovery-aware rollback"
+      ],
+      "manualNotes": "Only repository reads/searches were performed. No shell commands, device access, modifications or staging; pre-existing index state was not inspected."
+    }
+  }
+}

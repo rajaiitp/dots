@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "028db86c-8403-49b7-93a9-7451fce8fc1a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T21:37:21.497Z",
+  "updatedAt": "2026-11-09T21:39:21.793Z",
+  "runs": [
+    {
+      "runId": "efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4",
+      "status": "complete",
+      "startedAt": "2026-11-09T21:37:21.520Z",
+      "completedAt": "2026-11-09T21:39:21.793Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:37:21.647Z",
+      "updatedAt": "2026-11-09T21:37:57.813Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/2fd8139d-25eb-4219-be18-535f7f2764e6",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/.andux/tasks/hardened-batch-review-and-fennec.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/2fd8139d-25eb-4219-be18-535f7f2764e6/run-0/session.jsonl"
+      ],
+      "runId": "2fd8139d-25eb-4219-be18-535f7f2764e6",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T21:37:57.813Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/2fd8139d-25eb-4219-be18-535f7f2764e6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:37:57.813Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:37:21.713Z",
+      "updatedAt": "2026-11-09T21:39:21.589Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/658156c1-31c7-4f3c-9651-6639a25fe5e2",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/.andux/tasks/hardened-batch-review-and-fennec.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/658156c1-31c7-4f3c-9651-6639a25fe5e2/run-0/session.jsonl"
+      ],
+      "runId": "658156c1-31c7-4f3c-9651-6639a25fe5e2",
+      "agent": "worker",
+      "completedAt": "2026-11-09T21:39:21.589Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/658156c1-31c7-4f3c-9651-6639a25fe5e2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:39:21.589Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/2fd8139d-25eb-4219-be18-535f7f2764e6_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/658156c1-31c7-4f3c-9651-6639a25fe5e2_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREADY — inspected production changes close the specified prior findings; no concrete blocker found.\\n## Critical gaps\\nNone.\\n## Important improvements\\nNone.\\n## Validation gaps\\nNo combined ART failure-injection evidence; sanitizer results use mocked GTK/JNI boundaries and disable leak detection.\\n## Recommended revision\\nNone.\\n## Acceptance Contract\\nAcceptance level: attested\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/.andux/tasks/hardened-batch-review-and-fennec.task-1.txt (386 B, 12 lines). Read this file if needed.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"INCONCLUSIVE: exactly one fresh Fennec launch; APK exited -25 (SIGXFSZ), not successful startup or a proven missing-API blocker; … (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/efe4ea79-7b2b-4fba-bfa0-f60d82aa46a4/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

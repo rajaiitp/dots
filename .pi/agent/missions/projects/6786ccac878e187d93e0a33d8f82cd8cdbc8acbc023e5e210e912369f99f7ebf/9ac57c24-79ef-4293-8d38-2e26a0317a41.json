@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "9ac57c24-79ef-4293-8d38-2e26a0317a41",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:17:43.839Z",
+  "updatedAt": "2026-11-09T23:18:25.210Z",
+  "runs": [
+    {
+      "runId": "73c04f0e-717b-45a9-aff9-e334744c9277",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/73c04f0e-717b-45a9-aff9-e334744c9277",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:17:43.853Z",
+      "completedAt": "2026-11-09T23:18:25.210Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "73c04f0e-717b-45a9-aff9-e334744c9277",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:17:43.923Z",
+      "updatedAt": "2026-11-09T23:18:25.036Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/7cff79b3-88c1-454b-9426-05e569900464",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/73c04f0e-717b-45a9-aff9-e334744c9277/.andux/tasks/desktop-media-launch-review.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7cff79b3-88c1-454b-9426-05e569900464/run-0/session.jsonl"
+      ],
+      "runId": "7cff79b3-88c1-454b-9426-05e569900464",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:18:25.036Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7cff79b3-88c1-454b-9426-05e569900464/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:18:25.036Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "73c04f0e-717b-45a9-aff9-e334744c9277",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:17:43.959Z",
+      "updatedAt": "2026-11-09T23:18:19.066Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/7246999b-765a-4180-aee5-389738c32ed9",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/73c04f0e-717b-45a9-aff9-e334744c9277/.andux/tasks/desktop-media-launch-review.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7246999b-765a-4180-aee5-389738c32ed9/run-0/session.jsonl"
+      ],
+      "runId": "7246999b-765a-4180-aee5-389738c32ed9",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:18:19.066Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7246999b-765a-4180-aee5-389738c32ed9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:18:19.066Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/73c04f0e-717b-45a9-aff9-e334744c9277/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/73c04f0e-717b-45a9-aff9-e334744c9277/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/7cff79b3-88c1-454b-9426-05e569900464_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/7246999b-765a-4180-aee5-389738c32ed9_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREADY — inspected repairs address the scoped blockers.\\n## Critical gaps\\nNone.\\n## Important improvements\\nNone.\\n## Validation gaps\\nNone for this read-only review; runtime behavior remains unverified.\\n## Recommended revision\\nNone.\\n## Acceptance Contract\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/73c04f0e-717b-45a9-aff9-e334744c9277/.andux/tasks/desktop-media-launch-review.task-1.txt (263 B, 11 lines). Read this file if needed.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREADY — inspected repairs address the prior revision scope; host execution remains unvalidated.\\n## Critical gaps\\nNone.\\n## Important improvements\\nNone.\\n## Validation gaps\\nActual Root app launch remains outstanding; the supplied log re… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/73c04f0e-717b-45a9-aff9-e334744c9277/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

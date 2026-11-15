@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "bfd801d1-4c13-4672-af4c-3e4fbf1093cc",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T11:24:34.438Z",
+  "updatedAt": "2026-11-09T11:27:57.318Z",
+  "runs": [
+    {
+      "runId": "aa645a2e-6ed1-4fd9-92ef-54dc7895fbd8",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-09T11:27:57.318Z",
+      "completedAt": "2026-11-09T11:27:57.318Z",
+      "usage": {
+        "tokens": 63705
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/aa645a2e-6ed1-4fd9-92ef-54dc7895fbd8_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/aa645a2e-6ed1-4fd9-92ef-54dc7895fbd8_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The replacement `run()` path must explicitly preserve exception cleanup.\n\n## Critical gaps\n- **C1:** Bypassing `NaturalChatSimulation.run()` also bypasses its `BaseException` cleanup guard. Both `_round()` implementations allocate resources before their drain-level `try/finally`. Retain the outer guard, dispatch demand-specific cleanup, and verify setup/drain failures release all holds and finalize metering once.\n\n## Important improvements\n- **I1:** Define deterministic precedence for simultaneous deferral causes and attribution of cancellation corrections. Protocol attempts rejected before `transport.send()` must remain separate from deferred-wire accounting.\n\n## Validation gaps\n- Constructor rejection parity: duplicate/oversized workloads, invalid group participants, and quota/configuration mismatches.\n- Fractional-byte cancellation, simultaneous end/start transitions, and gaps exactly equal to each tail threshold; specify byte/time rounding expectations.\n\n## Recommended revision\n1. Resolve C1 and add constructor rejection checks before instrumentation.\n2. Freeze I1 and cancellation-rounding semantics; add boundary tests.\n3. Retain the remaining cohort, deadline, provenance, and publication sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned a REVISE verdict, identified the missing exception-cleanup dependency, and stated residual interpretation risk."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Static inspection confirmed the outer cleanup guard in natural_chat.py and pre-drain allocations in both timed custody implementations."
+      ],
+      "residualRisks": [
+        "The single-trace inventory16/demand64 comparison cannot isolate protocol effects from copy-budget effects."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "C1: unresolved lifecycle blocker",
+        "I1: exclusive attribution semantics need specification"
+      ],
+      "manualNotes": "Inspected adapter ancestors, transport lifecycle, existing tests, and parent campaign accounting. No commands, writes, or staging performed; pre-existing staging was not inspected."
+    }
+  }
+}

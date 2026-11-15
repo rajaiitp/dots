@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "43720b91-3fc0-471d-b1d0-fb6cd7d47993",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T17:14:27.227Z",
+  "updatedAt": "2026-11-05T17:19:11.528Z",
+  "runs": [
+    {
+      "runId": "1c85b35e-b7c9-462f-8231-82cc44f5be36",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T17:19:11.527Z",
+      "completedAt": "2026-11-05T17:19:11.527Z",
+      "usage": {
+        "tokens": 69923
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/1c85b35e-b7c9-462f-8231-82cc44f5be36_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/1c85b35e-b7c9-462f-8231-82cc44f5be36_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-11-05T14-04-14-136Z_01a1ac06-43b7-7769-897b-5d3c6f404b45.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The launch strategy has executable-resolution and runtime-configuration gaps that can prevent startup or silently broaden child permissions.\n\n## Critical gaps\n- **C1:** Passing `env.PATH` does not ensure `command[0] = \"pi\"` resolves. The inspected native `new-window` implementation uses Go `exec.Command` before assigning the child environment; lookup therefore uses the daemon’s PATH. Resolve an absolute executable first.\n- **C2:** Plain `pi --session ...` drops source CLI configuration. Native forks retain parsed options, including `--no-tools`, tool allowlists, system prompts, and explicit extensions. Preserve applicable configuration or reject unsupported invocations before launch; do not silently restore default tool permissions.\n\n## Important improvements\n- **I1:** Preserve resolved labels for retained entries. Native `createBranchedSession()` reconstructs labels from current session-wide state; copying only `getBranch()` can lose later bookmarks or resurrect removed ones.\n- **I2:** Cover failure after successful pane creation. `new-window` acknowledges PTY creation, not successful Pi initialization. Use retained exit visibility or nonblocking startup observation so an immediately failing child does not disappear without a recovery path.\n\n## Validation gaps\nAdd cases for:\n- Pi available only on the caller’s PATH.\n- Restricted source tool configuration and CLI-only runtime options.\n- Labels added, changed, or removed after the selected entry.\n- Successful `new-window` followed by immediate child exit.\n- Snapshot write failure/collision, confirming no launch and guaranteed cancellation despite notification failures.\n\n## Recommended revision\n1. Resolve C1 and define the supported configuration-transfer contract for C2.\n2. Extend snapshot metadata handling for I1; retain the source-read-only design.\n3. Add I2 without readiness blocking or focus changes.\n…\nFull output: /home/raja/dots/.pi/agent/sessions/--ho...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Concise REVISE verdict with concrete launch, compatibility, and validation findings."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Inspected SDK fork lifecycle, native label reconstruction, extension loading, and native new-window process spawning."
+      ],
+      "residualRisks": [
+        "Installed daemon behavior and child startup were not exercised."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made or staged.",
+      "reviewFindings": [
+        "Two launch-contract blockers and two compatibility/lifecycle improvements."
+      ],
+      "manualNotes": "Static inspection only; no commands, writes, network requests, panes, or sessions. Native spawning was inspected in /tmp/tuios-agent-display.OH3rXW/internal/session/session.go. Repository index was not inspected."
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "17b59e27-f06d-4472-b11e-0249134640f4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T15:02:07.788Z",
+  "updatedAt": "2026-11-09T15:05:59.622Z",
+  "runs": [
+    {
+      "runId": "ade38069-c056-4f20-a06c-88859318d17c",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ade38069-c056-4f20-a06c-88859318d17c",
+      "status": "complete",
+      "startedAt": "2026-11-09T15:02:07.816Z",
+      "completedAt": "2026-11-09T15:05:59.622Z",
+      "usage": {
+        "tokens": 39355
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ade38069-c056-4f20-a06c-88859318d17c/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ade38069-c056-4f20-a06c-88859318d17c/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ade38069-c056-4f20-a06c-88859318d17c_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/blocker-scout",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented discovery and durable append-only ledger only; no product fixes.\nChanged files: own ledger.jsonl, empty leads.jsonl, copied run_sandbox.py, scout_markor_document.py, probe logs and disposable run evidence.\nNew entries: SCOUT-001 — Markor 2026.10.0 synthetic document open reaches missing TextView.setTextKeepState(CharSequence), then JNI pending-exception abort. Distinct from known constructor/font-size failures. Ledger has one finding plus confirmation/clarification events, not three bugs.\nLedger: /home/raja/Projects/andux/.andux/tasks/blocker-scout/ledger.jsonl\nEvidence: .andux/probes/runs/corpus-0rozidin/app.log:230-234; independent no-preload confirmation .andux/probes/runs/corpus-_49dj5fc/app.log:214,229-233 (paths relative to scout cwd).\nValidation: two fresh offline runtime probes, 30s/20s observation, each 75s TERM +5s KILL outer bound. Both returned 1 due to reproduced failure, not timeout. Second app reaped -15, compositor reaped 0; no matching remaining app/compositor processes. Initial preflight import failed before runtime; corrected parent module PYTHONPATH. No assertions/JNI/ABI/permission bypasses. No host display/audio/network/profile access.\nDedup: corpus/bugs.json and task JSON/reports reviewed; corpus-evidence/update.json absent at both checks. Existing gallery/NewPipe/Thunderbird/Organic Maps workflows reviewed without promoting their unproven leads. No new leads retained.\nOpen risks: global runtime gate remains red for TextView font-size discrimination; no compatibility, editing, save or reopen claim. Coordinate API ownership with TextView constructor lane. First inherited recipe did not emit explicit cleanup status files; confirmation recipe does. evidence.sha256 predates final ledger clarification, so its ledger hash is superseded (other hashes valid).\nRecommended next step: parent reviewer accepts/deduplicates SCOUT-001 and assigns focused TextView API/selection regression plus unchanged Markor retest. No supervisor-contact"
+}

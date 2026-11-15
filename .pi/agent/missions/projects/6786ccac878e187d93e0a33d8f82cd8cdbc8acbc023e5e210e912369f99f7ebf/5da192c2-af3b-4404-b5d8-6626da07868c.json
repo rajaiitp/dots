@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "5da192c2-af3b-4404-b5d8-6626da07868c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:58:13.159Z",
+  "updatedAt": "2026-11-12T18:06:17.356Z",
+  "runs": [
+    {
+      "runId": "a3ac6d7c-0b35-45e9-869d-6c60798725b1",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a3ac6d7c-0b35-45e9-869d-6c60798725b1",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:58:13.193Z",
+      "completedAt": "2026-11-12T18:06:17.356Z",
+      "usage": {
+        "tokens": 78483
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a3ac6d7c-0b35-45e9-869d-6c60798725b1/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a3ac6d7c-0b35-45e9-869d-6c60798725b1/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a3ac6d7c-0b35-45e9-869d-6c60798725b1_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\n(no output)"
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "2903a785-c2cf-4242-a12c-df4d976e0362",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T00:33:54.509Z",
+  "updatedAt": "2026-11-10T00:34:33.388Z",
+  "runs": [
+    {
+      "runId": "887ea77e-baed-4668-8a97-e359b232fa82",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887ea77e-baed-4668-8a97-e359b232fa82",
+      "status": "complete",
+      "startedAt": "2026-11-10T00:33:54.547Z",
+      "completedAt": "2026-11-10T00:34:33.388Z",
+      "usage": {
+        "tokens": 15248
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887ea77e-baed-4668-8a97-e359b232fa82/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887ea77e-baed-4668-8a97-e359b232fa82/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/887ea77e-baed-4668-8a97-e359b232fa82_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-save-reopen",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — evidence/app1.log confirms missing /tmp/home/app-data, a harness setup failure before Java, not a product defect.\n## Critical gaps\nrun.py:sandbox omits required directories; workflow.py:close checks only immediate children/process-group members, missing reparented or setsid descendants; cleanup deletes the document without retaining before/after bytes. run.py:pins does not fingerprint all rootfs executables/libraries used.\n## Important improvements\nprivate_input.c pins client/surface but needs destruction invalidation; workflow.py accepts PID-only, potentially stale editor observations and coordinates. editor_probe.c must establish GTK-context ownership and pinned WrapperWidget/JNI weak-reference lifecycle; cached selection does not establish continuing editor uniqueness.\n## Validation gaps\nAdd tests for directory creation, stale/wrong-surface observations, focus loss, destroyed/replaced editors, JNI faults, Save ambiguity, close refusal/nonzero exit, reparented descendants, trailing fatal output, EOF failure and cap overflow; current tests largely check strings or isolated predicates.\n## Recommended revision\nCreate explicit app-data/config/data/runtime/cache/profile directories and a new immutable evidence revision; retain one fixture creation and app-only subsequent target writes. Bind disposable project-owned document/profile storage into separate per-stage PID namespaces, restarting private services; attest app natural exit0 separately, then wait for namespace teardown before reopen, retaining existing real Save/close controls and fresh second-process editor readback. Add destruction-safe identity/focus checks before each input and fresh sequence-bound editor geometry, verify JNI lifecycle against pinned implementation, retain bounded exact document snapshots before cleanup, enforce EOF/fatal/cap gates, and fingerprint the full no-follow rootfs tree or state exact limited provenance scope. Next executable step after repairs: is"
+}

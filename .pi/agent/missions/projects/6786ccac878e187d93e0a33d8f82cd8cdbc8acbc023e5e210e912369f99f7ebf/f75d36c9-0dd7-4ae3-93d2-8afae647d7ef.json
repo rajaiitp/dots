@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "f75d36c9-0dd7-4ae3-93d2-8afae647d7ef",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T10:06:53.569Z",
+  "updatedAt": "2026-11-12T10:19:06.718Z",
+  "runs": [
+    {
+      "runId": "71b518bc-e6bf-40c0-bde0-d8bd2be3e59a",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/71b518bc-e6bf-40c0-bde0-d8bd2be3e59a",
+      "status": "complete",
+      "startedAt": "2026-11-12T10:06:53.586Z",
+      "completedAt": "2026-11-12T10:19:06.718Z",
+      "usage": {
+        "tokens": 65470
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/71b518bc-e6bf-40c0-bde0-d8bd2be3e59a/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/71b518bc-e6bf-40c0-bde0-d8bd2be3e59a/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/71b518bc-e6bf-40c0-bde0-d8bd2be3e59a_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented the v3-only candidate with preflighted output budgets, bounded encoding/hash buffers, and publication checks before replacement.\n\nChanged files: `.andux/tasks/api-counter-candidate-v3/` only.\nValidation: 61 tests passed; format/lint passed; exact historical replay and preservation hashes passed.\nOpen risks/questions: Independent review pending; no product compatibility claim.\nRecommended next step: Review `revision-report.json` and `candidate-v3.diff`."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "fb8f899a-76f8-44b5-8103-8fa19905b4b4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:12:17.782Z",
+  "updatedAt": "2026-11-11T14:13:49.090Z",
+  "runs": [
+    {
+      "runId": "6443b713-be91-4fa0-a005-83e4339da174",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6443b713-be91-4fa0-a005-83e4339da174",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:12:17.803Z",
+      "completedAt": "2026-11-11T14:13:49.090Z",
+      "usage": {
+        "tokens": 25274
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6443b713-be91-4fa0-a005-83e4339da174/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6443b713-be91-4fa0-a005-83e4339da174/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6443b713-be91-4fa0-a005-83e4339da174_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/service-edges",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private service-edge Activity and parent-only staging wrapper.\nChanged files: `ServiceEdgesActivity.java`, `stage.py`.\nValidation: Python syntax passed; Java compilation blocked because `javac` is unavailable.\nOpen risks: Runtime assertions remain unverified.\nRecommended next step: Parent compiles/stages and runs using invocation in `stage.py`."
+}

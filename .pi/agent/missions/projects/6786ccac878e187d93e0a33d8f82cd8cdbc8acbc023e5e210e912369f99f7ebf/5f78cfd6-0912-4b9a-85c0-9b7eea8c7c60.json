@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "5f78cfd6-0912-4b9a-85c0-9b7eea8c7c60",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T13:23:22.120Z",
+  "updatedAt": "2026-11-09T13:25:31.328Z",
+  "runs": [
+    {
+      "runId": "604e6545-a44c-48c5-a4ac-7c6499cceaf2",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/604e6545-a44c-48c5-a4ac-7c6499cceaf2",
+      "status": "complete",
+      "startedAt": "2026-11-09T13:23:22.132Z",
+      "completedAt": "2026-11-09T13:25:31.328Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "604e6545-a44c-48c5-a4ac-7c6499cceaf2",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T13:23:22.208Z",
+      "updatedAt": "2026-11-09T13:25:31.148Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c011fc4f-15c9-4546-bc3f-c6ec5136ec5a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/604e6545-a44c-48c5-a4ac-7c6499cceaf2/.andux/tasks/next-contracts.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c011fc4f-15c9-4546-bc3f-c6ec5136ec5a/run-0/session.jsonl"
+      ],
+      "runId": "c011fc4f-15c9-4546-bc3f-c6ec5136ec5a",
+      "agent": "worker",
+      "completedAt": "2026-11-09T13:25:31.148Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c011fc4f-15c9-4546-bc3f-c6ec5136ec5a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T13:25:31.148Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "604e6545-a44c-48c5-a4ac-7c6499cceaf2",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T13:23:22.251Z",
+      "updatedAt": "2026-11-09T13:25:09.987Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c800e41b-7584-4da8-9157-e823e3257bc1",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/604e6545-a44c-48c5-a4ac-7c6499cceaf2/.andux/tasks/next-contracts.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c800e41b-7584-4da8-9157-e823e3257bc1/run-0/session.jsonl"
+      ],
+      "runId": "c800e41b-7584-4da8-9157-e823e3257bc1",
+      "agent": "worker",
+      "completedAt": "2026-11-09T13:25:09.987Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c800e41b-7584-4da8-9157-e823e3257bc1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T13:25:09.987Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/604e6545-a44c-48c5-a4ac-7c6499cceaf2/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/604e6545-a44c-48c5-a4ac-7c6499cceaf2/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/c011fc4f-15c9-4546-bc3f-c6ec5136ec5a_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/c800e41b-7584-4da8-9157-e823e3257bc1_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented minimal compositor-owned startup evidence correction.\\n\\nDeliverables in /home/raja/Projects/andux/.andux/tasks/surface-observer:\\n- surface_observer.c: standalone Weston module, exact client PID credentials filter, mapped view + mapped surface + content + positive dimensions required. No seat, injection, buffer reads, screenshots, or pixels. Fixed private /work target and metadata output. One successful metadata record maximum, 600 polls at 100ms maximum; timer and listener removed on compositor destruction.\\n- startup.py: copy of corpus startup with original artifact digest/signature gates, environment/app invocation, 30-second survival and captured fatal-pattern gate preserved. Compiles recipe source into /work, loads module, atomically publishes Popen PID, and requires compositor evidence. Existing protocol evidence retained as protocol_window_with_bu… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/604e6545-a44c-48c5-a4ac-7c6499cceaf2/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

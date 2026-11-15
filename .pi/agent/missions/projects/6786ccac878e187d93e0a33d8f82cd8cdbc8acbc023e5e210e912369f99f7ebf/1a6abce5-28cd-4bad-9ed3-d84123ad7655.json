@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "1a6abce5-28cd-4bad-9ed3-d84123ad7655",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T13:41:06.398Z",
+  "updatedAt": "2026-11-11T13:41:46.386Z",
+  "runs": [
+    {
+      "runId": "33df81aa-7666-4182-9185-11fa7979de46",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33df81aa-7666-4182-9185-11fa7979de46",
+      "status": "complete",
+      "startedAt": "2026-11-11T13:41:06.417Z",
+      "completedAt": "2026-11-11T13:41:46.386Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "33df81aa-7666-4182-9185-11fa7979de46",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T13:41:06.576Z",
+      "updatedAt": "2026-11-11T13:41:33.668Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6a5850f4-53bd-47db-9c68-78de389fa862",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6a5850f4-53bd-47db-9c68-78de389fa862/run-0/session.jsonl"
+      ],
+      "runId": "6a5850f4-53bd-47db-9c68-78de389fa862",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T13:41:33.668Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6a5850f4-53bd-47db-9c68-78de389fa862/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T13:41:33.668Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "33df81aa-7666-4182-9185-11fa7979de46",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T13:41:06.613Z",
+      "updatedAt": "2026-11-11T13:41:46.209Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/02c428be-8d8c-4001-817e-a219b08b0e98",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/02c428be-8d8c-4001-817e-a219b08b0e98/run-0/session.jsonl"
+      ],
+      "runId": "02c428be-8d8c-4001-817e-a219b08b0e98",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T13:41:46.209Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/02c428be-8d8c-4001-817e-a219b08b0e98/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T13:41:46.209Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33df81aa-7666-4182-9185-11fa7979de46/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33df81aa-7666-4182-9185-11fa7979de46/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6a5850f4-53bd-47db-9c68-78de389fa862_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/02c428be-8d8c-4001-817e-a219b08b0e98_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"READY — static prelaunch review found no blockers.\\n\\n- Both probes receive actual `<service>` declarations.\\n- Java uses anonymous `Runnable`s, not invokedynamic-dependent lambdas.\\n- Readiness, subprocess calls, natural exit, and shutdown have bounded waits.\\n- Hidden-window evidence precedes real MPRIS `Raise`; reopening and latest-start-ID stopping are asserted.\\n- PASS requires natural exit 0, required lifecycle markers, no fatal app trace, and reaped supervised processes.\\n\\nNo execution performed. Parent must rebind evidence hashes to the final sources.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"## Review\\n- Correct: Real MPRIS property polling, Play and SetPosition calls—not fabricated readiness (`probe.py:77–119`). Requests have sequence-matched acknowledgments and deadlines; Java drains four nested m… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/33df81aa-7666-4182-9185-11fa7979de46/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

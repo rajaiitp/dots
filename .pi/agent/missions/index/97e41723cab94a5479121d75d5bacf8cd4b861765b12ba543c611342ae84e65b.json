@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "ca9b31eb-7644-4fcf-8667-f07ede20761e",
+  "projectRoot": "/home/raja/Projects/andux",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/6786ccac878e187d93e0a33d8f82cd8cdbc8acbc023e5e210e912369f99f7ebf/ca9b31eb-7644-4fcf-8667-f07ede20761e.json",
+  "title": "[prompt redacted]",
+  "status": "failed",
+  "updatedAt": "2026-11-09T15:17:31.355Z",
+  "lastRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2"
+}

@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "c9aa7926-6513-4a69-a28f-45de9d8e3071",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-08T19:19:34.895Z",
+  "updatedAt": "2026-11-08T19:22:28.236Z",
+  "runs": [
+    {
+      "runId": "eac43d31-578c-4296-91e6-b92bf4db9304",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-08T19:22:28.236Z",
+      "completedAt": "2026-11-08T19:22:28.236Z",
+      "usage": {
+        "tokens": 61987
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/eac43d31-578c-4296-91e6-b92bf4db9304_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/eac43d31-578c-4296-91e6-b92bf4db9304_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Deadline enforcement and promotion criteria need precise, testable definitions before benchmarking.\n\n## Critical gaps\n- Existing runners use fixed subprocess timeouts and blocking executor shutdown. Require remaining-budget timeouts, termination/reaping of active workers, and reserved publication time to enforce 1800 seconds.\n- “Joint evidence” and “no slice regressions” are underspecified. Freeze confidence thresholds, six-block inference, named slices/regression rules, and complete heldout/scale manifests before observing results.\n\n## Important improvements\n- Explicitly hash both new modules, imported reference dependencies, and population inputs. Pinning only `timed_custody.py` cannot establish unchanged behavior across stages.\n\n## Validation gaps\n- Guard expiry during an outstanding refresh action and across contact-end timer cleanup: donor-only DEMAND+RETURN_GUARD must resume without suppressing pending-grant retries.\n- Hung-worker deadline test: no surviving children, late results rejected, previous complete reports preserved.\n- Synthetic correlated outcomes verifying that 24 heldout cells contribute only six independent blocks and that boundary evidence cannot accidentally promote.\n\n## Recommended revision\n1. Freeze manifests, statistical gates, and source/input fingerprints.\n2. Implement standalone variants, observer diagnostics, and deadline-aware orchestration.\n3. Complete parity and lifecycle tests before executing the existing gated study sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned material sequencing, deadline, inference, and validation findings with residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Static inspection only; no tests or simulations executed."
+      ],
+      "residualRisks": [
+        "Six independent heldout blocks may provide inconclusive evidence.",
+        "The fixed deadline may prevent completion of heldout or scale cohorts."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes; read-only review.",
+      "reviewFindings": [
+        "REVISE: global-deadline lifecycle and promotion rules require specification."
+      ],
+      "manualNotes": "Inspected timed_custody.py, timed_store.py, packet_transport.py, policy selection, existing study orchestration, and relevant tests. No files modified or staged by this review; repository staging state was not inspected."
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "ad4bc527-d3f0-43b9-a0a0-82da0c3ea807",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:13:03.985Z",
+  "updatedAt": "2026-11-09T23:13:37.436Z",
+  "runs": [
+    {
+      "runId": "fc97356f-1963-4d79-8341-2671f04699aa",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fc97356f-1963-4d79-8341-2671f04699aa",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:13:03.998Z",
+      "completedAt": "2026-11-09T23:13:37.436Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "fc97356f-1963-4d79-8341-2671f04699aa",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:13:04.104Z",
+      "updatedAt": "2026-11-09T23:13:24.186Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1a311fa8-31dc-49b8-b402-8e37db2218c7",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/fc97356f-1963-4d79-8341-2671f04699aa/.andux/tasks/overnight-active-blocker-plan-review.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1a311fa8-31dc-49b8-b402-8e37db2218c7/run-0/session.jsonl"
+      ],
+      "runId": "1a311fa8-31dc-49b8-b402-8e37db2218c7",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:13:24.186Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1a311fa8-31dc-49b8-b402-8e37db2218c7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:13:24.186Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "fc97356f-1963-4d79-8341-2671f04699aa",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:13:04.147Z",
+      "updatedAt": "2026-11-09T23:13:37.259Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/19846172-2092-4380-ad54-22399981d1c5",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/fc97356f-1963-4d79-8341-2671f04699aa/.andux/tasks/overnight-active-blocker-plan-review.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/19846172-2092-4380-ad54-22399981d1c5/run-0/session.jsonl"
+      ],
+      "runId": "19846172-2092-4380-ad54-22399981d1c5",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:13:37.259Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/19846172-2092-4380-ad54-22399981d1c5/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:13:37.259Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fc97356f-1963-4d79-8341-2671f04699aa/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fc97356f-1963-4d79-8341-2671f04699aa/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/1a311fa8-31dc-49b8-b402-8e37db2218c7_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/19846172-2092-4380-ad54-22399981d1c5_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREVISE — supervision is sound, but deadline, signal, and publication failure semantics remain underspecified.\\n## Critical gaps\\n- Specify an isolated child process group; never signal the parent’s group. Handle interruption during spawn, download, and cleanup without orphaning children or deleting staging prematurely.\\n- Include termination/reaping within the monotonic 180-second budget; bounded graceful termination must escalate to SIGKILL, not an unbounded wait.\\n- Atomic replacement of individual files is not an atomic APK/signature/probe transaction. Define rollback or an explicit partial-publication failure state; never report complete success after partial replacement.\\n## Important improvements\\n- Specify file and containing-directory fsync ordering, destination symlink checks, and success output only after the defined publication commit.\\n… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/fc97356f-1963-4d79-8341-2671f04699aa/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

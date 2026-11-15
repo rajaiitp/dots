@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "id": "e26fefd2-8482-4e56-bc95-471827650b87",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T14:53:42.547Z",
+  "updatedAt": "2026-11-09T14:58:25.828Z",
+  "runs": [
+    {
+      "runId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "status": "complete",
+      "startedAt": "2026-11-09T14:53:42.561Z",
+      "completedAt": "2026-11-09T14:58:25.828Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.624Z",
+      "updatedAt": "2026-11-09T14:58:25.652Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1e62b37a-a0f2-4ff9-afb4-f3fb3b2c3695",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1e62b37a-a0f2-4ff9-afb4-f3fb3b2c3695/run-0/session.jsonl"
+      ],
+      "runId": "1e62b37a-a0f2-4ff9-afb4-f3fb3b2c3695",
+      "agent": "worker",
+      "completedAt": "2026-11-09T14:58:25.652Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1e62b37a-a0f2-4ff9-afb4-f3fb3b2c3695/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:58:25.652Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.659Z",
+      "updatedAt": "2026-11-09T14:57:19.504Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4111a854-4841-4bbc-8b8b-5de6bf0b7e26",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4111a854-4841-4bbc-8b8b-5de6bf0b7e26/run-0/session.jsonl"
+      ],
+      "runId": "4111a854-4841-4bbc-8b8b-5de6bf0b7e26",
+      "agent": "worker",
+      "completedAt": "2026-11-09T14:57:19.504Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4111a854-4841-4bbc-8b8b-5de6bf0b7e26/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:57:19.504Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.692Z",
+      "updatedAt": "2026-11-09T14:58:05.697Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/dd8b57fb-e0e8-4c5d-8923-55afe9a56c66",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/dd8b57fb-e0e8-4c5d-8923-55afe9a56c66/run-0/session.jsonl"
+      ],
+      "runId": "dd8b57fb-e0e8-4c5d-8923-55afe9a56c66",
+      "agent": "worker",
+      "completedAt": "2026-11-09T14:58:05.697Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/dd8b57fb-e0e8-4c5d-8923-55afe9a56c66/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:58:05.697Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-4",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.725Z",
+      "updatedAt": "2026-11-09T14:55:39.922Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/67043441-8d0e-4c54-9e86-a7a959b95075",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-4.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/67043441-8d0e-4c54-9e86-a7a959b95075/run-0/session.jsonl"
+      ],
+      "runId": "67043441-8d0e-4c54-9e86-a7a959b95075",
+      "agent": "worker",
+      "completedAt": "2026-11-09T14:55:39.922Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/67043441-8d0e-4c54-9e86-a7a959b95075/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:55:39.922Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-5",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.767Z",
+      "updatedAt": "2026-11-09T14:55:20.927Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/02a52411-8077-4496-941e-0d170e4f1404",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-5.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/02a52411-8077-4496-941e-0d170e4f1404/run-0/session.jsonl"
+      ],
+      "runId": "02a52411-8077-4496-941e-0d170e4f1404",
+      "agent": "worker",
+      "completedAt": "2026-11-09T14:55:20.927Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/02a52411-8077-4496-941e-0d170e4f1404/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:55:20.927Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "e0501a5e-e295-4df8-b547-a2678f9e13b8",
+      "key": "task-6",
+      "status": "completed",
+      "startedAt": "2026-11-09T14:53:42.810Z",
+      "updatedAt": "2026-11-09T14:55:23.984Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/e5c8cdb1-76b4-4aa5-9ab7-8c46713d7e65",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/e0501a5e-e295-4df8-b547-a2678f9e13b8/.andux/tasks/crypto-native-followups.task-6.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e5c8cdb1-76b4-4aa5-9ab7-8c46713d7e65/run-0/session.jsonl"
+      ],
+      "runId": "e5c8cdb1-76b4-4aa5-9ab7-8c46713d7e65",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T14:55:23.984Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/e5c8cdb1-76b4-4aa5-9ab7-8c46713d7e65/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T14:55:23.984Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e0501a5e-e295-4df8-b547-a2678f9e13b8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/e0501a5e-e295-4df8-b547-a2678f9e13b8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/1e62b37a-a0f2-4ff9-afb4-f3fb3b2c3695_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4111a854-4841-4bbc-8b8b-5de6bf0b7e26_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/dd8b57fb-e0e8-4c5d-8923-55afe9a56c66_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/67043441-8d0e-4c54-9e86-a7a959b95075_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/02a52411-8077-4496-941e-0d170e4f1404_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/e5c8cdb1-76b4-4aa5-9ab7-8c46713d7e65_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 6 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Result: incomplete diagnostic; no production crypto edits. Do not approve a 16-to-12 length-only patch from this evidence.\\n\\nObserved application evidence:\\n/home/raja/Projects/andux/.andux/tasks/element-x-keyring/evidence/app.log lines 251-257 contain AndroidKeystoreAesGcm transient retry, GeneralSecurityException: IV has unexpected length, encrypt/getAead/readOrGenerateNewMasterKey. The supplied context reports fallback. This exception alone establishes neither actual AES mode nor authentication. No relationship to the independent Matrix native crash has been demonstrated.\\n\\nSource evidence (current source, NOT a verified identity match to frozen installed dex):\\n.andux/work/src/atl/src/api-impl/android/content/Context.java:125-129 registers provider AndroidKeyStore with KeyStore.AndroidKeyStore and AES/HmacSHA512 KeyGenerator services, but no Cipher service. The… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/e0501a5e-e295-4df8-b547-a2678f9e13b8/status.json (workflow.value, workflow.emits)) Trace: 12 event(s)."
+}

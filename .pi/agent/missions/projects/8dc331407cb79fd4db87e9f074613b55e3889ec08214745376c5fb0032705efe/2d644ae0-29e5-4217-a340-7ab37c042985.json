@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "2d644ae0-29e5-4217-a340-7ab37c042985",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T18:32:16.886Z",
+  "updatedAt": "2026-11-05T18:36:04.398Z",
+  "runs": [
+    {
+      "runId": "ed39f71c-ab6d-4a34-b7ea-aec725302489",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T18:36:04.397Z",
+      "completedAt": "2026-11-05T18:36:04.397Z",
+      "usage": {
+        "tokens": 51159
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/ed39f71c-ab6d-4a34-b7ea-aec725302489_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/ed39f71c-ab6d-4a34-b7ea-aec725302489_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Resolve realization-block independence and response-cache lifetime before running qualification.\n\n## Critical gaps\n- **The claimed 12 blocks are not independently seeded.** `community_contacts.py` initializes randomness from `seed`, without region namespacing. Regions therefore share random draws, while `custody_search.py` resamples region/seed pairs independently. Use distinct region-specific streams for generation 3, or cluster across regions by seed; the latter leaves only four blocks, below the existing minimum.\n- **Cache persistence is underspecified and differs from current behavior.** Replies use simulator-owned `query_buffers`, while `MobileStore.restart()` clears transient reservations. Define whether reply caches are durable or epoch-local. Durable caches need quota accounting, identity, expiry, and stale-epoch rejection; ledger persistence alone does not satisfy the stated cache contract.\n\n## Important improvements\n- Separate inventory-history collection from score advertisement. Currently `uses_history()` also adds eight bytes to every HELLO. FRONTIER_MEMORY needs local history, not an unsolicited historical score; reusing that switch unchanged introduces unintended traffic.\n\n## Validation gaps\n- Test 32-peer/64-ID limits, exact 480-second expiry, idle expiry, atomic quota rejection, replacement/drop accounting, restart recovery, and paid-empty versus unavailable inventories.\n- Exercise the policy decision table: live priority, strictly better historical peer, 180-second boundary, immediate evidence-free fallback, unavailable query pairs, and replay-resistant ownership age.\n- Verify frozen snapshots survive history replacement and staged DATA; compare fast/reference paths and confirm unchanged control decisions and wire accounting.\n- Test one-worker/two-worker result equivalence, timeout/failure handling, incomplete-cohort rejection, and independent realization streams.\n\n## Recommended revision\n...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with concrete statistical and cache-lifecycle gaps, validation requirements, and a corrected sequence."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [],
+      "residualRisks": [
+        "Qualification remains unsupported until realization-block dependence is addressed.",
+        "Reply-cache restart and epoch behavior remain unresolved."
+      ],
+      "noStagedFiles": false,
+      "diffSummary": "Read-only review; no changes produced.",
+      "reviewFindings": [],
+      "manualNotes": "Inspected simulation, storage, selection, runner, and test code. Round2 confirm.txt records 288 OK rows and the stated GROUP-slice regression. No commands were run; staging state was not verified."
+    }
+  }
+}

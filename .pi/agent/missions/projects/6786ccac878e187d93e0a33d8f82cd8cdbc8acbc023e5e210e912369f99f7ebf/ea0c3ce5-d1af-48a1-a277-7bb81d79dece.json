@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "ea0c3ce5-d1af-48a1-a277-7bb81d79dece",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:50:21.766Z",
+  "updatedAt": "2026-11-12T17:59:11.252Z",
+  "runs": [
+    {
+      "runId": "d9ee8df9-0145-45a3-9007-ccc7491ccbbe",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d9ee8df9-0145-45a3-9007-ccc7491ccbbe",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:50:21.802Z",
+      "completedAt": "2026-11-12T17:59:11.252Z",
+      "usage": {
+        "tokens": 58449
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d9ee8df9-0145-45a3-9007-ccc7491ccbbe/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d9ee8df9-0145-45a3-9007-ccc7491ccbbe/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/d9ee8df9-0145-45a3-9007-ccc7491ccbbe_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented the three pinned AOSP16 codecs: now **21/31**.\n\nChanged files: five-file candidate increment plus private tests/evidence, entirely under `.andux/tasks/api36-span-increment/`.\n\nValidation: 1,077 new assertions and 211 inherited assertions passed; strict compile, ABI preservation, byte-identical Parcel and patch verification passed.\n\nOpen risks: ten codecs remain required; native drawing, heavy validation and independent review remain pending.\n\nRecommended next step: parent-led independent review and heavy validation."
+}

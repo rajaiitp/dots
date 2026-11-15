@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "1263ed2a-3875-4226-b2ae-37e9440113ea",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T09:04:22.487Z",
+  "updatedAt": "2026-11-12T09:10:30.453Z",
+  "runs": [
+    {
+      "runId": "a0a87b0f-abe9-4a3d-a8e1-d31e85b81112",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a0a87b0f-abe9-4a3d-a8e1-d31e85b81112",
+      "status": "complete",
+      "startedAt": "2026-11-12T09:04:22.498Z",
+      "completedAt": "2026-11-12T09:10:30.453Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "a0a87b0f-abe9-4a3d-a8e1-d31e85b81112",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:04:22.613Z",
+      "updatedAt": "2026-11-12T09:10:13.223Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ff7ff465-8258-4374-95af-54c6fdc48c01",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ff7ff465-8258-4374-95af-54c6fdc48c01/run-0/session.jsonl"
+      ],
+      "runId": "ff7ff465-8258-4374-95af-54c6fdc48c01",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:10:13.223Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ff7ff465-8258-4374-95af-54c6fdc48c01/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:10:13.223Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "a0a87b0f-abe9-4a3d-a8e1-d31e85b81112",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:04:22.639Z",
+      "updatedAt": "2026-11-12T09:10:30.260Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/da0370d0-153b-470b-86b0-0d0ed796a2ed",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/da0370d0-153b-470b-86b0-0d0ed796a2ed/run-0/session.jsonl"
+      ],
+      "runId": "da0370d0-153b-470b-86b0-0d0ed796a2ed",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:10:30.260Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/da0370d0-153b-470b-86b0-0d0ed796a2ed/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:10:30.260Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a0a87b0f-abe9-4a3d-a8e1-d31e85b81112/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a0a87b0f-abe9-4a3d-a8e1-d31e85b81112/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ff7ff465-8258-4374-95af-54c6fdc48c01_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/da0370d0-153b-470b-86b0-0d0ed796a2ed_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private core AudioAttributes candidate only.\\nChanged files: `.andux/tasks/audioattributes-candidate/`.\\nValidation: 209 Java assertions, seven source tests, Activity/consumer compilation, ABI and exact-diff checks passed.\\nOpen risks/questions: deferred APIs remain unsupported; parent review/runtime validation pending.\\nRecommended next step: independent parent review before serialized runtime validation.\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

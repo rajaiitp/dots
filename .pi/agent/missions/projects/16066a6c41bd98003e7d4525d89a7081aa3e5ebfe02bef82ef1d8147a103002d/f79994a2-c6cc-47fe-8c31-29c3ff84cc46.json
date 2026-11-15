@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "f79994a2-c6cc-47fe-8c31-29c3ff84cc46",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-07T19:56:23.438Z",
+  "updatedAt": "2026-11-07T19:59:00.365Z",
+  "runs": [
+    {
+      "runId": "0843fda7-1850-4548-b179-60d281ccafdd",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-07T19:59:00.365Z",
+      "completedAt": "2026-11-07T19:59:00.365Z",
+      "usage": {
+        "tokens": 33241
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/0843fda7-1850-4548-b179-60d281ccafdd_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/0843fda7-1850-4548-b179-60d281ccafdd_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-11-07T10-12-07-882Z_01a1b57e-7c49-7722-b7ea-23869c767eae.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREADY — The revised boundaries resolve the attribution, unsafe-wake, and cancellation blockers without requiring Pi/tuios changes.\n\n## Critical gaps\nNone.\n\n## Important improvements\n- Gate recovery guarantees on subscription readiness, replay/gap detection, and retained exit metadata; `keep_open` alone does not establish these. Early-event buffer overflow must trigger reconciliation or unknown status.\n- Keep the private outbox authoritative for durability. Installed Pi can accept `appendEntry()` without immediately persisting it. Use `appendEntry()` plus `registerEntryRenderer()` for visible-only cards, not `sendMessage()`.\n\n## Validation gaps\n- Verify native exit-code/signal retrieval **after** an offline fast exit, beyond event retention, and following early-event buffer overflow.\n- Assert completion while idle or streaming creates neither model-context messages nor queued turns.\n- Test empty and nonpersistent Pi sessions, including a crash after card insertion but before private delivery-state persistence.\n\n## Recommended revision\n1. Verify the native recovery contracts and define unsupported/degraded outcomes.\n2. Retain steps 1–5, making private-outbox durability authoritative.\n3. Extend step 6 with the checks above; execute only when implementation is authorized.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned a concise verdict, material improvements, validation dependencies, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection covered tuios index.ts/client.ts and installed Pi extension and session-persistence APIs."
+      ],
+      "residualRisks": [
+        "An ambiguous create can leave an unbound live pane requiring explicit reconciliation.",
+        "Lost native evidence can prevent definitive completion recovery."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Proposal review only; no changes.",
+      "reviewFindings": [
+        "No design blockers."
+      ],
+      "manualNotes": "No shell commands, daemon calls, edits, network requests, or tests performed. No files staged by this review; existing staging was not checked."
+    }
+  }
+}

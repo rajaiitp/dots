@@ -138,7 +138,8 @@ confirm_close = false
 
 [appearance]
 theme = "gruvbox-teal"
-dockbar_position = "hidden"
+dockbar_position = "top"
+topbar_script = "~/.config/tuios/topbar.lua"
 dock_background = "#1c302d"
 border_focused_color = "surface"
 border_unfocused_color = "surface"
@@ -176,7 +177,8 @@ thumb = "█"
 track = "none"
 
 [appearance.sidebar]
-position = "left"
+enabled = false
+position = "hidden"
 sections = "overview,files,git"
 overview_mode = "attention"
 background = "#1c302d"
@@ -204,8 +206,10 @@ background = "panel"
 padding_left = 2
 
 [appearance.sidebar.ui.repository]
-bold = false
-active_bold = false
+foreground = "fg"
+active_foreground = "fg"
+bold = true
+active_bold = true
 uppercase = false
 
 [appearance.sidebar.ui.branch]

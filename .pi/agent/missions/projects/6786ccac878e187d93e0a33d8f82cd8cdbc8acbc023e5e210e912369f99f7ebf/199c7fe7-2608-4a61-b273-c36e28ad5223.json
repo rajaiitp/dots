@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "199c7fe7-2608-4a61-b273-c36e28ad5223",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T17:09:12.345Z",
+  "updatedAt": "2026-11-11T17:11:56.994Z",
+  "runs": [
+    {
+      "runId": "0d14208b-3536-40a1-a838-e74dd78d6db8",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0d14208b-3536-40a1-a838-e74dd78d6db8",
+      "status": "complete",
+      "startedAt": "2026-11-11T17:09:12.387Z",
+      "completedAt": "2026-11-11T17:11:56.994Z",
+      "usage": {
+        "tokens": 31775
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0d14208b-3536-40a1-a838-e74dd78d6db8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/0d14208b-3536-40a1-a838-e74dd78d6db8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0d14208b-3536-40a1-a838-e74dd78d6db8_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented private candidate only. Likely cause: pointer requests consumed before mapped/focus readiness; prior POINTER_SENT did not establish delivery. Exact coordinate fault remains unproven.\n\nChanged files under .andux/tasks/vlc-notification/selector-repair: start_controller.c, weston_input_probe.c, integration.txt.\n\nValidation: static checks passed; nothing compiled or launched. Parent integration requires both candidate sources, unchanged assertion gates and cleanup, then serialized normal-Start verification.\n\nOpen risks: candidate uncompiled; runtime success unproven.\nRecommended next step: reviewer approval before parent integration."
+}

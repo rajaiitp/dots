@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "3a77efed-4f85-480e-9e82-3ce481577baa",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T20:11:51.395Z",
+  "updatedAt": "2026-11-09T20:14:54.083Z",
+  "runs": [
+    {
+      "runId": "8957585e-93da-41ac-b8ef-4c3ae224d135",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8957585e-93da-41ac-b8ef-4c3ae224d135",
+      "status": "complete",
+      "startedAt": "2026-11-09T20:11:51.409Z",
+      "completedAt": "2026-11-09T20:14:54.083Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "8957585e-93da-41ac-b8ef-4c3ae224d135",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T20:11:51.475Z",
+      "updatedAt": "2026-11-09T20:12:19.062Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/60b079e9-4cb7-4059-be30-62e675aae8f6",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8957585e-93da-41ac-b8ef-4c3ae224d135/.andux/tasks/native-contract-followups.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/60b079e9-4cb7-4059-be30-62e675aae8f6/run-0/session.jsonl"
+      ],
+      "runId": "60b079e9-4cb7-4059-be30-62e675aae8f6",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T20:12:19.062Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/60b079e9-4cb7-4059-be30-62e675aae8f6/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T20:12:19.062Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "8957585e-93da-41ac-b8ef-4c3ae224d135",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T20:11:51.517Z",
+      "updatedAt": "2026-11-09T20:13:22.216Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa3cd978-d9e4-4bf2-b343-3575fb08fb21",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8957585e-93da-41ac-b8ef-4c3ae224d135/.andux/tasks/native-contract-followups.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa3cd978-d9e4-4bf2-b343-3575fb08fb21/run-0/session.jsonl"
+      ],
+      "runId": "fa3cd978-d9e4-4bf2-b343-3575fb08fb21",
+      "agent": "worker",
+      "completedAt": "2026-11-09T20:13:22.216Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa3cd978-d9e4-4bf2-b343-3575fb08fb21/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T20:13:22.216Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "8957585e-93da-41ac-b8ef-4c3ae224d135",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T20:11:51.541Z",
+      "updatedAt": "2026-11-09T20:14:53.882Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/cd26881d-de6b-4ed5-a9b6-cd7051030f50",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8957585e-93da-41ac-b8ef-4c3ae224d135/.andux/tasks/native-contract-followups.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cd26881d-de6b-4ed5-a9b6-cd7051030f50/run-0/session.jsonl"
+      ],
+      "runId": "cd26881d-de6b-4ed5-a9b6-cd7051030f50",
+      "agent": "worker",
+      "completedAt": "2026-11-09T20:14:53.882Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cd26881d-de6b-4ed5-a9b6-cd7051030f50/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T20:14:53.882Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8957585e-93da-41ac-b8ef-4c3ae224d135/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8957585e-93da-41ac-b8ef-4c3ae224d135/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/60b079e9-4cb7-4059-be30-62e675aae8f6_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fa3cd978-d9e4-4bf2-b343-3575fb08fb21_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/cd26881d-de6b-4ed5-a9b6-cd7051030f50_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREADY — candidate matches the supplied Android 7 ABI and checks bounds before searching, including early matches.\\n## Critical gaps\\nNone.\\n## Important improvements\\nNone.\\n## Validation gaps\\nHashes were not independently recomputed; CTS remains blocked, not passed.\\n## Recommended revision\\nNone; retain the separate unchanged-upstream CTS validation lane.\\n## Acceptance Contract\\nAcceptance level: attested\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8957585e-93da-41ac-b8ef-4c3ae224d135/.andux/tasks/native-contract-followups.task-1.txt (415 B, 12 lines). Read this file if needed.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private CTS harness correction in fortify-memchr/private_cts.py; source rehomed to ownstate/wor… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/8957585e-93da-41ac-b8ef-4c3ae224d135/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

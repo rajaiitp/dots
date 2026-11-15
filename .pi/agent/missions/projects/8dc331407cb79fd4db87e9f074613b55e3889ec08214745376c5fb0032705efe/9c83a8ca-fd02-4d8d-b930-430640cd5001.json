@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "9c83a8ca-fd02-4d8d-b930-430640cd5001",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-08T14:46:10.930Z",
+  "updatedAt": "2026-11-08T14:48:45.572Z",
+  "runs": [
+    {
+      "runId": "fd578538-3e18-423f-9d4d-aa7b7abbd0dd",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-08T14:48:45.571Z",
+      "completedAt": "2026-11-08T14:48:45.571Z",
+      "usage": {
+        "tokens": 32093
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/fd578538-3e18-423f-9d4d-aa7b7abbd0dd_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/fd578538-3e18-423f-9d4d-aa7b7abbd0dd_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — the codec design is coherent, but source freezing, selection criteria, and concurrent-run isolation need explicit safeguards.\n\n## Critical gaps\nNone.\n\n## Important improvements\n- Explicitly hash/archive the new codec and runner in the follow-up manifest: the existing `source_hashes()` excludes helpers outside `routing_sim`.\n- Predeclare delivery-first selection and promotion rules, retaining paired reference comparisons and rejecting incomplete cohorts. Exact snapshot reconstruction does not guarantee unchanged delivery under altered timing.\n- Defer follow-up simulations until v1 finishes, or isolate resources sufficiently to avoid contaminating its host-budget outcomes.\n\n## Validation gaps\n- Test ownership-only SAME captures against a forced-FULL oracle; then overwrite the same-digest sender version and verify repairs retain the original bitmap and sequence.\n- Deliver an older repair after a newer custody capture, including after decode-base eviction; assert no policy rollback.\n- Check exact byte charges and bitmap/count boundaries at 0, 1, 7, 8, 9, and 64 bodies. Rejected malformed frames must not advance watermarks or install HAVE/base state.\n- Verify partial/lost frames teach no bases, new helper mutations invalidate the follow-up freeze, and v1 source hashes remain identical.\n\n## Recommended revision\nPreserve the additive codec/subclass design; add the safeguards above, complete focused validation, then run training → freeze → independent heldout → scale without retuning from heldout outcomes.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Reviewed codec/cache integration and study manifests; identified concrete fairness and validation gaps without finding a fundamental codec blocker."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read control_state.py, control_custody.py, control_bench.py, study runner, and existing control tests.",
+        "Confirmed existing source hashing omits the proposed external codec helper."
+      ],
+      "residualRisks": [
+        "Implementation correctness and performance remain untested.",
+        "Exact decoding can still change delivery through timing, repairs, and quota pressure."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes or staging performed.",
+      "reviewFindings": [
+        "No fundamental codec-design blocker found.",
+        "Require explicit follow-up source capture, delivery-first gates, and resource isolation."
+      ],
+      "manualNotes": "Only repository read/search tools were used; no commands, tests, edits, or panes were run. Pre-existing index state was not inspected."
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "47350659-4875-4ce0-b9b3-2addd4f59ab2",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T11:26:03.752Z",
+  "updatedAt": "2026-11-09T11:26:16.161Z",
+  "runs": [
+    {
+      "runId": "89e9a51e-6e3d-4527-a91f-d49ea725bed9",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/89e9a51e-6e3d-4527-a91f-d49ea725bed9",
+      "status": "complete",
+      "startedAt": "2026-11-09T11:26:03.770Z",
+      "completedAt": "2026-11-09T11:26:16.161Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "89e9a51e-6e3d-4527-a91f-d49ea725bed9",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T11:26:03.857Z",
+      "updatedAt": "2026-11-09T11:26:15.926Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6632d811-df95-4182-b128-ae2af5835aa3",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd/6632d811-df95-4182-b128-ae2af5835aa3/run-0/session.jsonl"
+      ],
+      "runId": "6632d811-df95-4182-b128-ae2af5835aa3",
+      "agent": "delegate",
+      "completedAt": "2026-11-09T11:26:15.926Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd/6632d811-df95-4182-b128-ae2af5835aa3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T11:26:15.926Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "89e9a51e-6e3d-4527-a91f-d49ea725bed9",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T11:26:03.895Z",
+      "updatedAt": "2026-11-09T11:26:11.436Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/36c6dac3-029b-4439-a1ea-9111faadf6cf",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd/36c6dac3-029b-4439-a1ea-9111faadf6cf/run-0/session.jsonl"
+      ],
+      "runId": "36c6dac3-029b-4439-a1ea-9111faadf6cf",
+      "agent": "reviewer",
+      "completedAt": "2026-11-09T11:26:11.436Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd/36c6dac3-029b-4439-a1ea-9111faadf6cf/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T11:26:11.436Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/89e9a51e-6e3d-4527-a91f-d49ea725bed9/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/89e9a51e-6e3d-4527-a91f-d49ea725bed9/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/6632d811-df95-4182-b128-ae2af5835aa3_delegate_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/36c6dac3-029b-4439-a1ea-9111faadf6cf_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"delegate\",\n      \"ok\": true,\n      \"output\": \"SMOKE_EXEC_OK\\n\\n- CWD: `/home/raja/Projects/andux`\\n- Branch: `main`\\n- Status: No commits yet; untracked: `.gitignore`, `Makefile`, `andux/`, `build/`, `contracts/`, `corpus/`, `pyproject.toml`, `tests/`.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"SMOKE_READ_OK\\n- HEAD: `ref: refs/heads/main`\\n- Package: `pi-big-pickle`\\n- Version: `1.0.0`\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "32121945-068b-40e8-a5e7-cc586c62e425",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:46:45.882Z",
+  "updatedAt": "2026-11-11T14:47:14.955Z",
+  "runs": [
+    {
+      "runId": "ea33afc4-b2d3-4512-a605-0c0739146d35",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea33afc4-b2d3-4512-a605-0c0739146d35",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:46:45.903Z",
+      "completedAt": "2026-11-11T14:47:14.955Z",
+      "usage": {
+        "tokens": 17588
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea33afc4-b2d3-4512-a605-0c0739146d35/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea33afc4-b2d3-4512-a605-0c0739146d35/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ea33afc4-b2d3-4512-a605-0c0739146d35_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "reviewer:\n## Review\n- Correct: Both wrappers forward existing calls exactly once; no additional rendering, pixel capture, or JNI inspection (`ui_observer.c:101–165`).\n- Correct: TLS attribution is bounded, cleared on normal return, suppressed during overflow, and restricted to the innermost matching snapshot plus exact JNI library/symbols (`ui_observer.c:93–138`). Borrowed pointers remain within the synchronous snapshot call.\n- Correct: Submission remains historical metadata, separate from visibility (`ui_observer.c:77–79,343–354`). Workflow promotion still requires displayed-texture evidence, startup checks, and nontruncated traversal (`case_probe.py:71–85`).\n- Correct: Unit-source checks cover library mismatch, snapshot mismatch, overflow, ineligibility, empty bounds, and untagged textures (`ui_observer_test.c:46–74`).\n\nNo issues found.\n\n**Merge verdict: OK — READY.** Source-only review; no builds or tests run. No Git baseline was available, so exact diff preservation could not be verified."
+}

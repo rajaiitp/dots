@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "4ce74b4c-4225-49a0-8d02-ee26e2e2813b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T23:07:35.070Z",
+  "updatedAt": "2026-11-05T23:11:16.827Z",
+  "runs": [
+    {
+      "runId": "3576d374-7ae2-4829-917d-2fa4a90e17a7",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T23:11:16.826Z",
+      "completedAt": "2026-11-05T23:11:16.826Z",
+      "usage": {
+        "tokens": 42248
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/3576d374-7ae2-4829-917d-2fa4a90e17a7_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/3576d374-7ae2-4829-917d-2fa4a90e17a7_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Sender-visible completion, retry-loss identity, and interval-aware ceiling semantics need explicit contracts before the comparisons are trustworthy.\n\n## Critical gaps\n- Define sender-visible transport outcomes. Legacy `_stage` gates DATA on `_send`’s remote-reception result. Timed donor decisions, retry scheduling, and action unlocks must depend only on local transmission completion, timeouts, or paid received replies—not hidden receiver loss or commit results.\n\n## Important improvements\n- Define frame/reassembly identities and retransmission behavior. Existing `_lost` gives every same-contact retry identical segment losses; introduce stable per-attempt samples without coupling them to heap execution order.\n- Specify ceiling eligibility using contact overlap with publication, expiry, and observation windows. Retaining the old oracle’s whole-round expiry guard would undercount valid timed deliveries. Keep the legacy oracle path unchanged.\n\n## Validation gaps\n- Counterfactual receiver loss/commit-failure tests: donor-visible behavior remains identical until an explicit reply or timeout.\n- Same-contact retries receive distinct loss samples; replay, ordering, and cancellation preserve samples for unchanged attempts.\n- Mid-contact publication/expiry and post-horizon publications: ceiling dominance and identical offered-delivery denominators.\n\n## Recommended revision\n1. Freeze transport observability, transaction/reassembly, timeout, and loss-identity contracts; add the targeted tests.\n2. Implement shared timed mechanics, then round-gated and live modes, preserving legacy behavior.\n3. Add the interval-aware observer ceiling; run the proposed regression suite and complete matched comparison matrix.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with concrete correctness gaps, targeted validation, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Manual inspection confirmed remote-success branching in custody_tournament.py:_stage, missing attempt identity in custody_sim.py:_lost, and whole-round expiry filtering in custody_bench.py:temporal_oracle."
+      ],
+      "residualRisks": [
+        "Implementation and runtime behavior remain unvalidated."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "Revision required for sender observability, retry-loss identity, and interval-aware ceiling semantics."
+      ],
+      "manualNotes": "Repository files inspected read-only; no commands, edits, or staging operations performed. Existing Git index state was not inspected."
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "b8935091-ac50-4ce4-8ab8-b89193c54a69",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:29:42.509Z",
+  "updatedAt": "2026-11-12T17:46:15.922Z",
+  "runs": [
+    {
+      "runId": "7619a77e-a8f9-466a-bcb6-bd65a457bf96",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7619a77e-a8f9-466a-bcb6-bd65a457bf96",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:29:42.522Z",
+      "completedAt": "2026-11-12T17:46:15.922Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "7619a77e-a8f9-466a-bcb6-bd65a457bf96",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T17:29:42.628Z",
+      "updatedAt": "2026-11-12T17:36:06.304Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4ae41519-2bae-4d33-906d-b89b37078b3a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4ae41519-2bae-4d33-906d-b89b37078b3a/run-0/session.jsonl"
+      ],
+      "runId": "4ae41519-2bae-4d33-906d-b89b37078b3a",
+      "agent": "worker",
+      "completedAt": "2026-11-12T17:36:06.304Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4ae41519-2bae-4d33-906d-b89b37078b3a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T17:36:06.304Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7619a77e-a8f9-466a-bcb6-bd65a457bf96",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T17:29:42.654Z",
+      "updatedAt": "2026-11-12T17:46:15.694Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/cf52076a-8a30-4f15-b810-c9d24f790938",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cf52076a-8a30-4f15-b810-c9d24f790938/run-0/session.jsonl"
+      ],
+      "runId": "cf52076a-8a30-4f15-b810-c9d24f790938",
+      "agent": "worker",
+      "completedAt": "2026-11-12T17:46:15.694Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cf52076a-8a30-4f15-b810-c9d24f790938/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T17:46:15.694Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7619a77e-a8f9-466a-bcb6-bd65a457bf96/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7619a77e-a8f9-466a-bcb6-bd65a457bf96/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4ae41519-2bae-4d33-906d-b89b37078b3a_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/cf52076a-8a30-4f15-b810-c9d24f790938_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented a partial, license-gated inventory—not full gap closure.\\nChanged files: only `.andux/tasks/api36-public-signatures/`; entry point `manifest.json`.\\nValidation: 14 tests passed; 271 file hashes verified; nothing staged.\\nOpen risks: 35/63 checkpoint artifacts remain blocked, including merged `android.txt`.\\nRecommended next step: independent provenance review, then flag/library-union reconciliation.\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

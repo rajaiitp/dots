@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "e94bcb00-35fc-4ac2-ba20-3e415d53e318",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T19:42:04.108Z",
+  "updatedAt": "2026-11-09T19:43:25.655Z",
+  "runs": [
+    {
+      "runId": "36bc44ff-5591-4710-aab4-8dff4be858c0",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36bc44ff-5591-4710-aab4-8dff4be858c0",
+      "status": "complete",
+      "startedAt": "2026-11-09T19:42:04.120Z",
+      "completedAt": "2026-11-09T19:43:25.655Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "36bc44ff-5591-4710-aab4-8dff4be858c0",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T19:42:04.193Z",
+      "updatedAt": "2026-11-09T19:42:51.351Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/3d3b9f70-62bf-44ed-b02d-037c9fc8a9d3",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/36bc44ff-5591-4710-aab4-8dff4be858c0/.andux/tasks/batch-review-and-linker-producer.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/3d3b9f70-62bf-44ed-b02d-037c9fc8a9d3/run-0/session.jsonl"
+      ],
+      "runId": "3d3b9f70-62bf-44ed-b02d-037c9fc8a9d3",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T19:42:51.351Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/3d3b9f70-62bf-44ed-b02d-037c9fc8a9d3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T19:42:51.351Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "36bc44ff-5591-4710-aab4-8dff4be858c0",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T19:42:04.244Z",
+      "updatedAt": "2026-11-09T19:43:25.482Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/f24f59e8-35bd-4a65-8a3a-ce5818ab5de3",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/36bc44ff-5591-4710-aab4-8dff4be858c0/.andux/tasks/batch-review-and-linker-producer.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/f24f59e8-35bd-4a65-8a3a-ce5818ab5de3/run-0/session.jsonl"
+      ],
+      "runId": "f24f59e8-35bd-4a65-8a3a-ce5818ab5de3",
+      "agent": "worker",
+      "completedAt": "2026-11-09T19:43:25.482Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/f24f59e8-35bd-4a65-8a3a-ce5818ab5de3/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T19:43:25.482Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36bc44ff-5591-4710-aab4-8dff4be858c0/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36bc44ff-5591-4710-aab4-8dff4be858c0/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/3d3b9f70-62bf-44ed-b02d-037c9fc8a9d3_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/f24f59e8-35bd-4a65-8a3a-ce5818ab5de3_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREVISE — verified ownership and exception-boundary gaps violate the approved contract.\\n## Critical gaps\\nNative show commits generation before focus/OSK callbacks can fail; Java then skips activation, leaving mismatched bindings. Java activate/adopt can flush reentrantly, yet replacement returns success without final identity validation.\\nNon-EditText custom connections cannot populate snapshot: retrieval/deletion require it, while publishSelection rejects their views. nativeUpdateSnapshot calls GTK without the IMM origin guard; IMM and EditText guards are separate.\\n## Important improvements\\nUse one shared, thread-local exception-origin boundary across callback-capable JNI paths, including snapshot publication; inspect and include View.native_requestFocus, whose implementation was not located here. Actual callback emission remains unproven.\\n## … (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/36bc44ff-5591-4710-aab4-8dff4be858c0/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

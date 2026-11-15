@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "6daefc5a-6c53-4646-9b65-2066da033fa7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:43:43.998Z",
+  "updatedAt": "2026-11-11T14:45:08.912Z",
+  "runs": [
+    {
+      "runId": "acd501b5-a9b0-4bab-8eb8-3a0524af7b98",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/acd501b5-a9b0-4bab-8eb8-3a0524af7b98",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:43:44.024Z",
+      "completedAt": "2026-11-11T14:45:08.912Z",
+      "usage": {
+        "tokens": 22811
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/acd501b5-a9b0-4bab-8eb8-3a0524af7b98/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/acd501b5-a9b0-4bab-8eb8-3a0524af7b98/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/acd501b5-a9b0-4bab-8eb8-3a0524af7b98_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented passive bounded TLS submission attribution. Existing visibility proof gate remains unchanged; status stays UNPROVEN.\n\nChanged files: `ui_observer.c`, `ui_observer_test.c`, `evidence.json`.\nValidation: strict syntax checks passed; no builds or runtime runs.\nLimits: submission does not establish visible contribution; field is historical.\nNext step: required reviewer assessment, then parent-controlled validation."
+}

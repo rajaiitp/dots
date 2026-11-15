@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "bd41e3a6-e83d-4fc4-8bd7-5c43ecacfa31",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-07T09:44:42.407Z",
+  "updatedAt": "2026-11-07T09:48:25.390Z",
+  "runs": [
+    {
+      "runId": "3ae1dee3-2d60-42f2-9a45-27ee77acea2d",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-07T09:48:25.389Z",
+      "completedAt": "2026-11-07T09:48:25.389Z",
+      "usage": {
+        "tokens": 87781
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/3ae1dee3-2d60-42f2-9a45-27ee77acea2d_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/3ae1dee3-2d60-42f2-9a45-27ee77acea2d_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Existing startup and SDK behavior can bypass the gate or leave npm descendants running.\n\n## Critical gaps\n- **R1 — Cancellation lifecycle:** Signals are registered in `serve()`, after startup. Register cancellation before preflight; coordinate `Start`/`Stop` so descendants terminate before locks are released, without running persistence cleanup for an unstarted daemon.\n- **R2 — Competing starters:** `daemon_start.go` shortens waiting to one second when its child loses the startup race. `EnsureDaemonRunningWith` caches `ErrDaemonStarting` as failure. Both must await the winner using the preflight-aware deadline.\n- **R3 — Trust/scope:** SDK settings default to trusting the supplied cwd. Define user-only preflight with project trust disabled, or explicitly cover trusted restored project directories; the daemon’s launch directory is neither a safe trust decision nor representative of restored panes.\n- **R4 — Fail-closed validation:** Resource-loader installation failures become warnings, and settings parse failures can yield empty settings. Check package `installFailures` and settings errors explicitly. TUIOS’s `foregroundDaemonConfig()` also silently defaults on config-load failure, potentially omitting the gate.\n\n## Important improvements\n- Make the npm override survive `SettingsManager.reload()`; `applyOverrides()` alone does not. Route `.pi/install.sh`’s direct install/remove/copy operations through the same package lock.\n- Separate validate-only execution from repair/update: native resolution can install missing packages. Define interrupted-update recovery and final pin reconciliation. Native extension loading executes code, so it cannot itself guarantee absence of network/model calls.\n\n## Validation gaps\n- Race multiple CLI and in-process starters with preflight exceeding five seconds; verify one execution, successful waiting, and no standalone fallback.\n…\nFull output: /home/raja/dots/.pi/agent/sessions/-...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned concise, source-backed findings and explicit residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Inspected reconstructed TUIOS startup paths, repository installer, and installed Pi 1.5.0 SDK loaders."
+      ],
+      "residualRisks": [
+        "Runtime behavior, recovery, and process-tree cleanup remain untested."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes made.",
+      "reviewFindings": [
+        "REVISE: R1-R4 require explicit handling."
+      ],
+      "manualNotes": "Read-only inspection only; no processes launched or files modified/staged. Pre-existing staging state was not checked."
+    }
+  }
+}

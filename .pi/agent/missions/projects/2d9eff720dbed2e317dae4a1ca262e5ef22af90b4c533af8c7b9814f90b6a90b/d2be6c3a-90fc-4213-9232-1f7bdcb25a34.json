@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "id": "d2be6c3a-90fc-4213-9232-1f7bdcb25a34",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T16:02:45.443Z",
+  "updatedAt": "2026-11-05T16:06:01.194Z",
+  "runs": [
+    {
+      "runId": "82e0e1f6-5233-4550-b6ea-346748b9f034",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T16:06:01.194Z",
+      "completedAt": "2026-11-05T16:06:01.194Z",
+      "usage": {
+        "tokens": 25642
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/82e0e1f6-5233-4550-b6ea-346748b9f034_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/82e0e1f6-5233-4550-b6ea-346748b9f034_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Event coalescing and recovery paths can misclassify an interrupted session as a valid overnight interval.\n\n## Critical gaps\n- `StandbyService.events` discards event identity and coalesces reconciliation requests. A screen-on/off or power-connect/disconnect sequence can disappear before guards run; restore hooks alone cannot certify an uninterrupted interval. Latch disqualifying events for measurement without changing policy behavior, or narrow the validity claim.\n- `restore()` also runs during broker startup, cleanup, recovery, and rollback. Snapshot existence is insufficient: require a committed measurement start tied to the same boot and policy transaction, record the closing reason, and fail stale/in-progress sessions after restart. Recovery must never manufacture a normal completion or allow another capture.\n\n## Important improvements\n- Specify a whole-collector deadline compatible with the helper’s **45-second transition deadline**, including lock waits, persistence, and subprocess teardown. Isolate collector output from the broker protocol and prevent surviving descendants from retaining controller lock descriptors.\n- Timestamp/bracket charge and suspend reads and record collection duration. Entry collection holds `power-mode:transition`; exit collection follows wake processing. Report these observer-awake tails, and revalidate eligibility after entry capture before accepting it.\n- Batterystats can automatically reset on near-full unplug. Verify its epoch/history before comparing host captures, and distinguish its broader observation window from the device-side measurement interval.\n\n## Validation gaps\n- Test coalesced disqualifying events and wake/charging changes during entry capture.\n- Inject termination at every session phase, broker restart, repeated restoration, and collector timeout; verify one terminal result, no recapture, unchanged restoration, clean protocol output, and released locks.\n…\nFu...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with repository-backed lifecycle findings, concrete validation requirements, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read controller restore/apply paths, helper event handling, and transition deadlines; no execution performed."
+      ],
+      "residualRisks": [
+        "Unattended measurement and device-specific collector timing remain unvalidated.",
+        "Near-full gauge relaxation and host Batterystats window mismatch remain attribution limitations."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made.",
+      "reviewFindings": [
+        "StandbyService event coalescing prevents certification of uninterrupted eligibility.",
+        "Controller restoration paths require explicit measurement identity and recovery classification."
+      ],
+      "manualNotes": "Used read-only repository inspection only. No files modified or staged by this review; pre-existing staging state was not inspected."
+    }
+  }
+}

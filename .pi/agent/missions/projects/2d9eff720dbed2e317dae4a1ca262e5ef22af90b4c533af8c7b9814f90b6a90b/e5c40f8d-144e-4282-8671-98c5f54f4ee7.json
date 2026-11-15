@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "e5c40f8d-144e-4282-8671-98c5f54f4ee7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T12:41:00.660Z",
+  "updatedAt": "2026-11-05T12:44:00.423Z",
+  "runs": [
+    {
+      "runId": "35f39b2b-8053-4fa9-aa92-4928399f9fea",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T12:44:00.423Z",
+      "completedAt": "2026-11-05T12:44:00.423Z",
+      "usage": {
+        "tokens": 41309
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/35f39b2b-8053-4fa9-aa92-4928399f9fea_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/35f39b2b-8053-4fa9-aa92-4928399f9fea_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The strict-capability gate is sound, but freeze ownership, independent recovery, and deployment ordering need stronger requirements.\n\n## Critical gaps\n- Make framework-coordinated Binder/thread transitions and race-free coverage of new processes mandatory. **Avoid controller-side per-UID freezer writes entirely.** Neither freezer files nor per-process `--sticky` commands establish strict capability.\n- EOF restoration does not cover broker SIGKILL or hangs. Require an independent, excluded recovery owner with bounded activation/wake deadlines; failed radio restoration must never prevent owned processes from thawing.\n- Specify write-ahead ownership records covering boot identity, UID, PID/start time, prior Binder/thread freeze and restriction state, and partial application. If concurrent framework/external freezes cannot be distinguished safely, activation must remain blocked.\n- Preflight must precede retirement. The current `device/install-pipa.sh:32–71` stops/removes the legacy controller before checking its replacement, while `scripts/install.sh:22–23` changes device scripts before APK installation succeeds. Require recovery/quiescence checks and transactional rollback of scripts, APK, and startup state.\n\n## Important improvements\n- Strengthen guard parsing: `power-mode-control.sh:142–147` treats empty or unrecognized display output as no external display. Unknown/truncated power, battery, or display state must deny activation.\n- Define headless provisioning explicitly: initial service start, root authorization, package stopped-state handling, and boot/unlock behavior cannot depend on the removed activity or `BootReceiver.CONFIGURED`.\n- Establish restore ordering from actual service dependencies rather than assuming radios can always be restored while applications remain frozen.\n\n## Validation gaps\n…\nFull output: /home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/35f39b2b-80...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned REVISE with concrete safety gates, repository-backed deployment findings, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection confirmed destructive legacy retirement precedes replacement checks and APK installation.",
+        "Existing broker recovery relies on traps/EOF; display parsing accepts unrecognized output as no external display."
+      ],
+      "residualRisks": [
+        "A safe strict mechanism and independent recovery remain unverified on the device.",
+        "No tests or device validation were executed."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made.",
+      "reviewFindings": [
+        "Activation must require coordinated Binder/thread freezing and race-free process admission.",
+        "Recovery needs independent ownership and bounded thaw behavior.",
+        "Deployment needs preflight-before-retirement and transactional rollback."
+      ],
+      "manualNotes": "Inspected maintained check.sh and external controller, service, startup, installer and test sources using read-only tools. No files edited or staged by this review; repository index status was not inspected."
+    }
+  }
+}

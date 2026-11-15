@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "6fee55ad-0c47-461b-ac3b-b0a139de88f8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T21:18:19.622Z",
+  "updatedAt": "2026-11-09T21:19:15.224Z",
+  "runs": [
+    {
+      "runId": "33c298df-f413-4d04-b23f-0572b6411928",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33c298df-f413-4d04-b23f-0572b6411928",
+      "status": "complete",
+      "startedAt": "2026-11-09T21:18:19.649Z",
+      "completedAt": "2026-11-09T21:19:15.224Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "33c298df-f413-4d04-b23f-0572b6411928",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:18:19.749Z",
+      "updatedAt": "2026-11-09T21:18:58.915Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/961265a2-0e28-4473-9455-64cbd9177d66",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/33c298df-f413-4d04-b23f-0572b6411928/.andux/tasks/bounded-native-and-batch-review.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/961265a2-0e28-4473-9455-64cbd9177d66/run-0/session.jsonl"
+      ],
+      "runId": "961265a2-0e28-4473-9455-64cbd9177d66",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T21:18:58.915Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/961265a2-0e28-4473-9455-64cbd9177d66/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:18:58.915Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "33c298df-f413-4d04-b23f-0572b6411928",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T21:18:19.796Z",
+      "updatedAt": "2026-11-09T21:19:15.034Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/30066d62-bfe6-487a-82dc-61b1ab98993a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/33c298df-f413-4d04-b23f-0572b6411928/.andux/tasks/bounded-native-and-batch-review.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/30066d62-bfe6-487a-82dc-61b1ab98993a/run-0/session.jsonl"
+      ],
+      "runId": "30066d62-bfe6-487a-82dc-61b1ab98993a",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T21:19:15.034Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/30066d62-bfe6-487a-82dc-61b1ab98993a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T21:19:15.034Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33c298df-f413-4d04-b23f-0572b6411928/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/33c298df-f413-4d04-b23f-0572b6411928/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/961265a2-0e28-4473-9455-64cbd9177d66_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/30066d62-bfe6-487a-82dc-61b1ab98993a_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREVISE — implementation matches the bounded subset, but its contract still contradicts the delivered exports.\\n## Critical gaps\\ncontract.txt requires getSize-only and absence of create/setProt; replace this obsolete acceptance contract.\\n## Important improvements\\nRecord literal READ/nonexecute rejection, unlinked-regular identity, mutable sizes, surviving writable mappings, and no hard security-boundary or Android-parity claim; no licensing blocker observed.\\n## Validation gaps\\nAdd executable RWX/RX mapping checks and bind patch/tests to hashes; supplied kernel tests fail rather than skip, but were not rerun here.\\n## Recommended revision\\nUpdate contract, add missing validation, refresh evidence; preserve implementation and existing kernel/ABI tests.\\n## Acceptance Contract\\nAcceptance level: attested; no application success established.\\n\\nOut… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/33c298df-f413-4d04-b23f-0572b6411928/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

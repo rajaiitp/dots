@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "8736b116-4dbf-46aa-a5a1-a6efba40b692",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:36:39.216Z",
+  "updatedAt": "2026-11-09T23:37:13.104Z",
+  "runs": [
+    {
+      "runId": "975ffb52-d74d-4af8-8a66-25d0adfc89b8",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/975ffb52-d74d-4af8-8a66-25d0adfc89b8",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:36:39.250Z",
+      "completedAt": "2026-11-09T23:37:13.104Z",
+      "usage": {
+        "tokens": 47418
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/975ffb52-d74d-4af8-8a66-25d0adfc89b8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/975ffb52-d74d-4af8-8a66-25d0adfc89b8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/975ffb52-d74d-4af8-8a66-25d0adfc89b8_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/element-app-crypto",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Final-marker control flow supports the narrow diagnosis, not complete acceptance.\n## Critical gaps\nEarlier markers were not retained; discarded output cannot establish their framing or recover observations.\n## Important improvements\nPinned getAead and constructors bind unchanged APK code; the final marker follows provider/classloader checks and branch IDs 10→9 with key equality, supporting AndroidKeyStore/private-service use rather than Tink fallback.\n## Validation gaps\nTest fragmented/coalesced records, CRLF, EOF, bounded framing, prefixed/interleaved noise, missing markers, and fatal/error output after success; missing evidence must still reject.\n## Recommended revision\nPreserve failed artifacts and the attempt gate; correct test-only marker framing (explicit newline-delimited, flushed records) and bounded scanner parsing without substring acceptance; refresh fixture/source provenance. Obtain explicit authorization before any new isolated attempt; never backfill markers.\n## Acceptance Contract\nAcceptance level: attested. BC setup and exportable-key equality assume ATL software keys; neither hardware backing, authentication-negative coverage, production key generation nor login/sync is proved. No production changes authorized.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/975ffb52-d74d-4af8-8a66-25d0adfc89b8/.andux/tasks/element-app-crypto-review.txt (1.2 KB, 12 lines). Read this file if needed."
+}

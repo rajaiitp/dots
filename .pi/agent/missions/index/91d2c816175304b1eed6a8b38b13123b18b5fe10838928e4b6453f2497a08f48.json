@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "0910bec9-b7c1-4bc1-b58f-b32c5bae820c",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/acquisition-supervisor",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/d1cc0ecc16f8bbed6f12aa304a72510fd9c2b126303573d94fa601088a0a90ca/0910bec9-b7c1-4bc1-b58f-b32c5bae820c.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-09T23:30:53.693Z",
+  "lastRunId": "81abef53-8258-42cf-b5fe-4e8e2ca11329"
+}

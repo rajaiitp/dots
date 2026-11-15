@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "31c1bccb-02b2-46c6-b219-36aca522512b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T10:29:47.474Z",
+  "updatedAt": "2026-11-09T10:31:35.273Z",
+  "runs": [
+    {
+      "runId": "a6311dfc-a3fd-4c87-bd26-f0fa6acacc44",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-09T10:31:35.273Z",
+      "completedAt": "2026-11-09T10:31:35.273Z",
+      "usage": {
+        "tokens": 32987
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/a6311dfc-a3fd-4c87-bd26-f0fa6acacc44_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/a6311dfc-a3fd-4c87-bd26-f0fa6acacc44_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREADY — No blockers found in the proposed scope or worker reuse.\n\n## Critical gaps\nNone.\n\n## Important improvements\nCalculate remaining time from the parent’s cumulative `total_benchmark_seconds`: **551.083750447 s consumed; 1248.916249553 s remaining**. Reserve cleanup/publication time; do not subtract only its `host_seconds`.\n\n## Validation gaps\nExercise deadline expiry while both custom-command workers are running: verify kill/reap, incomplete/unranked publication, rejection of late results, and no Harrow launch.\n\n## Recommended revision\nAdd these preflight safeguards; otherwise preserve the planned sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Read-only review found no blockers; identified cumulative-timing and active-deadline validation refinements."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Stored campaign cumulative consumption is 551.0837504469964 seconds.",
+        "Existing executor supports custom commands and timeout kill/reap."
+      ],
+      "residualRisks": [
+        "The proposed wrapper and benchmark outcomes have not been executed or verified."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "No blockers."
+      ],
+      "manualNotes": "Inspected worker, validator, executor, existing tests and campaign reports. No commands run or files changed/staged by this review; pre-existing staging was not checked."
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "8cc7bfd7-f880-4aac-91bd-cd583c0f6d0e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:37:43.265Z",
+  "updatedAt": "2026-11-11T12:38:10.598Z",
+  "runs": [
+    {
+      "runId": "75de4c4a-835e-4c31-bec7-fcb418d5ae06",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75de4c4a-835e-4c31-bec7-fcb418d5ae06",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:37:43.299Z",
+      "completedAt": "2026-11-11T12:38:10.598Z",
+      "usage": {
+        "tokens": 13451
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75de4c4a-835e-4c31-bec7-fcb418d5ae06/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/75de4c4a-835e-4c31-bec7-fcb418d5ae06/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/75de4c4a-835e-4c31-bec7-fcb418d5ae06_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "reviewer:\n## Review\n- Correct: Independent `UUID.randomUUID()` capabilities replace predictable sequencing, with four collision attempts (`.andux/work/src/atl/src/api-impl/android/app/PendingIntentStore.java:167–182`).\n- Correct: Ownership is allocated before `try`; acquisition occurs inside it; `finally` always performs idempotent discard (`NotificationManager.java:29–45`, same source root).\n- Correct: Native initialization publishes ownership before JNI return and removes the builder on pending exception (`.andux/work/src/atl/src/api-impl-jni/app/notification_pending.c:149–185`). This closes the JNI-return safepoint ownership gap by source inspection.\n- Correct: `build/NotificationTokenSmoke.java:44–110` tests 128 explicit post-acquisition `ThreadDeath`/finally cycles and ownership validation. This does **not** prove arbitrary repeated `Thread.stop` safety.\n- Validation: Recorded build/runtime exit files both contain `0`; runtime log records strict C success. No builds or applications run during this review.\n\nNo issues found.\n\n- Merge verdict: **OK — READY** for the two scoped findings."
+}

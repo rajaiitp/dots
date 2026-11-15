@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "03781050-7ae9-4f8d-ab6e-fe0d84f10116",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T22:03:36.495Z",
+  "updatedAt": "2026-11-09T22:04:17.821Z",
+  "runs": [
+    {
+      "runId": "6a53f154-2911-4717-8bc4-bfb20ae7500f",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6a53f154-2911-4717-8bc4-bfb20ae7500f",
+      "status": "complete",
+      "startedAt": "2026-11-09T22:03:36.562Z",
+      "completedAt": "2026-11-09T22:04:17.820Z",
+      "usage": {
+        "tokens": 15366
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6a53f154-2911-4717-8bc4-bfb20ae7500f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6a53f154-2911-4717-8bc4-bfb20ae7500f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6a53f154-2911-4717-8bc4-bfb20ae7500f_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/patch-stack",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — staged replay is appropriate, but baseline mapping, mixed-state replay, and durable publication need implementable contracts.\n## Critical gaps\nSpecify whole-layer versus per-file reversal, including created/deleted files and mixed publication states; never skip failed reversals unless the recovered touched-file baseline verifies exactly.\n## Important improvements\nUse lock.inputs entries named atl/art/bionic and filenames *.tar.gz; Input exposes no revision. Validate archive-member mapping explicitly; stream only touched regular members, rejecting duplicates, links and unsafe ancestors. Rehash cached bytes against archive-derived digests, not merely cache-supplied fingerprints.\n## Validation gaps\nTest exact-offset rejection separately from fuzz=0; mixed-layer/file states, absent-file collisions, unrelated drift within touched files, and generated patched-header mismatches. Report mismatches without exemptions; leave unpatched generated files outside verification. Inject replace/fsync failures and restart after each published file; verify no success markers and enforce bounded disk/memory.\n## Recommended revision\nParse ordered paths and absence states → verify archives and bounded touched-file baseline/cache → stage, reverse applicable layers, compare exact baseline, replay all layers exactly → recheck preimages under existing CLI build lock → durable journal or explicit fail-closed publication, preserving modes and fsyncing files/directories → integrate helper fingerprints and run planned checks without full ART copying.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/6a53f154-2911-4717-8bc4-bfb20ae7500f/.andux/tasks/patch-stack-plan-review.txt (1.5 KB, 10 lines). Read this file if needed."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "a1917758-f224-4db8-9978-19975fbfa65d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T13:20:42.329Z",
+  "updatedAt": "2026-11-11T13:21:04.030Z",
+  "runs": [
+    {
+      "runId": "a188cbab-4dcb-4c10-aca5-7cd987d95b56",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a188cbab-4dcb-4c10-aca5-7cd987d95b56",
+      "status": "complete",
+      "startedAt": "2026-11-11T13:20:42.348Z",
+      "completedAt": "2026-11-11T13:21:04.029Z",
+      "usage": {
+        "tokens": 8432
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a188cbab-4dcb-4c10-aca5-7cd987d95b56/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a188cbab-4dcb-4c10-aca5-7cd987d95b56/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a188cbab-4dcb-4c10-aca5-7cd987d95b56_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "reviewer:\n## Review\n- Correct: Provenance rejects mixed/unknown/opacity nodes and requires finite positive coverage and viewport overlap (`ui_observer.c:71–149`). Recursion is depth-bounded; render-node access is borrowed.\n- Correct: Hook forwards exactly one existing render call without pixel reads or additional rendering. Exact caller symbol/library and mapped, positive-size GtkImage/Picture checks remain required (`ui_observer.c:116–169,242–244`).\n- No issues found.\n- Merge verdict: **READY** for the parent-controlled probe. Source-only review: no valid HEAD diff baseline was available; no tests/builds/apps were run. Source and headless tests remain private evidence only."
+}

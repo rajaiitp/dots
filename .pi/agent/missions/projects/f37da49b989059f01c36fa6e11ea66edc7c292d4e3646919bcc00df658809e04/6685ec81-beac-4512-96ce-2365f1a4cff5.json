@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "6685ec81-beac-4512-96ce-2365f1a4cff5",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:17:27.111Z",
+  "updatedAt": "2026-11-11T14:17:52.638Z",
+  "runs": [
+    {
+      "runId": "6441f8c6-b1eb-496f-bc5d-b9a5625098e2",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6441f8c6-b1eb-496f-bc5d-b9a5625098e2",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:17:27.140Z",
+      "completedAt": "2026-11-11T14:17:52.638Z",
+      "usage": {
+        "tokens": 8955
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6441f8c6-b1eb-496f-bc5d-b9a5625098e2/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/6441f8c6-b1eb-496f-bc5d-b9a5625098e2/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6441f8c6-b1eb-496f-bc5d-b9a5625098e2_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/vlc-playback",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "reviewer:\n## Review\n- Correct: `prepare.py:30–59` and `probe.py:135–169` enforce pinned APK/receipt hashes and signature-verification assertions.\n- Correct: copied PulseAudio/ALSA configs match `/tmp/runtime/pulse-native` and `andux_probe.monitor`; only a private null sink is configured.\n- Correct: `probe.py:255–332` gates success on metadata, playback advancement, pause stability, resume, nonzero PCM, captured-error checks, and natural app exit zero.\n- Correct: `probe.py:344–405` makes PASS conditional on cleanup, service-exit checks, and PID/starttime namespace accounting. Seek remains explicitly unclaimed. No identity/authentication or capture expansion found.\n\nNo issues found.\n\n- Merge verdict: **OK — READY** for the bounded workflow under the supplied outer isolation. This does not establish full audio parity or seek support. Static review only; no execution performed. No Git baseline was available to verify change history."
+}

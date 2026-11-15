@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "5dd395a1-c0b9-454d-8298-b8142fa1c0fd",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T19:34:09.709Z",
+  "updatedAt": "2026-11-09T19:36:41.801Z",
+  "runs": [
+    {
+      "runId": "541f755c-3257-4cfe-bfeb-38ea378a1d34",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/541f755c-3257-4cfe-bfeb-38ea378a1d34",
+      "status": "complete",
+      "startedAt": "2026-11-09T19:34:09.723Z",
+      "completedAt": "2026-11-09T19:36:41.801Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "541f755c-3257-4cfe-bfeb-38ea378a1d34",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T19:34:09.817Z",
+      "updatedAt": "2026-11-09T19:35:27.478Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa85a922-e0de-43d9-8519-52ef94ae434d",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/541f755c-3257-4cfe-bfeb-38ea378a1d34/.andux/tasks/batch-validation-and-nss-error.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa85a922-e0de-43d9-8519-52ef94ae434d/run-0/session.jsonl"
+      ],
+      "runId": "fa85a922-e0de-43d9-8519-52ef94ae434d",
+      "agent": "worker",
+      "completedAt": "2026-11-09T19:35:27.478Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/fa85a922-e0de-43d9-8519-52ef94ae434d/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T19:35:27.478Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "541f755c-3257-4cfe-bfeb-38ea378a1d34",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T19:34:09.843Z",
+      "updatedAt": "2026-11-09T19:36:41.630Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/3c41cec7-a450-48cf-bc9f-8c16745e5296",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/541f755c-3257-4cfe-bfeb-38ea378a1d34/.andux/tasks/batch-validation-and-nss-error.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/3c41cec7-a450-48cf-bc9f-8c16745e5296/run-0/session.jsonl"
+      ],
+      "runId": "3c41cec7-a450-48cf-bc9f-8c16745e5296",
+      "agent": "worker",
+      "completedAt": "2026-11-09T19:36:41.630Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/3c41cec7-a450-48cf-bc9f-8c16745e5296/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T19:36:41.630Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "541f755c-3257-4cfe-bfeb-38ea378a1d34",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T19:34:09.878Z",
+      "updatedAt": "2026-11-09T19:35:54.561Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/6ead9ed8-4dca-46fe-9258-11d512186c15",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/541f755c-3257-4cfe-bfeb-38ea378a1d34/.andux/tasks/batch-validation-and-nss-error.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6ead9ed8-4dca-46fe-9258-11d512186c15/run-0/session.jsonl"
+      ],
+      "runId": "6ead9ed8-4dca-46fe-9258-11d512186c15",
+      "agent": "worker",
+      "completedAt": "2026-11-09T19:35:54.561Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/6ead9ed8-4dca-46fe-9258-11d512186c15/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T19:35:54.561Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/541f755c-3257-4cfe-bfeb-38ea378a1d34/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/541f755c-3257-4cfe-bfeb-38ea378a1d34/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fa85a922-e0de-43d9-8519-52ef94ae434d_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/3c41cec7-a450-48cf-bc9f-8c16745e5296_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/6ead9ed8-4dca-46fe-9258-11d512186c15_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented exact package-private ExtractedText relocation; wildcard compile list includes new source; no API addition or warning suppression.\\nChanged: src/android/view/inputmethod/{InputConnection,ExtractedText}.java, tests/EditBatchCoordinatorModelTest.java, java-half.patch, validate.sh; refreshed validation.txt, source-final.sha256, classes/headers/dex.\\nValidation: strict release-8 javac, model, JNI headers, relative-path dx passed; exact patch reconstruction matched every Java source; final source hashes verified.\\nGuest shellcheck/shfmt passed after replacing quoted guest command with literal heredoc; all sandbox restrictions preserved; canonical pin/hax verified unchanged.\\nLifecycle inspection/tests cover replacement drain, stale owner begin/end/close, unmatched end, direct batching across replacement, callback failure during adoption; native binding/reentra… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/541f755c-3257-4cfe-bfeb-38ea378a1d34/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

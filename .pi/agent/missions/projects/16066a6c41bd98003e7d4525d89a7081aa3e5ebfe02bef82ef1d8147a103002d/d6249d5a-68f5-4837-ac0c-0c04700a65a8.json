@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "d6249d5a-68f5-4837-ac0c-0c04700a65a8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T13:51:08.388Z",
+  "updatedAt": "2026-11-05T13:54:31.596Z",
+  "runs": [
+    {
+      "runId": "4c0c3321-cd17-4b67-bddd-e458761ff02c",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T13:54:31.596Z",
+      "completedAt": "2026-11-05T13:54:31.596Z",
+      "usage": {
+        "tokens": 75127
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/4c0c3321-cd17-4b67-bddd-e458761ff02c_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/4c0c3321-cd17-4b67-bddd-e458761ff02c_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The approach is viable, but paint gating, color resolution and deployment details need tightening.\n\n## Critical gaps\n- `render.go:108–114,204` collects pane rectangles only when existing backgrounds are enabled; both compositor paths similarly gate fill construction. Tint must work independently when every existing background option is off.\n- Default backgrounds have no RGB value, and ANSI slots may use host-specific colors. Specify baseline resolution and unknown-color behavior; cache invalidation must include relevant ground, theme, host-palette and depth changes—not just focus/tint/strength.\n\n## Important improvements\n- Resolve reverse-video semantics: changing only `Style.Bg` while retaining `AttrReverse` changes visible foreground. Define the exception or effective-color policy.\n- Apply tint after ordinary surface filling, without reusing foreground-adjusting behavior or changing OSC color reports.\n- Regeneration must update the installer’s `PATCH_SHA256` and explicit test-selection lists. Enable local config only after successful installation; existing renderer processes cannot acquire new code through config reload.\n\n## Validation gaps\n- Add tint-only/all-backgrounds-off coverage; theme/host-color changes without pane output; zero-percent identity; repeated cached frames without cumulative blending.\n- Assert reverse-video behavior, unchanged hyperlinks/underline metadata, protected image cells and wide-cell continuations. Check occluding panes/overlays remain untouched.\n- Use isolated test sessions. Distinguish installed provenance from live activation; do not restart or replace existing clients to demonstrate completion.\n\n## Recommended revision\n1. Retain fresh pinned checkout and config work; settle the color-resolution and reverse-video contract first.\n2. Implement independent tint gating, fill ordering and complete cache dependencies; retain the planned fullscreen fallback.\n…\nFull output: /home/r...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Concise REVISE verdict with source-backed gaps and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection of background.go, background_fast.go, render.go, compose.go, host_colors.go and the tracked installer."
+      ],
+      "residualRisks": [
+        "Implementation and runtime behavior remain unvalidated."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes made by this review.",
+      "reviewFindings": [
+        "Material plan gaps identified; revision required before implementation."
+      ],
+      "manualNotes": "No shell commands, writes, network requests or runtime interventions. No files staged by this reviewer; pre-existing index state was not inspected."
+    }
+  }
+}

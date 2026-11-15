@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "40513095-0f17-4419-8469-f55136e6a47d",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T11:34:24.933Z",
+  "updatedAt": "2026-11-09T11:37:03.003Z",
+  "runs": [
+    {
+      "runId": "8ba1d573-edd8-446d-9d21-da9b7917e3d8",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ba1d573-edd8-446d-9d21-da9b7917e3d8",
+      "status": "complete",
+      "startedAt": "2026-11-09T11:34:24.947Z",
+      "completedAt": "2026-11-09T11:37:03.003Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "8ba1d573-edd8-446d-9d21-da9b7917e3d8",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T11:34:25.021Z",
+      "updatedAt": "2026-11-09T11:36:42.279Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1860ec09-4377-4dd2-9172-c6c728d2169f",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8ba1d573-edd8-446d-9d21-da9b7917e3d8/.andux/tasks/parallel-contract-fixes.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1860ec09-4377-4dd2-9172-c6c728d2169f/run-0/session.jsonl"
+      ],
+      "runId": "1860ec09-4377-4dd2-9172-c6c728d2169f",
+      "agent": "worker",
+      "completedAt": "2026-11-09T11:36:42.279Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1860ec09-4377-4dd2-9172-c6c728d2169f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T11:36:42.279Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "8ba1d573-edd8-446d-9d21-da9b7917e3d8",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T11:34:25.065Z",
+      "updatedAt": "2026-11-09T11:37:02.824Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/0667cbcc-5d1c-4a99-ad63-874cb0d43556",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/8ba1d573-edd8-446d-9d21-da9b7917e3d8/.andux/tasks/parallel-contract-fixes.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0667cbcc-5d1c-4a99-ad63-874cb0d43556/run-0/session.jsonl"
+      ],
+      "runId": "0667cbcc-5d1c-4a99-ad63-874cb0d43556",
+      "agent": "worker",
+      "completedAt": "2026-11-09T11:37:02.824Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0667cbcc-5d1c-4a99-ad63-874cb0d43556/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T11:37:02.824Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ba1d573-edd8-446d-9d21-da9b7917e3d8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ba1d573-edd8-446d-9d21-da9b7917e3d8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/1860ec09-4377-4dd2-9172-c6c728d2169f_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0667cbcc-5d1c-4a99-ad63-874cb0d43556_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented generic Window transition storage and missing accessors, including setExitTransition(Transition), with explicit-null and dynamic return/enter and reenter/exit fallback semantics.\\nChanged files: source/atl/src/api-impl/android/view/Window.java; window-transitions.patch; WindowTransitionsSmoke.java; report.txt.\\nValidation: offline rootless bwrap javac --release 8 -Xlint:all against parent's hax.jar and java -ea -Xcheck:jni passed: ANDUX_WINDOW_TRANSITIONS_SMOKE_OK. Local patch -p1 dry run, application and exact source comparison passed. No staged files.\\nOpen risks: official source/docs unavailable locally and not fetched; reviewer must confirm official semantics. No rendering, theme inflation, native constructor, shared build or app retest performed. JVM fixture bypasses native construction; real ManifestActivity entry point provided but not executed.\\nR… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/8ba1d573-edd8-446d-9d21-da9b7917e3d8/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

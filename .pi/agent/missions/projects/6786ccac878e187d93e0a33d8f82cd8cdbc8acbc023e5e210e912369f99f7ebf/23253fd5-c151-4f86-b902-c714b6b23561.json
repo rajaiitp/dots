@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "23253fd5-c151-4f86-b902-c714b6b23561",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T18:22:47.822Z",
+  "updatedAt": "2026-11-09T18:30:09.265Z",
+  "runs": [
+    {
+      "runId": "7b709d7b-8587-48b8-a892-db16aa274469",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b709d7b-8587-48b8-a892-db16aa274469",
+      "status": "complete",
+      "startedAt": "2026-11-09T18:22:47.837Z",
+      "completedAt": "2026-11-09T18:30:09.265Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "7b709d7b-8587-48b8-a892-db16aa274469",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:22:47.915Z",
+      "updatedAt": "2026-11-09T18:30:09.092Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4023a95c-c3b7-4010-94eb-9ed3f91616c7",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/7b709d7b-8587-48b8-a892-db16aa274469/.andux/tasks/editor-gate-preparation.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4023a95c-c3b7-4010-94eb-9ed3f91616c7/run-0/session.jsonl"
+      ],
+      "runId": "4023a95c-c3b7-4010-94eb-9ed3f91616c7",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:30:09.092Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4023a95c-c3b7-4010-94eb-9ed3f91616c7/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:30:09.092Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7b709d7b-8587-48b8-a892-db16aa274469",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:22:47.942Z",
+      "updatedAt": "2026-11-09T18:23:29.562Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/82e18398-3a2a-4084-8e74-444d8071e9db",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/7b709d7b-8587-48b8-a892-db16aa274469/.andux/tasks/editor-gate-preparation.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/82e18398-3a2a-4084-8e74-444d8071e9db/run-0/session.jsonl"
+      ],
+      "runId": "82e18398-3a2a-4084-8e74-444d8071e9db",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T18:23:29.562Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/82e18398-3a2a-4084-8e74-444d8071e9db/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:23:29.562Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7b709d7b-8587-48b8-a892-db16aa274469",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:22:48.001Z",
+      "updatedAt": "2026-11-09T18:25:17.219Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/795d4d49-acbe-4012-b68c-d4b4ea045ac9",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/7b709d7b-8587-48b8-a892-db16aa274469/.andux/tasks/editor-gate-preparation.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/795d4d49-acbe-4012-b68c-d4b4ea045ac9/run-0/session.jsonl"
+      ],
+      "runId": "795d4d49-acbe-4012-b68c-d4b4ea045ac9",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:25:17.219Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/795d4d49-acbe-4012-b68c-d4b4ea045ac9/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:25:17.219Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "7b709d7b-8587-48b8-a892-db16aa274469",
+      "key": "task-4",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:22:48.030Z",
+      "updatedAt": "2026-11-09T18:23:54.655Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/a1044cd0-10c1-4eef-a134-2f55cf6a1bd1",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/7b709d7b-8587-48b8-a892-db16aa274469/.andux/tasks/editor-gate-preparation.task-4.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a1044cd0-10c1-4eef-a134-2f55cf6a1bd1/run-0/session.jsonl"
+      ],
+      "runId": "a1044cd0-10c1-4eef-a134-2f55cf6a1bd1",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:23:54.655Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a1044cd0-10c1-4eef-a134-2f55cf6a1bd1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:23:54.655Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b709d7b-8587-48b8-a892-db16aa274469/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/7b709d7b-8587-48b8-a892-db16aa274469/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4023a95c-c3b7-4010-94eb-9ed3f91616c7_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/82e18398-3a2a-4084-8e74-444d8071e9db_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/795d4d49-acbe-4012-b68c-d4b4ea045ac9_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a1044cd0-10c1-4eef-a134-2f55cf6a1bd1_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented typed Scenario enum, explicit rejecting dispatch, named timeouts/poll intervals/log cap; physical helper named timing constants only.\\nChanged files: build/edittext_smoke.py, build/edittext_physical_smoke.py; durable logs and constructor-evidence.txt in .andux/editor-integration.\\nValidation: make format and make check passed (78 tests); both targeted helpers passed under bounded 150-second guest command; no full smoke.\\nAPK/JNI assertions, fixture names/markers/outcomes preserved; domain/native sources and selected-state header additions untouched.\\nInitial check caught an intermediate edit error, corrected before successful reruns.\\nOpen risks: independent review required; no JNI ABI waiver. No staged files.\\nRecommended next step: reviewer inspect helper diff and durable evidence.\\n\\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Proje… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/7b709d7b-8587-48b8-a892-db16aa274469/status.json (workflow.value, workflow.emits)) Trace: 8 event(s)."
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "5128d83c-f065-433f-8c9d-051859c2f64a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T09:42:15.166Z",
+  "updatedAt": "2026-11-12T09:49:17.213Z",
+  "runs": [
+    {
+      "runId": "40eaad6e-2c58-4216-9549-2cf153f48c68",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/40eaad6e-2c58-4216-9549-2cf153f48c68",
+      "status": "complete",
+      "startedAt": "2026-11-12T09:42:15.181Z",
+      "completedAt": "2026-11-12T09:49:17.213Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "40eaad6e-2c58-4216-9549-2cf153f48c68",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:42:15.311Z",
+      "updatedAt": "2026-11-12T09:49:16.971Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/186d16ea-318e-4381-bf9f-f21f765c4d23",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/186d16ea-318e-4381-bf9f-f21f765c4d23/run-0/session.jsonl"
+      ],
+      "runId": "186d16ea-318e-4381-bf9f-f21f765c4d23",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:49:16.971Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/186d16ea-318e-4381-bf9f-f21f765c4d23/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:49:16.971Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "40eaad6e-2c58-4216-9549-2cf153f48c68",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-12T09:42:15.340Z",
+      "updatedAt": "2026-11-12T09:46:06.177Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/d2f38d8c-593d-4163-921a-e4e1ea93d297",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/d2f38d8c-593d-4163-921a-e4e1ea93d297/run-0/session.jsonl"
+      ],
+      "runId": "d2f38d8c-593d-4163-921a-e4e1ea93d297",
+      "agent": "worker",
+      "completedAt": "2026-11-12T09:46:06.177Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/d2f38d8c-593d-4163-921a-e4e1ea93d297/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-12T09:46:06.177Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/40eaad6e-2c58-4216-9549-2cf153f48c68/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/40eaad6e-2c58-4216-9549-2cf153f48c68/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/186d16ea-318e-4381-bf9f-f21f765c4d23_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/d2f38d8c-593d-4163-921a-e4e1ea93d297_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"READY for narrow integration; no source blockers. Canonical build/runtime acceptance remains parent-owned.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented independent review.\\nChanged files: five JSON files under `.andux/tasks/origin-counter-review/`.\\nValidation: 33 tests passed; historical evidence unchanged.\\nOpen risks: origin input drift; counter resource bounds and recursion.\\nRecommended next step: resolve blockers before integration.\"\n    }\n  ]\n} Trace: 4 event(s)."
+}

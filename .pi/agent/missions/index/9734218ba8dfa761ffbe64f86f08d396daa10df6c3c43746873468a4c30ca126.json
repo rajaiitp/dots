@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "06538cd7-b92f-46ef-ae10-087a4d4f5710",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/markor-batch-probe",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/370685decbe65d036ef2e6a3aee11777b93b063213975e72bedb19701cdcb1e5/06538cd7-b92f-46ef-ae10-087a4d4f5710.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-09T20:15:39.856Z",
+  "lastRunId": "cf11fa1a-d44a-48e1-b26c-3476ff28bd6e"
+}

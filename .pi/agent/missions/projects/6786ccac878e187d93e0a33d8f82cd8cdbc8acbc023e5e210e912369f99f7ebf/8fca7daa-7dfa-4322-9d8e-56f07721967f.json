@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "8fca7daa-7dfa-4322-9d8e-56f07721967f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T10:19:38.828Z",
+  "updatedAt": "2026-11-12T10:27:49.192Z",
+  "runs": [
+    {
+      "runId": "23ec8472-45f6-4bb4-a53c-9d5cd1edc695",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/23ec8472-45f6-4bb4-a53c-9d5cd1edc695",
+      "status": "complete",
+      "startedAt": "2026-11-12T10:19:38.843Z",
+      "completedAt": "2026-11-12T10:27:49.192Z",
+      "usage": {
+        "tokens": 43693
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/23ec8472-45f6-4bb4-a53c-9d5cd1edc695/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/23ec8472-45f6-4bb4-a53c-9d5cd1edc695/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/23ec8472-45f6-4bb4-a53c-9d5cd1edc695_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented the private v2 reconciliation after confirming parent exit `0`.\nChanged files: only `.andux/tasks/framework-origin-candidate-v2/`.\nValidation: patches byte-identical; exact preflight, 15 tests, format and lint pass.\nOpen risks/questions: no integration approval or runtime validation.\nRecommended next step: independent parent review."
+}

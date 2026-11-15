@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "61e8d985-1fd7-4a97-9d1a-5446a8d75504",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-14T18:09:15.789Z",
+  "updatedAt": "2026-11-14T18:12:56.821Z",
+  "runs": [
+    {
+      "runId": "fb8c06b5-6d82-4e22-8092-41ef884993aa",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb8c06b5-6d82-4e22-8092-41ef884993aa",
+      "status": "complete",
+      "startedAt": "2026-11-14T18:09:15.856Z",
+      "completedAt": "2026-11-14T18:12:56.821Z",
+      "usage": {
+        "tokens": 31499
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb8c06b5-6d82-4e22-8092-41ef884993aa/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fb8c06b5-6d82-4e22-8092-41ef884993aa/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/fb8c06b5-6d82-4e22-8092-41ef884993aa_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — The isolation is appropriate, but publication, settlement identity, and valuation-clock contracts need tightening before implementation.\n\n## Critical gaps\n- If batches publish to shared mutable state, clone-and-publish alone can lose concurrent credits. Require serialized/version-checked commits, or explicitly make operations pure snapshot-to-snapshot transformations.\n\n## Important improvements\n- Track outstanding entitlements by merger, holder, and settlement leg—not event ID alone. Define full-only versus partial credits and reject repeat/over-credit under fresh IDs.\n- Give valuation an explicit `as_of` contract. Legacy `Account.equity()` does not check quote availability; the wrapper must enforce it without confusing receipt-capture timestamps with historical availability.\n- Specify rate-resolution-before-fraction-credit precedence at equal clocks.\n- Missing fractional evidence should block only positive fractional entitlements, not zero holdings or exact whole-share totals.\n\n## Validation gaps\nAdd assertions for:\n- Fresh-ID duplicate settlements, incorrect payment amounts, and the chosen partial-credit behavior.\n- Deterministic writer interleaving—or enforced snapshot ownership—and equal-clock permutations including rate resolution.\n- Future/unavailable successor marks and historical queries after late evidence arrives.\n- Holder partition invariance, including 10,000 PMCS shares producing exactly 771 successor shares.\n- Nested-state alias isolation, unchanged inputs after last-event failure, and continued prohibition of bare-Account export after every claim settles.\n\n## Recommended revision\n1. Freeze receipts separately and finalize the contracts above.\n2. Implement the isolated copied-state ledger and guarded valuation surface.\n3. Run the expanded synthetic checks; retain the separate admission gate for historical replay and model integration.\n\n## Acceptance Contract\nAcceptance level: attested"
+}

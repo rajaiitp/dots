@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "78ff40b2-8ee6-4c3d-aa31-f7b01f8ec0b4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:50:58.503Z",
+  "updatedAt": "2026-11-12T17:54:05.052Z",
+  "runs": [
+    {
+      "runId": "941b2abd-606a-428d-8b57-22a738e3910d",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/941b2abd-606a-428d-8b57-22a738e3910d",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:50:58.541Z",
+      "completedAt": "2026-11-12T17:54:05.052Z",
+      "usage": {
+        "tokens": 42547
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/941b2abd-606a-428d-8b57-22a738e3910d/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/941b2abd-606a-428d-8b57-22a738e3910d/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/941b2abd-606a-428d-8b57-22a738e3910d_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented C1-only review: **READY for narrow dependent integration**.\nChanged files: review `report.json` and `evidence.json`.\nValidation: 222+217+22 and 118+9 assertions pass; candidate evidence unchanged.\nOpen risks: separate B1 acceptance/composition required; no full parity.\nRecommended next step: compose accepted B1 guard and rerun combined review."
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "200a29a1-9513-4085-834f-e188b0e931c1",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/8c2bfc5ef74526b444cea0a7ee1a846195825cbed7f143193c824ba962a053c8/200a29a1-9513-4085-834f-e188b0e931c1.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-11T12:46:08.148Z",
+  "lastRunId": "ee9e2627-76b9-444b-9b38-d014204f52ef"
+}

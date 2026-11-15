@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "missionId": "4e1848df-cac6-47e7-8426-1943d1f54c33",
+  "projectRoot": "/home/raja/Projects/andux/.andux/tasks/text-batch-integration",
+  "recordPath": "/home/raja/dots/.pi/agent/missions/projects/0f351fb7119f022d4ffc5d228f78b5ef4770adfb81f1eea9a2fa2735370d41fa/4e1848df-cac6-47e7-8426-1943d1f54c33.json",
+  "title": "[prompt redacted]",
+  "status": "completed",
+  "updatedAt": "2026-11-09T20:15:08.270Z",
+  "lastRunId": "8c2de413-788a-4ced-ab60-19e007eda676"
+}

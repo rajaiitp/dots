@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "200a29a1-9513-4085-834f-e188b0e931c1",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:44:32.255Z",
+  "updatedAt": "2026-11-11T12:46:08.148Z",
+  "runs": [
+    {
+      "runId": "ee9e2627-76b9-444b-9b38-d014204f52ef",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ee9e2627-76b9-444b-9b38-d014204f52ef",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:44:32.276Z",
+      "completedAt": "2026-11-11T12:46:08.148Z",
+      "usage": {
+        "tokens": 26011
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ee9e2627-76b9-444b-9b38-d014204f52ef/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ee9e2627-76b9-444b-9b38-d014204f52ef/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ee9e2627-76b9-444b-9b38-d014204f52ef_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/thumbnail-probe",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented focused offline Files video probe; thumbnail verdict remains **UNPROVEN**.\n\nChanged files: copied runner/observer, focused case helper, synthetic MP4, evidence.json.\nValidation: Python syntax, JSON, fixture hash and ffprobe passed. Runtime deferred to parent.\nOpen risks: observer cannot distinguish real thumbnail completion.\nRecommended next step: required review, then serialized parent invocation in evidence.json."
+}

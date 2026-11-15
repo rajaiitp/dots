@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "e5b05b5f-8901-4140-882e-fe7c234144f4",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T13:51:12.934Z",
+  "updatedAt": "2026-11-05T13:56:28.687Z",
+  "runs": [
+    {
+      "runId": "d66e9acd-80e9-4f72-9484-9f6f4aa72e59",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T13:56:28.686Z",
+      "completedAt": "2026-11-05T13:56:28.686Z",
+      "usage": {
+        "tokens": 35573
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/d66e9acd-80e9-4f72-9484-9f6f4aa72e59_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/d66e9acd-80e9-4f72-9484-9f6f4aa72e59_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Storage accounting and publication/departure semantics need tightening before the comparisons can support bounded-resource delivery claims.\n\n## Critical gaps\n- The quota list omits encounter-history caches, peer inventories, queued transmissions, and segmented receive/reassembly state. Bound and charge these, or explicitly model bounded streaming/discard behavior; otherwise storage is not genuinely bounded.\n- Fix the common publication stream and sender-departure round. Departure immediately after local publication can leave no relay copies; departure conditioned on successful spraying gives strategies unequal opportunities. Specify offered-message denominators, including source-admission failures.\n\n## Important improvements\nFreeze the history-diversity score, sketch update rules, tie-breaks, and DATA/control scheduling before benchmarking. Strategies must not inspect remote stores or obtain inventory/sketch information without a charged, successful exchange.\n\n## Validation gaps\n- Two simultaneous inbound transfers competing for the final storage slot; quota exhaustion during reassembly; custody ACK deferred because receiver egress is exhausted.\n- Replay an original grant after its receiver has forwarded a subset onward: resend confirmation without restoring previously transferred labels.\n- Inject donor ACK-finalization failure and restart; replay DATA/ACK after absolute expiry without resurrecting state.\n- Handcomputed zero-seed departure and seeded-bridge departure cases; rejected publications remain visible in offered-load accounting.\n- Overlapping publications demonstrate quota contention and expiry reclamation, or results explicitly remain single-publication experiments.\n\n## Recommended revision\n1. Freeze workload/departure semantics, complete storage accounting, and strategy/scheduling rules.\n2. Implement the separate custody store with immutable absolute expiry and the additional lifecycle tests.\n…\nF...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned a concise REVISE verdict, material gaps, targeted validation, corrective sequence, and residual risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "tools/check",
+          "result": "not-run",
+          "summary": "Execution prohibited for this read-only review."
+        }
+      ],
+      "validationOutput": [
+        "Inspected the static simulator, population inputs, study runner, tests, and canonical check entrypoint."
+      ],
+      "residualRisks": [
+        "Custody invariants and resource-accounting correctness remain untested until implementation."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no files changed or staged by this reviewer.",
+      "reviewFindings": [
+        "Two critical modeling gaps require revision before implementation."
+      ],
+      "manualNotes": "No commands executed or files modified. Pre-existing Git staging state was not inspected."
+    }
+  }
+}

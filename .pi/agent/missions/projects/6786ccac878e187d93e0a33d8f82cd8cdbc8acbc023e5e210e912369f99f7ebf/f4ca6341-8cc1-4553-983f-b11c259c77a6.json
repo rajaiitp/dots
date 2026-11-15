@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "f4ca6341-8cc1-4553-983f-b11c259c77a6",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T17:54:49.516Z",
+  "updatedAt": "2026-11-09T17:56:30.455Z",
+  "runs": [
+    {
+      "runId": "b6562b16-8708-4113-b903-169b73f69768",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b6562b16-8708-4113-b903-169b73f69768",
+      "status": "complete",
+      "startedAt": "2026-11-09T17:54:49.531Z",
+      "completedAt": "2026-11-09T17:56:30.455Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "b6562b16-8708-4113-b903-169b73f69768",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T17:54:49.609Z",
+      "updatedAt": "2026-11-09T17:56:30.286Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/5796fade-7091-4340-a7f9-ca22962967d1",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/b6562b16-8708-4113-b903-169b73f69768/.andux/tasks/constructor-and-primary-bootstrap.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5796fade-7091-4340-a7f9-ca22962967d1/run-0/session.jsonl"
+      ],
+      "runId": "5796fade-7091-4340-a7f9-ca22962967d1",
+      "agent": "worker",
+      "completedAt": "2026-11-09T17:56:30.286Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5796fade-7091-4340-a7f9-ca22962967d1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T17:56:30.286Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "b6562b16-8708-4113-b903-169b73f69768",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T17:54:49.631Z",
+      "updatedAt": "2026-11-09T17:56:00.247Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/22caf132-7756-4440-abda-775f2e70f414",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/b6562b16-8708-4113-b903-169b73f69768/.andux/tasks/constructor-and-primary-bootstrap.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/22caf132-7756-4440-abda-775f2e70f414/run-0/session.jsonl"
+      ],
+      "runId": "22caf132-7756-4440-abda-775f2e70f414",
+      "agent": "worker",
+      "completedAt": "2026-11-09T17:56:00.247Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/22caf132-7756-4440-abda-775f2e70f414/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T17:56:00.247Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "b6562b16-8708-4113-b903-169b73f69768",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T17:54:49.658Z",
+      "updatedAt": "2026-11-09T17:55:49.268Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/0013e075-4910-4998-b840-e95db9c0886a",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/b6562b16-8708-4113-b903-169b73f69768/.andux/tasks/constructor-and-primary-bootstrap.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0013e075-4910-4998-b840-e95db9c0886a/run-0/session.jsonl"
+      ],
+      "runId": "0013e075-4910-4998-b840-e95db9c0886a",
+      "agent": "worker",
+      "completedAt": "2026-11-09T17:55:49.268Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0013e075-4910-4998-b840-e95db9c0886a/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T17:55:49.268Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b6562b16-8708-4113-b903-169b73f69768/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/b6562b16-8708-4113-b903-169b73f69768/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/5796fade-7091-4340-a7f9-ca22962967d1_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/22caf132-7756-4440-abda-775f2e70f414_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0013e075-4910-4998-b840-e95db9c0886a_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private replaceText shared by constructor accessor and two-argument setter; one-argument setter preserves normal virtual delegation.\\nChanged files: constructor-private/source/atl/src/api-impl/android/widget/EditText.java, constructor-private/EditTextStateSmoke.java, constructor-private/check.sh; new artifacts confined to constructor-private/.\\nTests added: guarded getter and both setters across all three constructors; post-construction virtual dispatch counts, live-buffer identity and BOA callbacks retained.\\nValidation: constructor-private/check.sh passed strict Java 8 javac -Xlint:all -Werror, DEX generation, protected/public API comparison, no invokedynamic/Unsafe; bytecode confirms private invokespecial replaceText.\\nPatches: constructor-private/full.patch and incremental.patch applied with --fuzz=0, no offsets/fuzz, resulting trees match; hashes in … (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/b6562b16-8708-4113-b903-169b73f69768/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

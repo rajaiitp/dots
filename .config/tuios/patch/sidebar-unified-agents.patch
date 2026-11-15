@@ -1,6 +1,6 @@
-diff --git c/docs/look-keys.json w/docs/look-keys.json
+diff --git i/docs/look-keys.json w/docs/look-keys.json
 index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943e5dc5e39 100644
---- c/docs/look-keys.json
+--- i/docs/look-keys.json
 +++ w/docs/look-keys.json
 @@ -213,6 +213,24 @@
          "off"
@@ -114,7 +114,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
      {
        "path": "dock.tabs.separator",
        "type": "string",
-diff --git c/e2e/tui/dock_growing_tabs_test.go w/e2e/tui/dock_growing_tabs_test.go
+diff --git i/e2e/tui/dock_growing_tabs_test.go w/e2e/tui/dock_growing_tabs_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..0f1c8ae7dd8f444d5bf140635072391a2b782854
 --- /dev/null
@@ -232,7 +232,7 @@ index 0000000000000000000000000000000000000000..0f1c8ae7dd8f444d5bf140635072391a
 +		})
 +	}
 +}
-diff --git c/e2e/tui/dock_sidebar_bounds_test.go w/e2e/tui/dock_sidebar_bounds_test.go
+diff --git i/e2e/tui/dock_sidebar_bounds_test.go w/e2e/tui/dock_sidebar_bounds_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..2b14646c32df5afb97ecffb564280f32562f13bd
 --- /dev/null
@@ -320,7 +320,7 @@ index 0000000000000000000000000000000000000000..2b14646c32df5afb97ecffb564280f32
 +		}
 +	}
 +}
-diff --git c/e2e/tui/focused_pane_tint_test.go w/e2e/tui/focused_pane_tint_test.go
+diff --git i/e2e/tui/focused_pane_tint_test.go w/e2e/tui/focused_pane_tint_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..3c43596e16eefe0c6b911e21d22b77ee9a99b596
 --- /dev/null
@@ -364,7 +364,7 @@ index 0000000000000000000000000000000000000000..3c43596e16eefe0c6b911e21d22b77ee
 +		t.Fatalf("live setting left stale tint: %v; actual=%+v/%+v initial=%+v/%+v\n%s", err, term.Screen().Cell(ax, ay).Bg, term.Screen().Cell(bx, by).Bg, active, inactive, term.Snapshot())
 +	}
 +}
-diff --git c/e2e/tui/interaction_modes_test.go w/e2e/tui/interaction_modes_test.go
+diff --git i/e2e/tui/interaction_modes_test.go w/e2e/tui/interaction_modes_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..ff19ae0f5c77a1b600df4211cb31f44403ca4bc1
 --- /dev/null
@@ -444,7 +444,117 @@ index 0000000000000000000000000000000000000000..ff19ae0f5c77a1b600df4211cb31f444
 +		})
 +	}
 +}
-diff --git c/e2e/tui/shared_border_hidden_sidebar_test.go w/e2e/tui/shared_border_hidden_sidebar_test.go
+diff --git i/e2e/tui/lua_topbar_test.go w/e2e/tui/lua_topbar_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..bb8394b9955cd6ae465d159c6dd935eea84d5a68
+--- /dev/null
++++ w/e2e/tui/lua_topbar_test.go
+@@ -0,0 +1,104 @@
++package tuie2e
++
++import (
++	"fmt"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++	"github.com/charmbracelet/x/ansi"
++)
++
++func TestLuaTopbarHotReloadWithoutRebuild(t *testing.T) {
++	base := t.TempDir()
++	script := filepath.Join(base, "topbar.lua")
++	lua := func(prefix string) string {
++		return fmt.Sprintf(`return function(ctx)
++			local left, right = {}, {}
++			for _, agent in ipairs(ctx.agents) do
++				left[#left+1] = {ref=agent.ref, text="%s:" .. agent.name}
++			end
++			for _, workspace in ipairs(ctx.workspaces) do
++				right[#right+1] = {ref=workspace.ref, text="WS:" .. workspace.name}
++			end
++			right[#right+1] = {ref="picker", text="PICK:" .. ctx.picker}
++			return {left=left, right=right}
++		end`, prefix)
++	}
++	if err := os.WriteFile(script, []byte(lua("LIVE")), 0600); err != nil {
++		t.Fatal(err)
++	}
++	writeConfig(t, base, fmt.Sprintf(`[appearance]
++	dockbar_position = "top"
++	dock_compact = true
++	topbar_script = %q
++	window_title_position = "hidden"
++	[appearance.sidebar]
++	enabled = false
++	position = "hidden"
++`, script))
++	cli := func(args ...string) string {
++		t.Helper()
++		out, err := tuiosCLI(t, base, args...)
++		if err != nil {
++			t.Fatalf("%v: %v\n%s", args, err, out)
++		}
++		return out
++	}
++	cli("new", "-d", "primary", "--cwd", base)
++	window := strings.TrimSpace(cli("new-window", "ALPHA-TASK", "-s", "primary", "--print-id"))
++	cli("set-agent-state", "working", "--harness", "pi", "-s", "primary", "-w", window)
++	cli("set-workspace-name", "1", "PRIMARY-TAB", "-s", "primary")
++	term := startIn(t, base, startOpts{cols: 100, rows: 32, args: []string{"attach", "primary"}})
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		line := screen.Line(0)
++		return strings.Contains(line, "LIVE:ALPHA-TASK") && strings.Contains(line, "WS:PRIMARY-TAB") && strings.Contains(line, "PICK:primary")
++	}, bootTimeout); err != nil {
++		t.Fatalf("single-row Lua bar did not render: %v\n%s", err, term.Snapshot())
++	}
++	if err := os.WriteFile(script, []byte(lua("RELOADED")), 0600); err != nil {
++		t.Fatal(err)
++	}
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		return strings.Contains(screen.Line(0), "RELOADED:ALPHA-TASK")
++	}, bootTimeout); err != nil {
++		t.Fatalf("Lua edit did not hot-reload: %v\n%s", err, term.Snapshot())
++	}
++	cli("new", "-d", "secondary", "--cwd", base)
++	beta := strings.TrimSpace(cli("new-window", "BETA-TASK", "-s", "secondary", "--print-id"))
++	cli("set-agent-state", "working", "--harness", "pi", "-s", "secondary", "-w", beta)
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		return strings.Contains(screen.Line(0), "RELOADED:BETA-TASK")
++	}, bootTimeout); err != nil {
++		t.Fatalf("foreign agent did not appear while sidebar was hidden: %v\n%s", err, term.Snapshot())
++	}
++	pickerLine := term.Screen().Line(0)
++	pickerIndex := strings.Index(pickerLine, "PICK:primary")
++	if pickerIndex < 0 {
++		t.Fatal("picker disappeared before click")
++	}
++	mouseClick(t, term, ansi.StringWidth(pickerLine[:pickerIndex])+2, 0, tuitest.MouseLeft, 0)
++	optionRow := -1
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		_, height := screen.Size()
++		for y := 1; y < height; y++ {
++			if strings.Contains(screen.Line(y), "secondary") {
++				optionRow = y
++				return true
++			}
++		}
++		return false
++	}, uiTimeout); err != nil {
++		t.Fatalf("project picker did not show secondary: %v\n%s", err, term.Snapshot())
++	}
++	optionLine := term.Screen().Line(optionRow)
++	optionX := strings.Index(optionLine, "secondary")
++	mouseClick(t, term, ansi.StringWidth(optionLine[:optionX])+2, optionRow, tuitest.MouseLeft, 0)
++	if err := term.WaitFor(func(screen tuitest.Screen) bool {
++		return strings.Contains(screen.Line(0), "PICK:secondary")
++	}, uiTimeout); err != nil {
++		t.Fatalf("project choice did not switch sessions: %v\n%s", err, term.Snapshot())
++	}
++}
+diff --git i/e2e/tui/shared_border_hidden_sidebar_test.go w/e2e/tui/shared_border_hidden_sidebar_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..ad171e5a33195bfcc316b339b1897d29c475a32e
 --- /dev/null
@@ -515,7 +625,7 @@ index 0000000000000000000000000000000000000000..ad171e5a33195bfcc316b339b1897d29
 +		})
 +	}
 +}
-diff --git c/e2e/tui/shared_border_junction_test.go w/e2e/tui/shared_border_junction_test.go
+diff --git i/e2e/tui/shared_border_junction_test.go w/e2e/tui/shared_border_junction_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..4400503207b756aa933a043e103ea7c365928c1e
 --- /dev/null
@@ -578,12 +688,12 @@ index 0000000000000000000000000000000000000000..4400503207b756aa933a043e103ea7c3
 +		})
 +	}
 +}
-diff --git c/e2e/tui/sidebar_attention_test.go w/e2e/tui/sidebar_attention_test.go
+diff --git i/e2e/tui/sidebar_attention_test.go w/e2e/tui/sidebar_attention_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051fb4aee647
+index 0000000000000000000000000000000000000000..06068bd474f458c0f6df2159b3bef1857f797f96
 --- /dev/null
 +++ w/e2e/tui/sidebar_attention_test.go
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,290 @@
 +package tuie2e
 +
 +import (
@@ -611,6 +721,18 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	return -1
 +}
 +
++func attentionSidebarContextRow(screen tuitest.Screen, label string) int {
++	_, height := screen.Size()
++	for y := range height {
++		line := []rune(screen.Line(y))
++		text := strings.TrimSpace(strings.Trim(strings.TrimSpace(string(line[:min(len(line), attentionRailWidth)])), "▎│┃"))
++		if text == label {
++			return y
++		}
++	}
++	return -1
++}
++
 +func attentionSidebarHasGroupHeadings(screen tuitest.Screen) bool {
 +	for _, title := range []string{"RESPOND", "YOUR TURN", "WORKING", "REVIEW", "ACTIVITY"} {
 +		if attentionSidebarRow(screen, title) >= 0 {
@@ -632,7 +754,12 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +sections = "overview,files,git"
 +overview_mode = "attention"
 +[appearance.sidebar.ui.overview_header]
-+visible = false
++visible = true
++[appearance.sidebar.ui.repository]
++foreground = "bright_magenta"
++active_foreground = "bright_magenta"
++bold = true
++active_bold = true
 +`)
 +	cli := func(args ...string) string {
 +		t.Helper()
@@ -667,7 +794,7 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	cli("set-agent-state", "needs_input", "--harness", "pi", "-s", "secondary", "-w", wait)
 +	term := startIn(t, base, startOpts{cols: 120, rows: 64, args: []string{"attach", "primary"}})
 +	if err := term.WaitFor(func(s tuitest.Screen) bool {
-+		return !attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "BUILD-TASK [main]") >= 0 && attentionSidebarRow(s, "WAIT-TASK [main]") >= 0 && attentionSidebarRow(s, "primary") == attentionSidebarRow(s, "BUILD-TASK")+1 && attentionSidebarRow(s, "secondary") == attentionSidebarRow(s, "WAIT-TASK")+1
++		return !attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "BUILD-TASK [main]") >= 0 && attentionSidebarRow(s, "WAIT-TASK [main]") >= 0 && attentionSidebarContextRow(s, "primary") == attentionSidebarRow(s, "BUILD-TASK")+1 && attentionSidebarContextRow(s, "secondary") == attentionSidebarRow(s, "WAIT-TASK")+1
 +	}, bootTimeout); err != nil {
 +		t.Fatalf("attention groups did not appear: %v\n%s", err, term.Snapshot())
 +	}
@@ -727,8 +854,8 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +		}
 +	}
 +	buildRow := attentionSidebarRow(term.Screen(), "BUILD-TASK")
-+	if gap := attentionSidebarRow(term.Screen(), "projects") - buildRow - 2; gap < 2 {
-+		t.Fatalf("before Projects: %d blank rows, want at least 2\n%s", gap, term.Snapshot())
++	if attentionSidebarRow(term.Screen(), "primary [main]") != 0 || attentionSidebarRow(term.Screen(), "projects") >= 0 || attentionSidebarRow(term.Screen(), " agents ") >= buildRow {
++		t.Fatalf("picker is not headerless and top-aligned above Agents:\n%s", term.Snapshot())
 +	}
 +	hoverRow := attentionSidebarRow(term.Screen(), "WAIT-TASK")
 +	beforeHover := term.Screen().Cell(10, hoverRow).Bg
@@ -789,6 +916,10 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	if err := term.SendMouse(tuitest.MouseEvent{Col: 100, Row: 30, Button: tuitest.MouseNone, Action: tuitest.MouseMove}); err != nil {
 +		t.Fatal(err)
 +	}
++	if err := term.WaitStable(uiTimeout); err != nil {
++		t.Fatal(err)
++	}
++	buildRow = attentionSidebarRow(term.Screen(), "BUILD-TASK")
 +	cli("set-agent-state", "idle", "--harness", "pi", "-s", "primary", "-w", build)
 +	if err := term.WaitFor(func(s tuitest.Screen) bool {
 +		row := attentionSidebarRow(s, "BUILD-TASK")
@@ -811,7 +942,7 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	}
 +	cli("set-config", "-s", "secondary", "appearance.sidebar.overview_mode", "attention", "--json")
 +	if err := term.WaitFor(func(s tuitest.Screen) bool {
-+		return !attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "primary") == attentionSidebarRow(s, "BUILD-TASK")+1 && attentionSidebarRow(s, "secondary") == attentionSidebarRow(s, "WAIT-TASK")+1
++		return !attentionSidebarHasGroupHeadings(s) && attentionSidebarContextRow(s, "primary") == attentionSidebarRow(s, "BUILD-TASK")+1 && attentionSidebarContextRow(s, "secondary") == attentionSidebarRow(s, "WAIT-TASK")+1
 +	}, uiTimeout); err != nil {
 +		t.Fatalf("attention view did not reload: %v\n%s", err, term.Snapshot())
 +	}
@@ -819,15 +950,15 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	cli("set-agent-state", "idle", "--harness", "pi", "-s", "secondary", "-w", wait)
 +	if err := term.WaitFor(func(s tuitest.Screen) bool {
 +		return attentionSidebarRow(s, "BUILD-TASK") >= 0 && attentionSidebarRow(s, "WAIT-TASK") >= 0 &&
-+			!attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "projects") >= 0
++			!attentionSidebarHasGroupHeadings(s) && attentionSidebarRow(s, "secondary [main]") == 0
 +	}, uiTimeout); err != nil {
 +		t.Fatalf("inactive dashboard lost recent Pi agents: %v\n%s", err, term.Snapshot())
 +	}
-+	projectRow := attentionSidebarRow(term.Screen(), "projects")
-+	_, height := term.Screen().Size()
++	projectRow := attentionSidebarRow(term.Screen(), "secondary [main]")
++	agentsRow := attentionSidebarRow(term.Screen(), " agents ")
 +	gitRow, filesRow := attentionSidebarRow(term.Screen(), " git "), attentionSidebarRow(term.Screen(), " files ")
-+	if projectRow < 0 || filesRow <= projectRow || gitRow <= filesRow {
-+		t.Fatalf("sidebar sections are not Agents, Projects, Files, Git: %s", term.Snapshot())
++	if projectRow != 0 || agentsRow <= projectRow || filesRow <= agentsRow || gitRow <= filesRow || attentionSidebarRow(term.Screen(), "projects") >= 0 {
++		t.Fatalf("sidebar sections are not picker, Agents, Files, Git: %s", term.Snapshot())
 +	}
 +	for _, header := range []int{filesRow, gitRow} {
 +		gap := 0
@@ -838,7 +969,7 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +			}
 +			gap++
 +		}
-+		if gap != 2 {
++		if gap < 2 || header == gitRow && gap != 2 {
 +			t.Fatalf("section at row %d has %d blank rows above, want 2; preceding=%q\n%s", header, gap, term.Screen().Line(header-1), term.Snapshot())
 +		}
 +	}
@@ -846,14 +977,14 @@ index 0000000000000000000000000000000000000000..9bfe76ad64d935f4196ac71859ff051f
 +	if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, "entry-39") >= 0 && visibleFiles(s) == 15 }, uiTimeout); err != nil {
 +		t.Fatalf("Files overflow did not scroll: %v\n%s", err, term.Snapshot())
 +	}
-+	for y := projectRow; y < height; y++ {
++	for y := projectRow; y < agentsRow; y++ {
 +		line := term.Screen().Line(y)
 +		if strings.Contains(line, "BUILD-TASK") || strings.Contains(line, "WAIT-TASK") {
 +			t.Fatalf("Projects exposed agent children: %s", line)
 +		}
 +	}
 +}
-diff --git c/e2e/tui/sidebar_checkout_test.go w/e2e/tui/sidebar_checkout_test.go
+diff --git i/e2e/tui/sidebar_checkout_test.go w/e2e/tui/sidebar_checkout_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..e73a40e5eec359a470ca0f895125032b46248a38
 --- /dev/null
@@ -916,7 +1047,7 @@ index 0000000000000000000000000000000000000000..e73a40e5eec359a470ca0f895125032b
 +		waitBranch("main")
 +	}
 +}
-diff --git c/e2e/tui/sidebar_padding_test.go w/e2e/tui/sidebar_padding_test.go
+diff --git i/e2e/tui/sidebar_padding_test.go w/e2e/tui/sidebar_padding_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..4b4111b940d32a20b62be018de69ec7056481103
 --- /dev/null
@@ -982,7 +1113,7 @@ index 0000000000000000000000000000000000000000..4b4111b940d32a20b62be018de69ec70
 +		}
 +	}
 +}
-diff --git c/e2e/tui/sidebar_reclaimed_column_test.go w/e2e/tui/sidebar_reclaimed_column_test.go
+diff --git i/e2e/tui/sidebar_reclaimed_column_test.go w/e2e/tui/sidebar_reclaimed_column_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..f5ae544433ec44d2190ea9a8356b833d92cf6a13
 --- /dev/null
@@ -1066,7 +1197,7 @@ index 0000000000000000000000000000000000000000..f5ae544433ec44d2190ea9a8356b833d
 +		})
 +	}
 +}
-diff --git c/e2e/tui/sidebar_session_controls_test.go w/e2e/tui/sidebar_session_controls_test.go
+diff --git i/e2e/tui/sidebar_session_controls_test.go w/e2e/tui/sidebar_session_controls_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..bb6882988bc2447a7c75ce8ae2d0a0d0cc79b9e6
 --- /dev/null
@@ -1158,7 +1289,7 @@ index 0000000000000000000000000000000000000000..bb6882988bc2447a7c75ce8ae2d0a0d0
 +		t.Fatalf("live disable did not restore topbar buttons: %v", err)
 +	}
 +}
-diff --git c/e2e/tui/workspace_auto_name_test.go w/e2e/tui/workspace_auto_name_test.go
+diff --git i/e2e/tui/workspace_auto_name_test.go w/e2e/tui/workspace_auto_name_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..993f49ee73c5c3201b5e803db207089818fee13e
 --- /dev/null
@@ -1263,7 +1394,7 @@ index 0000000000000000000000000000000000000000..993f49ee73c5c3201b5e803db2070898
 +	restored := startIn(t, base, startOpts{args: []string{"attach", session}})
 +	waitName(restored, "cat")
 +}
-diff --git c/e2e/tui/workspace_close_settings_test.go w/e2e/tui/workspace_close_settings_test.go
+diff --git i/e2e/tui/workspace_close_settings_test.go w/e2e/tui/workspace_close_settings_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..111d3d3b01b361cbbc13b89996d68af4317b6fd2
 --- /dev/null
@@ -1318,7 +1449,7 @@ index 0000000000000000000000000000000000000000..111d3d3b01b361cbbc13b89996d68af4
 +		})
 +	}
 +}
-diff --git c/e2e/tui/workspace_console_pending_test.go w/e2e/tui/workspace_console_pending_test.go
+diff --git i/e2e/tui/workspace_console_pending_test.go w/e2e/tui/workspace_console_pending_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..bf7c5de3325adf2dca6169069901e59614fd51ad
 --- /dev/null
@@ -1379,9 +1510,34 @@ index 0000000000000000000000000000000000000000..bf7c5de3325adf2dca6169069901e596
 +		})
 +	}
 +}
-diff --git c/internal/app/agent_rail_shipped_width_test.go w/internal/app/agent_rail_shipped_width_test.go
+diff --git i/go.mod w/go.mod
+index ca57f71c4b78f62b0ec53436e2a9df8c2a38d248..95bf2bf1481339d7f1a54549e7e42e2af3a034e7 100644
+--- i/go.mod
++++ w/go.mod
+@@ -27,6 +27,7 @@ require (
+ 	github.com/shirou/gopsutil/v4 v4.26.7
+ 	github.com/spf13/cobra v1.10.2
+ 	github.com/spf13/pflag v1.0.10
++	github.com/yuin/gopher-lua v1.1.1
+ 	golang.org/x/image v0.45.0
+ 	golang.org/x/sys v0.48.0
+ 	golang.org/x/term v0.46.0
+diff --git i/go.sum w/go.sum
+index 5032673f4ca2cc99d8f97b3b45e82dd7e4d15c39..4ccd712536270d18036bec51e29c7374e7d859f0 100644
+--- i/go.sum
++++ w/go.sum
+@@ -134,6 +134,8 @@ github.com/tklauser/numcpus v0.12.0 h1:NR85qdvHA9pFse3x3weVZ0r0ST8R6l5RHbZrlRaqo
+ github.com/tklauser/numcpus v0.12.0/go.mod h1:ABHeXzJnr/qqwguhClkZKT1/8VABcYrsyUiUGobwWJg=
+ github.com/xo/terminfo v1.2.0 h1:d0ZTOCpuGE0lwSAOs0zcJjwz3jWQyqcRt9XbGJpCOl4=
+ github.com/xo/terminfo v1.2.0/go.mod h1:lGzkSo8Fe7IRh/w+Gqz7n5mDog4FVXCj3gy/DYTBqio=
++github.com/yuin/gopher-lua v1.1.1 h1:kYKnWBjvbNP4XLT3+bPEwAXJx262OhaHDWDVOPjL46M=
++github.com/yuin/gopher-lua v1.1.1/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7kdAd1Pw=
+ github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
+ github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
+ go.mitchellh.com/libghostty v0.0.0-20260920220152-31b65cdc24cf h1:PgfZ7mRcXk8n3+B+46oo9WxDi6xK1z6feOQEKNRWCBs=
+diff --git i/internal/app/agent_rail_shipped_width_test.go w/internal/app/agent_rail_shipped_width_test.go
 index d6e342150149d35064e1c8642043a48c2cf38634..38110ccefe808dea6eea4045af8dab142b022518 100644
---- c/internal/app/agent_rail_shipped_width_test.go
+--- i/internal/app/agent_rail_shipped_width_test.go
 +++ w/internal/app/agent_rail_shipped_width_test.go
 @@ -80,7 +80,7 @@ func TestABlockedMachineHeaderFitsTheShippedRail(t *testing.T) {
  		}
@@ -1392,9 +1548,9 @@ index d6e342150149d35064e1c8642043a48c2cf38634..38110ccefe808dea6eea4045af8dab14
  	if !strings.Contains(row, "a-session") || !strings.Contains(row, agentStateIndicator("needs_input")) {
  		t.Errorf("a blocked session on another machine lost its name or glyph on the shipped rail: %q", row)
  	}
-diff --git c/internal/app/background.go w/internal/app/background.go
+diff --git i/internal/app/background.go w/internal/app/background.go
 index 5d0e8858e1c9ea0350494fc0728265bd857b9b42..103e68d33856c62da68302003f13d675f669f417 100644
---- c/internal/app/background.go
+--- i/internal/app/background.go
 +++ w/internal/app/background.go
 @@ -78,6 +78,7 @@ const (
  	surfaceChrome
@@ -1468,9 +1624,9 @@ index 5d0e8858e1c9ea0350494fc0728265bd857b9b42..103e68d33856c62da68302003f13d675
  	if f.inner.on() && !f.rect.Empty() {
  		paintGround(lines, f.rect, f.inner)
  	}
-diff --git c/internal/app/close_workspace.go w/internal/app/close_workspace.go
+diff --git i/internal/app/close_workspace.go w/internal/app/close_workspace.go
 index 8c07cb6a1013bd891e428627fe2a466ed571f5b7..2ecbb43849c8cf783846a80b85af32fdb3ac8147 100644
---- c/internal/app/close_workspace.go
+--- i/internal/app/close_workspace.go
 +++ w/internal/app/close_workspace.go
 @@ -11,9 +11,7 @@ import (
  
@@ -1507,9 +1663,9 @@ index 8c07cb6a1013bd891e428627fe2a466ed571f5b7..2ecbb43849c8cf783846a80b85af32fd
  	// The workspace is set first, so the dialog opens as a workspace one: it
  	// carries no delete-worktree row, and the toll that row would need is
  	// never fetched.
-diff --git c/internal/app/close_workspace_test.go w/internal/app/close_workspace_test.go
+diff --git i/internal/app/close_workspace_test.go w/internal/app/close_workspace_test.go
 index c3e05717345497f7897a31959ed02528892f9823..96b19aabc04f6b4fbabbb3322cb75f715073b059 100644
---- c/internal/app/close_workspace_test.go
+--- i/internal/app/close_workspace_test.go
 +++ w/internal/app/close_workspace_test.go
 @@ -4,6 +4,7 @@ import (
  	"strings"
@@ -1572,16 +1728,21 @@ index c3e05717345497f7897a31959ed02528892f9823..96b19aabc04f6b4fbabbb3322cb75f71
 +		t.Fatal("workspace setting disabled pane-link confirmation")
 +	}
 +}
-diff --git c/internal/app/command_palette.go w/internal/app/command_palette.go
-index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b198771277f 100644
---- c/internal/app/command_palette.go
+diff --git i/internal/app/command_palette.go w/internal/app/command_palette.go
+index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..f0e9c4c3868d94d66c2426eb2a51f09e38c30695 100644
+--- i/internal/app/command_palette.go
 +++ w/internal/app/command_palette.go
-@@ -55,7 +55,14 @@ func (m *OS) ApplyReloadedConfig(cfg *config.UserConfig) tea.Cmd {
+@@ -55,7 +55,19 @@ func (m *OS) ApplyReloadedConfig(cfg *config.UserConfig) tea.Cmd {
  		cfg = m.ReloadFilter(cfg)
  	}
  	themeBefore := theme.Generation()
 +	overviewBefore := m.Settings.SidebarOverviewMode
  	config.ApplyAppearanceConfig(cfg, &m.Settings)
++	if !m.topbarEnabled() && m.topbarLua.vm != nil {
++		m.topbarLua.vm.Close()
++		m.topbarLua = topbarLuaState{}
++	}
++	m.topbarHits = nil
 +	m.sidebarAttentionResetRows()
 +	m.secondaryRailView.attention.rows = nil
 +	m.secondaryRailView.attention.generation++
@@ -1591,7 +1752,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  	m.ListKeys = listKeymap(cfg)
  	// ApplyAppearanceConfig switches the theme package, which recolours the
  	// chrome, but each pane's emulator holds its own copy of the palette. The
-@@ -145,8 +152,9 @@ type CommandPaletteItem struct {
+@@ -145,8 +157,9 @@ type CommandPaletteItem struct {
  	// one per settings row, so they are left out of the empty palette and
  	// ranked after every command, and a query that names a setting still
  	// reaches it: "pane background" or "settings: pane background".
@@ -1603,7 +1764,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  }
  
  // GetCommandPaletteItems returns all available commands for the command palette.
-@@ -252,10 +260,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -252,10 +265,10 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  			Bind:     "prefix_close_window",
  			Category: "Window",
  			Action: func(m *OS) (*OS, tea.Cmd) {
@@ -1617,7 +1778,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  			},
  		},
  		{
-@@ -267,7 +275,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -267,7 +280,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  				// The editor is a centred dialog, so hidden titles are no reason
  				// for the palette to offer a row that does nothing.
  				if focused := m.GetFocusedWindow(); focused != nil {
@@ -1626,7 +1787,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  					m.BeginRenameWindow(focused)
  				}
  				return m, nil
-@@ -516,7 +524,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -516,7 +529,7 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  			},
  		})
  	}
@@ -1635,7 +1796,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  		{
  			Name:     "Add a master pane",
  			Shortcut: "",
-@@ -1252,12 +1260,15 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -1252,12 +1265,15 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  			},
  		},
  		{
@@ -1656,7 +1817,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  				m.ShowNotification("Window management mode", "info", s.NotificationDuration)
  				if focusedWindow := m.GetFocusedWindow(); focusedWindow != nil {
  					focusedWindow.InvalidateCache()
-@@ -1286,10 +1297,11 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -1286,10 +1302,11 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  			},
  		},
  		{
@@ -1672,7 +1833,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  			Action: func(m *OS) (*OS, tea.Cmd) {
  				m.EnterCopyModeFocused()
  				return m, nil
-@@ -1297,8 +1309,9 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -1297,8 +1314,9 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  		},
  		{
  			// No Shortcut: copy_mode_search_forward has no default binding.
@@ -1684,7 +1845,7 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  			Action: func(m *OS) (*OS, tea.Cmd) {
  				m.EnterCopyModeSearch(false)
  				return m, nil
-@@ -1306,24 +1319,30 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
+@@ -1306,24 +1324,30 @@ func GetCommandPaletteItems(s *config.Settings) []CommandPaletteItem {
  		},
  		{
  			// No Shortcut: copy_mode_search_backward has no default binding.
@@ -1721,9 +1882,9 @@ index 3a858350e0d4f1056ac16d4dca1ab2742e5f59c2..afe3a54ba1da88d3f8e24918f9ed3b19
  }
  
  // paletteStateTokens are the states a leading "@" token narrows the palette to.
-diff --git c/internal/app/compose.go w/internal/app/compose.go
+diff --git i/internal/app/compose.go w/internal/app/compose.go
 index dda7ce881eff0ce5ec033f8583882e6cb1e0d269..f1f4c0852914d1e453d9c721fbcc3a710a078ae7 100644
---- c/internal/app/compose.go
+--- i/internal/app/compose.go
 +++ w/internal/app/compose.go
 @@ -83,6 +83,7 @@ type cellLayer struct {
  	// if any, so a change of any of them reparses. See background.go.
@@ -1748,9 +1909,9 @@ index dda7ce881eff0ce5ec033f8583882e6cb1e0d269..f1f4c0852914d1e453d9c721fbcc3a71
  	cl.buf.Resize(cl.w+wideMargin, cl.h)
  	cl.blank = clearLines(cl.buf.Lines, cl.blank)
  	uv.NewStyledString(content).Draw(&cellLayerScreen{cl}, uv.Rect(0, 0, cl.w, cl.h))
-diff --git c/internal/app/contextmenu_build.go w/internal/app/contextmenu_build.go
+diff --git i/internal/app/contextmenu_build.go w/internal/app/contextmenu_build.go
 index 666deba7b3ca4c82378fcc6654b2a16afc77cad3..4f4c9e63ea044f13d635ae50d0a5b90e887c3dde 100644
---- c/internal/app/contextmenu_build.go
+--- i/internal/app/contextmenu_build.go
 +++ w/internal/app/contextmenu_build.go
 @@ -94,7 +94,7 @@ func (m *OS) OpenContextMenu(x, y int) {
  // wins over any window drawn near it, then the topmost window under the point,
@@ -1771,9 +1932,9 @@ index 666deba7b3ca4c82378fcc6654b2a16afc77cad3..4f4c9e63ea044f13d635ae50d0a5b90e
  func (m *OS) workspacePillMenu(ws int) (string, []ContextMenuItem) {
  	closeItem := m.item(glyphClose, "Close", "close_workspace", len(m.workspacePanes(ws)) == 0)
  	closeItem.Warn = true
-diff --git c/internal/app/copymode_entry.go w/internal/app/copymode_entry.go
+diff --git i/internal/app/copymode_entry.go w/internal/app/copymode_entry.go
 index f4ae7ce89e0107c275e71e8407263cbd73e56077..e1732f5a1d786b46c725b5593a9205f9e823603d 100644
---- c/internal/app/copymode_entry.go
+--- i/internal/app/copymode_entry.go
 +++ w/internal/app/copymode_entry.go
 @@ -10,6 +10,9 @@ import (
  // default, as tmux does), or in the middle row. In multi copy mode each pane
@@ -1795,9 +1956,9 @@ index f4ae7ce89e0107c275e71e8407263cbd73e56077..e1732f5a1d786b46c725b5593a9205f9
  	fw := m.GetFocusedWindow()
  	if fw == nil {
  		return
-diff --git c/internal/app/daemon_wiring.go w/internal/app/daemon_wiring.go
+diff --git i/internal/app/daemon_wiring.go w/internal/app/daemon_wiring.go
 index 16e2b0eb7a03c4a6dc1f459bfc5475ae518402d6..b92240af92d878dabbced801b17d882f409b932d 100644
---- c/internal/app/daemon_wiring.go
+--- i/internal/app/daemon_wiring.go
 +++ w/internal/app/daemon_wiring.go
 @@ -291,6 +291,7 @@ func (m *OS) reportFocusChange() {
  	if m.detachFired.Load() {
@@ -1807,7 +1968,7 @@ index 16e2b0eb7a03c4a6dc1f459bfc5475ae518402d6..b92240af92d878dabbced801b17d882f
  	current := ""
  	if w := m.GetFocusedWindow(); w != nil {
  		current = w.ID
-diff --git c/internal/app/dock_geometry.go w/internal/app/dock_geometry.go
+diff --git i/internal/app/dock_geometry.go w/internal/app/dock_geometry.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..0b807b604959127b0077dda5ab78ba3a7baccb7e
 --- /dev/null
@@ -1881,9 +2042,9 @@ index 0000000000000000000000000000000000000000..0b807b604959127b0077dda5ab78ba3a
 +		h.drawn = h.x1 > h.x0
 +	}
 +}
-diff --git c/internal/app/dock_helpers.go w/internal/app/dock_helpers.go
+diff --git i/internal/app/dock_helpers.go w/internal/app/dock_helpers.go
 index 94b799477c2a35cd743bb8f450622ef8f8c1cf19..8d2e31fffc719687c02c1d0c2cc10a6ef861ba4a 100644
---- c/internal/app/dock_helpers.go
+--- i/internal/app/dock_helpers.go
 +++ w/internal/app/dock_helpers.go
 @@ -153,12 +153,18 @@ func (m *OS) dockTabs() config.DockTabsConfig {
  	return m.UserConfig.Dock.Tabs
@@ -1955,9 +2116,9 @@ index 94b799477c2a35cd743bb8f450622ef8f8c1cf19..8d2e31fffc719687c02c1d0c2cc10a6e
  		return block.Width, false
  	}
  	// A mode's legend does not yield either. It is up only while the mode is,
-diff --git c/internal/app/dock_workspace_names_test.go w/internal/app/dock_workspace_names_test.go
+diff --git i/internal/app/dock_workspace_names_test.go w/internal/app/dock_workspace_names_test.go
 index 85274718a2726675f72efb49f2830d2e45823ee4..ca4a8a070ae6d3033001ee43765e0829192b324d 100644
---- c/internal/app/dock_workspace_names_test.go
+--- i/internal/app/dock_workspace_names_test.go
 +++ w/internal/app/dock_workspace_names_test.go
 @@ -9,6 +9,7 @@ import (
  	"github.com/Gaurav-Gosain/tuios/internal/session"
@@ -1988,9 +2149,9 @@ index 85274718a2726675f72efb49f2830d2e45823ee4..ca4a8a070ae6d3033001ee43765e0829
  func TestWorkspaceChipWidthFollowsItsLabel(t *testing.T) {
  	m := chipOS(t)
  	for _, tab := range m.buildDockWorkspaceTabs() {
-diff --git c/internal/app/factory.go w/internal/app/factory.go
+diff --git i/internal/app/factory.go w/internal/app/factory.go
 index a149881443fdd6da9145d981429326c8749819b2..e39c9e98d078370c8d06b4d60452900e2ed7a325 100644
---- c/internal/app/factory.go
+--- i/internal/app/factory.go
 +++ w/internal/app/factory.go
 @@ -384,5 +384,6 @@ func NewOS(opts OSOptions) *OS {
  		os.SubscribedPTYs = make(map[string]bool)
@@ -1999,7 +2160,7 @@ index a149881443fdd6da9145d981429326c8749819b2..e39c9e98d078370c8d06b4d60452900e
 +	os.EnforceInteractionModes()
  	return os
  }
-diff --git c/internal/app/focused_pane_tint.go w/internal/app/focused_pane_tint.go
+diff --git i/internal/app/focused_pane_tint.go w/internal/app/focused_pane_tint.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..3410b64024a8800731f1f969e335f461fa40a5a2
 --- /dev/null
@@ -2091,7 +2252,7 @@ index 0000000000000000000000000000000000000000..3410b64024a8800731f1f969e335f461
 +		}
 +	}
 +}
-diff --git c/internal/app/focused_pane_tint_paths_test.go w/internal/app/focused_pane_tint_paths_test.go
+diff --git i/internal/app/focused_pane_tint_paths_test.go w/internal/app/focused_pane_tint_paths_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..767dcc03c3ea025dfac419dcddf3c2bbdc79292d
 --- /dev/null
@@ -2157,7 +2318,7 @@ index 0000000000000000000000000000000000000000..767dcc03c3ea025dfac419dcddf3c2bb
 +		})
 +	}
 +}
-diff --git c/internal/app/focused_pane_tint_settings_test.go w/internal/app/focused_pane_tint_settings_test.go
+diff --git i/internal/app/focused_pane_tint_settings_test.go w/internal/app/focused_pane_tint_settings_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..49d9c3aa0d060286f931466e992d017889e7eba7
 --- /dev/null
@@ -2193,7 +2354,7 @@ index 0000000000000000000000000000000000000000..49d9c3aa0d060286f931466e992d0178
 +		t.Fatal("runtime zero did not disable tint")
 +	}
 +}
-diff --git c/internal/app/focused_pane_tint_test.go w/internal/app/focused_pane_tint_test.go
+diff --git i/internal/app/focused_pane_tint_test.go w/internal/app/focused_pane_tint_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..a94492515b0f0180b498fa15c3a58bc7e7d7e2f0
 --- /dev/null
@@ -2398,9 +2559,9 @@ index 0000000000000000000000000000000000000000..a94492515b0f0180b498fa15c3a58bc7
 +		t.Fatal("16-colour mode must not guess RGB")
 +	}
 +}
-diff --git c/internal/app/hold_mode.go w/internal/app/hold_mode.go
+diff --git i/internal/app/hold_mode.go w/internal/app/hold_mode.go
 index 116bffac31bca7b32f4cb4893c1a8c2e37460914..8eca93798ae03f0f8dfd902eefad5b2a314b7558 100644
---- c/internal/app/hold_mode.go
+--- i/internal/app/hold_mode.go
 +++ w/internal/app/hold_mode.go
 @@ -60,6 +60,9 @@ func (m *OS) HoldModeKey() string {
  // the trigger needs it: it turns every keystroke in the session into an escape
@@ -2439,7 +2600,7 @@ index 116bffac31bca7b32f4cb4893c1a8c2e37460914..8eca93798ae03f0f8dfd902eefad5b2a
  	case key.IsRepeat:
  		// The key is still down; the terminal is just repeating it.
  	default:
-diff --git c/internal/app/interaction_modes.go w/internal/app/interaction_modes.go
+diff --git i/internal/app/interaction_modes.go w/internal/app/interaction_modes.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..46d94c4fd3a1a0a5b968e0af9f06c2b23110981d
 --- /dev/null
@@ -2491,7 +2652,7 @@ index 0000000000000000000000000000000000000000..46d94c4fd3a1a0a5b968e0af9f06c2b2
 +		m.MarkAllDirty()
 +	}
 +}
-diff --git c/internal/app/interaction_modes_test.go w/internal/app/interaction_modes_test.go
+diff --git i/internal/app/interaction_modes_test.go w/internal/app/interaction_modes_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..b1e78d036e80d2614196d59cd9f9e357ef1c14d9
 --- /dev/null
@@ -2670,9 +2831,9 @@ index 0000000000000000000000000000000000000000..b1e78d036e80d2614196d59cd9f9e357
 +		t.Fatal("disabled policy changed legacy state")
 +	}
 +}
-diff --git c/internal/app/keyboard_enhancements.go w/internal/app/keyboard_enhancements.go
+diff --git i/internal/app/keyboard_enhancements.go w/internal/app/keyboard_enhancements.go
 index c194ae5b93a1ccfec60c6dc1af2be27b20055d0f..a8fbd22320c7b5b6c2c92f3badaceab1362af1d3 100644
---- c/internal/app/keyboard_enhancements.go
+--- i/internal/app/keyboard_enhancements.go
 +++ w/internal/app/keyboard_enhancements.go
 @@ -1,10 +1,17 @@
  package app
@@ -2742,9 +2903,9 @@ index c194ae5b93a1ccfec60c6dc1af2be27b20055d0f..a8fbd22320c7b5b6c2c92f3badaceab1
  // AllKeysPending reports whether tuios has asked the host for every key as an
  // escape code and the host has not yet said it switched.
  //
-diff --git c/internal/app/keyboard_enhancements_test.go w/internal/app/keyboard_enhancements_test.go
+diff --git i/internal/app/keyboard_enhancements_test.go w/internal/app/keyboard_enhancements_test.go
 index d2263dd97247f5266e21cee712cc1a5ecd63b635..9ac671db3828ed5fbc427d60279316274d64a0b8 100644
---- c/internal/app/keyboard_enhancements_test.go
+--- i/internal/app/keyboard_enhancements_test.go
 +++ w/internal/app/keyboard_enhancements_test.go
 @@ -3,8 +3,10 @@ package app
  import (
@@ -2821,9 +2982,9 @@ index d2263dd97247f5266e21cee712cc1a5ecd63b635..9ac671db3828ed5fbc427d6027931627
 +		t.Fatal("keyboard reset wait remained pending after timeout")
 +	}
 +}
-diff --git c/internal/app/link_pointer.go w/internal/app/link_pointer.go
+diff --git i/internal/app/link_pointer.go w/internal/app/link_pointer.go
 index febd944f51ce8d02aad201374fc13996295bd362..f76cb018c2279fd53fa52884959567048eb8ec75 100644
---- c/internal/app/link_pointer.go
+--- i/internal/app/link_pointer.go
 +++ w/internal/app/link_pointer.go
 @@ -101,7 +101,7 @@ func (m *OS) PointerSeen() (x, y int) {
  func (m *OS) TrackLinkPointer(x, y int) {
@@ -2834,9 +2995,9 @@ index febd944f51ce8d02aad201374fc13996295bd362..f76cb018c2279fd53fa5288495956704
  		m.clearLinkHover()
  		return
  	}
-diff --git c/internal/app/mode_switch.go w/internal/app/mode_switch.go
+diff --git i/internal/app/mode_switch.go w/internal/app/mode_switch.go
 index cd31c1fd0d54340afe48355f0c7d81103a9f3515..83dfe6a9aa042966ce139a4858a099e84c1a9b5c 100644
---- c/internal/app/mode_switch.go
+--- i/internal/app/mode_switch.go
 +++ w/internal/app/mode_switch.go
 @@ -28,12 +28,15 @@ func (m *OS) EnterTerminalMode() tea.Cmd {
  // ExitTerminalMode switches from terminal to window management mode.
@@ -2855,9 +3016,9 @@ index cd31c1fd0d54340afe48355f0c7d81103a9f3515..83dfe6a9aa042966ce139a4858a099e8
  
  	// The raw reader is disabled. Bubbletea handles all input correctly.
  	return nil
-diff --git c/internal/app/multicopy.go w/internal/app/multicopy.go
+diff --git i/internal/app/multicopy.go w/internal/app/multicopy.go
 index 6dff26e856772e05f4a354bd29f8d089fc4e08f0..6ce539c76433e1dcda8fb3731e381e8cc2f84001 100644
---- c/internal/app/multicopy.go
+--- i/internal/app/multicopy.go
 +++ w/internal/app/multicopy.go
 @@ -125,6 +125,9 @@ func (m *OS) EnterCopyModeFocused() {
  // mode together. It reports false, with a message that says what to do, when
@@ -2869,11 +3030,45 @@ index 6dff26e856772e05f4a354bd29f8d089fc4e08f0..6ce539c76433e1dcda8fb3731e381e8c
  	panes := m.multiCopyCandidates()
  	if len(panes) < 2 {
  		m.ShowNotification("Multi copy mode needs two or more panes in multifocus. Add panes with Ctrl+Shift+Click.", "warning", 2*m.Settings.NotificationDuration)
-diff --git c/internal/app/os.go w/internal/app/os.go
-index 71629421598eb340f54fe1c571c1de0ed1833f86..d945e74f90d46d2679e0a71fbcd34a6f43adf767 100644
---- c/internal/app/os.go
+diff --git i/internal/app/os.go w/internal/app/os.go
+index 71629421598eb340f54fe1c571c1de0ed1833f86..c0cda918e32b005e3a3ec0ef844bd03f6e69ecfa 100644
+--- i/internal/app/os.go
 +++ w/internal/app/os.go
-@@ -1019,6 +1019,12 @@ type OS struct {
+@@ -401,18 +401,21 @@ type OS struct {
+ 	notifHit               notifHitZones                 // where the message block was drawn last frame
+ 	dockWorkspaceHits      []dockWorkspaceHit            // where the dock's workspace pills were drawn last frame
+ 	dockWorkspaceArrowHits []dockWorkspaceArrowHit       // where the strip's overflow arrows were drawn last frame
+-	dockWorkspaceScroll    int                           // index of the first workspace pill the strip draws
+-	dockWorkspaceScrollFor int                           // the workspace that offset was last pulled into view for
+-	dockWorkspaceScrollAt  int                           // the viewport width it was pulled into view at
+-	dockWorkspaceDrag      dockWorkspaceDragState        // the click-or-drag gesture on a workspace pill
+-	dockItemHits           []dockItemHit                 // where the dock's minimized entries were drawn last frame
+-	dockOverflowHit        dockOverflowHit               // where the entries' overflow marker was drawn last frame
+-	dockSessionHits        []dockSessionHit              // where the dock's session controls were drawn last frame
+-	notifDrawn             notifDrawn                    // what the last frame showed of the live message
+-	dockSessionHover       DockSessionAction             // which session control the pointer is on, DockSessionNone for neither
+-	dockCustomHits         []dockCustomHit               // where the custom components were drawn last frame
+-	dockPlan               dockPlan                      // which components are on which side, in draw order
+-	dockEngine             *dockEngine                   // refresh scheduler for the components that move on their own
++	topbarLua              topbarLuaState
++	topbarAgentScroll      int
++	topbarHits             []topbarHit
++	dockWorkspaceScroll    int                    // index of the first workspace pill the strip draws
++	dockWorkspaceScrollFor int                    // the workspace that offset was last pulled into view for
++	dockWorkspaceScrollAt  int                    // the viewport width it was pulled into view at
++	dockWorkspaceDrag      dockWorkspaceDragState // the click-or-drag gesture on a workspace pill
++	dockItemHits           []dockItemHit          // where the dock's minimized entries were drawn last frame
++	dockOverflowHit        dockOverflowHit        // where the entries' overflow marker was drawn last frame
++	dockSessionHits        []dockSessionHit       // where the dock's session controls were drawn last frame
++	notifDrawn             notifDrawn             // what the last frame showed of the live message
++	dockSessionHover       DockSessionAction      // which session control the pointer is on, DockSessionNone for neither
++	dockCustomHits         []dockCustomHit        // where the custom components were drawn last frame
++	dockPlan               dockPlan               // which components are on which side, in draw order
++	dockEngine             *dockEngine            // refresh scheduler for the components that move on their own
+ 	// RemoteCommandChan carries a verb the daemon routed to this client, for
+ 	// the hosts that cannot Send into the program directly. See dock_remote.go.
+ 	RemoteCommandChan chan RemoteCommandMsg
+@@ -1019,6 +1022,12 @@ type OS struct {
  	// hostGrantedAllKeys is set once the host has answered with report-all-keys
  	// in effect. See AllKeysPending.
  	hostGrantedAllKeys bool
@@ -2886,7 +3081,7 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..d945e74f90d46d2679e0a71fbcd34a6f
  	// paneKeysDown maps the code of each key press that went to a pane to that
  	// pane's window ID, so its release goes to the same pane and the release
  	// of a key tuios kept for itself goes nowhere. See NotePaneKeyDown.
-@@ -1570,6 +1576,8 @@ type OS struct {
+@@ -1570,6 +1579,8 @@ type OS struct {
  	SidebarScrollF            int
  	SidebarScrollG            int
  	SidebarScrollC            int
@@ -2895,7 +3090,7 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..d945e74f90d46d2679e0a71fbcd34a6f
  	// sidebarAgentAnchor keeps the agents section's viewport on the row it was
  	// left on rather than on the index that row happened to have, since that
  	// section resorts itself on live agent state. See sidebar_anchor.go.
-@@ -1588,6 +1596,8 @@ type OS struct {
+@@ -1588,6 +1599,8 @@ type OS struct {
  	// sidebarSubagentFoldGen counts the toggles of any rail's headings, for
  	// the rails' signatures.
  	sidebarSubagentFoldGen int
@@ -2904,9 +3099,20 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..d945e74f90d46d2679e0a71fbcd34a6f
  	// subagentHideDue is the earliest moment a finished subagent's row is
  	// due to go under appearance.sidebar.subagent_hide_finished, noted while
  	// the rail is drawn, and subagentHideArmed the moment a frame was last
-diff --git c/internal/app/os_geometry.go w/internal/app/os_geometry.go
+@@ -2294,6 +2307,10 @@ func (m *OS) Cleanup() {
+ 	}
+ 
+ 	m.stopSidebarSessions()
++	if m.topbarLua.vm != nil {
++		m.topbarLua.vm.Close()
++		m.topbarLua = topbarLuaState{}
++	}
+ 	// The copy of an image the desktop viewer was given.
+ 	m.replyPreview.removeOpened()
+ 	m.removeReplyEditorFile()
+diff --git i/internal/app/os_geometry.go w/internal/app/os_geometry.go
 index 9175a7fae4d89c1de7ca7ed957ba015fff371915..90c60e0407d0595794f6122615b012efb671f51b 100644
---- c/internal/app/os_geometry.go
+--- i/internal/app/os_geometry.go
 +++ w/internal/app/os_geometry.go
 @@ -396,6 +396,33 @@ func (m *OS) sidebarWidthPreference() int {
  // the footer stepper can ask what a width would actually get it before offering
@@ -2951,9 +3157,9 @@ index 9175a7fae4d89c1de7ca7ed957ba015fff371915..90c60e0407d0595794f6122615b012ef
  }
  
  func sidebarResponsiveWidth(prefer, rw int) int {
-diff --git c/internal/app/os_minimize.go w/internal/app/os_minimize.go
+diff --git i/internal/app/os_minimize.go w/internal/app/os_minimize.go
 index f2fed1c46170735551db3e23a4a927737f39aa91..34f7a0e55b4244b092f754a72000694d233fd518 100644
---- c/internal/app/os_minimize.go
+--- i/internal/app/os_minimize.go
 +++ w/internal/app/os_minimize.go
 @@ -121,7 +121,7 @@ func (m *OS) RestoreWindow(i int) {
  		// Bring the window to front and focus it
@@ -2964,9 +3170,9 @@ index f2fed1c46170735551db3e23a4a927737f39aa91..34f7a0e55b4244b092f754a72000694d
  	}
  }
  
-diff --git c/internal/app/os_popup.go w/internal/app/os_popup.go
+diff --git i/internal/app/os_popup.go w/internal/app/os_popup.go
 index 119df259ccbd3ed79b9bf469607bb6653e55ac1e..1853e02ffc9916f47cbf5b78f400a047cb261fcb 100644
---- c/internal/app/os_popup.go
+--- i/internal/app/os_popup.go
 +++ w/internal/app/os_popup.go
 @@ -1,6 +1,8 @@
  package app
@@ -3030,9 +3236,9 @@ index 119df259ccbd3ed79b9bf469607bb6653e55ac1e..1853e02ffc9916f47cbf5b78f400a047
  	m.leaveEmptyScratchView()
 +	return nil
  }
-diff --git c/internal/app/os_tape_executor.go w/internal/app/os_tape_executor.go
+diff --git i/internal/app/os_tape_executor.go w/internal/app/os_tape_executor.go
 index f2d53c5c2ea6c710bc3bd59d1ce89ecd3e5d6f6a..b43747daefcb6b7c8506c0cbdbaf741aa505d737 100644
---- c/internal/app/os_tape_executor.go
+--- i/internal/app/os_tape_executor.go
 +++ w/internal/app/os_tape_executor.go
 @@ -528,7 +528,9 @@ func (m *OS) SetMode(mode string) error {
  			}
@@ -3045,9 +3251,9 @@ index f2d53c5c2ea6c710bc3bd59d1ce89ecd3e5d6f6a..b43747daefcb6b7c8506c0cbdbaf741a
  	}
  	return nil
  }
-diff --git c/internal/app/os_window.go w/internal/app/os_window.go
+diff --git i/internal/app/os_window.go w/internal/app/os_window.go
 index 600611a043588766b9d823431617de5201540565..1d0cc5da585af0d9a290b0a007cd86c8972a5de9 100644
---- c/internal/app/os_window.go
+--- i/internal/app/os_window.go
 +++ w/internal/app/os_window.go
 @@ -699,6 +699,9 @@ func (m *OS) addDaemonWindow(dir, name, sshFrom string, command []string) *OS {
  		// know the session's window set, so the state it holds must not be
@@ -3071,9 +3277,9 @@ index 600611a043588766b9d823431617de5201540565..1d0cc5da585af0d9a290b0a007cd86c8
  	} else if i < m.FocusedWindow {
  		m.FocusedWindow--
  	} else if i == m.FocusedWindow {
-diff --git c/internal/app/overlay_hit.go w/internal/app/overlay_hit.go
+diff --git i/internal/app/overlay_hit.go w/internal/app/overlay_hit.go
 index eb1620c568fc8bab8cdd88b0ff0a0291201e39db..960d3f28f0a3ccb1818edf1a9ca5fc819adbbed2 100644
---- c/internal/app/overlay_hit.go
+--- i/internal/app/overlay_hit.go
 +++ w/internal/app/overlay_hit.go
 @@ -215,6 +215,11 @@ func (m *OS) centerOrigin(w, h int) (int, int) {
  // overlayOrigin returns the top-left screen cell for an overlay panel: centered,
@@ -3087,9 +3293,9 @@ index eb1620c568fc8bab8cdd88b0ff0a0291201e39db..960d3f28f0a3ccb1818edf1a9ca5fc81
  	rw, rh := m.GetRenderWidth(), m.GetRenderHeight()
  	// Centred in the rows under a dock at the top, and kept below it while it
  	// fits there. See panelRoomHeight.
-diff --git c/internal/app/pointer_gesture.go w/internal/app/pointer_gesture.go
+diff --git i/internal/app/pointer_gesture.go w/internal/app/pointer_gesture.go
 index 8096eea73da1486e24624db617ad2a43aaf21a1f..c15b3ad3f8df02cf32447fcdf573ab7cb3f79401 100644
---- c/internal/app/pointer_gesture.go
+--- i/internal/app/pointer_gesture.go
 +++ w/internal/app/pointer_gesture.go
 @@ -19,7 +19,7 @@ package app
  func (m *OS) BeginPointerGesture() {
@@ -3100,9 +3306,9 @@ index 8096eea73da1486e24624db617ad2a43aaf21a1f..c15b3ad3f8df02cf32447fcdf573ab7c
  	}
  }
  
-diff --git c/internal/app/program_options.go w/internal/app/program_options.go
+diff --git i/internal/app/program_options.go w/internal/app/program_options.go
 index ee4e568d96187a9db7f95051975f789dbe8543da..accbf5866e1fecdee9191cf020b5865a11343563 100644
---- c/internal/app/program_options.go
+--- i/internal/app/program_options.go
 +++ w/internal/app/program_options.go
 @@ -292,7 +292,7 @@ func FilterMouseMotion(model tea.Model, msg tea.Msg) tea.Msg {
  	// control, from one to the next, or off one. Passing every cell of the
@@ -3113,9 +3319,9 @@ index ee4e568d96187a9db7f95051975f789dbe8543da..accbf5866e1fecdee9191cf020b5865a
  		return msg
  	}
  
-diff --git c/internal/app/quit_menu.go w/internal/app/quit_menu.go
+diff --git i/internal/app/quit_menu.go w/internal/app/quit_menu.go
 index 64bcc8d3cad86cf8b8149246c346ad78d8bf4d1b..7faae45b795c7660cdd3ead269df57e7680c5c07 100644
---- c/internal/app/quit_menu.go
+--- i/internal/app/quit_menu.go
 +++ w/internal/app/quit_menu.go
 @@ -1,9 +1,11 @@
  package app
@@ -3204,9 +3410,9 @@ index 64bcc8d3cad86cf8b8149246c346ad78d8bf4d1b..7faae45b795c7660cdd3ead269df57e7
  	m.ShowNotification("Killed session: "+oldLabel, "success", m.Settings.NotificationDuration)
  	return nil
  }
-diff --git c/internal/app/render.go w/internal/app/render.go
+diff --git i/internal/app/render.go w/internal/app/render.go
 index 40ed65028ffbc72ddfc3d17cb72345fde68ed5d3..5af9363aae7ea8a73a17249ae2c749bb43ddbe8a 100644
---- c/internal/app/render.go
+--- i/internal/app/render.go
 +++ w/internal/app/render.go
 @@ -844,6 +844,9 @@ func (m *OS) composeFrameOnce() string {
  // visible windows, any overlay, separators, graphics, or active manipulation or
@@ -3218,9 +3424,9 @@ index 40ed65028ffbc72ddfc3d17cb72345fde68ed5d3..5af9363aae7ea8a73a17249ae2c749bb
  	if len(m.Animations) > 0 || m.Renaming() {
  		return nil, false
  	}
-diff --git c/internal/app/render_border_grid.go w/internal/app/render_border_grid.go
+diff --git i/internal/app/render_border_grid.go w/internal/app/render_border_grid.go
 index c68ac13090b5cb9ed244ce943527c5a9ee9d2ae1..2ab61ed9e6d33faa445936926965e700ee1f5b2d 100644
---- c/internal/app/render_border_grid.go
+--- i/internal/app/render_border_grid.go
 +++ w/internal/app/render_border_grid.go
 @@ -338,11 +338,13 @@ func (m *OS) chromeRules(bounds layout.Rect) chromeRules {
  	default:
@@ -3258,9 +3464,9 @@ index c68ac13090b5cb9ed244ce943527c5a9ee9d2ae1..2ab61ed9e6d33faa445936926965e700
  		case c.vert:
  			// Check horizontal neighbors for T-junctions. An arm is only grown
  			// toward a neighbour carrying a line that runs into this one: two
-diff --git c/internal/app/render_dock.go w/internal/app/render_dock.go
-index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd491411a6ac 100644
---- c/internal/app/render_dock.go
+diff --git i/internal/app/render_dock.go w/internal/app/render_dock.go
+index 9429e6b005622c50f73e0d9ac601070e2e214b00..9e6be17d23418eff5020594bba4477f4c9820319 100644
+--- i/internal/app/render_dock.go
 +++ w/internal/app/render_dock.go
 @@ -10,6 +10,7 @@ import (
  	"github.com/Gaurav-Gosain/tuios/internal/config"
@@ -3385,7 +3591,7 @@ index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd49
  		m.dockWorkspaceHits = append(m.dockWorkspaceHits, dockWorkspaceHit{
  			X0: x, X1: x + s.Add.Width, Y: y, Workspace: 0,
  		})
-@@ -263,7 +284,7 @@ func (m *OS) renderDockWorkspaceStrip(s dockWorkspaceStrip, startX int) string {
+@@ -263,12 +284,18 @@ func (m *OS) renderDockWorkspaceStrip(s dockWorkspaceStrip, startX int) string {
  
  func (m *OS) renderDock() *lipgloss.Layer {
  	fullDock, dockbarYPos := m.renderDockString()
@@ -3394,7 +3600,18 @@ index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd49
  }
  
  // renderDockString returns the dock content and its top row, used both by the
-@@ -451,7 +472,8 @@ func (m *OS) renderDockString() (string, int) {
+ // layer path and the fullscreen fast path.
+ func (m *OS) renderDockString() (string, int) {
++	if m.topbarEnabled() {
++		if bar, ok := m.renderLuaTopbar(); ok {
++			return bar, 0
++		}
++	}
++	m.topbarHits = m.topbarHits[:0]
+ 	m.ensureDockPlan()
+ 	layout := m.CalculateDockLayout()
+ 	pal := m.groundUI()
+@@ -451,7 +478,8 @@ func (m *OS) renderDockString() (string, int) {
  	}
  	leftInfo := leftB.String()
  
@@ -3404,7 +3621,7 @@ index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd49
  
  	// The session controls take the bar's right-hand end before anything else is
  	// measured, and barWidth is the bar every other block is fitted into. They
-@@ -611,7 +633,8 @@ func (m *OS) renderDockString() (string, int) {
+@@ -611,7 +639,8 @@ func (m *OS) renderDockString() (string, int) {
  		})
  		sessionX += c.Width
  	}
@@ -3414,9 +3631,18 @@ index 9429e6b005622c50f73e0d9ac601070e2e214b00..c3d480d89cef6522ccfc3f93be83bd49
  
  	// The styled hairline is kept until its width, glyph or colour changes.
  	// Keyed on the glyph as well as the width: the separator character follows
-diff --git c/internal/app/render_dock_session.go w/internal/app/render_dock_session.go
+@@ -653,7 +682,7 @@ func (m *OS) renderDockString() (string, int) {
+ 	// on it, are not drawn.
+ 	dockbarYPos := m.GetRenderHeight() - m.Settings.DockHeight()
+ 	dockbarParts := []string{separator, dockBar}
+-	if m.Settings.DockCompact {
++	if m.Settings.DockCompact || m.topbarEnabled() {
+ 		dockbarParts = dockbarParts[1:]
+ 	}
+ 	if m.Settings.DockbarPosition == "top" {
+diff --git i/internal/app/render_dock_session.go w/internal/app/render_dock_session.go
 index 3de66d46536f3e52d167987b3bbf4b4dbddf5758..fcc84edc7ffd108a64e9213f54393fe859c05e53 100644
---- c/internal/app/render_dock_session.go
+--- i/internal/app/render_dock_session.go
 +++ w/internal/app/render_dock_session.go
 @@ -18,22 +18,10 @@ type dockSessionCell struct {
  	Action DockSessionAction
@@ -3462,9 +3688,9 @@ index 3de66d46536f3e52d167987b3bbf4b4dbddf5758..fcc84edc7ffd108a64e9213f54393fe8
  	var b strings.Builder
  	b.WriteString(" ")
  	for _, c := range cells {
-diff --git c/internal/app/render_list_overlay.go w/internal/app/render_list_overlay.go
+diff --git i/internal/app/render_list_overlay.go w/internal/app/render_list_overlay.go
 index ea865af00c0757367ade01409edad6ee14a5538e..f8dce7881f40e426c0de3ab4717af071fdaf11aa 100644
---- c/internal/app/render_list_overlay.go
+--- i/internal/app/render_list_overlay.go
 +++ w/internal/app/render_list_overlay.go
 @@ -297,7 +297,11 @@ func (m *OS) moveListSelection(selected, scroll *int, count, maxVisible, delta i
  // SessionSwitcherMove moves the session switcher's selection by delta.
@@ -3479,9 +3705,9 @@ index ea865af00c0757367ade01409edad6ee14a5538e..f8dce7881f40e426c0de3ab4717af071
  }
  
  // LayoutPickerMove moves the layout picker's selection by delta.
-diff --git c/internal/app/render_overlays.go w/internal/app/render_overlays.go
+diff --git i/internal/app/render_overlays.go w/internal/app/render_overlays.go
 index c920c2fababcab4c417715ea8d646a05a93f6844..cf9ca2e5b3f4dfbd2ba0d5d83f90eb4cb3bb414a 100644
---- c/internal/app/render_overlays.go
+--- i/internal/app/render_overlays.go
 +++ w/internal/app/render_overlays.go
 @@ -97,7 +97,7 @@ func (m *OS) renderOverlays() []*lipgloss.Layer {
  		layers = append(layers, timeLayer)
@@ -3492,31 +3718,36 @@ index c920c2fababcab4c417715ea8d646a05a93f6844..cf9ca2e5b3f4dfbd2ba0d5d83f90eb4c
  		asciiArt := `████████╗██╗   ██╗██╗ ██████╗ ███████╗
  ╚══██╔══╝██║   ██║██║██╔═══██╗██╔════╝
     ██║   ██║   ██║██║██║   ██║███████╗
-diff --git c/internal/app/render_session_switcher.go w/internal/app/render_session_switcher.go
-index dc361bae653914c973c80a1be5287e0587564a14..1f1d2952cff42e694d7df980d857e74bb76543ec 100644
---- c/internal/app/render_session_switcher.go
+diff --git i/internal/app/render_session_switcher.go w/internal/app/render_session_switcher.go
+index dc361bae653914c973c80a1be5287e0587564a14..13049e1592b0fe8018ef4a7d7899ef7ec3d6cf32 100644
+--- i/internal/app/render_session_switcher.go
 +++ w/internal/app/render_session_switcher.go
-@@ -9,7 +9,11 @@ import (
+@@ -9,7 +9,12 @@ import (
  	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
  )
  
 -const sessionSwitcherWidth = 58
 +const (
 +	sessionSwitcherWidth       = 58
++	projectSwitcherWidth       = 30
 +	projectSwitcherMaxVisible  = 6
 +	overlayKindSessionSwitcher = "session"
 +)
  
  // renderSessionSwitcher renders the session switcher on the shared overlay
  // grammar, returning the panel, geometry and hit rows.
-@@ -52,10 +56,16 @@ func (m *OS) renderSessionSwitcher() (string, overlay.Geometry, []overlayRowHit)
+@@ -52,10 +57,20 @@ func (m *OS) renderSessionSwitcher() (string, overlay.Geometry, []overlayRowHit)
  		emptyHint = overlay.Hint{Key: overlay.EnterGlyph, Label: "create it"}
  	}
  
 +	title, width, maxVisible := "Sessions", sessionSwitcherWidth, 10
 +	hints := sessionSwitcherHints(filtered, m.SessionSwitcherSelected)
 +	if m.sidebarAttention.projectPickerOpen {
-+		title, width, maxVisible = "Projects", m.GetSidebarWidth(), projectSwitcherMaxVisible
++		width = m.GetSidebarWidth()
++		if !m.SidebarActive() {
++			width = projectSwitcherWidth
++		}
++		title, maxVisible = "Projects", projectSwitcherMaxVisible
 +		hints = []overlay.Hint{{Key: overlay.EnterGlyph, Label: "switch"}, {Key: "esc", Label: "close"}}
 +	}
  	return m.renderListOverlay(listOverlay{
@@ -3529,7 +3760,7 @@ index dc361bae653914c973c80a1be5287e0587564a14..1f1d2952cff42e694d7df980d857e74b
  		Search:     true,
  		Query:      m.SessionSwitcherQuery,
  		Count:      len(filtered),
-@@ -63,8 +73,16 @@ func (m *OS) renderSessionSwitcher() (string, overlay.Geometry, []overlayRowHit)
+@@ -63,8 +78,16 @@ func (m *OS) renderSessionSwitcher() (string, overlay.Geometry, []overlayRowHit)
  		Scroll:     &m.SessionSwitcherScroll,
  		EmptyMsg:   empty,
  		EmptyHint:  emptyHint,
@@ -3547,9 +3778,9 @@ index dc361bae653914c973c80a1be5287e0587564a14..1f1d2952cff42e694d7df980d857e74b
  			return m.sessionSwitcherRow(filtered[i], selected, rowBg, pal, width)
  		},
  	})
-diff --git c/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
+diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
 index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c4e955a7a 100644
---- c/internal/app/render_sidebar.go
+--- i/internal/app/render_sidebar.go
 +++ w/internal/app/render_sidebar.go
 @@ -134,6 +134,18 @@ const (
  	// Activating it opens or shuts the rows. It carries the pane's session
@@ -4954,9 +5185,9 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +	return m.sidebarComposeRow(gutter,
  		sidebarGlyph(e.State, e.DoneSeen, e.Subagents, rowBg, pal, &m.Settings), body, right, cw, rowBg), lipgloss.Width(body)
  }
-diff --git c/internal/app/render_sidebar_files.go w/internal/app/render_sidebar_files.go
+diff --git i/internal/app/render_sidebar_files.go w/internal/app/render_sidebar_files.go
 index d112791fcab406f26b8a278c188d0e08a3c27df9..66341a154540f136be36c8180602dedeb37f6933 100644
---- c/internal/app/render_sidebar_files.go
+--- i/internal/app/render_sidebar_files.go
 +++ w/internal/app/render_sidebar_files.go
 @@ -164,7 +164,7 @@ func (m *OS) sidebarFilesHeaderCd(cw int, pal overlay.Palette, hoverX int, curso
  	}
@@ -5007,9 +5238,9 @@ index d112791fcab406f26b8a278c188d0e08a3c27df9..66341a154540f136be36c8180602dede
  }
  
  // shortenHome writes a path under the home directory as ~/..., which is how the
-diff --git c/internal/app/render_splash_test.go w/internal/app/render_splash_test.go
+diff --git i/internal/app/render_splash_test.go w/internal/app/render_splash_test.go
 index fff3937c9e9ccd19ad170040d90d08f23616c920..082c0a526a9ce6d4dd5bc022bcf1ccdd4af27c53 100644
---- c/internal/app/render_splash_test.go
+--- i/internal/app/render_splash_test.go
 +++ w/internal/app/render_splash_test.go
 @@ -3,6 +3,7 @@ package app
  import (
@@ -5052,9 +5283,9 @@ index fff3937c9e9ccd19ad170040d90d08f23616c920..082c0a526a9ce6d4dd5bc022bcf1ccdd
  // TestSplashCentersInContentRegion pins the splash to the region the panes get,
  // not the whole screen. Centering on the screen drew the box across the rail's
  // reserved columns and left it visibly off-centre in the part of the desktop
-diff --git c/internal/app/session.go w/internal/app/session.go
+diff --git i/internal/app/session.go w/internal/app/session.go
 index 0e1bcdce2f3faec5a6b7232f3e76fb3a5a432463..c6cda3729c631ab8c8f0a1a78500037be7bcf7b7 100644
---- c/internal/app/session.go
+--- i/internal/app/session.go
 +++ w/internal/app/session.go
 @@ -798,7 +798,7 @@ func (m *OS) ApplyStateSyncFrom(state *session.SessionState, sourceID string) er
  	// terminal to reach. Closing is the daemon's job, so the drop back to window
@@ -5065,9 +5296,9 @@ index 0e1bcdce2f3faec5a6b7232f3e76fb3a5a432463..c6cda3729c631ab8c8f0a1a78500037b
  	}
  
  	// Update workspace focus map
-diff --git c/internal/app/session_close.go w/internal/app/session_close.go
+diff --git i/internal/app/session_close.go w/internal/app/session_close.go
 index 5a389c8144d01219aa046bda5a9fa0ed99e1dd40..cad5b3eb9c6b27ab85ac55ec035bebdbc7395ada 100644
---- c/internal/app/session_close.go
+--- i/internal/app/session_close.go
 +++ w/internal/app/session_close.go
 @@ -299,7 +299,7 @@ func (m *OS) SessionCloseActivate(idx int) tea.Cmd {
  		// The pane is found again by its ID: it may have moved in
@@ -5078,9 +5309,9 @@ index 5a389c8144d01219aa046bda5a9fa0ed99e1dd40..cad5b3eb9c6b27ab85ac55ec035bebdb
  		}
  		return nil
  	}
-diff --git c/internal/app/session_kill_test.go w/internal/app/session_kill_test.go
+diff --git i/internal/app/session_kill_test.go w/internal/app/session_kill_test.go
 index 8818bdb52d40c7dda61d6079b8d02bdee4cf8d2d..f5aef1fb6a1a1fbd424d91264c6b05811b43d630 100644
---- c/internal/app/session_kill_test.go
+--- i/internal/app/session_kill_test.go
 +++ w/internal/app/session_kill_test.go
 @@ -120,3 +120,41 @@ func TestTheNextSessionIsAnIdentity(t *testing.T) {
  		}
@@ -5124,9 +5355,9 @@ index 8818bdb52d40c7dda61d6079b8d02bdee4cf8d2d..f5aef1fb6a1a1fbd424d91264c6b0581
 +		}
 +	}
 +}
-diff --git c/internal/app/session_labels.go w/internal/app/session_labels.go
+diff --git i/internal/app/session_labels.go w/internal/app/session_labels.go
 index 0ad99687cff7e0ac3991d53215f1830984b06e27..cf3c5923e2b829540511c44dd3ac592ac337f837 100644
---- c/internal/app/session_labels.go
+--- i/internal/app/session_labels.go
 +++ w/internal/app/session_labels.go
 @@ -2,6 +2,7 @@ package app
  
@@ -5171,9 +5402,9 @@ index 0ad99687cff7e0ac3991d53215f1830984b06e27..cf3c5923e2b829540511c44dd3ac592a
  	if !session.IsGeneratedSessionName(name) {
  		dir = ""
  	}
-diff --git c/internal/app/session_switcher.go w/internal/app/session_switcher.go
+diff --git i/internal/app/session_switcher.go w/internal/app/session_switcher.go
 index e064b4aa49941966d8192c2b25b4660baf2cc559..b835ffbcbc631ddcca361f1b03140cdba4a4f4d8 100644
---- c/internal/app/session_switcher.go
+--- i/internal/app/session_switcher.go
 +++ w/internal/app/session_switcher.go
 @@ -61,6 +61,7 @@ func (m *OS) RefreshSessionList() []sessiontree.Node {
  // daemon round trip. The cache behind it is refreshed off the UI goroutine, at
@@ -5194,9 +5425,43 @@ index e064b4aa49941966d8192c2b25b4660baf2cc559..b835ffbcbc631ddcca361f1b03140cdb
  		out = append(out, n)
  	}
  	return out
-diff --git c/internal/app/session_tree.go w/internal/app/session_tree.go
+diff --git i/internal/app/session_switcher_render_test.go w/internal/app/session_switcher_render_test.go
+index bf0f3a0a0d68113a09b2cc6bb87541cf91e1f7cd..779da824510ff9d203e6af51cfa9a163293270c1 100644
+--- i/internal/app/session_switcher_render_test.go
++++ w/internal/app/session_switcher_render_test.go
+@@ -17,6 +17,29 @@ func switcherOS(items []sessiontree.Node) *OS {
+ 	return m
+ }
+ 
++func TestTopbarProjectDropdownIsCompactWithoutSidebar(t *testing.T) {
++	m := switcherOS(switcherItems())
++	m.Width, m.Height = 100, 40
++	m.Settings.SidebarEnabled = false
++	m.Settings.SidebarPosition = "hidden"
++	m.sidebarAttention.projectPickerOpen = true
++	_, geo, rows := m.renderSessionSwitcher()
++	if geo.InnerWidth != 30 || len(rows) != len(m.SessionSwitcherItems) {
++		t.Fatalf("project dropdown width=%d, hit rows=%d", geo.InnerWidth, len(rows))
++	}
++	m.sidebarAttention.projectPickerOpen = false
++	_, geo, _ = m.renderSessionSwitcher()
++	if geo.InnerWidth != sessionSwitcherWidth {
++		t.Fatalf("ordinary session switcher width=%d, want %d", geo.InnerWidth, sessionSwitcherWidth)
++	}
++	m.sidebarAttention.projectPickerOpen = true
++	m.Width = 24
++	_, geo, _ = m.renderSessionSwitcher()
++	if geo.Width > m.Width {
++		t.Fatalf("project dropdown overflows narrow screen: panel=%d screen=%d", geo.Width, m.Width)
++	}
++}
++
+ func switcherItems() []sessiontree.Node {
+ 	return []sessiontree.Node{
+ 		sessiontree.BuildSession(sessiontree.SessionInput{
+diff --git i/internal/app/session_tree.go w/internal/app/session_tree.go
 index 8919d8bbeca36c51d593ebe3384a9fa29feb33fa..432a2e35bed975633a56205bdfabd39cf5bd8248 100644
---- c/internal/app/session_tree.go
+--- i/internal/app/session_tree.go
 +++ w/internal/app/session_tree.go
 @@ -76,23 +76,25 @@ func (m *OS) currentSessionInput() sessiontree.SessionInput {
  		state, seen := m.railAgentState(w.ID, w.AgentState, w.AgentCompletionSeq)
@@ -5294,9 +5559,9 @@ index 8919d8bbeca36c51d593ebe3384a9fa29feb33fa..432a2e35bed975633a56205bdfabd39c
  		Space:            client.SessionSpace(name),
  		Windows:          windows,
  	}
-diff --git c/internal/app/settings.go w/internal/app/settings.go
+diff --git i/internal/app/settings.go w/internal/app/settings.go
 index ba2243f42243b5d95fc7e68e4240cd61407c9664..d08faf7d1685b6bb2706ae80898bdccc4e506226 100644
---- c/internal/app/settings.go
+--- i/internal/app/settings.go
 +++ w/internal/app/settings.go
 @@ -149,6 +149,7 @@ func clampInt(v, lo, hi int) int {
  // immediately; when retile is set it also reflows the tiling layout for
@@ -5349,9 +5614,9 @@ index ba2243f42243b5d95fc7e68e4240cd61407c9664..d08faf7d1685b6bb2706ae80898bdccc
  		}),
  	}
  
-diff --git c/internal/app/settings_color.go w/internal/app/settings_color.go
+diff --git i/internal/app/settings_color.go w/internal/app/settings_color.go
 index cf431ef38e3276eae63210b28059320cc2781972..d2b98de993fde765cbc7312019a3e9e3d7ca0dd1 100644
---- c/internal/app/settings_color.go
+--- i/internal/app/settings_color.go
 +++ w/internal/app/settings_color.go
 @@ -114,6 +114,16 @@ var colorSettings = []colorSetting{
  		backgroundFollowsAll,
@@ -5370,9 +5635,9 @@ index cf431ef38e3276eae63210b28059320cc2781972..d2b98de993fde765cbc7312019a3e9e3
  	backgroundSetting("appearance.desktop_background", "Desktop background",
  		"Behind and between panes: the gaps, the space around floating panes, an empty workspace",
  		backgroundFollowsAll,
-diff --git c/internal/app/settings_registry.go w/internal/app/settings_registry.go
+diff --git i/internal/app/settings_registry.go w/internal/app/settings_registry.go
 index 04a8d1bcc61e36548b5d2924b018ad70aebe0daa..94f02e22dde25155ad894fe4414e210183bd3140 100644
---- c/internal/app/settings_registry.go
+--- i/internal/app/settings_registry.go
 +++ w/internal/app/settings_registry.go
 @@ -121,6 +121,9 @@ var settingLabels = map[string]string{
  	"launcher.gui_command":                "Launcher GUI command",
@@ -5384,7 +5649,7 @@ index 04a8d1bcc61e36548b5d2924b018ad70aebe0daa..94f02e22dde25155ad894fe4414e2101
  	"paste_buffers.limit":                 "Paste buffers to keep",
  	"paste_buffers.max_kb":                "Paste buffer size limit",
  
-diff --git c/internal/app/shared_border_hidden_sidebar_test.go w/internal/app/shared_border_hidden_sidebar_test.go
+diff --git i/internal/app/shared_border_hidden_sidebar_test.go w/internal/app/shared_border_hidden_sidebar_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..cf45776bbf17cbe64f2523aed9fa89703a43d412
 --- /dev/null
@@ -5459,7 +5724,7 @@ index 0000000000000000000000000000000000000000..cf45776bbf17cbe64f2523aed9fa8970
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_agent_focus.go w/internal/app/sidebar_agent_focus.go
+diff --git i/internal/app/sidebar_agent_focus.go w/internal/app/sidebar_agent_focus.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..2fa1aa22b54115c7f4fa8298d3585011d1c27808
 --- /dev/null
@@ -5550,7 +5815,7 @@ index 0000000000000000000000000000000000000000..2fa1aa22b54115c7f4fa8298d3585011
 +func (m *OS) sidebarAgentWasLastFocused(e sidebarAgentEntry) bool {
 +	return e.Host == "" && e.WindowID != "" && m.sidebarAgentFocus.windows[m.sidebarAgentFocusKey(e.SessionID)] == e.WindowID
 +}
-diff --git c/internal/app/sidebar_agent_focus_restore_test.go w/internal/app/sidebar_agent_focus_restore_test.go
+diff --git i/internal/app/sidebar_agent_focus_restore_test.go w/internal/app/sidebar_agent_focus_restore_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..a7ee12806651a51bb4856612a8cddb78596a412a
 --- /dev/null
@@ -5669,7 +5934,7 @@ index 0000000000000000000000000000000000000000..a7ee12806651a51bb4856612a8cddb78
 +		t.Fatal("restoration overrode the currently focused agent")
 +	}
 +}
-diff --git c/internal/app/sidebar_agent_focus_test.go w/internal/app/sidebar_agent_focus_test.go
+diff --git i/internal/app/sidebar_agent_focus_test.go w/internal/app/sidebar_agent_focus_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..ecc68524662e199aa278d498308698c61b26ee99
 --- /dev/null
@@ -5862,7 +6127,7 @@ index 0000000000000000000000000000000000000000..ecc68524662e199aa278d498308698c6
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_agent_presentation_test.go w/internal/app/sidebar_agent_presentation_test.go
+diff --git i/internal/app/sidebar_agent_presentation_test.go w/internal/app/sidebar_agent_presentation_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..1dca959a9d8b834f0dd74b01242cc7984297e75e
 --- /dev/null
@@ -5968,9 +6233,9 @@ index 0000000000000000000000000000000000000000..1dca959a9d8b834f0dd74b01242cc798
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_agents.go w/internal/app/sidebar_agents.go
+diff --git i/internal/app/sidebar_agents.go w/internal/app/sidebar_agents.go
 index 9e4ce6121c87943ca599adf7872bcfbac8a64ca3..3909517f7a795a6e582eefa885a9e521637eee1b 100644
---- c/internal/app/sidebar_agents.go
+--- i/internal/app/sidebar_agents.go
 +++ w/internal/app/sidebar_agents.go
 @@ -281,12 +281,12 @@ func (m *OS) sidebarAgentFoldRow(e sidebarAgentEntry, cw int, pal overlay.Palett
  	if st.lit() {
@@ -5987,7 +6252,7 @@ index 9e4ce6121c87943ca599adf7872bcfbac8a64ca3..3909517f7a795a6e582eefa885a9e521
 -		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(sidebarNameAvail(cw, 0)-(indent-sidebarNameCol), 1))), cw, rowBg)
 +		sidebarStyle(rowBg, fg).Render(overlay.Truncate(text, max(m.sidebarNameAvail(cw, 0)-(indent-m.sidebarNameColumn()), 1))), cw, rowBg)
  }
-diff --git c/internal/app/sidebar_attention.go w/internal/app/sidebar_attention.go
+diff --git i/internal/app/sidebar_attention.go w/internal/app/sidebar_attention.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..d7f0e19d958f10ee157169b0c3b2ebe4790f5e17
 --- /dev/null
@@ -6207,7 +6472,7 @@ index 0000000000000000000000000000000000000000..d7f0e19d958f10ee157169b0c3b2ebe4
 +	}
 +	m.sidebarStripRows = append(m.sidebarStripRows, note)
 +}
-diff --git c/internal/app/sidebar_attention_model.go w/internal/app/sidebar_attention_model.go
+diff --git i/internal/app/sidebar_attention_model.go w/internal/app/sidebar_attention_model.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..56c5a72815d1988aa3f8d7bb35ff112d320fa7a9
 --- /dev/null
@@ -6275,12 +6540,12 @@ index 0000000000000000000000000000000000000000..56c5a72815d1988aa3f8d7bb35ff112d
 +	}
 +	return state, seen
 +}
-diff --git c/internal/app/sidebar_attention_model_test.go w/internal/app/sidebar_attention_model_test.go
+diff --git i/internal/app/sidebar_attention_model_test.go w/internal/app/sidebar_attention_model_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..5c85f4e5d6204e916d67f41f678a2042fc129fac
+index 0000000000000000000000000000000000000000..8d56b1881e5f9dd9ea4aef03d7f74ccb6bcb77c4
 --- /dev/null
 +++ w/internal/app/sidebar_attention_model_test.go
-@@ -0,0 +1,294 @@
+@@ -0,0 +1,275 @@
 +package app
 +
 +import (
@@ -6482,39 +6747,20 @@ index 0000000000000000000000000000000000000000..5c85f4e5d6204e916d67f41f678a2042
 +		}},
 +	})
 +	agents := append(m.agentEntries(tree.Sessions), sidebarAgentEntry{SessionID: "busy", WindowID: "active", Title: "working task", ReportedState: "working"})
-+	rows := append(m.sidebarOverviewRows(tree.Sessions, agents), m.sidebarAttentionProjectsRows(tree.Sessions)...)
-+	projects, lastContent, repositories, projectAgents, workingContext := -1, -1, 0, 0, 0
-+	for i, row := range rows {
-+		if row.Kind == sidebarOverviewAttentionProjects {
-+			projects = i
-+			lastContent = i
-+			continue
++	workingContext := 0
++	for _, row := range m.sidebarOverviewRows(tree.Sessions, agents) {
++		if row.Kind == sidebarOverviewAttentionContext && row.Agent.WindowID == "active" {
++			workingContext++
 +		}
-+		if projects < 0 {
-+			if row.Kind == sidebarOverviewAttentionContext && row.Agent.WindowID == "active" {
-+				workingContext++
-+			}
-+			continue
-+		}
-+		if row.Kind == sidebarOverviewAttentionContext {
-+			t.Fatal("Projects retained repeated agent context")
-+		}
-+		if row.Kind == sidebarOverviewGap {
-+			continue
-+		}
-+		if row.Kind == sidebarOverviewProjectPicker {
-+			if repositories > 0 && i-lastContent-1 != 0 {
-+				t.Fatalf("between repositories: %d blank rows", i-lastContent-1)
-+			}
-+			repositories++
-+		}
-+		if row.Kind == sidebarOverviewAttentionAgent {
-+			projectAgents++
-+		}
-+		lastContent = i
 +	}
-+	if projects < 0 || repositories != 1 || projectAgents != 0 || workingContext != 1 {
-+		t.Fatalf("bad projection: projects=%d repos=%d agents=%d working contexts=%d", projects, repositories, projectAgents, workingContext)
++	projects := m.sidebarAttentionProjectsRows(tree.Sessions)
++	if len(projects) == 0 || projects[0].Kind != sidebarOverviewProjectPicker || workingContext != 1 {
++		t.Fatalf("bad projection: projects=%+v working contexts=%d", projects, workingContext)
++	}
++	for _, row := range projects {
++		if row.Kind != sidebarOverviewProjectPicker && row.Kind != sidebarOverviewProjectWorkspace {
++			t.Fatalf("project picker retained a header or agent context: %+v", row)
++		}
 +	}
 +}
 +
@@ -6575,12 +6821,12 @@ index 0000000000000000000000000000000000000000..5c85f4e5d6204e916d67f41f678a2042
 +		t.Fatal("an explicit drag retained the frozen ordering")
 +	}
 +}
-diff --git c/internal/app/sidebar_attention_render_test.go w/internal/app/sidebar_attention_render_test.go
+diff --git i/internal/app/sidebar_attention_render_test.go w/internal/app/sidebar_attention_render_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..83aa70557b872a434b19a4c835b7f7fd6e267c82
+index 0000000000000000000000000000000000000000..becd5ccf4187ecc07b9d72d97cdb29aaf6e76930
 --- /dev/null
 +++ w/internal/app/sidebar_attention_render_test.go
-@@ -0,0 +1,276 @@
+@@ -0,0 +1,300 @@
 +package app
 +
 +import (
@@ -6588,8 +6834,11 @@ index 0000000000000000000000000000000000000000..83aa70557b872a434b19a4c835b7f7fd
 +	"strings"
 +	"testing"
 +
++	"charm.land/lipgloss/v2"
 +	"github.com/Gaurav-Gosain/tuios/internal/config"
 +	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	"github.com/Gaurav-Gosain/tuios/internal/theme"
++	uv "github.com/charmbracelet/ultraviolet"
 +)
 +
 +func attentionRenderOS(t *testing.T, width, height int) (*OS, sessiontree.Tree) {
@@ -6610,17 +6859,38 @@ index 0000000000000000000000000000000000000000..83aa70557b872a434b19a4c835b7f7fd
 +
 +func TestSidebarAttentionRendersGroupsAndSharedContextTargets(t *testing.T) {
 +	m, tree := attentionRenderOS(t, 120, 40)
++	m.UserConfig = config.DefaultConfig()
++	repository := &m.UserConfig.Appearance.Sidebar.UI.Repository
++	repository.Foreground, repository.ActiveForeground = "bright_magenta", "bright_magenta"
++	repository.Bold, repository.ActiveBold = new(true), new(true)
 +	plain := railPlain(t, m, tree)
 +	text := strings.Join(plain, "\n")
-+	for _, title := range []string{"projects", "refactor", "build", "server"} {
++	for _, title := range []string{"refactor", "build", "server"} {
 +		if !strings.Contains(text, title) {
 +			t.Fatalf("missing %q:\n%s", title, text)
 +		}
 +	}
-+	for _, heading := range []string{"RESPOND", "WORKING", "REVIEW", "YOUR TURN", "ACTIVITY"} {
++	for _, heading := range []string{"projects", "RESPOND", "WORKING", "REVIEW", "YOUR TURN", "ACTIVITY"} {
 +		if strings.Contains(text, heading) {
 +			t.Fatalf("activity list retained heading %q", heading)
 +		}
++	}
++	row := styledRow(t, railStyled(t, m, tree), "main")
++	canvas := uv.NewScreenBuffer(lipgloss.Width(row), 1)
++	uv.NewStyledString(row).Draw(canvas, canvas.Bounds())
++	col := strings.Index(stripANSIForTrace(row), "main")
++	pal := m.groundUI()
++	cell := canvas.CellAt(col, 0)
++	if cell == nil || cell.Style.Attrs&uv.AttrBold == 0 || !samePaneColor(cell.Style.Fg, theme.ConfigColorOn("bright_magenta", &pal)) || cell.Style.Bg != nil {
++		t.Fatalf("project name is not bold magenta without a fill: %+v", cell)
++	}
++	arrow := strings.Index(stripANSIForTrace(row), "▼")
++	if arrow < 0 {
++		t.Fatal("session picker is missing its downward triangle")
++	}
++	arrowCell := canvas.CellAt(lipgloss.Width(stripANSIForTrace(row)[:arrow]), 0)
++	if arrowCell == nil || arrowCell.Style.Attrs&uv.AttrBold == 0 || !samePaneColor(arrowCell.Style.Fg, theme.ConfigColorOn("bright_magenta", &pal)) {
++		t.Fatalf("dropdown arrow is not bold magenta: %+v", arrowCell)
 +	}
 +	if strings.Contains(text, "nvim") || strings.Contains(text, "docs") {
 +		t.Fatalf("closed project selector exposed other projects or panes:\n%s", text)
@@ -6857,9 +7127,9 @@ index 0000000000000000000000000000000000000000..83aa70557b872a434b19a4c835b7f7fd
 +		t.Fatal("mode switch did not rebuild the attention projection")
 +	}
 +}
-diff --git c/internal/app/sidebar_cache.go w/internal/app/sidebar_cache.go
+diff --git i/internal/app/sidebar_cache.go w/internal/app/sidebar_cache.go
 index e72a9fd527af8949740f755acdcdf52d7c09f259..fcf0ca0577dce0f59e82bf413c02da22c942d506 100644
---- c/internal/app/sidebar_cache.go
+--- i/internal/app/sidebar_cache.go
 +++ w/internal/app/sidebar_cache.go
 @@ -3,6 +3,8 @@ package app
  import (
@@ -6974,9 +7244,9 @@ index e72a9fd527af8949740f755acdcdf52d7c09f259..fcf0ca0577dce0f59e82bf413c02da22
  
  	return h
  }
-diff --git c/internal/app/sidebar_cache_test.go w/internal/app/sidebar_cache_test.go
+diff --git i/internal/app/sidebar_cache_test.go w/internal/app/sidebar_cache_test.go
 index 8a6db1aff2acca48b65d8fd8c9362695078ff6a7..c4bcb9ea33acab3bec32756f5a75365bb67b063d 100644
---- c/internal/app/sidebar_cache_test.go
+--- i/internal/app/sidebar_cache_test.go
 +++ w/internal/app/sidebar_cache_test.go
 @@ -191,9 +191,8 @@ func TestSidebarCacheFollowsForeignCache(t *testing.T) {
  // frame is served from the cache, so a switch that moves the rail without
@@ -6990,7 +7260,7 @@ index 8a6db1aff2acca48b65d8fd8c9362695078ff6a7..c4bcb9ea33acab3bec32756f5a75365b
  func TestSidebarSignatureFollowsTheGlyphSet(t *testing.T) {
  	withSidebar(t, true, "left", config.SidebarDefaultWidth)
  	prevASCII, prevStyle := config.Global.UseASCIIOnly, config.Global.BorderStyle
-diff --git c/internal/app/sidebar_checkout.go w/internal/app/sidebar_checkout.go
+diff --git i/internal/app/sidebar_checkout.go w/internal/app/sidebar_checkout.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..cf989de747a2eb8afc7beadf166c293a78f6d259
 --- /dev/null
@@ -7193,7 +7463,7 @@ index 0000000000000000000000000000000000000000..cf989de747a2eb8afc7beadf166c293a
 +	}
 +	return ref
 +}
-diff --git c/internal/app/sidebar_checkout_test.go w/internal/app/sidebar_checkout_test.go
+diff --git i/internal/app/sidebar_checkout_test.go w/internal/app/sidebar_checkout_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..93ea1507f8325738ac7be7b61b08d7516b9ec808
 --- /dev/null
@@ -7375,9 +7645,9 @@ index 0000000000000000000000000000000000000000..93ea1507f8325738ac7be7b61b08d751
 +		t.Fatal("hidden sidebar kept polling")
 +	}
 +}
-diff --git c/internal/app/sidebar_custom.go w/internal/app/sidebar_custom.go
+diff --git i/internal/app/sidebar_custom.go w/internal/app/sidebar_custom.go
 index 38e5351c9480abd3685a3b59ad0a1faa5fb0c657..98cc0229c669957421f9bea286b61924c455f3f5 100644
---- c/internal/app/sidebar_custom.go
+--- i/internal/app/sidebar_custom.go
 +++ w/internal/app/sidebar_custom.go
 @@ -117,8 +117,9 @@ func (m *OS) railCustomRows() []string {
  // left open cannot run into the padding or the row below.
@@ -7422,7 +7692,7 @@ index 38e5351c9480abd3685a3b59ad0a1faa5fb0c657..98cc0229c669957421f9bea286b61924
  	if m.UserConfig != nil {
  		cfg := m.UserConfig.Appearance.Sidebar.Left
  		if m.legacySidebarEdge() == sidebarLeft {
-diff --git c/internal/app/sidebar_dock.go w/internal/app/sidebar_dock.go
+diff --git i/internal/app/sidebar_dock.go w/internal/app/sidebar_dock.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..646c03483cf52e5f5da1548b1d9166660bada45d
 --- /dev/null
@@ -7938,7 +8208,7 @@ index 0000000000000000000000000000000000000000..646c03483cf52e5f5da1548b1d916666
 +		m.jumpToNotifTarget(*visible.Target)
 +	}
 +}
-diff --git c/internal/app/sidebar_dock_test.go w/internal/app/sidebar_dock_test.go
+diff --git i/internal/app/sidebar_dock_test.go w/internal/app/sidebar_dock_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..2ea46720f3b1eaafe389a1af264716b577173a93
 --- /dev/null
@@ -8435,9 +8705,9 @@ index 0000000000000000000000000000000000000000..2ea46720f3b1eaafe389a1af264716b5
 +		t.Fatalf("dock token did not survive config parsing: %+v", parsed)
 +	}
 +}
-diff --git c/internal/app/sidebar_edge.go w/internal/app/sidebar_edge.go
+diff --git i/internal/app/sidebar_edge.go w/internal/app/sidebar_edge.go
 index 5ede96d2d29b34d3eb2db4daa71db0209eff1d49..e539396232cf9292fadc7853e21e2da3e3749e34 100644
---- c/internal/app/sidebar_edge.go
+--- i/internal/app/sidebar_edge.go
 +++ w/internal/app/sidebar_edge.go
 @@ -40,10 +40,21 @@ func sidebarEdgeX(edge sidebarEdge, w, screenWidth int) int {
  	return 0
@@ -8462,7 +8732,7 @@ index 5ede96d2d29b34d3eb2db4daa71db0209eff1d49..e539396232cf9292fadc7853e21e2da3
  		return false
  	}
  	edge := sidebarLeft
-diff --git c/internal/app/sidebar_edge_style_test.go w/internal/app/sidebar_edge_style_test.go
+diff --git i/internal/app/sidebar_edge_style_test.go w/internal/app/sidebar_edge_style_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..1d635db3a014436f048cac7bc524e4bba8b98572
 --- /dev/null
@@ -8527,9 +8797,9 @@ index 0000000000000000000000000000000000000000..1d635db3a014436f048cac7bc524e4bb
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_editor.go w/internal/app/sidebar_editor.go
+diff --git i/internal/app/sidebar_editor.go w/internal/app/sidebar_editor.go
 index 94a6e733265a7382f030c2006e860b55b1cf52fc..8e9b28054d91ddd4ec441bbebfe6ac5af1b13262 100644
---- c/internal/app/sidebar_editor.go
+--- i/internal/app/sidebar_editor.go
 +++ w/internal/app/sidebar_editor.go
 @@ -239,6 +239,15 @@ func (m *OS) SectionEditorToggle() tea.Cmd {
  		}
@@ -8557,9 +8827,9 @@ index 94a6e733265a7382f030c2006e860b55b1cf52fc..8e9b28054d91ddd4ec441bbebfe6ac5a
  }
  
  // commitSectionString writes one layout string, applies it and hands back the
-diff --git c/internal/app/sidebar_editor_test.go w/internal/app/sidebar_editor_test.go
+diff --git i/internal/app/sidebar_editor_test.go w/internal/app/sidebar_editor_test.go
 index a34b66d1333137c00b7236ba15a4f59e7c362796..0428fc043939bf85d3c6f8be6cf27f70c416e98b 100644
---- c/internal/app/sidebar_editor_test.go
+--- i/internal/app/sidebar_editor_test.go
 +++ w/internal/app/sidebar_editor_test.go
 @@ -45,6 +45,21 @@ func selectRow(t *testing.T, m *OS, name string, kind railRowKind) {
  // Negative control, confirmed red: drop the sectionCount guard from
@@ -8583,9 +8853,9 @@ index a34b66d1333137c00b7236ba15a4f59e7c362796..0428fc043939bf85d3c6f8be6cf27f70
  func TestSectionEditorKeepsOneSection(t *testing.T) {
  	m := editorOS(t)
  	for _, name := range []string{"files", "terminals", "agents"} {
-diff --git c/internal/app/sidebar_files.go w/internal/app/sidebar_files.go
+diff --git i/internal/app/sidebar_files.go w/internal/app/sidebar_files.go
 index d8f144b3c5e7bab6624e464d5a700ef387bd5c76..7179c135ca0ff31e4645f91a345176f697154628 100644
---- c/internal/app/sidebar_files.go
+--- i/internal/app/sidebar_files.go
 +++ w/internal/app/sidebar_files.go
 @@ -12,6 +12,7 @@ import (
  
@@ -8768,9 +9038,9 @@ index d8f144b3c5e7bab6624e464d5a700ef387bd5c76..7179c135ca0ff31e4645f91a345176f6
  		return false
  	}
  	m.filesView.Show = 1
-diff --git c/internal/app/sidebar_git.go w/internal/app/sidebar_git.go
+diff --git i/internal/app/sidebar_git.go w/internal/app/sidebar_git.go
 index 0dd36a2ec6b814e165fad2062b8b9650504eb05c..9bb20f12a17da90f173fc1091d57e6ae2ae8231b 100644
---- c/internal/app/sidebar_git.go
+--- i/internal/app/sidebar_git.go
 +++ w/internal/app/sidebar_git.go
 @@ -13,20 +13,14 @@ import (
  	"github.com/Gaurav-Gosain/tuios/internal/overlay"
@@ -8957,9 +9227,9 @@ index 0dd36a2ec6b814e165fad2062b8b9650504eb05c..9bb20f12a17da90f173fc1091d57e6ae
  }
  
  // gitDivergenceToken colours the two halves of the figure separately: commits
-diff --git c/internal/app/sidebar_host_agents_test.go w/internal/app/sidebar_host_agents_test.go
+diff --git i/internal/app/sidebar_host_agents_test.go w/internal/app/sidebar_host_agents_test.go
 index 8f9be0f5c5f9c8485909c08b2acffd3984ce60f1..aebf52abbcfd824c87df6dcbd0542d0179bc3f92 100644
---- c/internal/app/sidebar_host_agents_test.go
+--- i/internal/app/sidebar_host_agents_test.go
 +++ w/internal/app/sidebar_host_agents_test.go
 @@ -83,7 +83,7 @@ func TestAMachineThatDidNotAnswerDrawsNoGlyph(t *testing.T) {
  
@@ -8970,9 +9240,9 @@ index 8f9be0f5c5f9c8485909c08b2acffd3984ce60f1..aebf52abbcfd824c87df6dcbd0542d01
  
  	if strings.Contains(row, agentStateIndicator("needs_input")) {
  		t.Errorf("a machine that is not answering still draws an alarm: %q", row)
-diff --git c/internal/app/sidebar_hosts.go w/internal/app/sidebar_hosts.go
+diff --git i/internal/app/sidebar_hosts.go w/internal/app/sidebar_hosts.go
 index 5332bb69e43723b82aaf59fb4118c25b04335827..dbd62529fccffc3ef909019e40fc474a68054c01 100644
---- c/internal/app/sidebar_hosts.go
+--- i/internal/app/sidebar_hosts.go
 +++ w/internal/app/sidebar_hosts.go
 @@ -729,6 +729,7 @@ func (m *OS) SidebarHostCollapsed(host string) bool {
  // attached session is in is allowed: the session keeps running and the
@@ -9083,9 +9353,9 @@ index 5332bb69e43723b82aaf59fb4118c25b04335827..dbd62529fccffc3ef909019e40fc474a
 -	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
 +	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
  }
-diff --git c/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
+diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
 index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0beef7f8d 100644
---- c/internal/app/sidebar_keyboard.go
+--- i/internal/app/sidebar_keyboard.go
 +++ w/internal/app/sidebar_keyboard.go
 @@ -5,6 +5,7 @@ import (
  	"slices"
@@ -9265,9 +9535,9 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  		m.ShowNotification("The screen is too narrow for a wider rail", "info", m.Settings.NotificationDuration)
  		return
  	}
-diff --git c/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
-index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8352d4832 100644
---- c/internal/app/sidebar_layout.go
+diff --git i/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
+index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff7864a7fc03 100644
+--- i/internal/app/sidebar_layout.go
 +++ w/internal/app/sidebar_layout.go
 @@ -51,6 +51,22 @@ import (
  // lines than its rows can fill and the total is never more than the rail has,
@@ -9276,7 +9546,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8
 +const sidebarFilesVisibleLimit = 15
 +
 +func sidebarPinnedBlockStart(plans []sidebarSectionPlan, pinned sidebarSection) sidebarSection {
-+	block := [...]sidebarSection{sidebarSectionProjects, sidebarSectionFiles, sidebarSectionGit}
++	block := [...]sidebarSection{sidebarSectionFiles, sidebarSectionGit}
 +	if len(plans) < len(block) || pinned != block[len(block)-1] {
 +		return pinned
 +	}
@@ -9344,7 +9614,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8
 +	plans, has := sidebarLayoutFor(s.SidebarSections)
 +	if s.SidebarOverviewMode == config.SidebarOverviewAttention && has[sidebarSectionOverview] {
 +		index := slices.IndexFunc(plans, func(plan sidebarSectionPlan) bool { return plan.Section == sidebarSectionOverview })
-+		plans = slices.Insert(slices.Clone(plans), index+1, sidebarSectionPlan{Section: sidebarSectionProjects})
++		plans = slices.Insert(slices.Clone(plans), index, sidebarSectionPlan{Section: sidebarSectionProjects})
 +	}
  	return plans
  }
@@ -9358,7 +9628,17 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8
  	return has[section]
  }
  
-@@ -413,5 +437,7 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
+@@ -136,6 +160,9 @@ func sidebarLayoutHas(section sidebarSection, s *config.Settings) bool {
+ // bottom edge because a gap was asked for higher up would be a surprise nobody
+ // typed.
+ func sidebarLayoutPins(plans []sidebarSectionPlan) bool {
++	if len(plans) > 0 && plans[0].Section == sidebarSectionProjects && plans[len(plans)-1].Section == sidebarSectionOverview {
++		return false
++	}
+ 	return len(plans) > 1 && !plans[len(plans)-1].Spacer
+ }
+ 
+@@ -413,5 +440,7 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
  		sidebarSectionFiles:     &m.SidebarScrollF,
  		sidebarSectionGit:       &m.SidebarScrollG,
  		sidebarSectionCustom:    &m.SidebarScrollC,
@@ -9366,9 +9646,9 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..2abef3b5896001e7a5e845a4702cdab8
 +		sidebarSectionProjects:  &m.sidebarAttention.projectsScroll,
  	}
  }
-diff --git c/internal/app/sidebar_mouse.go w/internal/app/sidebar_mouse.go
+diff --git i/internal/app/sidebar_mouse.go w/internal/app/sidebar_mouse.go
 index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed55de8fba 100644
---- c/internal/app/sidebar_mouse.go
+--- i/internal/app/sidebar_mouse.go
 +++ w/internal/app/sidebar_mouse.go
 @@ -127,7 +127,8 @@ func (m *OS) applySidebarFlag(on bool) bool {
  		return false
@@ -9503,7 +9783,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  	case sidebarRowHost:
  		// A machine's header. Its menu says where the machine sits among the
  		// others, and the rows that move it act on the rail's cursor, so the
-diff --git c/internal/app/sidebar_overview.go w/internal/app/sidebar_overview.go
+diff --git i/internal/app/sidebar_overview.go w/internal/app/sidebar_overview.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..10a309007b28d7dd88f0743e2dd3273ae834a625
 --- /dev/null
@@ -9836,7 +10116,7 @@ index 0000000000000000000000000000000000000000..10a309007b28d7dd88f0743e2dd3273a
 +	}
 +	return session
 +}
-diff --git c/internal/app/sidebar_overview_rail_test.go w/internal/app/sidebar_overview_rail_test.go
+diff --git i/internal/app/sidebar_overview_rail_test.go w/internal/app/sidebar_overview_rail_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..ba59ba8c4c8737d8ed7e7bb35a8d0388a488b9b2
 --- /dev/null
@@ -9913,7 +10193,7 @@ index 0000000000000000000000000000000000000000..ba59ba8c4c8737d8ed7e7bb35a8d0388
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_overview_test.go w/internal/app/sidebar_overview_test.go
+diff --git i/internal/app/sidebar_overview_test.go w/internal/app/sidebar_overview_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..04be4917b6878a62e5b1266e64c87c5b3d821dad
 --- /dev/null
@@ -10441,12 +10721,12 @@ index 0000000000000000000000000000000000000000..04be4917b6878a62e5b1266e64c87c5b
 +		t.Fatalf("overview scroll did not swap independently: primary=%d secondary=%d", m.SidebarScrollO, m.secondaryRailView.scrollO)
 +	}
 +}
-diff --git c/internal/app/sidebar_projects.go w/internal/app/sidebar_projects.go
+diff --git i/internal/app/sidebar_projects.go w/internal/app/sidebar_projects.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..c5c5def8ecab1e319512cf2f041b3f025d2194f8
+index 0000000000000000000000000000000000000000..e318d309350d9bf4db89abd47558e5f4855e67c5
 --- /dev/null
 +++ w/internal/app/sidebar_projects.go
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,146 @@
 +package app
 +
 +import (
@@ -10454,6 +10734,8 @@ index 0000000000000000000000000000000000000000..c5c5def8ecab1e319512cf2f041b3f02
 +	"github.com/Gaurav-Gosain/tuios/internal/overlay"
 +	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
 +)
++
++const sidebarProjectDropdownGlyph = "▼"
 +
 +type sidebarProjectRowKey struct {
 +	kind      sidebarOverviewRowKind
@@ -10506,7 +10788,7 @@ index 0000000000000000000000000000000000000000..c5c5def8ecab1e319512cf2f041b3f02
 +			break
 +		}
 +	}
-+	rows := []sidebarOverviewRow{{Kind: sidebarOverviewAttentionProjects}, {Kind: sidebarOverviewProjectPicker, Node: current}}
++	rows := []sidebarOverviewRow{{Kind: sidebarOverviewProjectPicker, Node: current}}
 +	for _, tab := range m.buildDockWorkspaceTabs() {
 +		rows = append(rows, sidebarOverviewRow{Kind: sidebarOverviewProjectWorkspace, Node: current, Workspace: tab})
 +	}
@@ -10543,14 +10825,11 @@ index 0000000000000000000000000000000000000000..c5c5def8ecab1e319512cf2f041b3f02
 +	}
 +	style := m.sidebarUIResolved(sidebarUIRepository, active, pal, fg, bg, false, false)
 +	bg = style.rowBackground(bg)
-+	right := m.Settings.GetRailFoldShutGlyph()
-+	if m.sidebarAttention.projectPickerOpen {
-+		right = m.Settings.GetRailFoldOpenGlyph()
-+	}
++	right := sidebarProjectDropdownGlyph
 +	room := max(m.sidebarNameAvailIn(width, lipgloss.Width(right), 0), 1)
 +	name := style.render(truncateToWidth(m.sidebarProjectLabel(row.Node), room), room)
 +	blank := sidebarStyle(bg, nil).Render(" ")
-+	return m.sidebarComposeGroupRow(0, blank, blank, name, sidebarStyle(bg, fg).Render(right), width, bg)
++	return m.sidebarComposeGroupRow(0, blank, blank, name, sidebarStyle(bg, style.fg).Bold(true).Render(right), width, bg)
 +}
 +
 +func (m *OS) activateSidebarProjectRow(hit sidebarRowHit) bool {
@@ -10585,9 +10864,16 @@ index 0000000000000000000000000000000000000000..c5c5def8ecab1e319512cf2f041b3f02
 +		y = max(min(y, m.GetRenderHeight()-geo.Height), 0)
 +		return x, y, true
 +	}
++	for _, hit := range m.topbarHits {
++		if hit.action.kind == topbarActionProjectPicker {
++			x := max(min(hit.x1-geo.Width, m.GetRenderWidth()-geo.Width), 0)
++			y := max(min(hit.y+1, m.GetRenderHeight()-geo.Height), 0)
++			return x, y, true
++		}
++	}
 +	return 0, 0, false
 +}
-diff --git c/internal/app/sidebar_recent.go w/internal/app/sidebar_recent.go
+diff --git i/internal/app/sidebar_recent.go w/internal/app/sidebar_recent.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..6f6f4b09223f0bcd81da83889ba5550ac7471068
 --- /dev/null
@@ -10669,12 +10955,12 @@ index 0000000000000000000000000000000000000000..6f6f4b09223f0bcd81da83889ba5550a
 +	}
 +	return out
 +}
-diff --git c/internal/app/sidebar_recent_test.go w/internal/app/sidebar_recent_test.go
+diff --git i/internal/app/sidebar_recent_test.go w/internal/app/sidebar_recent_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e323e64ec
+index 0000000000000000000000000000000000000000..f66014e314d6461330732c0300234b02b915545c
 --- /dev/null
 +++ w/internal/app/sidebar_recent_test.go
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,261 @@
 +package app
 +
 +import (
@@ -10745,13 +11031,13 @@ index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e
 +func TestSidebarRecentProjectPlanAndNoAgentChildren(t *testing.T) {
 +	m, tree := attentionRenderOS(t, 120, 50)
 +	plans := sidebarLayoutPlans(&m.Settings)
-+	if len(plans) != 2 || plans[0].Section != sidebarSectionOverview || plans[1].Section != sidebarSectionProjects || !sidebarLayoutPins(plans) {
++	if len(plans) != 2 || plans[0].Section != sidebarSectionProjects || plans[1].Section != sidebarSectionOverview || sidebarLayoutPins(plans) {
 +		t.Fatalf("plans = %+v", plans)
 +	}
 +	m.sidebarAttentionBeforeCache()
 +	rows := m.sidebarAttentionProjectsRows(tree.Sessions)
 +	for _, row := range rows {
-+		if row.Kind != sidebarOverviewProjectPicker && row.Kind != sidebarOverviewProjectWorkspace && row.Kind != sidebarOverviewAttentionProjects {
++		if row.Kind != sidebarOverviewProjectPicker && row.Kind != sidebarOverviewProjectWorkspace {
 +			t.Fatalf("Projects exposed an agent row: %+v", row)
 +		}
 +	}
@@ -10761,7 +11047,7 @@ index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e
 +	}
 +}
 +
-+func TestSidebarRecentProjectsStayBottomPinned(t *testing.T) {
++func TestSidebarRecentProjectsStayAboveAgents(t *testing.T) {
 +	for _, height := range []int{20, 40, 60} {
 +		m, tree := attentionRenderOS(t, 120, height)
 +		lines := railPlain(t, m, tree)
@@ -10774,7 +11060,7 @@ index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e
 +				lastAgent = max(lastAgent, hit.Y1-1)
 +			}
 +		}
-+		if lastAgent < 0 || lastProject <= lastAgent || lastProject < m.sidebarTop()+len(lines)-4-sidebarAttentionProjectsBottomPadding {
++		if lastProject < 0 || lastAgent <= lastProject {
 +			t.Fatalf("height %d: agents=%d projects=%d lines=%d", height, lastAgent, lastProject, len(lines))
 +		}
 +		for _, row := range m.SidebarNav {
@@ -10785,22 +11071,28 @@ index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e
 +	}
 +}
 +
-+func TestSidebarRecentProjectsBottomPadding(t *testing.T) {
++func TestSidebarRecentProjectsTopAlignmentAndAgentSpacing(t *testing.T) {
 +	for _, height := range []int{20, 40, 60} {
 +		m, tree := attentionRenderOS(t, 120, height)
 +		m.Settings.SidebarHideSeparator = true
 +		lines := railPlain(t, m, tree)
 +		bottom := m.sidebarSectionY[sidebarSectionProjects][1]
-+		footerTop := m.sidebarTop() + len(lines)
++		pickerTop, agentsHeader := -1, -1
 +		for _, hit := range m.SidebarHits {
-+			if hit.Y0 >= bottom {
-+				footerTop = min(footerTop, hit.Y0)
++			if hit.Kind == sidebarRowProjectPicker {
++				pickerTop = hit.Y0
 +			}
 +		}
-+		if footerTop-bottom != sidebarAttentionProjectsBottomPadding {
-+			t.Fatalf("height %d: bottom padding=%d, want %d", height, footerTop-bottom, sidebarAttentionProjectsBottomPadding)
++		for i, line := range lines {
++			if strings.Contains(line, "agents") {
++				agentsHeader = m.sidebarTop() + i
++				break
++			}
 +		}
-+		for y := bottom; y < footerTop; y++ {
++		if pickerTop != m.sidebarTop() || agentsHeader-bottom != sidebarAttentionProjectsGap {
++			t.Fatalf("height %d: picker=%d agents=%d project bottom=%d", height, pickerTop, agentsHeader, bottom)
++		}
++		for y := bottom; y < agentsHeader; y++ {
 +			if strings.TrimSpace(lines[y-m.sidebarTop()]) != "" {
 +				t.Fatalf("padding row %d contains content", y)
 +			}
@@ -10930,7 +11222,7 @@ index 0000000000000000000000000000000000000000..182952bca3500eb9902354ab13e9357e
 +		t.Fatal("removed project slot was not retained")
 +	}
 +}
-diff --git c/internal/app/sidebar_reclaimed_column_test.go w/internal/app/sidebar_reclaimed_column_test.go
+diff --git i/internal/app/sidebar_reclaimed_column_test.go w/internal/app/sidebar_reclaimed_column_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..6eae39be73d66fad25d743ce27f4b2f70fe9fdfb
 --- /dev/null
@@ -11079,9 +11371,9 @@ index 0000000000000000000000000000000000000000..6eae39be73d66fad25d743ce27f4b2f7
 +		})
 +	}
 +}
-diff --git c/internal/app/sidebar_return.go w/internal/app/sidebar_return.go
+diff --git i/internal/app/sidebar_return.go w/internal/app/sidebar_return.go
 index 415033242d2ed2ca4e7f71f0316419db4e16670d..95474fb384ca5d1f825f5a7e6d48a5377ad4304a 100644
---- c/internal/app/sidebar_return.go
+--- i/internal/app/sidebar_return.go
 +++ w/internal/app/sidebar_return.go
 @@ -82,6 +82,6 @@ func (m *OS) endSidebarReturn() {
  	// management is the mode that can go find another one, so a terminal mode
@@ -11091,9 +11383,9 @@ index 415033242d2ed2ca4e7f71f0316419db4e16670d..95474fb384ca5d1f825f5a7e6d48a537
 +		m.EnterWindowManagementMode()
  	}
  }
-diff --git c/internal/app/sidebar_reveal.go w/internal/app/sidebar_reveal.go
+diff --git i/internal/app/sidebar_reveal.go w/internal/app/sidebar_reveal.go
 index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..3c005d8c3623673a60d01bbe62a004fb3fd129d6 100644
---- c/internal/app/sidebar_reveal.go
+--- i/internal/app/sidebar_reveal.go
 +++ w/internal/app/sidebar_reveal.go
 @@ -35,6 +35,9 @@ type sidebarRevealState struct {
  	SessionID string
@@ -11156,7 +11448,7 @@ index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..3c005d8c3623673a60d01bbe62a004fb
  		Valid:     true,
  	}
  }
-diff --git c/internal/app/sidebar_separator_visibility_test.go w/internal/app/sidebar_separator_visibility_test.go
+diff --git i/internal/app/sidebar_separator_visibility_test.go w/internal/app/sidebar_separator_visibility_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..cf21aa74d09a49240f0ef51f44b7723763438ac7
 --- /dev/null
@@ -11210,9 +11502,9 @@ index 0000000000000000000000000000000000000000..cf21aa74d09a49240f0ef51f44b77237
 +		t.Fatalf("restored edge=%q", got)
 +	}
 +}
-diff --git c/internal/app/sidebar_session.go w/internal/app/sidebar_session.go
+diff --git i/internal/app/sidebar_session.go w/internal/app/sidebar_session.go
 index 7d8ea5e6981a6083025b567856a19c315040bf0b..ebedddd7a96ad15bc645ad2dc5f0c560bbe98dbf 100644
---- c/internal/app/sidebar_session.go
+--- i/internal/app/sidebar_session.go
 +++ w/internal/app/sidebar_session.go
 @@ -88,7 +88,7 @@ func (m *OS) sidebarSessionVisible(edge sidebarEdge) bool {
  	cfg := m.sidebarSessionConfig(edge)
@@ -11292,7 +11584,7 @@ index 7d8ea5e6981a6083025b567856a19c315040bf0b..ebedddd7a96ad15bc645ad2dc5f0c560
  		return 0, false
  	}
  	for _, side := range []sidebarEdge{sidebarLeft, sidebarRight} {
-diff --git c/internal/app/sidebar_session_controls_test.go w/internal/app/sidebar_session_controls_test.go
+diff --git i/internal/app/sidebar_session_controls_test.go w/internal/app/sidebar_session_controls_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..e959b500fc70eb670ded20bb1ea896ff74fcf67b
 --- /dev/null
@@ -11384,9 +11676,9 @@ index 0000000000000000000000000000000000000000..e959b500fc70eb670ded20bb1ea896ff
 +		})
 +	}
 +}
-diff --git c/internal/app/sidebar_spaces.go w/internal/app/sidebar_spaces.go
+diff --git i/internal/app/sidebar_spaces.go w/internal/app/sidebar_spaces.go
 index bcc71d438b2fc69a3798210f3c16cc2fac5feca9..fcff5d0d093c8e19c04d6fcc1646fb17baf54759 100644
---- c/internal/app/sidebar_spaces.go
+--- i/internal/app/sidebar_spaces.go
 +++ w/internal/app/sidebar_spaces.go
 @@ -35,11 +35,18 @@ func (m *OS) sidebarNodeIndent(node sessiontree.Node) int {
  // It is drawn like a machine's heading, one level in: secondary ink, no bold,
@@ -11413,7 +11705,7 @@ index bcc71d438b2fc69a3798210f3c16cc2fac5feca9..fcff5d0d093c8e19c04d6fcc1646fb17
 +	glyph := sidebarStyle(rowBg, nil).Render(" ")
 +	return m.sidebarComposeRuledRow(indent, gutter, glyph, name, "", cw, rowBg, pal)
  }
-diff --git c/internal/app/sidebar_spacing.go w/internal/app/sidebar_spacing.go
+diff --git i/internal/app/sidebar_spacing.go w/internal/app/sidebar_spacing.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..f9ab463af10fca9ad15c8ff02bc08645505f3ef8
 --- /dev/null
@@ -11471,9 +11763,9 @@ index 0000000000000000000000000000000000000000..f9ab463af10fca9ad15c8ff02bc08645
 +func (m *OS) sidebarHeaderLabelW(label string, settings *config.Settings) int {
 +	return sidebarHeaderLabelW(label, settings) + m.sidebarUIPaddingShift()
 +}
-diff --git c/internal/app/sidebar_split.go w/internal/app/sidebar_split.go
+diff --git i/internal/app/sidebar_split.go w/internal/app/sidebar_split.go
 index 093cd0112a4968cb62da6342496ad16f34bddd59..f4c3678c31fa513905c540e64c76880f1ad14a93 100644
---- c/internal/app/sidebar_split.go
+--- i/internal/app/sidebar_split.go
 +++ w/internal/app/sidebar_split.go
 @@ -196,7 +196,7 @@ func (m *OS) SidebarSplitMotion(x, y int) bool {
  	if !g.Valid || g.Avail <= 0 {
@@ -11484,9 +11776,9 @@ index 093cd0112a4968cb62da6342496ad16f34bddd59..f4c3678c31fa513905c540e64c76880f
  	if share != m.SidebarSectionSplit {
  		m.SidebarSectionSplit = share
  		m.MarkAllDirty()
-diff --git c/internal/app/sidebar_strip.go w/internal/app/sidebar_strip.go
+diff --git i/internal/app/sidebar_strip.go w/internal/app/sidebar_strip.go
 index 482946798aa9bacf35b2be11720ea31fba92a79f..1f18968ab7d545fe7bd62071f39335be1a6f9646 100644
---- c/internal/app/sidebar_strip.go
+--- i/internal/app/sidebar_strip.go
 +++ w/internal/app/sidebar_strip.go
 @@ -356,7 +356,8 @@ func (m *OS) sidebarStripLines(sessions []sessiontree.Node, w, cw, height, topMa
  
@@ -11554,7 +11846,7 @@ index 482946798aa9bacf35b2be11720ea31fba92a79f..1f18968ab7d545fe7bd62071f39335be
  	body := sidebarFit(content, cw, bg)
  	if edgeLeft {
  		return body + edge
-diff --git c/internal/app/sidebar_text_alignment_test.go w/internal/app/sidebar_text_alignment_test.go
+diff --git i/internal/app/sidebar_text_alignment_test.go w/internal/app/sidebar_text_alignment_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..897500d845a3a818ffecef78090ab15348ee5eda
 --- /dev/null
@@ -11711,7 +12003,7 @@ index 0000000000000000000000000000000000000000..897500d845a3a818ffecef78090ab153
 +		}
 +	}
 +}
-diff --git c/internal/app/sidebar_ui.go w/internal/app/sidebar_ui.go
+diff --git i/internal/app/sidebar_ui.go w/internal/app/sidebar_ui.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..973ca25adeb4aa8e34c8a34181adc761e3b6d350
 --- /dev/null
@@ -11991,9 +12283,9 @@ index 0000000000000000000000000000000000000000..973ca25adeb4aa8e34c8a34181adc761
 +func (m *OS) sidebarUIDockGroupGap() int {
 +	return sidebarUIInt(m.sidebarUIConfig().DockGroupGap, 1, 0, 6)
 +}
-diff --git c/internal/app/sidebar_view_state.go w/internal/app/sidebar_view_state.go
+diff --git i/internal/app/sidebar_view_state.go w/internal/app/sidebar_view_state.go
 index c88164cc3a6d24bb16bc59bd1f69b13a44662272..f870fedaa4f072aaa798bb97242e5d3db7d3d641 100644
---- c/internal/app/sidebar_view_state.go
+--- i/internal/app/sidebar_view_state.go
 +++ w/internal/app/sidebar_view_state.go
 @@ -15,6 +15,8 @@ type secondaryRailView struct {
  	scrollS, scrollT int
@@ -12013,9 +12305,9 @@ index c88164cc3a6d24bb16bc59bd1f69b13a44662272..f870fedaa4f072aaa798bb97242e5d3d
  	m.sidebarAgentAnchor, s.agentAnchor = s.agentAnchor, m.sidebarAgentAnchor
  	m.sidebarAgentsUnfolded, s.agentsUnfolded = s.agentsUnfolded, m.sidebarAgentsUnfolded
  	m.sidebarSubagentFold, s.subagentFold = s.subagentFold, m.sidebarSubagentFold
-diff --git c/internal/app/sidebar_worktrees.go w/internal/app/sidebar_worktrees.go
+diff --git i/internal/app/sidebar_worktrees.go w/internal/app/sidebar_worktrees.go
 index 02a36280499045c1d0f73d540d0f885055bf1a03..68b9356d79ce06eccd4d7310e80c57b11416c2a2 100644
---- c/internal/app/sidebar_worktrees.go
+--- i/internal/app/sidebar_worktrees.go
 +++ w/internal/app/sidebar_worktrees.go
 @@ -106,6 +106,7 @@ func (m *OS) SidebarRepoCollapsed(repo string) bool {
  // group the user shut yesterday is still shut after a restart and after the
@@ -12133,9 +12425,9 @@ index 02a36280499045c1d0f73d540d0f885055bf1a03..68b9356d79ce06eccd4d7310e80c57b1
 -	return sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
 +	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
  }
-diff --git c/internal/app/subagents.go w/internal/app/subagents.go
+diff --git i/internal/app/subagents.go w/internal/app/subagents.go
 index a538e5013b609ae35c4a3ca97b1a9d3206a787e8..6a30f1cfd2864dedce61cd62a98f0ebf3a140487 100644
---- c/internal/app/subagents.go
+--- i/internal/app/subagents.go
 +++ w/internal/app/subagents.go
 @@ -553,6 +553,10 @@ func sidebarWithChildren(parents []sidebarAgentEntry, info []sidebarChildParent,
  // parent's entry.
@@ -12217,11 +12509,21 @@ index a538e5013b609ae35c4a3ca97b1a9d3206a787e8..6a30f1cfd2864dedce61cd62a98f0ebf
  	name, kind := "", ""
  	if fields.Name {
  		name = subagentName(s)
-diff --git c/internal/app/tick_deadline.go w/internal/app/tick_deadline.go
-index 74e4a7d15263853deefc226966d8e51577834d5e..990414921d121703958fdb9c26407467a6841b3c 100644
---- c/internal/app/tick_deadline.go
+diff --git i/internal/app/tick_deadline.go w/internal/app/tick_deadline.go
+index 74e4a7d15263853deefc226966d8e51577834d5e..88d2dfaf8c9ee17579f6ab099d97084adf8220b4 100644
+--- i/internal/app/tick_deadline.go
 +++ w/internal/app/tick_deadline.go
-@@ -177,6 +177,13 @@ func (m *OS) nextWake(now time.Time) (time.Time, bool) {
+@@ -153,6 +153,9 @@ func (m *OS) nextWake(now time.Time) (time.Time, bool) {
+ 	if fr := &m.frameRate; fr.program != nil && !fr.idle {
+ 		at(fr.lastFrame.Add(idleTickerAfter))
+ 	}
++	if m.topbarEnabled() {
++		at(now.Add(time.Second))
++	}
+ 	// The git section asks again on its interval, and the files section
+ 	// retries a listing that failed. Each rail has its own.
+ 	m.railReadsDue(at)
+@@ -177,6 +180,13 @@ func (m *OS) nextWake(now time.Time) (time.Time, bool) {
  // state and retries its file listing. GitSyncCmd and FilesSyncCmd ask on the
  // message after that moment.
  func (m *OS) railReadsDue(at func(time.Time)) {
@@ -12235,9 +12537,9 @@ index 74e4a7d15263853deefc226966d8e51577834d5e..990414921d121703958fdb9c26407467
  	if m.gitView.asked != "" && m.gitSectionEnabled() {
  		at(m.gitView.at.Add(gitRefreshInterval))
  	}
-diff --git c/internal/app/tooltip.go w/internal/app/tooltip.go
+diff --git i/internal/app/tooltip.go w/internal/app/tooltip.go
 index de3f06bf85fb1a15418a446e90b53b8bc7f7c28a..ad6e85d92ecd68195bf6f273f4dcd4066941d5b1 100644
---- c/internal/app/tooltip.go
+--- i/internal/app/tooltip.go
 +++ w/internal/app/tooltip.go
 @@ -65,6 +65,7 @@ const (
  	// tooltipDockNotif is the dock's message block holding a message it had to
@@ -12272,9 +12574,9 @@ index de3f06bf85fb1a15418a446e90b53b8bc7f7c28a..ad6e85d92ecd68195bf6f273f4dcd406
  	case tooltipRailHost:
  		return m.renderRailHostTooltip()
  	case tooltipDockSession:
-diff --git c/internal/app/tooltip_rail.go w/internal/app/tooltip_rail.go
+diff --git i/internal/app/tooltip_rail.go w/internal/app/tooltip_rail.go
 index 2239fbb4ff1916686861f110220a4e35d77d8a06..3d2ff3bd8c17739573a24cd5bd019cf7721d41cb 100644
---- c/internal/app/tooltip_rail.go
+--- i/internal/app/tooltip_rail.go
 +++ w/internal/app/tooltip_rail.go
 @@ -21,6 +21,10 @@ import (
  // Called from the motion handler, which is the only thing that knows the
@@ -12310,9 +12612,881 @@ index 2239fbb4ff1916686861f110220a4e35d77d8a06..3d2ff3bd8c17739573a24cd5bd019cf7
  // hostSignInTooltip is what the header of a machine that waits for a
  // Tailscale sign-in says when it is hovered.
  const hostSignInTooltip = federation.SignInSentence
-diff --git c/internal/app/update.go w/internal/app/update.go
-index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9488c5075 100644
---- c/internal/app/update.go
+diff --git i/internal/app/topbar_lua.go w/internal/app/topbar_lua.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..a2ffb51ee360ccea03475982184a0b8108410516
+--- /dev/null
++++ w/internal/app/topbar_lua.go
+@@ -0,0 +1,312 @@
++package app
++
++import (
++	"context"
++	"crypto/sha256"
++	"fmt"
++	"os"
++	"path/filepath"
++	"strings"
++	"time"
++	"unicode/utf8"
++
++	"github.com/Gaurav-Gosain/tuios/internal/sessiontree"
++	lua "github.com/yuin/gopher-lua"
++)
++
++const (
++	topbarScriptBudget      = 25 * time.Millisecond
++	topbarMaxItems          = 128
++	topbarMaxTextRunes      = 120
++	topbarMaxIndicatorRunes = 8
++)
++
++type topbarActionKind uint8
++
++const (
++	topbarActionNone topbarActionKind = iota
++	topbarActionAgent
++	topbarActionWorkspace
++	topbarActionNewSession
++	topbarActionLeaveSession
++	topbarActionCloseSession
++	topbarActionProjectPicker
++	topbarActionScrollLeft
++	topbarActionScrollRight
++)
++
++type topbarAction struct {
++	kind      topbarActionKind
++	sessionID string
++	windowID  string
++	workspace int
++}
++
++type topbarItem struct {
++	text                string
++	foreground          string
++	background          string
++	indicator           string
++	indicatorForeground string
++	bold                bool
++	action              topbarAction
++}
++
++type topbarModel struct {
++	left  []topbarItem
++	right []topbarItem
++}
++
++type topbarLuaState struct {
++	path         string
++	digest       [32]byte
++	vm           *lua.LState
++	fn           *lua.LFunction
++	err          error
++	last         time.Time
++	recentBucket int64
++}
++
++func topbarScriptPath(path string) string {
++	if path == "~" || strings.HasPrefix(path, "~/") {
++		home, err := os.UserHomeDir()
++		if err == nil {
++			if path == "~" {
++				return home
++			}
++			return filepath.Join(home, strings.TrimPrefix(path, "~/"))
++		}
++	}
++	return path
++}
++
++func (m *OS) topbarEnabled() bool {
++	return m.Settings.DockbarPosition == "top" && m.Settings.TopbarScript != ""
++}
++
++func (m *OS) topbarLoad(now time.Time) {
++	path := topbarScriptPath(m.Settings.TopbarScript)
++	state := &m.topbarLua
++	if path != state.path {
++		if state.vm != nil {
++			state.vm.Close()
++		}
++		*state = topbarLuaState{path: path}
++	}
++	if now.Sub(state.last) < time.Second && !state.last.IsZero() {
++		return
++	}
++	state.last = now
++	data, err := os.ReadFile(path)
++	if err != nil {
++		state.err = fmt.Errorf("read %s: %w", path, err)
++		return
++	}
++	if len(data) > 64*1024 {
++		state.err = fmt.Errorf("topbar Lua file exceeds 64 KiB: %s", path)
++		return
++	}
++	digest := sha256.Sum256(data)
++	if digest == state.digest && (state.vm != nil || state.err != nil) {
++		return
++	}
++	state.digest = digest
++	vm := lua.NewState(lua.Options{SkipOpenLibs: true})
++	lua.OpenBase(vm)
++	lua.OpenTable(vm)
++	lua.OpenString(vm)
++	lua.OpenMath(vm)
++	for _, name := range []string{"dofile", "loadfile", "load", "loadstring", "collectgarbage", "require", "module", "print"} {
++		vm.SetGlobal(name, lua.LNil)
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), topbarScriptBudget)
++	vm.SetContext(ctx)
++	err = vm.DoString(string(data))
++	cancel()
++	vm.RemoveContext()
++	if err == nil {
++		fn, ok := vm.Get(-1).(*lua.LFunction)
++		if !ok {
++			err = fmt.Errorf("%s must return function(ctx)", path)
++		} else {
++			vm.Pop(1)
++			if _, err = m.topbarEvaluate(vm, fn); err == nil {
++				if state.vm != nil {
++					state.vm.Close()
++				}
++				state.vm, state.fn, state.err = vm, fn, nil
++				return
++			}
++		}
++	}
++	vm.Close()
++	state.err = fmt.Errorf("topbar Lua: %w", err)
++}
++
++func topbarLuaString(t *lua.LTable, name string) string {
++	v, ok := t.RawGetString(name).(lua.LString)
++	if !ok {
++		return ""
++	}
++	return string(v)
++}
++
++func topbarLuaTable(vm *lua.LState, values []map[string]lua.LValue) *lua.LTable {
++	out := vm.NewTable()
++	for i, fields := range values {
++		row := vm.NewTable()
++		for k, v := range fields {
++			row.RawSetString(k, v)
++		}
++		out.RawSetInt(i+1, row)
++	}
++	return out
++}
++
++func (m *OS) topbarContext(vm *lua.LState) (*lua.LTable, map[string]topbarAction) {
++	sessions := m.BuildSessionTree().Sessions
++	agents := m.sidebarRecentAgents(m.agentEntries(sessions))
++	ctx := vm.NewTable()
++	actions := make(map[string]topbarAction, len(agents)+m.NumWorkspaces+4)
++	left := make([]map[string]lua.LValue, 0, len(agents))
++	for i, agent := range agents {
++		id := fmt.Sprintf("agent:%d", i+1)
++		actions[id] = topbarAction{kind: topbarActionAgent, sessionID: agent.SessionID, windowID: agent.WindowID}
++		mark, _ := agentMark(agent.State, agent.DoneSeen, agent.Subagents, m.groundUI())
++		name := printableTitle(firstNonEmptyStr(agent.BaseTitle, firstNonEmptyStr(agent.Title, agent.WindowID)))
++		project := printableTitle(firstNonEmptyStr(agent.ProjectLabel, firstNonEmptyStr(agent.SessionLabel, agent.SessionID)))
++		left = append(left, map[string]lua.LValue{
++			"ref": lua.LString(id), "name": lua.LString(name), "project": lua.LString(project),
++			"marker": lua.LString(mark), "state": lua.LString(agent.State), "done_seen": lua.LBool(agent.DoneSeen), "focused": lua.LBool(agent.Focused),
++		})
++	}
++	ctx.RawSetString("agents", topbarLuaTable(vm, left))
++	workspaces := make([]map[string]lua.LValue, 0, m.NumWorkspaces)
++	for _, tab := range m.buildDockWorkspaceTabs() {
++		id := fmt.Sprintf("workspace:%d", tab.Workspace)
++		actions[id] = topbarAction{kind: topbarActionWorkspace, workspace: tab.Workspace}
++		workspaces = append(workspaces, map[string]lua.LValue{
++			"ref": lua.LString(id), "index": lua.LNumber(tab.Workspace), "name": lua.LString(tab.Label), "active": lua.LBool(tab.Active),
++		})
++	}
++	ctx.RawSetString("workspaces", topbarLuaTable(vm, workspaces))
++	controls := make([]map[string]lua.LValue, 0, 3)
++	if m.CanCreateSession() {
++		actions["new"] = topbarAction{kind: topbarActionNewSession}
++		controls = append(controls, map[string]lua.LValue{"ref": lua.LString("new"), "label": lua.LString("＋")})
++	}
++	if m.CanLeaveRunning() {
++		actions["leave"] = topbarAction{kind: topbarActionLeaveSession}
++		controls = append(controls, map[string]lua.LValue{"ref": lua.LString("leave"), "label": lua.LString("↗")})
++	}
++	actions["close"] = topbarAction{kind: topbarActionCloseSession}
++	controls = append(controls, map[string]lua.LValue{"ref": lua.LString("close"), "label": lua.LString("×")})
++	ctx.RawSetString("controls", topbarLuaTable(vm, controls))
++	actions["picker"] = topbarAction{kind: topbarActionProjectPicker}
++	ctx.RawSetString("picker", lua.LString(m.sidebarProjectLabel(m.topbarCurrentProject(sessions))))
++	return ctx, actions
++}
++
++func (m *OS) topbarCurrentProject(sessions []sessiontree.Node) sessiontree.Node {
++	current := sessiontree.Node{ID: m.sidebarCurrentSessionID(), Title: m.sessionTitle(m.SessionName), IsCurrent: true}
++	for _, node := range sessions {
++		if node.Kind == sessiontree.KindSession && node.IsCurrent {
++			return node
++		}
++	}
++	return current
++}
++
++func topbarValidItemText(text string, maxRunes int) bool {
++	return utf8.RuneCountInString(text) <= maxRunes && strings.IndexFunc(text, func(r rune) bool { return r < 0x20 || r >= 0x7f && r <= 0x9f }) < 0
++}
++
++func topbarReadItems(value lua.LValue, actions map[string]topbarAction) ([]topbarItem, error) {
++	t, ok := value.(*lua.LTable)
++	if !ok || t.Len() > topbarMaxItems {
++		return nil, fmt.Errorf("topbar groups must be arrays of at most %d items", topbarMaxItems)
++	}
++	items := make([]topbarItem, 0, t.Len())
++	for i := 1; i <= t.Len(); i++ {
++		row, ok := t.RawGetInt(i).(*lua.LTable)
++		if !ok {
++			return nil, fmt.Errorf("topbar item %d must be a table", i)
++		}
++		ref := topbarLuaString(row, "ref")
++		action, ok := actions[ref]
++		if !ok {
++			return nil, fmt.Errorf("topbar item %d references unknown action %q", i, ref)
++		}
++		text := topbarLuaString(row, "text")
++		if text == "" || !topbarValidItemText(text, topbarMaxTextRunes) {
++			return nil, fmt.Errorf("topbar item %d has invalid text", i)
++		}
++		indicator := topbarLuaString(row, "indicator")
++		if !topbarValidItemText(indicator, topbarMaxIndicatorRunes) {
++			return nil, fmt.Errorf("topbar item %d has invalid indicator", i)
++		}
++		items = append(items, topbarItem{
++			text: text, foreground: topbarLuaString(row, "fg"), background: topbarLuaString(row, "bg"),
++			indicator: indicator, indicatorForeground: topbarLuaString(row, "indicator_fg"),
++			bold: row.RawGetString("bold") == lua.LTrue, action: action,
++		})
++	}
++	return items, nil
++}
++
++func (m *OS) topbarRefresh(now time.Time) bool {
++	if !m.topbarEnabled() {
++		return false
++	}
++	before := m.topbarLua.digest
++	previousError := fmt.Sprint(m.topbarLua.err)
++	previousPath := m.topbarLua.path
++	m.topbarLoad(now)
++	changed := before != m.topbarLua.digest || previousPath != m.topbarLua.path || previousError != fmt.Sprint(m.topbarLua.err)
++	bucket := sidebarRecentBucket()
++	if bucket != m.topbarLua.recentBucket {
++		m.topbarLua.recentBucket = bucket
++		changed = true
++	}
++	if changed && m.topbarLua.err != nil {
++		m.ShowNotification(m.topbarLua.err.Error(), "error", m.Settings.NotificationDuration)
++	}
++	return changed
++}
++
++func (m *OS) topbarModel(now time.Time) (topbarModel, error) {
++	m.topbarLoad(now)
++	state := &m.topbarLua
++	if state.vm == nil || state.fn == nil {
++		return topbarModel{}, state.err
++	}
++	return m.topbarEvaluate(state.vm, state.fn)
++}
++
++func (m *OS) topbarEvaluate(vm *lua.LState, fn *lua.LFunction) (topbarModel, error) {
++	ctx, actions := m.topbarContext(vm)
++	deadline, cancel := context.WithTimeout(context.Background(), topbarScriptBudget)
++	vm.SetContext(deadline)
++	err := vm.CallByParam(lua.P{Fn: fn, NRet: 1, Protect: true}, ctx)
++	cancel()
++	vm.RemoveContext()
++	if err != nil {
++		vm.SetTop(0)
++		return topbarModel{}, fmt.Errorf("topbar Lua render: %w", err)
++	}
++	response := vm.Get(-1)
++	defer vm.SetTop(0)
++	t, ok := response.(*lua.LTable)
++	if !ok {
++		return topbarModel{}, fmt.Errorf("topbar Lua render must return a table with left and right arrays")
++	}
++	left, err := topbarReadItems(t.RawGetString("left"), actions)
++	if err != nil {
++		return topbarModel{}, err
++	}
++	right, err := topbarReadItems(t.RawGetString("right"), actions)
++	if err != nil {
++		return topbarModel{}, err
++	}
++	return topbarModel{left: left, right: right}, nil
++}
+diff --git i/internal/app/topbar_lua_test.go w/internal/app/topbar_lua_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..c389f4ef2e96a9aa88214c9e19f38ddac79076dc
+--- /dev/null
++++ w/internal/app/topbar_lua_test.go
+@@ -0,0 +1,260 @@
++package app
++
++import (
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/overlay"
++	"github.com/Gaurav-Gosain/tuios/internal/theme"
++	uv "github.com/charmbracelet/ultraviolet"
++)
++
++func topbarTestOS(t *testing.T, width int, script string) *OS {
++	t.Helper()
++	m := dockTabTestOS(t, 1, 1, 2)
++	m.Width = width
++	m.Settings.DockbarPosition = "top"
++	m.Settings.DockCompact = true
++	m.Settings.SidebarPosition = "hidden"
++	m.Settings.SidebarEnabled = false
++	m.Settings.TopbarScript = script
++	m.Windows[0].AgentState = "working"
++	m.Windows[0].AgentHarness = "pi"
++	m.Windows[0].CustomName = "review"
++	m.NumWorkspaces = 2
++	t.Cleanup(func() {
++		if m.topbarLua.vm != nil {
++			m.topbarLua.vm.Close()
++		}
++	})
++	return m
++}
++
++func TestLuaTopbarAddWorkspaceUsesNativeTabAction(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "topbar.lua")
++	script := `return function(ctx)
++		local right = {}
++		for _, w in ipairs(ctx.workspaces) do
++			right[#right+1] = {ref=w.ref, text=w.index == 0 and "+" or w.name}
++		end
++		right[#right+1] = {ref="picker", text=ctx.picker .. " ▼"}
++		return {left={}, right=right}
++	end`
++	if err := os.WriteFile(path, []byte(script), 0600); err != nil {
++		t.Fatal(err)
++	}
++	m := topbarTestOS(t, 100, path)
++	m.Windows = m.Windows[:1]
++	m.NumWorkspaces = 3
++	m.renderDockString()
++	for _, hit := range m.dockWorkspaceHits {
++		if hit.Workspace == 0 {
++			if got := m.DockWorkspaceAt(hit.X0, hit.Y); got != 2 {
++				t.Fatalf("add tab resolves to workspace %d, want 2", got)
++			}
++			return
++		}
++	}
++	t.Fatalf("Lua bar did not expose the native add-workspace tab: %v", m.topbarHits)
++}
++
++func TestLuaTopbarAgentStatusAndSpacing(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "topbar.lua")
++	script := `return function(ctx)
++		local left = {}
++		for _, a in ipairs(ctx.agents) do
++			left[#left+1] = {ref=a.ref, text=a.name, indicator="!", indicator_fg="warning", fg="fg", bg="panel", bold=true}
++		end
++		return {left=left, right={{ref="picker", text=ctx.picker .. " ▼"}}}
++	end`
++	if err := os.WriteFile(path, []byte(script), 0600); err != nil {
++		t.Fatal(err)
++	}
++	m := topbarTestOS(t, 120, path)
++	second := newTestWindow(t, "second", 35, 12)
++	second.AgentState, second.AgentHarness, second.CustomName = "working", "pi", "second"
++	m.Windows = append(m.Windows, second)
++	bar, _ := m.renderDockString()
++	var agentHits []topbarHit
++	for _, hit := range m.topbarHits {
++		if hit.action.kind == topbarActionAgent {
++			agentHits = append(agentHits, hit)
++		}
++	}
++	if len(agentHits) != 2 {
++		t.Fatalf("expected two agent tabs, got %v", m.topbarHits)
++	}
++	canvas := uv.NewScreenBuffer(120, 1)
++	uv.NewStyledString(bar).Draw(canvas, canvas.Bounds())
++	focused := agentHits[0]
++	marker := canvas.CellAt(focused.x0+2, 0)
++	label := canvas.CellAt(focused.x0+4, 0)
++	pal := m.groundUI()
++	warning := theme.ConfigColorOn("warning", &pal)
++	if marker == nil || marker.Content != "!" || !samePaneColor(marker.Style.Fg, warning) {
++		t.Fatalf("focused agent status marker lost its warning color: got %v, want %v (cell %+v)", marker.Style.Fg, warning, marker)
++	}
++	foreground := theme.ConfigColorOn("fg", &pal)
++	foregroundMatches := label != nil && (overlay.IsNoColor(foreground) && overlay.IsNoColor(label.Style.Fg) || samePaneColor(label.Style.Fg, foreground))
++	if label == nil {
++		t.Fatal("focused agent label is missing")
++	}
++	if !foregroundMatches || label.Style.Attrs&uv.AttrBold == 0 {
++		t.Fatalf("focused agent label should be normal foreground and bold: got %v attrs %v, want %v", label.Style.Fg, label.Style.Attrs, foreground)
++	}
++	if got := agentHits[1].x0 - agentHits[0].x1; got != 1 {
++		t.Fatalf("agent tabs gap = %d, want one bare column", got)
++	}
++}
++
++func TestLuaTopbarSandboxAndNarrowWidths(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "topbar.lua")
++	script := `return function(ctx)
++		assert(io == nil and os == nil and debug == nil and dofile == nil and loadfile == nil)
++		local left = {}
++		for _, a in ipairs(ctx.agents) do left[#left+1] = {ref=a.ref, text=a.name} end
++		local right = {}
++		for _, w in ipairs(ctx.workspaces) do right[#right+1] = {ref=w.ref, text=w.name} end
++		for _, c in ipairs(ctx.controls) do right[#right+1] = {ref=c.ref, text=c.label} end
++		right[#right+1] = {ref="picker", text=ctx.picker .. " ▼"}
++		return {left=left, right=right}
++	end`
++	if err := os.WriteFile(path, []byte(script), 0600); err != nil {
++		t.Fatal(err)
++	}
++	for _, width := range []int{1, 2, 3, 8, 24, 60, 120} {
++		m := topbarTestOS(t, width, path)
++		m.Settings.DockCompact = false
++		bar, y := m.renderDockString()
++		if y != 0 || m.Settings.DockHeight() != 1 || lipgloss.Width(bar) != width {
++			t.Errorf("width %d: y=%d height=%d rendered=%d err=%v", width, y, m.Settings.DockHeight(), lipgloss.Width(bar), m.topbarLua.err)
++		}
++		for _, hit := range m.topbarHits {
++			if hit.x0 < 0 || hit.x1 > width || hit.x0 >= hit.x1 {
++				t.Errorf("width %d: hit beyond viewport: %+v", width, hit)
++			}
++		}
++		if m.topbarLua.err != nil {
++			t.Fatal(m.topbarLua.err)
++		}
++	}
++}
++
++func TestLuaTopbarWorkspacePickerAndAgentScroll(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "topbar.lua")
++	script := `return function(ctx)
++		local left, right = {}, {}
++		for _, a in ipairs(ctx.agents) do left[#left+1] = {ref=a.ref, text=a.name} end
++		for _, w in ipairs(ctx.workspaces) do right[#right+1] = {ref=w.ref, text="WS" .. w.index} end
++		right[#right+1] = {ref="picker", text="PICK"}
++		return {left=left, right=right}
++	end`
++	if err := os.WriteFile(path, []byte(script), 0600); err != nil {
++		t.Fatal(err)
++	}
++	m := topbarTestOS(t, 46, path)
++	for i := 1; i < 5; i++ {
++		w := newTestWindow(t, "agent-"+string(rune('0'+i)), 35, 12)
++		w.CustomName = "agent-" + string(rune('0'+i))
++		w.AgentState, w.AgentHarness, w.Workspace = "working", "pi", 1
++		m.Windows = append(m.Windows, w)
++	}
++	bar, _ := m.renderDockString()
++	if !strings.Contains(bar, "review") || !strings.Contains(bar, "›") {
++		t.Fatalf("expected first agent and scroll affordance: %q", bar)
++	}
++	if !m.TopbarWheel(0, 0, 1) {
++		t.Fatal("wheel on agent group was not consumed")
++	}
++	bar, _ = m.renderDockString()
++	if strings.Contains(bar, "review") || !strings.Contains(bar, "‹") {
++		t.Fatalf("agent group did not scroll: %q", bar)
++	}
++	var workspace, picker topbarHit
++	for _, hit := range m.topbarHits {
++		switch hit.action.kind {
++		case topbarActionWorkspace:
++			if hit.action.workspace == 2 {
++				workspace = hit
++			}
++		case topbarActionProjectPicker:
++			picker = hit
++		}
++	}
++	if workspace.x1 <= workspace.x0 || picker.x1 <= picker.x0 {
++		t.Fatalf("right-hand actions not visible: %v", m.topbarHits)
++	}
++	if got := m.TopbarClick(workspace.x0, 0); got != TopbarNoClick || !m.BeginDockWorkspaceDrag(workspace.x0, 0) {
++		t.Fatalf("workspace tab did not enter native drag/switch routing: %v", got)
++	}
++	m.DockWorkspaceDragRelease(workspace.x0, 0)
++	if m.CurrentWorkspace != 2 {
++		t.Fatalf("workspace click selected %d, want 2", m.CurrentWorkspace)
++	}
++	if got := m.TopbarClick(picker.x0, 0); got != TopbarHandled || !m.ShowSessionSwitcher || !m.sidebarAttention.projectPickerOpen {
++		t.Fatalf("picker click did not open project switcher: %v", got)
++	}
++}
++
++func TestLuaTopbarReloadAndHitGeometry(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "topbar.lua")
++	first := `return function(ctx)
++		local left, right = {}, {}
++		for _, a in ipairs(ctx.agents) do
++			left[#left+1] = {ref=a.ref, text="AGENT:" .. a.name, fg="accent"}
++		end
++		for _, w in ipairs(ctx.workspaces) do
++			right[#right+1] = {ref=w.ref, text="WS:" .. w.index}
++		end
++		right[#right+1] = {ref="picker", text="PICK"}
++		return {left=left, right=right}
++	end`
++	if err := os.WriteFile(path, []byte(first), 0600); err != nil {
++		t.Fatal(err)
++	}
++	m := topbarTestOS(t, 100, path)
++	bar, y := m.renderDockString()
++	if y != 0 || !strings.Contains(bar, "AGENT:review") || !strings.Contains(bar, "WS:1") || !strings.Contains(bar, "PICK") {
++		t.Fatalf("lua bar not rendered: y=%d %q, err=%v", y, bar, m.topbarLua.err)
++	}
++	for _, hit := range m.topbarHits {
++		if hit.x0 < 0 || hit.x1 > m.GetRenderWidth() || hit.x0 >= hit.x1 {
++			t.Fatalf("bad hit geometry: %+v", hit)
++		}
++		if m.topbarActionAt(hit.x0, hit.y).kind != hit.action.kind {
++			t.Fatalf("hit misses drawn action: %+v", hit)
++		}
++	}
++	if !strings.HasSuffix(bar, "PICK ") && !strings.HasSuffix(bar, "PICK\x1b[0m") {
++		// Styled runs can end with a reset; the visible text is the contract.
++		if !strings.HasSuffix(strings.TrimSpace(stripANSIForTrace(bar)), "PICK") {
++			t.Fatalf("picker is not at the far right: %q", bar)
++		}
++	}
++	second := strings.Replace(first, "AGENT:", "UPDATED:", 1)
++	if err := os.WriteFile(path, []byte(second), 0600); err != nil {
++		t.Fatal(err)
++	}
++	if !m.topbarRefresh(time.Now().Add(2 * time.Second)) {
++		t.Fatal("script edit was not detected by the hot-reload poll")
++	}
++	bar, _ = m.renderDockString()
++	if !strings.Contains(bar, "UPDATED:review") {
++		t.Fatalf("script edit did not reload: %q, err=%v", bar, m.topbarLua.err)
++	}
++	if err := os.WriteFile(path, []byte("return function(ctx) while true do end end"), 0600); err != nil {
++		t.Fatal(err)
++	}
++	if !m.topbarRefresh(time.Now().Add(4 * time.Second)) {
++		t.Fatal("invalid revision was not detected")
++	}
++	start := time.Now()
++	bar, _ = m.renderDockString()
++	if time.Since(start) > time.Second || !strings.Contains(bar, "UPDATED:review") {
++		t.Fatalf("failed Lua revision did not retain last good script: %q", bar)
++	}
++}
+diff --git i/internal/app/topbar_render.go w/internal/app/topbar_render.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..efc67c598bd37805f59485946392476206a2704b
+--- /dev/null
++++ w/internal/app/topbar_render.go
+@@ -0,0 +1,282 @@
++package app
++
++import (
++	"strings"
++	"time"
++
++	"charm.land/lipgloss/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/overlay"
++	"github.com/Gaurav-Gosain/tuios/internal/theme"
++	"github.com/charmbracelet/x/ansi"
++)
++
++type topbarHit struct {
++	x0, x1, y int
++	action    topbarAction
++}
++
++type TopbarClickResult uint8
++
++const (
++	TopbarNoClick TopbarClickResult = iota
++	TopbarHandled
++	TopbarLeaveSession
++	TopbarCloseSession
++)
++
++func (m *OS) topbarItemText(item topbarItem, pal overlay.Palette) string {
++	bg := theme.ConfigColorOn(item.background, &pal)
++	if bg == nil {
++		bg = m.surfaceGround(surfaceDock).bg
++	}
++	fg := theme.ConfigColorOn(item.foreground, &pal)
++	if fg == nil {
++		fg = pal.Fg
++	}
++	st := lipgloss.NewStyle().Foreground(fg).Bold(item.bold)
++	if bg != nil {
++		st = st.Background(bg)
++	}
++	if item.indicator != "" {
++		indicatorFg := theme.ConfigColorOn(item.indicatorForeground, &pal)
++		if indicatorFg == nil {
++			indicatorFg = fg
++		}
++		return st.Foreground(indicatorFg).Bold(false).Render("  "+item.indicator+" ") + st.Render(item.text+"  ")
++	}
++	return st.Render(" " + item.text + " ")
++}
++
++func (m *OS) renderLuaTopbar() (string, bool) {
++	model, err := m.topbarModel(time.Now())
++	if err != nil {
++		m.topbarHits = nil
++		return "", false
++	}
++	width := m.dockBounds().Dx()
++	if width <= 0 {
++		m.topbarHits = nil
++		return "", true
++	}
++	pal := m.groundUI()
++	m.topbarHits = m.topbarHits[:0]
++	m.dockWorkspaceHits = m.dockWorkspaceHits[:0]
++	m.dockWorkspaceArrowHits = m.dockWorkspaceArrowHits[:0]
++	m.dockSessionHits = m.dockSessionHits[:0]
++	m.dockItemHits = m.dockItemHits[:0]
++	m.dockCustomHits = m.dockCustomHits[:0]
++	m.dockOverflowHit = dockOverflowHit{}
++	m.notifHit = notifHitZones{}
++
++	// Keep the picker and controls reachable before spending room on agent tabs.
++	const gap = " "
++	right := make([]string, len(model.right))
++	rightWidth := 0
++	for i, item := range model.right {
++		right[i] = m.topbarItemText(item, pal)
++		rightWidth += lipgloss.Width(right[i])
++		if i > 0 {
++			rightWidth += len(gap)
++		}
++	}
++	for rightWidth > width && len(right) > 1 {
++		drop := -1
++		for i := len(model.right) - 2; i >= 0; i-- {
++			a := model.right[i].action
++			if a.kind == topbarActionWorkspace && a.workspace != m.dockWorkspace() {
++				drop = i
++				break
++			}
++		}
++		if drop < 0 {
++			for i, item := range model.right[:len(model.right)-1] {
++				if item.action.kind != topbarActionWorkspace {
++					drop = i
++					break
++				}
++			}
++		}
++		if drop < 0 {
++			drop = 0
++		}
++		rightWidth -= lipgloss.Width(right[drop]) + len(gap)
++		right = append(right[:drop], right[drop+1:]...)
++		model.right = append(model.right[:drop], model.right[drop+1:]...)
++	}
++	if rightWidth > width && len(right) == 1 {
++		if model.right[0].action.kind == topbarActionProjectPicker {
++			right[0] = m.topbarItemText(topbarItem{text: "▼", action: model.right[0].action, foreground: model.right[0].foreground}, pal)
++			rightWidth = lipgloss.Width(right[0])
++		}
++		if rightWidth > width {
++			right[0] = ansi.Truncate(right[0], width, "")
++			rightWidth = lipgloss.Width(right[0])
++		}
++	}
++	leftRoom := max(width-rightWidth-1, 0)
++	if len(right) == 0 {
++		leftRoom = width
++	}
++	if m.topbarAgentScroll > len(model.left) {
++		m.topbarAgentScroll = len(model.left)
++	}
++	var left strings.Builder
++	x := 0
++	if m.topbarAgentScroll > 0 && x < leftRoom {
++		left.WriteString("‹")
++		m.topbarHits = append(m.topbarHits, topbarHit{x0: x, x1: x + 1, y: 0, action: topbarAction{kind: topbarActionScrollLeft}})
++		x++
++	}
++	remaining := model.left[m.topbarAgentScroll:]
++	needed := 0
++	for i, item := range remaining {
++		if i > 0 {
++			needed += len(gap)
++		}
++		needed += lipgloss.Width(m.topbarItemText(item, pal))
++	}
++	showRightArrow := needed > leftRoom-x
++	itemRoom := leftRoom
++	if showRightArrow && itemRoom > x {
++		itemRoom--
++	}
++	drawn := 0
++	for _, item := range remaining {
++		text := m.topbarItemText(item, pal)
++		cellWidth := lipgloss.Width(text)
++		separatorWidth := 0
++		if drawn > 0 {
++			separatorWidth = len(gap)
++		}
++		if x+separatorWidth+cellWidth > itemRoom {
++			break
++		}
++		if separatorWidth > 0 {
++			left.WriteString(gap)
++			x += separatorWidth
++		}
++		left.WriteString(text)
++		m.topbarHits = append(m.topbarHits, topbarHit{x0: x, x1: x + cellWidth, y: 0, action: item.action})
++		x += cellWidth
++		drawn++
++	}
++	if showRightArrow && x < leftRoom {
++		left.WriteString("›")
++		m.topbarHits = append(m.topbarHits, topbarHit{x0: x, x1: x + 1, y: 0, action: topbarAction{kind: topbarActionScrollRight}})
++	}
++	var rightText strings.Builder
++	rightX := width - rightWidth
++	for i, item := range model.right {
++		if i > 0 {
++			rightText.WriteString(gap)
++			rightX += len(gap)
++		}
++		cellWidth := lipgloss.Width(right[i])
++		rightText.WriteString(right[i])
++		m.topbarHits = append(m.topbarHits, topbarHit{x0: rightX, x1: rightX + cellWidth, y: 0, action: item.action})
++		rightX += cellWidth
++	}
++	padding := max(width-lipgloss.Width(left.String())-rightWidth, 0)
++	bar := left.String() + strings.Repeat(" ", padding) + rightText.String()
++	if bg := m.surfaceGround(surfaceDock).bg; bg != nil {
++		bar = lipgloss.NewStyle().Background(bg).Render(bar)
++	}
++	m.topbarOffsetHits(m.dockBounds().Min.X)
++	for _, h := range m.topbarHits {
++		action := DockSessionNone
++		switch h.action.kind {
++		case topbarActionWorkspace:
++			m.dockWorkspaceHits = append(m.dockWorkspaceHits, dockWorkspaceHit{X0: h.x0, X1: h.x1, Y: h.y, Workspace: h.action.workspace})
++		case topbarActionNewSession:
++			action = DockSessionNew
++		case topbarActionLeaveSession:
++			action = DockSessionLeave
++		case topbarActionCloseSession:
++			action = DockSessionClose
++		}
++		if action != DockSessionNone {
++			m.dockSessionHits = append(m.dockSessionHits, dockSessionHit{X0: h.x0, X1: h.x1, Y: h.y, Action: action})
++		}
++	}
++	return ansi.Truncate(bar, width, ""), true
++}
++
++func (m *OS) topbarOffsetHits(dx int) []topbarHit {
++	for i := range m.topbarHits {
++		m.topbarHits[i].x0 += dx
++		m.topbarHits[i].x1 += dx
++	}
++	return m.topbarHits
++}
++
++func (m *OS) topbarActionAt(x, y int) topbarAction {
++	if !m.topbarEnabled() {
++		return topbarAction{}
++	}
++	x, y = m.ScreenPoint(x, y)
++	for _, hit := range m.topbarHits {
++		if y == hit.y && x >= hit.x0 && x < hit.x1 {
++			return hit.action
++		}
++	}
++	return topbarAction{}
++}
++
++func (m *OS) TopbarClick(x, y int) TopbarClickResult {
++	a := m.topbarActionAt(x, y)
++	switch a.kind {
++	case topbarActionAgent:
++		if a.windowID != "" {
++			_, ok := m.sidebarFocusWindow(sidebarRowHit{SessionID: a.sessionID, WindowID: a.windowID, WindowIndex: -1})
++			if ok {
++				return TopbarHandled
++			}
++		}
++	case topbarActionWorkspace:
++		return TopbarNoClick
++	case topbarActionNewSession:
++		m.OpenNewSessionPicker()
++		return TopbarHandled
++	case topbarActionLeaveSession:
++		return TopbarLeaveSession
++	case topbarActionCloseSession:
++		return TopbarCloseSession
++	case topbarActionScrollLeft:
++		m.topbarAgentScroll = max(m.topbarAgentScroll-1, 0)
++		m.MarkAllDirty()
++		return TopbarHandled
++	case topbarActionScrollRight:
++		m.topbarAgentScroll++
++		m.MarkAllDirty()
++		return TopbarHandled
++	case topbarActionProjectPicker:
++		m.OpenSessionSwitcher()
++		if m.ShowSessionSwitcher {
++			m.sidebarAttention.projectPickerOpen = true
++			m.SessionSwitcherItems = m.sessionSwitcherItems()
++		}
++		return TopbarHandled
++	case topbarActionNone:
++		return TopbarNoClick
++	}
++	return TopbarNoClick
++}
++
++// TopbarWheel scrolls only the left agent group; the workspace controls stay put.
++func (m *OS) TopbarWheel(x, y, delta int) bool {
++	if !m.topbarEnabled() || !m.DockBandContains(x, y) {
++		return false
++	}
++	x, _ = m.ScreenPoint(x, y)
++	if len(m.topbarHits) == 0 {
++		return true
++	}
++	for _, h := range m.topbarHits {
++		if h.action.kind != topbarActionAgent && h.action.kind != topbarActionScrollLeft && h.action.kind != topbarActionScrollRight && x >= h.x0 {
++			return true
++		}
++	}
++	m.topbarAgentScroll = max(m.topbarAgentScroll+delta, 0)
++	m.MarkAllDirty()
++	return true
++}
+diff --git i/internal/app/update.go w/internal/app/update.go
+index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae9058ab96960 100644
+--- i/internal/app/update.go
 +++ w/internal/app/update.go
 @@ -592,6 +592,9 @@ func (m *OS) tickAtFrameRate() bool {
  // and per window an exited process, unflushed output, a stranded
@@ -12324,6 +13498,15 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9
  	if len(m.Animations) > 0 || m.Dragging || m.Resizing {
  		return true
  	}
+@@ -807,7 +810,7 @@ func (m *OS) foreignSessionRefreshPlan() (after time.Duration, refresh bool) {
+ 	if m.DaemonClient == nil {
+ 		return foreignSessionRefreshIdle, false
+ 	}
+-	if m.SidebarActive() || m.ShowSessionSwitcher || m.gotoPicker.open {
++	if m.SidebarActive() || m.topbarEnabled() || m.ShowSessionSwitcher || m.gotoPicker.open {
+ 		return foreignSessionRefreshActive, true
+ 	}
+ 	if m.DaemonClient.SessionCount() <= 1 {
 @@ -853,6 +856,7 @@ type foreignSessionsChangedMsg struct{}
  // one somebody writes. One comparison, once, is the whole cost, and it answers
  // nil without allocating for a client whose rail has no files section.
@@ -12380,7 +13563,33 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9
  	case GitStateMsg:
  		// The reading the git section asked for. It is applied rather than
  		// acted on: the section draws whatever the last answer was, and a
-@@ -1668,7 +1679,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1295,6 +1306,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		m.tickStats.Ticks++
+ 		m.idleFrameTicker(time.Time(msg))
+ 		m.releaseEmulatorScratch(time.Time(msg))
++		topbarChanged := m.topbarRefresh(time.Time(msg))
+ 
+ 		// Idle diet: when nothing periodic needs attention the per-tick scans have
+ 		// no work, so skip them and hold the frame. Process exits and PTY output
+@@ -1303,7 +1315,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		// stranded manipulation before deciding to sleep. The tick is not
+ 		// re-armed here: Update arms the next one for the next job that is due,
+ 		// and none at all when nothing is (see nextWake).
+-		if !m.tickNeedsWork() {
++		if !m.tickNeedsWork() && !topbarChanged {
+ 			m.renderSkipped = true
+ 			return m, nil
+ 		}
+@@ -1420,7 +1432,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		needsRender := hadAnimations || hasAnimations || m.InteractionMode || m.PrefixActive ||
+ 			hasBackgroundChanges || m.notifBurnMoved() || notifExpired || leftScriptMode ||
+ 			m.SidebarMarqueeActive() || m.TooltipPending() || railTitleChanged || zenCrossed ||
+-			m.pointerMotionPending
++			m.pointerMotionPending || topbarChanged
+ 		if !needsRender {
+ 			m.renderSkipped = true
+ 			return m, tea.Batch(cmds...)
+@@ -1668,7 +1680,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		// Ensure we're in window management mode if no windows remain
  		if len(m.Windows) == 0 {
@@ -12389,7 +13598,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9
  		}
  		return m, ListenForWindowExits(m.WindowExitChan)
  
-@@ -2213,6 +2224,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -2213,6 +2225,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		return m, nil
  
@@ -12402,7 +13611,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9
  	case tea.KeyboardEnhancementsMsg:
  		// The host answered the Kitty keyboard protocol query, so tuios now knows
  		// which of the things it asked for it actually got.
-@@ -2227,7 +2244,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -2227,7 +2245,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		if reason := m.HoldModeUnsupportedReason(); reason != "" && first {
  			m.ShowNotification(reason, "warning", m.Settings.NotificationDuration)
  		}
@@ -12411,9 +13620,9 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..fe7c38bfd923fa1dc24c0589b69184a9
  
  	// Multi-client daemon messages
  	case StateSyncMsg:
-diff --git c/internal/app/workspace.go w/internal/app/workspace.go
+diff --git i/internal/app/workspace.go w/internal/app/workspace.go
 index eb41e8399cb64ea2084cb249b1596772e9740487..d749525b575ed4d4eee4ad3e7b5abc93177d90d1 100644
---- c/internal/app/workspace.go
+--- i/internal/app/workspace.go
 +++ w/internal/app/workspace.go
 @@ -66,8 +66,7 @@ func (m *OS) newWorkspaceSlot(workspace int) int {
  	for ws := 1; ws <= m.NumWorkspaces; ws++ {
@@ -12500,9 +13709,9 @@ index eb41e8399cb64ea2084cb249b1596772e9740487..d749525b575ed4d4eee4ad3e7b5abc93
  	}
  }
  
-diff --git c/internal/config/constants.go w/internal/config/constants.go
-index 81885684d6d5c9f10a44e6252b459d0af73d16d1..7c1b1af783360d7b7f09564ce2dd21d6b4fcee10 100644
---- c/internal/config/constants.go
+diff --git i/internal/config/constants.go w/internal/config/constants.go
+index 81885684d6d5c9f10a44e6252b459d0af73d16d1..92593dd8e5d15d307e50b57fe913acba0321fd7e 100644
+--- i/internal/config/constants.go
 +++ w/internal/config/constants.go
 @@ -493,7 +493,12 @@ const SidebarDefaultSections = "sessions:25,terminals,files:25,agents:34"
  // section the rail does not draw, and that is the only way to turn one off:
@@ -12542,9 +13751,18 @@ index 81885684d6d5c9f10a44e6252b459d0af73d16d1..7c1b1af783360d7b7f09564ce2dd21d6
  // DefaultClockFormat is the layout the clock draws with when none is set. It
  // has no seconds: the dock engine arms the clock's timer for the next change
  // of what it draws, so a clock without seconds wakes the client once a minute
-diff --git c/internal/config/dock.go w/internal/config/dock.go
+@@ -1667,7 +1682,7 @@ var OSC52WriteModes = []string{
+ // appearance.dock_compact, two without. It does not look at DockbarPosition,
+ // so a caller that has to treat a hidden dock as no rows checks that itself.
+ func (s *Settings) DockHeight() int {
+-	if s.DockCompact {
++	if s.DockCompact || s.DockbarPosition == "top" && s.TopbarScript != "" {
+ 		return DockCompactHeight
+ 	}
+ 	return DockFullHeight
+diff --git i/internal/config/dock.go w/internal/config/dock.go
 index 2992b7c41078d3ce7155a6842bcc35c6432e386f..cdc9b25c06b0c36ad1ed534b7ea7363729adaa6f 100644
---- c/internal/config/dock.go
+--- i/internal/config/dock.go
 +++ w/internal/config/dock.go
 @@ -147,6 +147,10 @@ type DockConfig struct {
  const (
@@ -12607,7 +13825,7 @@ index 2992b7c41078d3ce7155a6842bcc35c6432e386f..cdc9b25c06b0c36ad1ed534b7ea73637
  	validateDockColors(result, "dock.tabs", map[string]string{
  		"separator_fg": t.SeparatorFg, "active_fg": t.ActiveFg, "active_bg": t.ActiveBg,
  		"inactive_fg": t.InactiveFg, "inactive_bg": t.InactiveBg,
-diff --git c/internal/config/focused_pane_tint_test.go w/internal/config/focused_pane_tint_test.go
+diff --git i/internal/config/focused_pane_tint_test.go w/internal/config/focused_pane_tint_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..a1007dadf42cab15866301a6cca9fe129b81bf6e
 --- /dev/null
@@ -12662,7 +13880,7 @@ index 0000000000000000000000000000000000000000..a1007dadf42cab15866301a6cca9fe12
 +		}
 +	}
 +}
-diff --git c/internal/config/interaction_modes_test.go w/internal/config/interaction_modes_test.go
+diff --git i/internal/config/interaction_modes_test.go w/internal/config/interaction_modes_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..6dd6da59f71fc52fc6ea4ee891847a5e348caa54
 --- /dev/null
@@ -12697,9 +13915,9 @@ index 0000000000000000000000000000000000000000..6dd6da59f71fc52fc6ea4ee891847a5e
 +		t.Fatal("restriction stayed enabled after disabling it")
 +	}
 +}
-diff --git c/internal/config/look.go w/internal/config/look.go
+diff --git i/internal/config/look.go w/internal/config/look.go
 index abe4b1bdd730de9175aa69ad1062864d7bf7ba69..c90bdcf0e3ce54328ee03f3326044e0041757663 100644
---- c/internal/config/look.go
+--- i/internal/config/look.go
 +++ w/internal/config/look.go
 @@ -94,6 +94,8 @@ var lookKeys = []string{
  	"appearance.background",
@@ -12734,9 +13952,9 @@ index abe4b1bdd730de9175aa69ad1062864d7bf7ba69..c90bdcf0e3ce54328ee03f3326044e00
  			}
  			if spec.MaxBytes < maxLookString {
  				info.MaxBytes = spec.MaxBytes
-diff --git c/internal/config/look_items.go w/internal/config/look_items.go
+diff --git i/internal/config/look_items.go w/internal/config/look_items.go
 index 611532354699f7d560c24c87e1cb9cd5cf12ec5d..e4a7c0bbe7a2fc6c4a0e018fb4314757bac409cd 100644
---- c/internal/config/look_items.go
+--- i/internal/config/look_items.go
 +++ w/internal/config/look_items.go
 @@ -45,6 +45,7 @@ type lookFileKey struct {
  	// MaxBytes caps a text value, or one list item.
@@ -12804,9 +14022,9 @@ index 611532354699f7d560c24c87e1cb9cd5cf12ec5d..e4a7c0bbe7a2fc6c4a0e018fb4314757
  	case bool:
  		target.SetBool(v)
  	case string:
-diff --git c/internal/config/options.go w/internal/config/options.go
-index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8fb390b69e 100644
---- c/internal/config/options.go
+diff --git i/internal/config/options.go w/internal/config/options.go
+index bfeb88ffd40b8e48151976a7666e5c361f47c765..ac10f5c4ccc854fcf584eef110962855a0085c6d 100644
+--- i/internal/config/options.go
 +++ w/internal/config/options.go
 @@ -155,7 +155,7 @@ const (
  //
@@ -12834,7 +14052,19 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  	{
  		Path: "appearance.desktop_background", Type: OptionString, Section: "appearance",
  		Description: "Background behind and between panes, including gaps and an empty workspace: off, theme, or a colour (#rrggbb, 0-255, a slot name or a role name); empty follows appearance.background",
-@@ -869,7 +879,7 @@ var optionSpecs = []Option{
+@@ -664,6 +674,11 @@ var optionSpecs = []Option{
+ 		Description: "Edge the dock sits on, or hidden",
+ 		Accepted:    DockbarPositions, Default: DefaultDockbarPosition,
+ 	},
++	{
++		Path: "appearance.topbar_script", Type: OptionString, Section: "dock",
++		Description: "Lua script defining a hot-reloaded single-row topbar (requires dockbar_position=top)",
++		Default:     "", DefaultClears: true,
++	},
+ 	{
+ 		Path: "appearance.dock_workspace_tabs", Type: OptionBool, Section: "dock",
+ 		Description: "Show the clickable workspace strip in the dock",
+@@ -869,7 +884,7 @@ var optionSpecs = []Option{
  	},
  	{
  		Path: "appearance.sidebar.width", Type: OptionInt, Section: "sidebar",
@@ -12843,7 +14073,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  		Default:     strconv.Itoa(SidebarDefaultWidth), Min: 0,
  	},
  	{
-@@ -893,6 +903,16 @@ var optionSpecs = []Option{
+@@ -893,6 +908,16 @@ var optionSpecs = []Option{
  		Description: "Show the switch number ahead of each session name",
  		Default:     "false",
  	},
@@ -12860,7 +14090,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  	{
  		Path: "appearance.sidebar.show_agents", Type: OptionBool, Section: "sidebar",
  		Description: "Show the agents section at the rail's bottom",
-@@ -919,6 +939,11 @@ var optionSpecs = []Option{
+@@ -919,6 +944,11 @@ var optionSpecs = []Option{
  		Description: "Background of the row under the cursor while the rail has the keyboard: a colour (#rrggbb, 0-255, a slot name or a role name); empty keeps the theme's",
  		Default:     "", Color: true,
  	},
@@ -12872,7 +14102,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  	{
  		Path: "appearance.sidebar.sections", Type: OptionString, Section: "sidebar",
  		Description: "Section names in the order the rail stacks them, each with an optional percent share. A name left out is a section the rail does not draw, and \"spacer\" is an empty block you may repeat.",
-@@ -1011,6 +1036,12 @@ var optionSpecs = []Option{
+@@ -1011,6 +1041,12 @@ var optionSpecs = []Option{
  		Deprecated:  "no longer used: panes name their own workspace, and switching lives on the dock and alt+1..9",
  	},
  
@@ -12885,7 +14115,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  	// [startup]
  	{
  		Path: "startup.open_default_window", Type: OptionBool, Section: "startup",
-@@ -1501,6 +1532,16 @@ var optionSpecs = []Option{
+@@ -1501,6 +1537,16 @@ var optionSpecs = []Option{
  		Description: "When the last pane on the workspace on screen closes, show the workspace you came from. Off shows the splash screen",
  		Default:     "true",
  	},
@@ -12902,7 +14132,7 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  	// [paste_buffers]. The daemon reads it when it starts and when the file
  	// changes, and so does a client with no daemon.
  	{
-@@ -1519,6 +1560,55 @@ var optionSpecs = []Option{
+@@ -1519,6 +1565,55 @@ var optionSpecs = []Option{
  		Description: "When you switch to a workspace with no panes, open a new pane there. It starts in the folder of the pane you came from",
  		Default:     "false",
  	},
@@ -12958,11 +14188,19 @@ index bfeb88ffd40b8e48151976a7666e5c361f47c765..796e229314edf16d39841b9ca92a5d8f
  }
  
  // optionsByPath indexes the registry for lookup. Built once at init so a caller
-diff --git c/internal/config/settings.go w/internal/config/settings.go
-index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95ae37f577 100644
---- c/internal/config/settings.go
+diff --git i/internal/config/settings.go w/internal/config/settings.go
+index 65d294619805ad0ca897e0e43b523a22e7d626ea..398a857c13a71bf941a8d0f68560111e3bd79a85 100644
+--- i/internal/config/settings.go
 +++ w/internal/config/settings.go
-@@ -196,7 +196,9 @@ type Settings struct {
+@@ -175,6 +175,7 @@ type Settings struct {
+ 	// DockbarPosition controls the position of the dockbar
+ 	// Set via --dockbar-position flag or appearance.dockbar_position config
+ 	DockbarPosition string
++	TopbarScript    string
+ 
+ 	// SidebarEnabled turns the sidebar on. Default on since v0.8.0.
+ 	SidebarEnabled bool
+@@ -196,7 +197,9 @@ type Settings struct {
  	// SidebarShowNumbers draws the switch number ahead of each session name.
  	// Off by default: the quiet rail is the default, and the people who want
  	// the numbers set show_numbers in [appearance.sidebar].
@@ -12973,7 +14211,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  
  	// SidebarMarquee scrolls a hovered row's title when it overflows its columns.
  	SidebarMarquee bool
-@@ -204,7 +206,8 @@ type Settings struct {
+@@ -204,7 +207,8 @@ type Settings struct {
  	// SidebarSections is the rail's layout: which sections it stacks, in what
  	// order, and the share of the rail each one may claim. See
  	// SidebarDefaultSections for the syntax.
@@ -12983,7 +14221,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  
  	// SidebarFileIcons draws a nerd font icon per file type in the files
  	// section. Off, and on a terminal running in ASCII, the section falls back
-@@ -643,7 +646,8 @@ type Settings struct {
+@@ -643,7 +647,8 @@ type Settings struct {
  	OptionGlyphs   string
  	// Lock is keybindings.lock: terminal mode gives every key but the leader
  	// to the focused pane.
@@ -12993,7 +14231,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  
  	// PaneGap is the cells of empty space the tiler keeps between two neighbouring
  	// panes: i3's inner gap, and about the only spacing a terminal window manager
-@@ -793,6 +797,8 @@ type Settings struct {
+@@ -793,6 +798,8 @@ type Settings struct {
  	// *BackgroundResolved methods.
  	Background             string
  	PaneBackground         string
@@ -13002,7 +14240,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  	DesktopBackground      string
  	WindowChromeBackground string
  	DockBackground         string
-@@ -892,6 +898,7 @@ func DefaultSettings() Settings {
+@@ -892,6 +899,7 @@ func DefaultSettings() Settings {
  		SidebarShowNumbers:          false,
  		SidebarMarquee:              true,
  		SidebarSections:             SidebarDefaultSections,
@@ -13010,7 +14248,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  		SidebarFileIcons:            true,
  		SidebarFileIconColors:       true,
  		SidebarFolderClick:          SidebarFolderClickNavigate,
-@@ -979,6 +986,7 @@ func DefaultSettings() Settings {
+@@ -979,6 +987,7 @@ func DefaultSettings() Settings {
  		WindowButtonZoom:            true,
  		DimUnfocused:                0,
  		DimForeground:               true,
@@ -13018,7 +14256,7 @@ index 65d294619805ad0ca897e0e43b523a22e7d626ea..a51ca63a436ed5bd91a8fe588b771b95
  		Background:                  BackgroundOff,
  		ClockFormat:                 "",
  		ZoomMaxWidth:                0,
-diff --git c/internal/config/sidebar_overview.go w/internal/config/sidebar_overview.go
+diff --git i/internal/config/sidebar_overview.go w/internal/config/sidebar_overview.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..b9739b26bb3dde759ced68cbfcc64aa11ea5c26e
 --- /dev/null
@@ -13051,7 +14289,7 @@ index 0000000000000000000000000000000000000000..b9739b26bb3dde759ced68cbfcc64aa1
 +	}
 +	return SidebarOverviewInvalid, false
 +}
-diff --git c/internal/config/sidebar_overview_test.go w/internal/config/sidebar_overview_test.go
+diff --git i/internal/config/sidebar_overview_test.go w/internal/config/sidebar_overview_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..4e9c5275a502448b9d24d90b04bb2ae5cafe2516
 --- /dev/null
@@ -13098,9 +14336,9 @@ index 0000000000000000000000000000000000000000..4e9c5275a502448b9d24d90b04bb2ae5
 +		t.Fatal("invalid mode produced no warning")
 +	}
 +}
-diff --git c/internal/config/sidebar_sections.go w/internal/config/sidebar_sections.go
+diff --git i/internal/config/sidebar_sections.go w/internal/config/sidebar_sections.go
 index 8f4598a5092e8aabdb1f406015f7872ad854ad67..ef214d160d0bacaaa570feeeb76043a24f023039 100644
---- c/internal/config/sidebar_sections.go
+--- i/internal/config/sidebar_sections.go
 +++ w/internal/config/sidebar_sections.go
 @@ -59,6 +59,15 @@ func ParseSidebarSections(source string) []SidebarSectionShare {
  	if sections == 0 && source != SidebarDefaultSections {
@@ -13150,9 +14388,9 @@ index 8f4598a5092e8aabdb1f406015f7872ad854ad67..ef214d160d0bacaaa570feeeb76043a2
  	return problems
  }
  
-diff --git c/internal/config/sidebar_sections_test.go w/internal/config/sidebar_sections_test.go
+diff --git i/internal/config/sidebar_sections_test.go w/internal/config/sidebar_sections_test.go
 index 671d70a950cb6d7652d479f511220e7886b526f9..f0669e67c293ff8d3164b6778208bbb3239c0971 100644
---- c/internal/config/sidebar_sections_test.go
+--- i/internal/config/sidebar_sections_test.go
 +++ w/internal/config/sidebar_sections_test.go
 @@ -47,6 +47,8 @@ func TestParseSidebarSections(t *testing.T) {
  		{"terminals,sessions", []string{"terminals", "sessions"}},
@@ -13183,7 +14421,7 @@ index 671d70a950cb6d7652d479f511220e7886b526f9..f0669e67c293ff8d3164b6778208bbb3
  // TestSectionProblemsSaySpacerIsFine is the validator's half of the same rule:
  // a repeated spacer is not a problem and a repeated section still is.
  //
-diff --git c/internal/config/sidebar_separator_test.go w/internal/config/sidebar_separator_test.go
+diff --git i/internal/config/sidebar_separator_test.go w/internal/config/sidebar_separator_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..aacf39b71cc492a60bb08131996d3aca970ef676
 --- /dev/null
@@ -13221,7 +14459,7 @@ index 0000000000000000000000000000000000000000..aacf39b71cc492a60bb08131996d3aca
 +		})
 +	}
 +}
-diff --git c/internal/config/sidebar_session_controls_test.go w/internal/config/sidebar_session_controls_test.go
+diff --git i/internal/config/sidebar_session_controls_test.go w/internal/config/sidebar_session_controls_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..2efd264c25cde38a1fd5a03bc41fba8e82f0a485
 --- /dev/null
@@ -13255,7 +14493,7 @@ index 0000000000000000000000000000000000000000..2efd264c25cde38a1fd5a03bc41fba8e
 +		})
 +	}
 +}
-diff --git c/internal/config/sidebar_spacing_test.go w/internal/config/sidebar_spacing_test.go
+diff --git i/internal/config/sidebar_spacing_test.go w/internal/config/sidebar_spacing_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..b610ae1adc0c1ff21fbb72ea596c25dea85353aa
 --- /dev/null
@@ -13315,7 +14553,7 @@ index 0000000000000000000000000000000000000000..b610ae1adc0c1ff21fbb72ea596c25de
 +		}
 +	}
 +}
-diff --git c/internal/config/sidebar_typography_test.go w/internal/config/sidebar_typography_test.go
+diff --git i/internal/config/sidebar_typography_test.go w/internal/config/sidebar_typography_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..daeee70e70cd844dbe992d8fa306d3e1641fd709
 --- /dev/null
@@ -13353,7 +14591,7 @@ index 0000000000000000000000000000000000000000..daeee70e70cd844dbe992d8fa306d3e1
 +		}
 +	}
 +}
-diff --git c/internal/config/sidebar_ui_test.go w/internal/config/sidebar_ui_test.go
+diff --git i/internal/config/sidebar_ui_test.go w/internal/config/sidebar_ui_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..4aedae81ab30bf3ad5159ea31fa2dd7a69ad1936
 --- /dev/null
@@ -13423,11 +14661,11 @@ index 0000000000000000000000000000000000000000..4aedae81ab30bf3ad5159ea31fa2dd7a
 +		}
 +	}
 +}
-diff --git c/internal/config/userconfig.go w/internal/config/userconfig.go
-index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579934e02ba 100644
---- c/internal/config/userconfig.go
+diff --git i/internal/config/userconfig.go w/internal/config/userconfig.go
+index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..dfcf653d9c4a2100c53bc2e36afd4e4df18a73af 100644
+--- i/internal/config/userconfig.go
 +++ w/internal/config/userconfig.go
-@@ -333,29 +333,30 @@ var WindowSizeModes = []string{WindowSizeSmallest, WindowSizeLargest, WindowSize
+@@ -333,33 +333,35 @@ var WindowSizeModes = []string{WindowSizeSmallest, WindowSizeLargest, WindowSize
  
  // AppearanceConfig holds appearance-related settings
  type AppearanceConfig struct {
@@ -13481,7 +14719,12 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	AutoEnterTerminalOnFocus AutoEnterTerminalPolicy `toml:"auto_enter_terminal_on_focus"` // When a keyboard focus command should start typing in that pane: off, targeted, all (default: off)
  	ClickToType              string                  `toml:"click_to_type"`                // What a click on a pane's content does in window-management mode: single, double, off (default: double)
  	WordCharacters           *string                 `toml:"word_characters"`              // Punctuation that counts as part of a word for double-click selection (default: "@-./_~?&=%+#")
-@@ -461,8 +462,10 @@ type AppearanceConfig struct {
+ 	DockbarPosition          string                  `toml:"dockbar_position"`             // Dockbar position: bottom, top, hidden (default: top)
++	TopbarScript             string                  `toml:"topbar_script"`                // Embedded Lua topbar model (empty: regular dock)
+ 	PreferredShell           string                  `toml:"preferred_shell"`              // Preferred shell: if empty, auto-detect based on platform.
+ 	AnimationsEnabled        *bool                   `toml:"animations_enabled,omitempty"` // Deprecated: folded into motion on load (false is none)
+ 	Motion                   string                  `toml:"motion"`                       // How much moves: none, basic (window slides, copy sweep), full (also fades and the working shimmer) (default: full)
+@@ -461,8 +463,10 @@ type AppearanceConfig struct {
  	// takes off, theme or #RRGGBB. background is the default for every
  	// surface; a surface's own key overrides it, and empty follows it. See
  	// ResolveBackground.
@@ -13494,7 +14737,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	DesktopBackground      string `toml:"desktop_background"`       // Ground behind and between panes (default: empty, follows background)
  	WindowChromeBackground string `toml:"window_chrome_background"` // Ground under pane borders and title bars (default: empty, follows background)
  	DockBackground         string `toml:"dock_background"`          // Ground under the dock (default: empty, follows background)
-@@ -806,18 +809,68 @@ type SelectionConfig struct {
+@@ -806,18 +810,68 @@ type SelectionConfig struct {
  	CopyCommand string `toml:"copy_command,omitempty"`
  }
  
@@ -13571,7 +14814,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	// Workspaces named the workspace chip band, which the rail no longer draws:
  	// panes say which workspace they are on with a tag of their own, and
  	// switching stays on the dock and alt+1..9. Still parsed so an existing
-@@ -827,7 +880,8 @@ type SidebarConfig struct {
+@@ -827,7 +881,8 @@ type SidebarConfig struct {
  	Tooltips   *bool  `toml:"tooltips"` // Label the collapsed strip on hover (default: true)
  	// Sections is the rail's layout: which sections it stacks, in what order,
  	// and the share of it each may claim. See SidebarDefaultSections.
@@ -13581,7 +14824,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	// FileIcons draws a nerd font icon per file type in the files section
  	// (default: true).
  	FileIcons *bool `toml:"file_icons"`
-@@ -893,6 +947,7 @@ type SidebarConfig struct {
+@@ -893,6 +948,7 @@ type SidebarConfig struct {
  	// output the custom section draws, its heading, and when it runs. Read
  	// from the file only; see SidebarCustomConfig for why.
  	Custom SidebarCustomConfig `toml:"custom"`
@@ -13589,7 +14832,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	// Left and Right independently configure rails on the two screen edges.
  	// When absent, the existing rail still lives at Position with its existing
  	// settings. A new edge must be explicitly enabled; see sidebar_edges.go.
-@@ -1075,6 +1130,7 @@ func DefaultConfig() *UserConfig {
+@@ -1075,6 +1131,7 @@ func DefaultConfig() *UserConfig {
  			AutoEnterTerminalOnFocus: AutoEnterTerminalOff,
  			Glyphs:                   theme.GlyphSetNone,
  			Motion:                   MotionFull,
@@ -13597,7 +14840,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  			ModalDim:                 new(ModalDimDefault),
  			PopupDim:                 new(PopupDimDefault),
  			PanelPadding:             overlay.DefaultPanelPadding,
-@@ -1108,9 +1164,11 @@ func DefaultConfig() *UserConfig {
+@@ -1108,9 +1165,11 @@ func DefaultConfig() *UserConfig {
  				// A fresh pointer per call, so a caller that flips it in place
  				// cannot change the next DefaultConfig.
  				Enabled:       new(true),
@@ -13609,7 +14852,15 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  				FolderClick:   SidebarFolderClickNavigate,
  				HeaderCase:    RailHeaderLowercase,
  				RowStyle:      RailRowBar,
-@@ -2573,6 +2631,8 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+@@ -2507,6 +2566,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+ 	} else if cfg.Appearance.DockbarPosition != "" {
+ 		s.DockbarPosition = DefaultDockbarPosition
+ 	}
++	s.TopbarScript = strings.TrimSpace(cfg.Appearance.TopbarScript)
+ 
+ 	// Sidebar. Also runs for a config that never went through LoadUserConfig (the
+ 	// settings page builds one in memory), so an old flat key reaches the globals
+@@ -2573,6 +2633,8 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
  	if sb.ShowNumbers != nil {
  		s.SidebarShowNumbers = *sb.ShowNumbers
  	}
@@ -13618,7 +14869,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	if sb.Marquee != nil {
  		s.SidebarMarquee = *sb.Marquee
  	}
-@@ -2585,6 +2645,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+@@ -2585,6 +2647,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
  	// is what lets the editor's undo hand a layout it never wrote back to the
  	// default, rather than writing today's four sections into a file that named
  	// none and pinning that user to them for good.
@@ -13626,7 +14877,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	s.SidebarSections = SidebarDefaultSections
  	if sb.Sections != "" {
  		s.SidebarSections = sb.Sections
-@@ -2709,6 +2770,11 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+@@ -2709,6 +2772,11 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
  	// live cannot paint a colour the file's validation would have refused.
  	s.Background = cfg.Appearance.Background
  	s.PaneBackground = cfg.Appearance.PaneBackground
@@ -13638,7 +14889,7 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  	s.DesktopBackground = cfg.Appearance.DesktopBackground
  	s.WindowChromeBackground = cfg.Appearance.WindowChromeBackground
  	s.DockBackground = cfg.Appearance.DockBackground
-@@ -2843,6 +2909,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
+@@ -2843,6 +2911,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
  	s.KeyboardLayout = cfg.Keybindings.KeyboardLayout
  	s.OptionGlyphs = cfg.Keybindings.OptionGlyphs
  	s.Lock = cfg.Keybindings.Lock != nil && *cfg.Keybindings.Lock
@@ -13646,9 +14897,9 @@ index 8163e60d618a236b43f24c3e5fd4d1f2a382d06a..a0a35070d9fc2b95c4fe46502d283579
  
  	// The motion level. A config that was not run through the load path (one
  	// built in code) can still carry the old boolean, so it is folded here as
-diff --git c/internal/config/validation.go w/internal/config/validation.go
+diff --git i/internal/config/validation.go w/internal/config/validation.go
 index 21fc5de33f6fb21076e8a3d0ed46cc0592ee0e22..b3ef9545a51d9c1048f90b01642652c336acc449 100644
---- c/internal/config/validation.go
+--- i/internal/config/validation.go
 +++ w/internal/config/validation.go
 @@ -364,6 +364,12 @@ func validateAppearanceEnums(cfg *UserConfig, result *ValidationResult) {
  	checkEnum("dockbar_position", cfg.Appearance.DockbarPosition, DockbarPositions)
@@ -13734,9 +14985,9 @@ index 21fc5de33f6fb21076e8a3d0ed46cc0592ee0e22..b3ef9545a51d9c1048f90b01642652c3
  }
  
  // validateBackground is validateBackgrounds for one option.
-diff --git c/internal/config/workspaces.go w/internal/config/workspaces.go
+diff --git i/internal/config/workspaces.go w/internal/config/workspaces.go
 index 7f3ff9ec7e9eeaab00936e6f2c00088b7471fc6a..0a6d399aeda274125c133b4ee9e5163e97dbeeba 100644
---- c/internal/config/workspaces.go
+--- i/internal/config/workspaces.go
 +++ w/internal/config/workspaces.go
 @@ -1,10 +1,6 @@
  package config
@@ -13765,7 +15016,7 @@ index 7f3ff9ec7e9eeaab00936e6f2c00088b7471fc6a..0a6d399aeda274125c133b4ee9e5163e
  }
  
  // ReturnsWhenEmpty reports whether return_when_empty is on. Unset means on.
-diff --git c/internal/config/workspaces_test.go w/internal/config/workspaces_test.go
+diff --git i/internal/config/workspaces_test.go w/internal/config/workspaces_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..c53ee7f71c7d72ed3e8599f252a8541d5fe362ef
 --- /dev/null
@@ -13809,7 +15060,7 @@ index 0000000000000000000000000000000000000000..c53ee7f71c7d72ed3e8599f252a8541d
 +		}
 +	}
 +}
-diff --git c/internal/gitstate/history.go w/internal/gitstate/history.go
+diff --git i/internal/gitstate/history.go w/internal/gitstate/history.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..a5ad1dba23192249fd07d6f5abe8c8e9646a9c13
 --- /dev/null
@@ -13881,9 +15132,9 @@ index 0000000000000000000000000000000000000000..a5ad1dba23192249fd07d6f5abe8c8e9
 +	mu.Unlock()
 +	return commits, nil
 +}
-diff --git c/internal/input/actions.go w/internal/input/actions.go
+diff --git i/internal/input/actions.go w/internal/input/actions.go
 index 0ac4adbc1f010faac7a85dee50040d38794ca333..3e695c6abaf645e4f00eaca6900e181838ba272e 100644
---- c/internal/input/actions.go
+--- i/internal/input/actions.go
 +++ w/internal/input/actions.go
 @@ -8,7 +8,6 @@ import (
  	tea "charm.land/bubbletea/v2"
@@ -13913,9 +15164,9 @@ index 0ac4adbc1f010faac7a85dee50040d38794ca333..3e695c6abaf645e4f00eaca6900e1818
  }
  
  // handleRenameWorkspace opens the rename editor on the workspace the session
-diff --git c/internal/input/border_resize.go w/internal/input/border_resize.go
+diff --git i/internal/input/border_resize.go w/internal/input/border_resize.go
 index 39c011158f06cdf05c3b207b7cd1baf045b8e62e..bde4f2042c8c816750a18a11176e531ce7e4bf4f 100644
---- c/internal/input/border_resize.go
+--- i/internal/input/border_resize.go
 +++ w/internal/input/border_resize.go
 @@ -45,7 +45,7 @@ func within(v, target, slop int) bool { return abs(v-target) <= slop }
  func armBorderResize(x, y int, o *app.OS) bool {
@@ -13926,9 +15177,9 @@ index 39c011158f06cdf05c3b207b7cd1baf045b8e62e..bde4f2042c8c816750a18a11176e531c
  		return false
  	}
  	// Scrolling columns drawing their own borders have the right drag for
-diff --git c/internal/input/handler.go w/internal/input/handler.go
+diff --git i/internal/input/handler.go w/internal/input/handler.go
 index 94bbb6f68ab5241dbcebc00373d5182592dc4bda..996f4fb833706d93482711ac523ef703f88226be 100644
---- c/internal/input/handler.go
+--- i/internal/input/handler.go
 +++ w/internal/input/handler.go
 @@ -16,6 +16,8 @@ import (
  
@@ -13948,7 +15199,7 @@ index 94bbb6f68ab5241dbcebc00373d5182592dc4bda..996f4fb833706d93482711ac523ef703
  	// Keep the key as the host sent it for the pane, and read it the rest of
  	// the way by the key the layout produced (see readKey).
  	o.NoteHostKey(msg)
-diff --git c/internal/input/interaction_modes_test.go w/internal/input/interaction_modes_test.go
+diff --git i/internal/input/interaction_modes_test.go w/internal/input/interaction_modes_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..008eecab2e195f36915930f7dd2a4036a76eff58
 --- /dev/null
@@ -14036,9 +15287,9 @@ index 0000000000000000000000000000000000000000..008eecab2e195f36915930f7dd2a4036
 +		t.Fatal("leader was unavailable without a focused pane")
 +	}
 +}
-diff --git c/internal/input/keyboard_terminal.go w/internal/input/keyboard_terminal.go
+diff --git i/internal/input/keyboard_terminal.go w/internal/input/keyboard_terminal.go
 index 8d19387c356144a4d44347e2274d38db5745f5c6..ee88f09911100879e895be0fa6847ed8624fd077 100644
---- c/internal/input/keyboard_terminal.go
+--- i/internal/input/keyboard_terminal.go
 +++ w/internal/input/keyboard_terminal.go
 @@ -304,7 +304,7 @@ func typeIntoPane(msg tea.KeyPressMsg, o *app.OS, nvimNavigation bool) (*app.OS,
  			}
@@ -14058,9 +15309,9 @@ index 8d19387c356144a4d44347e2274d38db5745f5c6..ee88f09911100879e895be0fa6847ed8
  	}
  	return o, nil
  }
-diff --git c/internal/input/keyboard_wm.go w/internal/input/keyboard_wm.go
+diff --git i/internal/input/keyboard_wm.go w/internal/input/keyboard_wm.go
 index 55416ada39978c6edeb5de616f812644537b1b17..24f67bafbc50955baa6572d687c1c0298272e705 100644
---- c/internal/input/keyboard_wm.go
+--- i/internal/input/keyboard_wm.go
 +++ w/internal/input/keyboard_wm.go
 @@ -152,8 +152,7 @@ func HandleWindowManagementModeKey(msg tea.KeyPressMsg, o *app.OS) (*app.OS, tea
  			action = lookupAction(o, msg, o.KeybindRegistry.GetAction)
@@ -14072,9 +15323,9 @@ index 55416ada39978c6edeb5de616f812644537b1b17..24f67bafbc50955baa6572d687c1c029
  		}
  	}
  
-diff --git c/internal/input/mouse_click.go w/internal/input/mouse_click.go
-index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..8883fb27404848bd2d4bda4ec63c00192469b3f2 100644
---- c/internal/input/mouse_click.go
+diff --git i/internal/input/mouse_click.go w/internal/input/mouse_click.go
+index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..633a8d7c55daaed9877a952397506be067d53272 100644
+--- i/internal/input/mouse_click.go
 +++ w/internal/input/mouse_click.go
 @@ -139,7 +139,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
  	// test claims one row too many, and that row is the first row of the topmost
@@ -14085,7 +15336,28 @@ index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..8883fb27404848bd2d4bda4ec63c0019
  		// A plain right-click on the dock opens its menu (the dock item's menu
  		// when one is under the pointer). The dock has no drag gesture on the
  		// right button, so the menu can open on the press itself.
-@@ -462,7 +462,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
+@@ -147,6 +147,20 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ 			o.OpenContextMenu(X, Y)
+ 			return o, nil
+ 		}
++		if msg.Button == tea.MouseLeft {
++			switch o.TopbarClick(X, Y) {
++			case app.TopbarHandled:
++				return o, nil
++			case app.TopbarLeaveSession:
++				if m, cmd, detached := detachSession(o); detached {
++					return m, cmd
++				}
++				return o, nil
++			case app.TopbarCloseSession:
++				return o, o.OpenSessionClose()
++			case app.TopbarNoClick:
++			}
++		}
+ 		// The session controls are the bar's outermost block and are tested
+ 		// first. Leaving happens on the click; closing only ever raises its
+ 		// confirmation, whatever the session is holding.
+@@ -462,7 +476,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
  		if action, ok := o.WindowButtonIn(clickedWindow.ID, X, Y); ok {
  			switch action {
  			case app.WindowButtonClose:
@@ -14094,7 +15366,7 @@ index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..8883fb27404848bd2d4bda4ec63c0019
  			case app.WindowButtonMinimize:
  				o.MinimizeWindow(clickedWindowIndex)
  			case app.WindowButtonFloat:
-@@ -539,7 +539,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
+@@ -539,7 +553,7 @@ func handleMouseClick(msg tea.MouseClickMsg, o *app.OS) (*app.OS, tea.Cmd) {
  	}
  	o.FocusWindowFromClick(clickedWindowIndex, X, Y)
  	if o.Mode == app.TerminalMode {
@@ -14103,7 +15375,7 @@ index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..8883fb27404848bd2d4bda4ec63c0019
  	}
  
  	// A left press on the content area in window-management mode arms
-@@ -662,7 +662,7 @@ func beginWindowDrag(o *app.OS, idx, x, y int) {
+@@ -662,7 +676,7 @@ func beginWindowDrag(o *app.OS, idx, x, y int) {
  	win := o.Windows[idx]
  	o.FocusWindowFromClick(idx, x, y)
  	if o.Mode == app.TerminalMode {
@@ -14112,9 +15384,9 @@ index 094f9b0d4f5fdebdee055a111d0a3320f7758d13..8883fb27404848bd2d4bda4ec63c0019
  	}
  	o.SetPointerShape(app.PointerGrabbing)
  	o.InteractionMode = true
-diff --git c/internal/input/mouse_motion.go w/internal/input/mouse_motion.go
+diff --git i/internal/input/mouse_motion.go w/internal/input/mouse_motion.go
 index 53c8e3739689c2e9456a974bca0248ddfb1dcb38..fcadf8b787e92682bbf521a20c22839ba13637bd 100644
---- c/internal/input/mouse_motion.go
+--- i/internal/input/mouse_motion.go
 +++ w/internal/input/mouse_motion.go
 @@ -208,7 +208,7 @@ func handleMouseMotion(msg tea.MouseMotionMsg, o *app.OS) (*app.OS, tea.Cmd) {
  		!o.SidebarFocused &&
@@ -14125,9 +15397,34 @@ index 53c8e3739689c2e9456a974bca0248ddfb1dcb38..fcadf8b787e92682bbf521a20c22839b
  		// The picture-in-picture view is not a pane: a pointer resting on it
  		// is not over the tile underneath.
  		idx := findClickedWindow(mouse.X, mouse.Y, o)
-diff --git c/internal/input/multifocus_actions.go w/internal/input/multifocus_actions.go
+diff --git i/internal/input/mouse_wheel.go w/internal/input/mouse_wheel.go
+index a835ac76d7c3dbe81badcebfaa57a351ecb07862..0adeeff150947f734c4e0a6ed4dc4a658052377b 100644
+--- i/internal/input/mouse_wheel.go
++++ w/internal/input/mouse_wheel.go
+@@ -40,6 +40,20 @@ func handleMouseWheel(msg tea.MouseWheelMsg, o *app.OS) (*app.OS, tea.Cmd) {
+ 		}
+ 	}
+ 
++	if !o.OverlayActive() {
++		wm := msg.Mouse()
++		delta := 0
++		switch wm.Button {
++		case tea.MouseWheelUp, tea.MouseWheelLeft:
++			delta = -1
++		case tea.MouseWheelDown, tea.MouseWheelRight:
++			delta = 1
++		}
++		if delta != 0 && o.TopbarWheel(wm.X, wm.Y, delta) {
++			return o, nil
++		}
++	}
++
+ 	// A docked session is an ordinary pane: send a tracked wheel to its app,
+ 	// otherwise scroll its own history rather than the rail's old list model.
+ 	if wm := msg.Mouse(); !o.OverlayActive() {
+diff --git i/internal/input/multifocus_actions.go w/internal/input/multifocus_actions.go
 index 97017f816d60c84850aac9eb0e7b42f9b3df8deb..d9df8017c519fa3d74ebf325987b9763f14fe1df 100644
---- c/internal/input/multifocus_actions.go
+--- i/internal/input/multifocus_actions.go
 +++ w/internal/input/multifocus_actions.go
 @@ -20,7 +20,7 @@ func (d *ActionDispatcher) registerMultifocusHandlers() {
  }
@@ -14138,9 +15435,9 @@ index 97017f816d60c84850aac9eb0e7b42f9b3df8deb..d9df8017c519fa3d74ebf325987b9763
  // ran it, or the current one. It has no default key. It sits here because it
  // is how a multifocus set from tuios xpanes goes away.
  const actionCloseWorkspace = "close_workspace"
-diff --git c/internal/input/prefix_actions.go w/internal/input/prefix_actions.go
+diff --git i/internal/input/prefix_actions.go w/internal/input/prefix_actions.go
 index 63026788ee960bfc22829acd5abb6588ec69872c..dbec8521251e56f170b45d65ac6de76901594908 100644
---- c/internal/input/prefix_actions.go
+--- i/internal/input/prefix_actions.go
 +++ w/internal/input/prefix_actions.go
 @@ -6,7 +6,6 @@ import (
  	tea "charm.land/bubbletea/v2"
@@ -14203,9 +15500,9 @@ index 63026788ee960bfc22829acd5abb6588ec69872c..dbec8521251e56f170b45d65ac6de769
  	o.ShowNotification("Window management mode", "info", o.Settings.NotificationDuration)
  	refreshFocusedWindow(o)
  }
-diff --git c/internal/overlay/rows.go w/internal/overlay/rows.go
+diff --git i/internal/overlay/rows.go w/internal/overlay/rows.go
 index 9ab267c129d849b6ae2e52972d16a133dbb0f81f..e452806ba6902a8a4e5f560be3aabad6851f48af 100644
---- c/internal/overlay/rows.go
+--- i/internal/overlay/rows.go
 +++ w/internal/overlay/rows.go
 @@ -134,6 +134,17 @@ func reverseCell(c *uv.Cell) {
  	c.Style.Attrs &^= uv.AttrFaint
@@ -14225,9 +15522,9 @@ index 9ab267c129d849b6ae2e52972d16a133dbb0f81f..e452806ba6902a8a4e5f560be3aabad6
  // underlineCell underlines a cell that carries text, leaving the padding
  // alone so the line runs under the words rather than across the panel.
  func underlineCell(c *uv.Cell) {
-diff --git c/internal/session/agent_detect.go w/internal/session/agent_detect.go
+diff --git i/internal/session/agent_detect.go w/internal/session/agent_detect.go
 index 1556c35d9662c1179227a0de8ed895543dfe205a..d8e5d8aee1b8c6df066a7358af696e4a0c4f8586 100644
---- c/internal/session/agent_detect.go
+--- i/internal/session/agent_detect.go
 +++ w/internal/session/agent_detect.go
 @@ -938,6 +938,9 @@ func (s *Session) detectionPass(st *SessionState, readings map[string]detectRead
  			delete(s.agentSharedGuards, id)
@@ -14239,9 +15536,9 @@ index 1556c35d9662c1179227a0de8ed895543dfe205a..d8e5d8aee1b8c6df066a7358af696e4a
  	return out
  }
  
-diff --git c/internal/session/daemon.go w/internal/session/daemon.go
+diff --git i/internal/session/daemon.go w/internal/session/daemon.go
 index ecc6fcf0157fb49bd31c17b97b25f933444c5280..a308ac0813f33a60ab8fe7ff01aaae63d2f37b3c 100644
---- c/internal/session/daemon.go
+--- i/internal/session/daemon.go
 +++ w/internal/session/daemon.go
 @@ -833,6 +833,7 @@ type DaemonConfig struct {
  	// session stays on a workspace that loses its last pane. The zero value
@@ -14259,9 +15556,9 @@ index ecc6fcf0157fb49bd31c17b97b25f933444c5280..a308ac0813f33a60ab8fe7ff01aaae63
  	d.agentDetectInterval = resolveAgentDetectInterval(cfg.AgentAutoDetect, cfg.AgentDetectInterval)
  	d.agentsOff.Store(cfg.AgentsOff)
  	d.wakes.init()
-diff --git c/internal/session/daemon_hosts.go w/internal/session/daemon_hosts.go
+diff --git i/internal/session/daemon_hosts.go w/internal/session/daemon_hosts.go
 index 617878d4616df3b4294e2f3b74861b32f09fe04b..bbdfce9d28d580e17bbae0a2b7e717f37fc6a9e7 100644
---- c/internal/session/daemon_hosts.go
+--- i/internal/session/daemon_hosts.go
 +++ w/internal/session/daemon_hosts.go
 @@ -120,6 +120,7 @@ func (d *Daemon) applyUserConfig(cfg *config.UserConfig, byPerson bool) {
  	d.manager.SetPreferredShell(cfg.Appearance.PreferredShell)
@@ -14271,9 +15568,9 @@ index 617878d4616df3b4294e2f3b74861b32f09fe04b..bbdfce9d28d580e17bbae0a2b7e717f3
  	if d.buffers != nil {
  		d.buffers.SetLimits(cfg.PasteBuffers.Resolved())
  	}
-diff --git c/internal/session/daemon_user_config.go w/internal/session/daemon_user_config.go
+diff --git i/internal/session/daemon_user_config.go w/internal/session/daemon_user_config.go
 index 92e9936e31c1368facf2bbd27c03a94d8fda0cb9..8b57e9e34b9535790bedd46c87888a4c5f4f8263 100644
---- c/internal/session/daemon_user_config.go
+--- i/internal/session/daemon_user_config.go
 +++ w/internal/session/daemon_user_config.go
 @@ -74,6 +74,7 @@ func DaemonConfigFromUser(uc *config.UserConfig) *DaemonConfig {
  	// The daemon owns the window set, so it sees the workspace on screen
@@ -14283,9 +15580,9 @@ index 92e9936e31c1368facf2bbd27c03a94d8fda0cb9..8b57e9e34b9535790bedd46c87888a4c
  	// The daemon holds the paste buffers every client shares.
  	cfg.PasteBufferLimit, cfg.PasteBufferMaxBytes = uc.PasteBuffers.Resolved()
  	cfg.PasteBuffersOff = cfg.PasteBufferLimit == 0
-diff --git c/internal/session/manager.go w/internal/session/manager.go
+diff --git i/internal/session/manager.go w/internal/session/manager.go
 index 620ac4952f31b667f79f90389b042301df1ba66e..7550fd0d62a9cc7f3decd67e1ede7600c1089e5e 100644
---- c/internal/session/manager.go
+--- i/internal/session/manager.go
 +++ w/internal/session/manager.go
 @@ -46,7 +46,8 @@ type Manager struct {
  	preferredShell atomic.Pointer[string]
@@ -14322,9 +15619,9 @@ index 620ac4952f31b667f79f90389b042301df1ba66e..7550fd0d62a9cc7f3decd67e1ede7600
  	if cfg.HerdrEnv == nil {
  		cfg.HerdrEnv = m.HerdrEnv
  	}
-diff --git c/internal/session/session.go w/internal/session/session.go
+diff --git i/internal/session/session.go w/internal/session/session.go
 index 086d93d0571021e23717668817148b23b856c3b8..a70959d6473518bd214fa99fb664480c6391491f 100644
---- c/internal/session/session.go
+--- i/internal/session/session.go
 +++ w/internal/session/session.go
 @@ -492,6 +492,8 @@ type SessionState struct {
  	// sees it. A workspace's number is its position, and a move renumbers the
@@ -14372,9 +15669,9 @@ index 086d93d0571021e23717668817148b23b856c3b8..a70959d6473518bd214fa99fb664480c
  	s.noteStateChangeLocked()
  	s.emitLifecycleLocked(before)
  	return s.snapshotStateLocked(), nil
-diff --git c/internal/session/session_ops.go w/internal/session/session_ops.go
+diff --git i/internal/session/session_ops.go w/internal/session/session_ops.go
 index 77b2f10fa13636f00ba90bdffc7e12e8bb122638..406cb5663626ef6567f9e6788c5fac8c914dbcac 100644
---- c/internal/session/session_ops.go
+--- i/internal/session/session_ops.go
 +++ w/internal/session/session_ops.go
 @@ -3,6 +3,7 @@ package session
  import (
@@ -14394,9 +15691,9 @@ index 77b2f10fa13636f00ba90bdffc7e12e8bb122638..406cb5663626ef6567f9e6788c5fac8c
  		if name == "" {
  			delete(state.WorkspaceNames, ws)
  			return nil
-diff --git c/internal/session/state_fingerprint.go w/internal/session/state_fingerprint.go
+diff --git i/internal/session/state_fingerprint.go w/internal/session/state_fingerprint.go
 index db73a50f7274bca198e4e24bbd301b859865efa4..9b08f2e951bde0ff87a06c0b839cc169e49f5b76 100644
---- c/internal/session/state_fingerprint.go
+--- i/internal/session/state_fingerprint.go
 +++ w/internal/session/state_fingerprint.go
 @@ -192,6 +192,7 @@ func StateFingerprint(s *SessionState) uint64 {
  		}
@@ -14406,9 +15703,9 @@ index db73a50f7274bca198e4e24bbd301b859865efa4..9b08f2e951bde0ff87a06c0b839cc169
  
  	// The per-workspace master ratios, folded in the same way and for the same
  	// reason as the flat one above: a peer acts on them, so a push that changes
-diff --git c/internal/session/state_merge.go w/internal/session/state_merge.go
+diff --git i/internal/session/state_merge.go w/internal/session/state_merge.go
 index 99427daf7aa26fe357081e9d9be997e9c3218bc3..bc2629bcece0df1201efd4b4dc3e3e9a05aae46c 100644
---- c/internal/session/state_merge.go
+--- i/internal/session/state_merge.go
 +++ w/internal/session/state_merge.go
 @@ -68,6 +68,7 @@ func retainDaemonExclusive(incoming, canonical *SessionState) {
  	if incoming.WorkspaceNames == nil {
@@ -14418,7 +15715,7 @@ index 99427daf7aa26fe357081e9d9be997e9c3218bc3..bc2629bcece0df1201efd4b4dc3e3e9a
  	// Older clients omit focus history.
  	if incoming.FocusHistory == nil {
  		incoming.FocusHistory = canonical.FocusHistory
-diff --git c/internal/session/workspace_auto_name.go w/internal/session/workspace_auto_name.go
+diff --git i/internal/session/workspace_auto_name.go w/internal/session/workspace_auto_name.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..3bc0e454b97aabd71c090753ced52d9a85b40388
 --- /dev/null
@@ -14501,7 +15798,7 @@ index 0000000000000000000000000000000000000000..3bc0e454b97aabd71c090753ced52d9a
 +func (s *Session) inheritWorkspaceNamesLocked(state *SessionState) bool {
 +	return s.autoNamesSinglePanesLocked(state) && state.reconcileWorkspaceAutoNames(true)
 +}
-diff --git c/internal/session/workspace_auto_name_test.go w/internal/session/workspace_auto_name_test.go
+diff --git i/internal/session/workspace_auto_name_test.go w/internal/session/workspace_auto_name_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..971b2aa925d177ade259dc180d159c9b03cde1cd
 --- /dev/null
@@ -14706,9 +16003,9 @@ index 0000000000000000000000000000000000000000..971b2aa925d177ade259dc180d159c9b
 +		t.Fatal("automatic naming ignored the default-off policy")
 +	}
 +}
-diff --git c/internal/session/workspace_renumber.go w/internal/session/workspace_renumber.go
+diff --git i/internal/session/workspace_renumber.go w/internal/session/workspace_renumber.go
 index ee9f01eb461a6ccd82a39cccdb5c07fdb42bacee..2f4f38d7e927abe3129c04321f78fff39d111dc4 100644
---- c/internal/session/workspace_renumber.go
+--- i/internal/session/workspace_renumber.go
 +++ w/internal/session/workspace_renumber.go
 @@ -177,6 +177,7 @@ func (st *SessionState) renumberWorkspaces(newOf map[int]int) {
  	st.WorkspaceFocus = RenumberWorkspaceMap(st.WorkspaceFocus, newOf)
@@ -14738,9 +16035,9 @@ index ee9f01eb461a6ccd82a39cccdb5c07fdb42bacee..2f4f38d7e927abe3129c04321f78fff3
  	incoming.WorkspaceMasterRatio = maps.Clone(canonical.WorkspaceMasterRatio)
  	incoming.WorkspaceStackRatio = maps.Clone(canonical.WorkspaceStackRatio)
  	incoming.WorkspaceMasterSplits = cloneMasterSplits(canonical.WorkspaceMasterSplits)
-diff --git c/internal/sessiontree/sessiontree.go w/internal/sessiontree/sessiontree.go
+diff --git i/internal/sessiontree/sessiontree.go w/internal/sessiontree/sessiontree.go
 index 0b15f736c503cc3fe12b54e2900799d925780a4b..343d909d90fe51e97ac5bcb4d667afcf3ec2f878 100644
---- c/internal/sessiontree/sessiontree.go
+--- i/internal/sessiontree/sessiontree.go
 +++ w/internal/sessiontree/sessiontree.go
 @@ -59,12 +59,17 @@ const (
  type Node struct {

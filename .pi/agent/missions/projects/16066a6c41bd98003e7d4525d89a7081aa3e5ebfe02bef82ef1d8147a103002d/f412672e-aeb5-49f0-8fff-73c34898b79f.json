@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "f412672e-aeb5-49f0-8fff-73c34898b79f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-07T19:47:05.892Z",
+  "updatedAt": "2026-11-07T19:51:07.833Z",
+  "runs": [
+    {
+      "runId": "84bd98f7-0434-44a4-9db8-656782a22951",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-07T19:51:07.832Z",
+      "completedAt": "2026-11-07T19:51:07.832Z",
+      "usage": {
+        "tokens": 40769
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/84bd98f7-0434-44a4-9db8-656782a22951_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/84bd98f7-0434-44a4-9db8-656782a22951_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-11-07T10-12-07-882Z_01a1b57e-7c49-7722-b7ea-23869c767eae.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Native observation and durable visible results are feasible, but safe automatic activation, consumption acknowledgement and command-scoped cancellation remain unproven.\n\n## Critical gaps\n- **Activation-time gating:** Pi’s queued `followUp` messages bypass `before_agent_start`, and the inspected API provides no per-message retraction. Queue-time affinity checks cannot prevent stale activation. Keep actionable completions in an extension-owned queue until a demonstrated gating boundary; otherwise disable automatic follow-up.\n- **Acknowledgement:** `sendMessage` returns `void`; transcript insertion and `message_end` do not prove model consumption. Define separate persisted/displayed, activation-attempted and explicitly acknowledged states. Notification retries must not automatically retry agent work after an uncertain crash.\n- **Cancellation scope:** No supplied evidence establishes an atomic “interrupt only this command sequence” operation. Checking identity and subsequently sending Ctrl+C can interrupt a replacement command. Defer job-scoped cancellation unless guarded native cancellation exists; an explicitly authorized pane interrupt is a different contract.\n\n## Important improvements\n- Make launch attribution a capability boundary. Per-pane extension serialization does not fence humans or other Pi processes; a baseline’s next completion is not necessarily this job. Require positively correlated evidence, otherwise retain unknown and quarantine further managed submissions pending reconciliation. Guaranteed shared-pane attribution may require daemon changes.\n- Preserve aborted-execution rethrow behavior and publish detached-wait status through independent UI. Render the evidenced state—not unconditional “Still running,” which is false for launch-unknown or already-completed jobs.\n\n## Validation gaps\n- Another writer submits an identical command between baseline capture and submission; an ambiguous launch is...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Concise review identifies material gaps, a reduced staged proposal and residual verification risk."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only inspection of tuios index.ts/client.ts and installed Pi 1.5.0 extension API/runtime.",
+        "The two supplied /tmp native-protocol evidence files were unavailable."
+      ],
+      "residualRisks": [
+        "Native launch and cancellation semantics were assessed from supplied evidence, not independently verified."
+      ],
+      "noStagedFiles": false,
+      "diffSummary": "No changes made.",
+      "reviewFindings": [
+        "REVISE: unresolved activation, acknowledgement and cancellation capabilities."
+      ],
+      "manualNotes": "No commands, edits or staging performed. Existing Git staging state was not inspected; noStagedFiles is not attested."
+    }
+  }
+}

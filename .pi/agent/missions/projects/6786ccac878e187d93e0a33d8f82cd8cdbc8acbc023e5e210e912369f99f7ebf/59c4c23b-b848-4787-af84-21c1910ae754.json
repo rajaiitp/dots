@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "59c4c23b-b848-4787-af84-21c1910ae754",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T13:31:58.142Z",
+  "updatedAt": "2026-11-11T13:37:23.223Z",
+  "runs": [
+    {
+      "runId": "5919a4f1-3df4-4d07-956b-b9ec9532bb13",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5919a4f1-3df4-4d07-956b-b9ec9532bb13",
+      "status": "complete",
+      "startedAt": "2026-11-11T13:31:58.158Z",
+      "completedAt": "2026-11-11T13:37:23.223Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "5919a4f1-3df4-4d07-956b-b9ec9532bb13",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T13:31:58.284Z",
+      "updatedAt": "2026-11-11T13:37:23.014Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/5e5a5c5c-a00d-42a5-bf1a-eb8011da7cdd",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5e5a5c5c-a00d-42a5-bf1a-eb8011da7cdd/run-0/session.jsonl"
+      ],
+      "runId": "5e5a5c5c-a00d-42a5-bf1a-eb8011da7cdd",
+      "agent": "worker",
+      "completedAt": "2026-11-11T13:37:23.014Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/5e5a5c5c-a00d-42a5-bf1a-eb8011da7cdd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T13:37:23.014Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "5919a4f1-3df4-4d07-956b-b9ec9532bb13",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T13:31:58.314Z",
+      "updatedAt": "2026-11-11T13:34:27.060Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/c81c2ccf-d055-4606-96cf-b9202d2bb906",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c81c2ccf-d055-4606-96cf-b9202d2bb906/run-0/session.jsonl"
+      ],
+      "runId": "c81c2ccf-d055-4606-96cf-b9202d2bb906",
+      "agent": "worker",
+      "completedAt": "2026-11-11T13:34:27.059Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/c81c2ccf-d055-4606-96cf-b9202d2bb906/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T13:34:27.060Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5919a4f1-3df4-4d07-956b-b9ec9532bb13/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5919a4f1-3df4-4d07-956b-b9ec9532bb13/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/5e5a5c5c-a00d-42a5-bf1a-eb8011da7cdd_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/c81c2ccf-d055-4606-96cf-b9202d2bb906_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private APK harness with bounded command/ack IPC, real D-Bus play/seek, nested main-handler drain, MediaStyle publication, and ownership readiness polling.\\n\\nChanged files: Java fixture/wrapper, Python helper, invocation/compile scripts, textual compile evidence.\\n\\nValidation: composed API and fixtures compile against unchanged runtime SDK; Python and shell syntax pass. Nothing staged.\\n\\nOpen risks: runtime regression not executed; requires composed runtime prefix/JAR and template APK. Manifest uses explicit ATL launcher, not a newly declared activity.\\n\\nRecommended next step: reviewer runs `bash invoke.sh ROOTFS COMPOSED_PREFIX COMPOSED_HAX_JAR TEMPLATE_APK`.\"\n    },\n    {\n      \"key\": \"task-2\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private APK fixture, bounded headless/private-D-Bus harness, and service manifest hel… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/5919a4f1-3df4-4d07-956b-b9ec9532bb13/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

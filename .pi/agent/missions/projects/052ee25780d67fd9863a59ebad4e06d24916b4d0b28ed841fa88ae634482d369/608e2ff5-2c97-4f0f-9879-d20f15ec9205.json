@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "608e2ff5-2c97-4f0f-9879-d20f15ec9205",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-14T17:22:10.755Z",
+  "updatedAt": "2026-11-14T17:25:04.897Z",
+  "runs": [
+    {
+      "runId": "c5a5d643-d9df-4b36-a2dd-c1040a012217",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c5a5d643-d9df-4b36-a2dd-c1040a012217",
+      "status": "complete",
+      "startedAt": "2026-11-14T17:22:11.038Z",
+      "completedAt": "2026-11-14T17:25:04.897Z",
+      "usage": {
+        "tokens": 49713
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c5a5d643-d9df-4b36-a2dd-c1040a012217/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/c5a5d643-d9df-4b36-a2dd-c1040a012217/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/c5a5d643-d9df-4b36-a2dd-c1040a012217_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — The audit-only scope is safe, but full-window identity/action admission and fail-closed completion criteria need to be explicit.\n\n## Critical gaps\n- Existing ownership rules for ADBE/ADSK and the six added stocks stop at **2014-01-01** (`config/stock_repair_daily_swing.json:800–882`). Raw-symbol coverage cannot extend issuer identity through 2017; report evidence-backed intervals and blocking gaps separately.\n- Stock-action scanning must produce event-level accounting prerequisites, not merely action counts. Any active-period dividend, split or distribution needs supported entitlement, valuation and settlement treatment—or an admission blocker—beyond the specifically identified PMC merger.\n\n## Important improvements\n- Separate `audit_complete`, `admission_ready` and fitting/replay authorization. Assess every permitted holding path, not positions observed in prior runs; include pending PMCS orders, MSCC successor shares and unsettled fractional rights without adding MSCC to the selectable universe.\n- Existing normalized ETF cash facts end **2013-12-31**. Reconcile the extended interval against frozen issuer receipts and provider events, retaining ex-dates through cutoff whose payments occur afterward.\n- Use an exclusively created, path-confined output directory; verify input hashes before and after inspection and seal only complete inventories. Do not relax legacy pilot validators, which require five stocks and two learned candidates.\n\n## Validation gaps\nAcceptance requires targeted offline checks demonstrating:\n- Missing, duplicate and invalid sessions remain explicit; interior PMCS gaps differ from evidenced retirement absence; identity expiry cannot pass as coverage.\n- Missing successor/fractional-settlement evidence blocks admission; late-pay entitlements survive cutoff; DGS3MO preserves the existing seven-calendar-day lag and 31-day freshness bound.\n- Corrupt manifests, escaping paths, existing output destinations and source mu"
+}

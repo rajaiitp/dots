@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "9fd38959-bd4f-43a5-b0e5-53663071723b",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-12T17:41:18.785Z",
+  "updatedAt": "2026-11-12T17:49:15.625Z",
+  "runs": [
+    {
+      "runId": "3eac2b5b-c556-4a61-afce-57e84ab9e4a8",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3eac2b5b-c556-4a61-afce-57e84ab9e4a8",
+      "status": "complete",
+      "startedAt": "2026-11-12T17:41:18.828Z",
+      "completedAt": "2026-11-12T17:49:15.625Z",
+      "usage": {
+        "tokens": 60614
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3eac2b5b-c556-4a61-afce-57e84ab9e4a8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3eac2b5b-c556-4a61-afce-57e84ab9e4a8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/3eac2b5b-c556-4a61-afce-57e84ab9e4a8_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented B1 rejection in new `.andux/tasks/api36-text-parcel-v2/` only.\n\nChanged files: original 22-file candidate preserved byte-for-byte, plus minimal Parcel guard, regressions, validation scripts and evidence.\n\nValidation: 1,129 assertions pass; ABI and 23-file patch checks pass; 509 history hashes unchanged. Parcel’s inherited lint warnings explicitly tracked.\n\nOpen risks: temporary 65,534-byte limit; inherited malformed-input behavior; independent review pending.\n\nRecommended next step: independent v2 review before integration."
+}

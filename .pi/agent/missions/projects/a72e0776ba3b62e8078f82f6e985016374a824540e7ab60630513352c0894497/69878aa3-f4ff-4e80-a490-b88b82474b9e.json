@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "69878aa3-f4ff-4e80-a490-b88b82474b9e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T10:53:33.724Z",
+  "updatedAt": "2026-11-05T10:56:39.643Z",
+  "runs": [
+    {
+      "runId": "cc4588f0-77ab-418d-816a-5251d1c73787",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T10:56:39.642Z",
+      "completedAt": "2026-11-05T10:56:39.642Z",
+      "usage": {
+        "tokens": 28195
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-power_mode--/subagent-artifacts/cc4588f0-77ab-418d-816a-5251d1c73787_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-power_mode--/subagent-artifacts/cc4588f0-77ab-418d-816a-5251d1c73787_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/power_mode",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-power_mode--/2026-11-05T09-51-53-866Z_01a1ab1f-3e0a-7678-9be8-d10f82e9a656.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — resolve controller-death recovery and stale-event ordering before enabling automatic radio changes.\n\n## Critical gaps\n- `START_STICKY` and dynamic receivers do not guarantee wake restoration after process death, force-stop, or foreground-service termination. Define fail-open recovery independent of the app, and distinguish persisted **enabled** from operational **armed**.\n- A transaction lock prevents overlap, not stale decisions. Serialize reconciliation, reread current screen/power/display guards before mutation, and cancel or reverse an in-flight apply when wake/charging/display activation supersedes it.\n\n## Important improvements\n- Minimal arrangement: app foreground service owns policy decisions; root owns desired state and journal. Add one-shot boot restoration before rearming and a lifetime-bound root broker that restores on controller disconnect—not another policy loop. Promote the service before root work; register listeners before initial reconciliation; use only bounded transition wake locks.\n- Archive legacy ownership markers and quiesce the verified idle-saver process before restoration. Its termination trap deletes markers even when restoration fails; the existing uninstaller also unforces Doze unconditionally.\n- Preserve manual overrides for the remainder of the current screen-off episode; repeated display callbacks must not reacquire settings already relinquished.\n\n## Validation gaps\n- Device tests for API36 boot startup, process death, force-stop/foreground-service stop, APK replacement, and root denial while standby changes are applied. Verify restoration or explicit retained recovery state.\n- Java controller tests for rapid screen/power/display transitions and delayed radio completion; Python helper tests alone cannot validate lifecycle ordering.\n- Fault injection around every journal/write boundary, including asynchronous radio transitions, missing scan-setting values, and repeated recon...",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned a REVISE verdict with concrete lifecycle, ordering, migration, and validation findings."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read the tracked installer, charge service, Termux startup, legacy idle-saver and uninstaller, plus captured device state.",
+        "Confirmed legacy termination cleanup removes ownership markers despite ignored restoration failures."
+      ],
+      "residualRisks": [
+        "Android 16 startup and controller-death recovery remain unvalidated.",
+        "Battery savings remain unmeasured; benchmarking is intentionally deferred."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "critical: automatic restoration lacks a defined controller-independent recovery path",
+        "critical: transaction locking does not prevent stale screen-off application"
+      ],
+      "manualNotes": "Repository and captured evidence inspected read-only. No commands, device operations, edits, or staging performed."
+    }
+  }
+}

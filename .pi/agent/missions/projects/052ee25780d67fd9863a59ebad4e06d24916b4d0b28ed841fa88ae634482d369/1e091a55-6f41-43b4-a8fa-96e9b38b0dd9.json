@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "1e091a55-6f41-43b4-a8fa-96e9b38b0dd9",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T09:55:23.212Z",
+  "updatedAt": "2026-11-09T10:01:21.293Z",
+  "runs": [
+    {
+      "runId": "aaf9e3d5-618e-49d1-9737-7f00da084a12",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aaf9e3d5-618e-49d1-9737-7f00da084a12",
+      "status": "complete",
+      "startedAt": "2026-11-09T09:55:23.261Z",
+      "completedAt": "2026-11-09T10:01:21.293Z",
+      "usage": {
+        "tokens": 59898
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aaf9e3d5-618e-49d1-9737-7f00da084a12/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aaf9e3d5-618e-49d1-9737-7f00da084a12/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/aaf9e3d5-618e-49d1-9737-7f00da084a12_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Fitting remains blocked on issuer/action evidence, and several accounting, allocation and lifecycle contracts need tightening before registration.\n\n## Critical gaps\n1. **Admission remains blocked.** All eight audit candidates have `issuer_identity_verified=false`. Their complete 2,265-session coverage and 820 training sessions establish coverage, not issuer/action support. Freeze the admitted cohort before fitting; require at least two supported new stocks, with no replacements. Include warmup actions: CIEN reports one split.\n2. **Cost-aware allocation does not yet match execution.** `Account.rebalance` reserves fees against the maximum of held and target notional, not incremental turnover; unchanged target weights can therefore generate trades. Also, `simulate(stress=True)` changes account fees without passing the active fee case into policy proposals. Require a literal no-order carry reference, execution-aware proposal comparison and explicit primary/stress allocator binding.\n3. **Risk feasibility is not fully specified.** Freeze the covariance estimator, observation cutoff, PSD treatment, objective coefficients and drawdown feasible set. `_risk_projection` multiplies exposure by the drawdown factor on every invocation; applying it after an already drawdown-constrained optimizer would reduce risk twice. Separate unpaid receivables from spendable funding and define feasible rounded-order/failure behavior.\n4. **Label cash timing needs an exact contract.** Existing settlement recognizes payment at the first modeled open **strictly after** the legal pay date. Labels must use that convention: entry-open ex-date buyers receive nothing; exit-open sellers retain that day’s entitlement. Paid dividends accrue cash carry only after recognition; unpaid rights remain receivables. Use raw execution opens plus these economic distributions, without adjusted-price dividend double counting.\n\n## Important improvements\n- **Isolation dependencies:** "
+}

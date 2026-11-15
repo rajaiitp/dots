@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "507a8c4e-f309-4fa8-a43a-458b7faf0504",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T16:39:54.771Z",
+  "updatedAt": "2026-11-05T16:44:58.710Z",
+  "runs": [
+    {
+      "runId": "5cd3dc27-7afb-40f2-9f62-2201759ca201",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T16:44:58.710Z",
+      "completedAt": "2026-11-05T16:44:58.710Z",
+      "usage": {
+        "tokens": 37170
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/5cd3dc27-7afb-40f2-9f62-2201759ca201_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/5cd3dc27-7afb-40f2-9f62-2201759ca201_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Two safety gaps remain before deployment.\n\n## Critical gaps\n- **Restoration can block indefinitely:** `power-mode-control.sh:39–41` uses TERM-only timeouts. Collector cleanup itself calls `sync`, so termination need not finish within 4+1 seconds. Because capture precedes restoration (`:139`), stalled telemetry can prevent settings restoration.\n- **Stale measurements can be reused:** `measure-standby.sh:103` permits arming when `phase` is absent but old `start`/`end` directories remain. Publication at `:86` nests new captures inside those directories rather than replacing them. Completion checks then compare old endpoints, potentially reporting an earlier boot/session as valid. The analyzer also does not reject `accepted_s` later than the end capture.\n\n## Important improvements\nNone.\n\n## Validation gaps\n- Inject TERM-resistant capture and abort processes; verify restoration and broker responses remain bounded and incomplete telemetry cannot become valid.\n- Preseed old endpoints without `phase`; verify rearming refuses them. Test invalid acceptance/capture chronology.\n- Test installer success and rollback with the previous measurement executable both present and absent.\n\n## Recommended revision\n1. Enforce hard capture/abort deadlines without depending on collector cleanup.\n2. Require absent endpoint destinations when arming/publishing; reject inconsistent acceptance chronology.\n3. Add the fault tests and rerun the canonical suite.\n4. Retain the planned charging/maintenance installation, broker restart, then arming sequence.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Returned two concrete safety findings and targeted validation requirements."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read-only source inspection; no tests executed."
+      ],
+      "residualRisks": [
+        "Deployment safety remains unverified until the findings and fault-injection tests are addressed."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No changes made.",
+      "reviewFindings": [
+        "Two deployment-blocking findings identified in Critical gaps."
+      ],
+      "manualNotes": "Inspected requested files under android, installer tests, and existing broker lifecycle. No shell commands, device access, edits, or staging performed; existing index state was not checked."
+    }
+  }
+}

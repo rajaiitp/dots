@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "fefb075d-c80f-4f12-846f-586963db074a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T12:03:00.947Z",
+  "updatedAt": "2026-11-09T12:04:53.114Z",
+  "runs": [
+    {
+      "runId": "56958349-703a-4a1d-b3d5-a6c838b3af9e",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-09T12:04:53.113Z",
+      "completedAt": "2026-11-09T12:04:53.113Z",
+      "usage": {
+        "tokens": 30509
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/56958349-703a-4a1d-b3d5-a6c838b3af9e_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/56958349-703a-4a1d-b3d5-a6c838b3af9e_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — add an explicit post-run integrity gate before publishing recovered results.\n\n## Critical gaps\nPreflight-only hashing permits source, wrapper, inputs, or frozen evidence to change during execution undetected; `radio_study.validate` does not verify filesystem integrity.\n\n## Important improvements\nNone.\n\n## Validation gaps\n- Mock `resource.setrlimit` in in-process tests: the worker lowers hard limits, which cannot reliably be restored.\n- Verify override restoration on exceptions.\n- Test malformed output, nonzero exit, and non-OK results containing rows; none may produce a complete report.\n\n## Recommended revision\nKeep the proposed sequence, adding rehashing of every pinned artifact immediately before publication. Any mismatch must reject completion. Run the failure-path tests before the single authorized launch.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Identified the publication-integrity gap and remaining execution risk."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Read radio_study.worker, validate, publication checks, and the existing process-termination helper."
+      ],
+      "residualRisks": [
+        "The increased simulator ceilings or authorized deadline may still leave recovery incomplete."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made.",
+      "reviewFindings": [
+        "Require final pinned-artifact verification before publishing completion."
+      ],
+      "manualNotes": "Inspected repository files using read-only tools. No commands, tests, or benchmark runs performed; no files staged by this reviewer."
+    }
+  }
+}

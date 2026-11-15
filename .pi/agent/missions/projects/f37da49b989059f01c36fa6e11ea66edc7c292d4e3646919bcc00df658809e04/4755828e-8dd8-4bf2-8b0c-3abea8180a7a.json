@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "4755828e-8dd8-4bf2-8b0c-3abea8180a7a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T14:10:45.362Z",
+  "updatedAt": "2026-11-11T14:12:18.105Z",
+  "runs": [
+    {
+      "runId": "8ed24876-caf3-4517-aed9-be6c3d33ba0e",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ed24876-caf3-4517-aed9-be6c3d33ba0e",
+      "status": "complete",
+      "startedAt": "2026-11-11T14:10:45.389Z",
+      "completedAt": "2026-11-11T14:12:18.105Z",
+      "usage": {
+        "tokens": 26554
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ed24876-caf3-4517-aed9-be6c3d33ba0e/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/8ed24876-caf3-4517-aed9-be6c3d33ba0e/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/8ed24876-caf3-4517-aed9-be6c3d33ba0e_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/vlc-playback",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented harness refinements.\nChanged files: `prepare.py`, `probe.py`.\nValidation: source syntax/whitespace only; no builds, apps, or sandboxes launched.\nRemaining limits: seek unclaimed; captured-log vetoes cannot detect redirected errors. Runtime review required.\n\nReady invocation, after parent supplies private rootfs/prefix/build/tool links and empty recipe staging:\n```bash\ncd /home/raja/Projects/andux/.andux/tasks/parallel-vlc/vlc-playback\npython3 prepare.py\nPYTHONPATH=/home/raja/Projects/andux timeout --kill-after=5 75 python3 \\\n  /home/raja/Projects/andux/.andux/probes/run_sandbox.py --recipes corpus \\\n  dbus-run-session -- python3 /recipes/probe.py\n```\n\nRecommended next step: reviewer inspection before parent execution."
+}

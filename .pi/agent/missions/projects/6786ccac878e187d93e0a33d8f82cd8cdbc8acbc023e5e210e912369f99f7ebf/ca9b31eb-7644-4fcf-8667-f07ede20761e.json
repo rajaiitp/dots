@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "id": "ca9b31eb-7644-4fcf-8667-f07ede20761e",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "failed",
+  "createdAt": "2026-11-09T15:10:50.507Z",
+  "updatedAt": "2026-11-09T15:17:31.355Z",
+  "runs": [
+    {
+      "runId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "status": "failed",
+      "startedAt": "2026-11-09T15:10:50.521Z",
+      "completedAt": "2026-11-09T15:17:31.355Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T15:10:50.641Z",
+      "updatedAt": "2026-11-09T15:13:20.503Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4a8e2e1b-472d-4ac4-b248-9afb32a80d52",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/.andux/tasks/fixing-lanes.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4a8e2e1b-472d-4ac4-b248-9afb32a80d52/run-0/session.jsonl"
+      ],
+      "runId": "4a8e2e1b-472d-4ac4-b248-9afb32a80d52",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:13:20.503Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4a8e2e1b-472d-4ac4-b248-9afb32a80d52/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:13:20.503Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-2",
+      "status": "failed",
+      "startedAt": "2026-11-09T15:10:50.693Z",
+      "updatedAt": "2026-11-09T15:12:31.399Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/a65b5014-bd7b-4d88-83ce-1850473ff240",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a65b5014-bd7b-4d88-83ce-1850473ff240/run-0/session.jsonl"
+      ],
+      "runId": "a65b5014-bd7b-4d88-83ce-1850473ff240",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:12:31.399Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a65b5014-bd7b-4d88-83ce-1850473ff240/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:12:31.399Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T15:10:50.745Z",
+      "updatedAt": "2026-11-09T15:13:48.661Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/0dc74906-89d6-4e88-ac8e-9f0b55dac4de",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/.andux/tasks/fixing-lanes.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0dc74906-89d6-4e88-ac8e-9f0b55dac4de/run-0/session.jsonl"
+      ],
+      "runId": "0dc74906-89d6-4e88-ac8e-9f0b55dac4de",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:13:48.661Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/0dc74906-89d6-4e88-ac8e-9f0b55dac4de/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:13:48.661Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-4",
+      "status": "completed",
+      "startedAt": "2026-11-09T15:10:50.810Z",
+      "updatedAt": "2026-11-09T15:17:31.303Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/662ef037-c36a-49ea-a7f0-4c1e09db2615",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/.andux/tasks/fixing-lanes.task-4.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/662ef037-c36a-49ea-a7f0-4c1e09db2615/run-0/session.jsonl"
+      ],
+      "runId": "662ef037-c36a-49ea-a7f0-4c1e09db2615",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:17:31.303Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/662ef037-c36a-49ea-a7f0-4c1e09db2615/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:17:31.303Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-5",
+      "status": "completed",
+      "startedAt": "2026-11-09T15:10:50.871Z",
+      "updatedAt": "2026-11-09T15:12:00.691Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/1e515f9f-635c-4c2a-b774-82eab266ecde",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/.andux/tasks/fixing-lanes.task-5.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1e515f9f-635c-4c2a-b774-82eab266ecde/run-0/session.jsonl"
+      ],
+      "runId": "1e515f9f-635c-4c2a-b774-82eab266ecde",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:12:00.691Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/1e515f9f-635c-4c2a-b774-82eab266ecde/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:12:00.691Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "667a71fc-eb2a-4641-8cf1-09b71e459dc2",
+      "key": "task-6",
+      "status": "completed",
+      "startedAt": "2026-11-09T15:10:50.935Z",
+      "updatedAt": "2026-11-09T15:12:17.226Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ccd0ed66-ad05-41a5-8060-edbb191df73b",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/.andux/tasks/fixing-lanes.task-6.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ccd0ed66-ad05-41a5-8060-edbb191df73b/run-0/session.jsonl"
+      ],
+      "runId": "ccd0ed66-ad05-41a5-8060-edbb191df73b",
+      "agent": "worker",
+      "completedAt": "2026-11-09T15:12:17.226Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ccd0ed66-ad05-41a5-8060-edbb191df73b/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T15:12:17.226Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/667a71fc-eb2a-4641-8cf1-09b71e459dc2/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4a8e2e1b-472d-4ac4-b248-9afb32a80d52_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a65b5014-bd7b-4d88-83ce-1850473ff240_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/0dc74906-89d6-4e88-ac8e-9f0b55dac4de_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/662ef037-c36a-49ea-a7f0-4c1e09db2615_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/1e515f9f-635c-4c2a-b774-82eab266ecde_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ccd0ed66-ad05-41a5-8060-edbb191df73b_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Error: tasks failed: task-2 (worker) failed: Codex error: This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. If you’re doing authorized security work that requires more cyber permissive safeguards, apply for Daybreak access via https://platform.openai.com/settings/organization/status-and-access before retrying.\n    at failure (workflow-script.js:9:10)\n    at workflow-script.js:13:67\n    at async MessagePort.<anonymous> ([worker eval]:1040:15)"
+}

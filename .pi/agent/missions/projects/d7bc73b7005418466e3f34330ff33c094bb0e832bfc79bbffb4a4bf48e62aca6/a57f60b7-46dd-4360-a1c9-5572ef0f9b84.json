@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "a57f60b7-46dd-4360-a1c9-5572ef0f9b84",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:27:55.191Z",
+  "updatedAt": "2026-11-11T12:30:02.523Z",
+  "runs": [
+    {
+      "runId": "bba306bf-d35a-428f-a3a7-3ac0e88bf55a",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bba306bf-d35a-428f-a3a7-3ac0e88bf55a",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:27:55.215Z",
+      "completedAt": "2026-11-11T12:30:02.523Z",
+      "usage": {
+        "tokens": 35514
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bba306bf-d35a-428f-a3a7-3ac0e88bf55a/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/bba306bf-d35a-428f-a3a7-3ac0e88bf55a/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/bba306bf-d35a-428f-a3a7-3ac0e88bf55a_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/services",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nNo runtime implementation made. Delivered precise remaining implementation gaps and a runnable architecture probe.\n\nChanged files: JSON reports, source copies, `tests/probe.py`; `candidate.patch` is intentionally empty.\nValidation: probe passed; copies match source.\nOpen risks: all requested runtime behavior remains unimplemented.\nRecommended next step: implement the coordinated service/native ownership bridge before review."
+}

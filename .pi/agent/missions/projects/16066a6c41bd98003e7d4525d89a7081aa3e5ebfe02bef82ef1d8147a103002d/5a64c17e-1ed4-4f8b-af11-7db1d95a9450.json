@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "5a64c17e-1ed4-4f8b-af11-7db1d95a9450",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-07T21:48:28.139Z",
+  "updatedAt": "2026-11-07T21:50:07.163Z",
+  "runs": [
+    {
+      "runId": "8824ae8e-a0e2-4d8b-9fc8-080a39142f0f",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-07T21:50:07.162Z",
+      "completedAt": "2026-11-07T21:50:07.162Z",
+      "usage": {
+        "tokens": 10221
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/8824ae8e-a0e2-4d8b-9fc8-080a39142f0f_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/subagent-artifacts/8824ae8e-a0e2-4d8b-9fc8-080a39142f0f_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/dots",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-dots--/2026-10-26T21-39-25-842Z_01a17a27-6a12-77cc-881f-4eaff13db3fd.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — The three replacements are supported, but the activation transaction needs an explicit lock scope.\n\n## Critical gaps\nThe lock must cover the fresh-source comparison, backup, activation, postchecks, and any rollback—not just replacement. Otherwise a concurrent writer could invalidate the comparison or be overwritten by rollback.\n\n## Important improvements\nNone.\n\n## Validation gaps\nCompare installed bytes with the validated candidate before releasing the lock; if rollback occurs, verify restoration against the original backup.\n\n## Recommended revision\nStage and validate → acquire lock → compare live source → back up → atomically replace → verify installed bytes and planned invariants → sync; on failure restore, verify, and sync before unlocking.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Reviewed supplied files and identified one transaction-safety clarification plus installed-file verification."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Static inspection supports the three substitutions."
+      ],
+      "residualRisks": [
+        "Actual vendor-EFI boot remains user-tested afterward; GRUB 2.16 filesystem reads do not establish identical GRUB 2.12 boot behavior."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes.",
+      "reviewFindings": [
+        "Revision required as specified under Critical gaps and Validation gaps."
+      ],
+      "manualNotes": "Read the cached configuration, image layout, both initramfs scripts, and filesystem-reader harness. No commands, writes, mounts, or code execution performed; existing repository staging state was not inspected."
+    }
+  }
+}

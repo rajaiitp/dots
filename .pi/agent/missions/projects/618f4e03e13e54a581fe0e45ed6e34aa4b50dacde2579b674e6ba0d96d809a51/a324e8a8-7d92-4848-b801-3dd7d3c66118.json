@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "a324e8a8-7d92-4848-b801-3dd7d3c66118",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T08:27:48.734Z",
+  "updatedAt": "2026-11-10T08:28:33.970Z",
+  "runs": [
+    {
+      "runId": "ed2c646f-9c38-4e8f-8add-75b4fbdb93f4",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ed2c646f-9c38-4e8f-8add-75b4fbdb93f4",
+      "status": "complete",
+      "startedAt": "2026-11-10T08:27:48.794Z",
+      "completedAt": "2026-11-10T08:28:33.970Z",
+      "usage": {
+        "tokens": 15230
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ed2c646f-9c38-4e8f-8add-75b4fbdb93f4/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ed2c646f-9c38-4e8f-8add-75b4fbdb93f4/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ed2c646f-9c38-4e8f-8add-75b4fbdb93f4_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/native-sharedmem-integration",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREADY — No critical gaps found in the bounded integration plan.\n## Critical gaps\nNone.\n## Important improvements\nExplicitly compare replayed sharedmem.c bytes against the approved source, independently of rebased patch hashes.\n## Validation gaps\nAdd negative symbol-origin coverage; verify size mutation after RX and invalid-FD precedence over invalid masks.\n## Recommended revision\nPreserve steps 1–4; incorporate these source-equivalence and fixture assertions before the canonical gate.\n## Acceptance Contract\nAcceptance level: attested\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ed2c646f-9c38-4e8f-8add-75b4fbdb93f4/.andux/tasks/native-sharedmem-integration-review.txt (554 B, 12 lines). Read this file if needed."
+}

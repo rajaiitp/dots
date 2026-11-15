@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "372cf7e5-fd53-445b-a901-ba3f1edb24cc",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T14:09:42.312Z",
+  "updatedAt": "2026-11-05T14:16:47.903Z",
+  "runs": [
+    {
+      "runId": "e720fec8-22bb-48eb-adea-a7362d4c4c72",
+      "mode": "single",
+      "agent": "plan-reviewer",
+      "status": "completed",
+      "startedAt": "2026-11-05T14:16:47.903Z",
+      "completedAt": "2026-11-05T14:16:47.903Z",
+      "usage": {
+        "tokens": 45842
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/e720fec8-22bb-48eb-adea-a7362d4c4c72_plan-reviewer_0_output.md"
+    },
+    {
+      "kind": "other",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/subagent-artifacts/e720fec8-22bb-48eb-adea-a7362d4c4c72_plan-reviewer_0_transcript.jsonl",
+      "description": "Child transcript"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/xiaomi-pad-projects",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-xiaomi-pad-projects--/2026-11-05T12-39-01-273Z_01a1abb8-3f98-7335-ac6a-36f69a7fc62f.jsonl",
+  "summary": "Run fan-out: 1/64 used, 63 remaining\n## Verdict\nREVISE — Two concrete rollback safety blockers remain.\n\n## Critical gaps\n- **B1 — `android/power-mode/install-pipa.sh:87`:** Rollback uses `pm install -r -g` without downgrade authorization. After a version-increasing upgrade, Android rejects the older backup with `INSTALL_FAILED_VERSION_DOWNGRADE`. The fake package manager cannot expose this.\n- **B2 — `android/power-mode/install-pipa.sh:94–97`:** Rollback deletes the maintenance sentinel before restarting a previously active helper. Restart failure therefore reports “startup inhibited” with no barrier remaining. Successful service dispatch also does not establish root/controller readiness.\n\n## Important improvements\nNone.\n\n## Validation gaps\n- Exercise version-enforced APK rollback after a version-code increase.\n- Test rollback from `armed` and `sleeping` with restart failure and with successful dispatch but no controller readiness; assert retained inhibition and recovery evidence.\n- Validate boot/replacement entry points with the sentinel present/absent without requiring a reboot. Actual unplugged sleep/wake remains user-gated.\n\n## Recommended revision\n1. Establish a verified, data-preserving APK downgrade path before allowing version-increasing upgrades.\n2. Preserve existing quiescence sequencing; make rollback finalization fail-closed and verify restored controller readiness before declaring completion.\n3. Add the targeted failure and lifecycle checks above.\n\n## Acceptance Contract\nAcceptance level: attested",
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Read-only source and test inspection identified two concrete rollback blockers and recorded remaining validation risks."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [],
+      "validationOutput": [
+        "Static inspection only; tests and device operations were not executed."
+      ],
+      "residualRisks": [
+        "Real-device APK downgrade and boot/root readiness remain unverified.",
+        "Unplugged sleep/wake requires user action; no battery spoofing or endurance testing performed."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Read-only review; no changes made.",
+      "reviewFindings": [
+        "B1 and B2 require correction before acceptance."
+      ],
+      "manualNotes": "Inspected the requested files, manifest, boot-recovery script, and related protocol/controller tests. No edits, staging, shell commands, or device operations were performed; repository index state was not inspected."
+    }
+  }
+}

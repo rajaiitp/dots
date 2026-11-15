@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "3eee1e8f-6b91-42c2-b5cc-c2628abf8da8",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:45:12.161Z",
+  "updatedAt": "2026-11-09T23:45:42.053Z",
+  "runs": [
+    {
+      "runId": "d21d632a-2798-4a3c-b61f-383f54359566",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d21d632a-2798-4a3c-b61f-383f54359566",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:45:12.173Z",
+      "completedAt": "2026-11-09T23:45:42.053Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "d21d632a-2798-4a3c-b61f-383f54359566",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:45:12.243Z",
+      "updatedAt": "2026-11-09T23:45:38.355Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/117b8aad-75a5-4e17-b513-0a1a7d37407c",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/d21d632a-2798-4a3c-b61f-383f54359566/.andux/tasks/overnight-next-gates-review.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/117b8aad-75a5-4e17-b513-0a1a7d37407c/run-0/session.jsonl"
+      ],
+      "runId": "117b8aad-75a5-4e17-b513-0a1a7d37407c",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:45:38.355Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/117b8aad-75a5-4e17-b513-0a1a7d37407c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:45:38.355Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "d21d632a-2798-4a3c-b61f-383f54359566",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:45:12.286Z",
+      "updatedAt": "2026-11-09T23:45:41.883Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/88c9b911-1791-4bd1-9e38-f4c10e8e3f20",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/d21d632a-2798-4a3c-b61f-383f54359566/.andux/tasks/overnight-next-gates-review.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/88c9b911-1791-4bd1-9e38-f4c10e8e3f20/run-0/session.jsonl"
+      ],
+      "runId": "88c9b911-1791-4bd1-9e38-f4c10e8e3f20",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T23:45:41.883Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/88c9b911-1791-4bd1-9e38-f4c10e8e3f20/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:45:41.883Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d21d632a-2798-4a3c-b61f-383f54359566/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d21d632a-2798-4a3c-b61f-383f54359566/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/117b8aad-75a5-4e17-b513-0a1a7d37407c_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/88c9b911-1791-4bd1-9e38-f4c10e8e3f20_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"plan-reviewer\",\n      \"ok\": true,\n      \"output\": \"## Verdict\\nREVISE — Isolation is sound, but fixture execution and freshness criteria remain underspecified.\\n## Critical gaps\\nSpecify an existing compiler/classpath/launcher and disposable build location requiring neither SDK installation nor prefix writes; name the Java-to-GTK observation bridge.\\n## Important improvements\\nSeparate resize, same-size requestLayout, asynchronous insertion and snapshot-request stages; gate each on completion before advancing.\\n## Validation gaps\\nRecord stage IDs, monotonic timestamps and before/after counters; define settlement deadlines and expected changed child bounds, not merely nonzero allocation. Prove snapshot entry and subsequent deferred traversal without recursion.\\n## Recommended revision\\nPreflight tools/hashes; run unchanged NPR once at verified 704x854 with repeated branch samples; classify recovery versus pers… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/d21d632a-2798-4a3c-b61f-383f54359566/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

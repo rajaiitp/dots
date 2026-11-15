@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "97da04bc-1f20-4de1-b689-f9ef6f31a100",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T12:25:30.652Z",
+  "updatedAt": "2026-11-11T12:26:47.663Z",
+  "runs": [
+    {
+      "runId": "36d92a09-dbec-495f-a54b-2bb166e60b89",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36d92a09-dbec-495f-a54b-2bb166e60b89",
+      "status": "complete",
+      "startedAt": "2026-11-11T12:25:30.671Z",
+      "completedAt": "2026-11-11T12:26:47.663Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "36d92a09-dbec-495f-a54b-2bb166e60b89",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:25:30.761Z",
+      "updatedAt": "2026-11-11T12:26:06.352Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/a2abae95-dc37-43ec-8b7f-f2ec69073738",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a2abae95-dc37-43ec-8b7f-f2ec69073738/run-0/session.jsonl"
+      ],
+      "runId": "a2abae95-dc37-43ec-8b7f-f2ec69073738",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:26:06.352Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/a2abae95-dc37-43ec-8b7f-f2ec69073738/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:26:06.352Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "36d92a09-dbec-495f-a54b-2bb166e60b89",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:25:30.795Z",
+      "updatedAt": "2026-11-11T12:26:13.382Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/b370d926-89c5-4e73-9d60-c6c9093e6ff8",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/b370d926-89c5-4e73-9d60-c6c9093e6ff8/run-0/session.jsonl"
+      ],
+      "runId": "b370d926-89c5-4e73-9d60-c6c9093e6ff8",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:26:13.382Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/b370d926-89c5-4e73-9d60-c6c9093e6ff8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:26:13.382Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "36d92a09-dbec-495f-a54b-2bb166e60b89",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-11T12:25:30.821Z",
+      "updatedAt": "2026-11-11T12:26:47.482Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/71085756-ba7c-4711-8601-0dbfd6d0be0f",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/71085756-ba7c-4711-8601-0dbfd6d0be0f/run-0/session.jsonl"
+      ],
+      "runId": "71085756-ba7c-4711-8601-0dbfd6d0be0f",
+      "agent": "reviewer",
+      "completedAt": "2026-11-11T12:26:47.482Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/71085756-ba7c-4711-8601-0dbfd6d0be0f/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-11T12:26:47.482Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36d92a09-dbec-495f-a54b-2bb166e60b89/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/36d92a09-dbec-495f-a54b-2bb166e60b89/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/a2abae95-dc37-43ec-8b7f-f2ec69073738_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/b370d926-89c5-4e73-9d60-c6c9093e6ff8_reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/71085756-ba7c-4711-8601-0dbfd6d0be0f_reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 3 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"reviewer\",\n      \"ok\": true,\n      \"output\": \"REVISE\\n\\n## Review\\n- Correct: New public `notify` transports live tokens rather than serialized intents. Cancellation and one-shot consumption remove capability mappings; updates retain token identity (`.andux/work/src/atl/src/api-impl/android/app/PendingIntentStore.java:131–195`). Native builder mutations are mutex-protected, publication steals ownership, and GVariant references are balanced (`.andux/work/src/atl/src/api-impl-jni/app/notification_pending.c:179–266`).\\n- Finding: **P1 — Capabilities are predictable after observing one.** `PendingIntentStore.java:169–176` constructs every capability from one process-wide UUID prefix plus an incrementing sequence. A holder of one notification capability can derive other issued capabilities and invoke their operations through the exported dispatcher (`PendingIntent.java:285–294`). Creator-bound execution does not pr… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/36d92a09-dbec-495f-a54b-2bb166e60b89/status.json (workflow.value, workflow.emits)) Trace: 6 event(s)."
+}

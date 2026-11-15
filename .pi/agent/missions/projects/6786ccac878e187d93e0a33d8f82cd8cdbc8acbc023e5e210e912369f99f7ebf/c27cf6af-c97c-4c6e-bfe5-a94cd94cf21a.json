@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "c27cf6af-c97c-4c6e-bfe5-a94cd94cf21a",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T18:52:12.122Z",
+  "updatedAt": "2026-11-09T18:57:11.677Z",
+  "runs": [
+    {
+      "runId": "cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "status": "complete",
+      "startedAt": "2026-11-09T18:52:12.136Z",
+      "completedAt": "2026-11-09T18:57:11.677Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:52:12.215Z",
+      "updatedAt": "2026-11-09T18:57:11.344Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/ce7cb62b-c9bc-4609-b162-3239a9468fbd",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/.andux/tasks/batch-and-evidence-hardening.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ce7cb62b-c9bc-4609-b162-3239a9468fbd/run-0/session.jsonl"
+      ],
+      "runId": "ce7cb62b-c9bc-4609-b162-3239a9468fbd",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:57:11.344Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/ce7cb62b-c9bc-4609-b162-3239a9468fbd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:57:11.344Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:52:12.243Z",
+      "updatedAt": "2026-11-09T18:53:03.862Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/d2a5d6fb-32d0-4f4b-82d9-511c4f12e067",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/.andux/tasks/batch-and-evidence-hardening.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/d2a5d6fb-32d0-4f4b-82d9-511c4f12e067/run-0/session.jsonl"
+      ],
+      "runId": "d2a5d6fb-32d0-4f4b-82d9-511c4f12e067",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T18:53:03.862Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/d2a5d6fb-32d0-4f4b-82d9-511c4f12e067/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:53:03.862Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "key": "task-3",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:52:12.286Z",
+      "updatedAt": "2026-11-09T18:52:41.901Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/83c020df-5147-473b-9d38-0aebb14a6e9c",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/.andux/tasks/batch-and-evidence-hardening.task-3.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/83c020df-5147-473b-9d38-0aebb14a6e9c/run-0/session.jsonl"
+      ],
+      "runId": "83c020df-5147-473b-9d38-0aebb14a6e9c",
+      "agent": "plan-reviewer",
+      "completedAt": "2026-11-09T18:52:41.901Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/83c020df-5147-473b-9d38-0aebb14a6e9c/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:52:41.901Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "cfaab2e9-a105-4aac-8efa-c5fd6f4c529f",
+      "key": "task-4",
+      "status": "completed",
+      "startedAt": "2026-11-09T18:52:12.336Z",
+      "updatedAt": "2026-11-09T18:54:09.045Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/4bef6577-4f2d-47bc-af85-652baa22a112",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/.andux/tasks/batch-and-evidence-hardening.task-4.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4bef6577-4f2d-47bc-af85-652baa22a112/run-0/session.jsonl"
+      ],
+      "runId": "4bef6577-4f2d-47bc-af85-652baa22a112",
+      "agent": "worker",
+      "completedAt": "2026-11-09T18:54:09.045Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/4bef6577-4f2d-47bc-af85-652baa22a112/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T18:54:09.045Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/ce7cb62b-c9bc-4609-b162-3239a9468fbd_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/d2a5d6fb-32d0-4f4b-82d9-511c4f12e067_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/83c020df-5147-473b-9d38-0aebb14a6e9c_plan-reviewer_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/4bef6577-4f2d-47bc-af85-652baa22a112_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 4 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented fatal-trace rejection despite success markers, production class/dex bridge exclusion, and standalone Android6 hasFocusable semantics.\\nChanged files: build/{smoke.py,edittext_physical_smoke.py,ViewFocusableSmoke.java,ViewClickPresenceSmoke.java,patches/atl-view-focus.patch,patches/atl-view-has-focusable.patch}, andux/pipeline.py, tests/test_edittext_recipes.py, corpus/bugs.json.\\nExisting focus patch only split context to permit repeatable application alongside standalone query patch; Root flags/focus implementations unchanged.\\nValidation: format/check/build passed; 4 editor recipe tests and 2 fingerprint tests passed. Earlier build failures fixed; no full smoke run.\\nOpen risks/questions: real Activity fixture awaits parent smoke gate; review required. Existing artifact-acceptance.json unchanged.\\nRecommended next step: parent coalesced gate and indepen… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/cfaab2e9-a105-4aac-8efa-c5fd6f4c529f/status.json (workflow.value, workflow.emits)) Trace: 8 event(s)."
+}

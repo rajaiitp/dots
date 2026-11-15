@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "7e56194a-de41-44ea-b81c-f3a94a8648ff",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T13:44:49.586Z",
+  "updatedAt": "2026-11-09T13:49:03.790Z",
+  "runs": [
+    {
+      "runId": "5282cf13-1a07-4e14-8e35-f994342a9f17",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5282cf13-1a07-4e14-8e35-f994342a9f17",
+      "status": "complete",
+      "startedAt": "2026-11-09T13:44:49.597Z",
+      "completedAt": "2026-11-09T13:49:03.790Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "5282cf13-1a07-4e14-8e35-f994342a9f17",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T13:44:49.664Z",
+      "updatedAt": "2026-11-09T13:49:03.613Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/63435b9e-4392-44df-b8eb-b0f7c47f92c1",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/5282cf13-1a07-4e14-8e35-f994342a9f17/.andux/tasks/document-clock-fixes.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/63435b9e-4392-44df-b8eb-b0f7c47f92c1/run-0/session.jsonl"
+      ],
+      "runId": "63435b9e-4392-44df-b8eb-b0f7c47f92c1",
+      "agent": "worker",
+      "completedAt": "2026-11-09T13:49:03.613Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/63435b9e-4392-44df-b8eb-b0f7c47f92c1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T13:49:03.613Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "5282cf13-1a07-4e14-8e35-f994342a9f17",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T13:44:49.702Z",
+      "updatedAt": "2026-11-09T13:45:56.360Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/7586f0bf-f117-4b3a-bfc0-a07c013a03cf",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/5282cf13-1a07-4e14-8e35-f994342a9f17/.andux/tasks/document-clock-fixes.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7586f0bf-f117-4b3a-bfc0-a07c013a03cf/run-0/session.jsonl"
+      ],
+      "runId": "7586f0bf-f117-4b3a-bfc0-a07c013a03cf",
+      "agent": "worker",
+      "completedAt": "2026-11-09T13:45:56.360Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/7586f0bf-f117-4b3a-bfc0-a07c013a03cf/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T13:45:56.360Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5282cf13-1a07-4e14-8e35-f994342a9f17/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/5282cf13-1a07-4e14-8e35-f994342a9f17/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/63435b9e-4392-44df-b8eb-b0f7c47f92c1_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/7586f0bf-f117-4b3a-bfc0-a07c013a03cf_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"BUG-015 candidate implemented exclusively under /home/raja/Projects/andux/.andux/tasks/content-resolver-query. Integration artifact: content-resolver-query.patch (a/atl/src/... paths); fixture: ContentResolverQuerySmoke.java. Parent source, prefix and APK unchanged. No staged files.\\n\\nCause established: app.log:305-308 identifies native_query_file_info through ContentResolver.java:115 and GsContextUtils.contentColumnData. Uri.StringUri.parsePath/getPath parses file:///work/note.txt to /work/note.txt (also asserted using real Uri in smoke). The NULL is a projection member, not this path. Unchanged APK DEX inspection of contentColumnData shows array-length v8,v9; new-array v3,v8,String[] at 001c-001d, with no aput before query at 0028; the newly allocated projection is all null. Its later processing explicitly accepts empty input column names. Evidence: inspect_dex.py… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/5282cf13-1a07-4e14-8e35-f994342a9f17/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

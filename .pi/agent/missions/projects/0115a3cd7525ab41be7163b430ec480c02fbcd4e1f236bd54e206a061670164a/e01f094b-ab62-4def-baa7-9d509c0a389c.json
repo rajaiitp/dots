@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "e01f094b-ab62-4def-baa7-9d509c0a389c",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-11T13:26:14.022Z",
+  "updatedAt": "2026-11-11T13:28:46.786Z",
+  "runs": [
+    {
+      "runId": "fa5117cf-e040-485f-896a-70eab72d51d8",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa5117cf-e040-485f-896a-70eab72d51d8",
+      "status": "complete",
+      "startedAt": "2026-11-11T13:26:14.042Z",
+      "completedAt": "2026-11-11T13:28:46.786Z",
+      "usage": {
+        "tokens": 32817
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa5117cf-e040-485f-896a-70eab72d51d8/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/fa5117cf-e040-485f-896a-70eab72d51d8/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/fa5117cf-e040-485f-896a-70eab72d51d8_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/parallel-vlc/mpris-interop",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented guarded Rate=0 → Pause dispatch without optimistic state changes.\n\nChanged files: two native sources, regression harness, candidate.patch, evidence.json. Patch targets **INTEGRATION**, not Root.\n\nValidation: 13 native/private-D-Bus cases passed. No staged files.\n\nOpen risks: JNI mocked; full application not built.\nRecommended next step: required reviewer acceptance."
+}

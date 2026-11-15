@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "91e84af7-9e96-4b7c-a34e-db0a962e2e5f",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-05T10:34:26.093Z",
+  "updatedAt": "2026-11-05T10:38:01.389Z",
+  "runs": [
+    {
+      "runId": "d0c07ff9-9990-4794-92aa-0ae59b51e6df",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d0c07ff9-9990-4794-92aa-0ae59b51e6df",
+      "status": "complete",
+      "startedAt": "2026-11-05T10:34:26.136Z",
+      "completedAt": "2026-11-05T10:38:01.388Z",
+      "usage": {
+        "tokens": 29175
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d0c07ff9-9990-4794-92aa-0ae59b51e6df/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/d0c07ff9-9990-4794-92aa-0ae59b51e6df/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/subagent-artifacts/d0c07ff9-9990-4794-92aa-0ae59b51e6df_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/network_recticulum",
+  "ownerSessionId": "/home/raja/.pi/agent/sessions/--home-raja-Projects-network_recticulum--/2026-10-28T20-39-13-717Z_01a1843d-0435-74d2-a5dd-48e55bf82801.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — Resolve partition handling, replay compatibility, and enforceable resource limits before implementation.\n\n## Critical gaps\n- **Disconnected planning is undefined.** KMB requires finite terminal distances; branch-aware construction likewise needs reachable terminals. Optimize only source-reachable terminals while retaining all intended recipients in delivery denominators. Define explicit outcomes for zero/singleton populations and infeasible groups without resampling or silently shrinking them.\n- **Coordinates alone cannot extend the replay contract.** `dataset.mjs` accepts only PRUNED/UNICAST, caps manifests at 16 entries, and requires the aggregate route union to be acyclic. Multiple source-specific trees can legitimately form cycles. Either keep replays explicitly baseline-only with comparison summaries, or introduce per-plan route validation while preserving legacy scenes.\n\n## Important improvements\n- Pin paper versions and algorithm contracts before implementation: edge-cost interpretation, branch objective/penalty where applicable, deterministic ties, and exactly which published steps the fallback implements.\n- Move a resource feasibility gate ahead of full sweeps: windowed raster reads, numeric download/disk/memory/runtime limits, a representative 10k/1k pilot, and a fixed trial matrix. Export only a bounded replay subset; retain summary rows for budget failures.\n\n## Validation gaps\n- Test zero/one-phone samples, infeasible group sizes, disconnected terminals, and zero reachable recipients through both planners and workload generation.\n- Test planned receipts on routes differing from the shared Forest, plus Network/TracingNetwork equivalence at intermediate horizons.\n- Test cyclic unions of valid source-specific trees if comparator replays are supported; otherwise verify baseline-only labeling. Exercise new manifest choices and unchanged legacy scenes.\n- Verify planner/resource failures produce explicit result rows, preserve "
+}

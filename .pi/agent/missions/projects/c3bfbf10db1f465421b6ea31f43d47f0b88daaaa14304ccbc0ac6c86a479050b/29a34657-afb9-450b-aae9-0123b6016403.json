@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "29a34657-afb9-450b-aae9-0123b6016403",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T19:49:46.706Z",
+  "updatedAt": "2026-11-09T19:53:18.967Z",
+  "runs": [
+    {
+      "runId": "887092cc-818b-47a4-b953-46357bd7f533",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887092cc-818b-47a4-b953-46357bd7f533",
+      "status": "complete",
+      "startedAt": "2026-11-09T19:49:46.732Z",
+      "completedAt": "2026-11-09T19:53:18.967Z",
+      "usage": {
+        "tokens": 43500
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887092cc-818b-47a4-b953-46357bd7f533/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/887092cc-818b-47a4-b953-46357bd7f533/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/887092cc-818b-47a4-b953-46357bd7f533_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/fortify-memchr",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nImplemented one PRIVATE generic bionic___memchr_chk: n>actual_size aborts before memchr; otherwise native binary/int-to-byte semantics.\nChanged files: private src/libc/libc-chk.c only; exact patch/fixture/helpers under /home/raja/Projects/andux/.andux/tasks/fortify-memchr.\nValidation: bounded HTTPS AOSP Android 7 reference acquired; strict C11 -Wall -Wextra -Werror -pedantic candidate and dynamic fixture pass.\nFixture: bionic_dlopen(\"libc.so\")/bionic_dlsym; first/last/absent/NUL/zero/high-byte/SIZE_MAX; four fork oversizes SIGABRT, not SIGSEGV; core=0.\nIsolation: own source excludes builddir; reflink private current Root prefix; offline clearenv/unshare-all/cap-drop guest build; only candidate libc replaced; Root phdr preserved.\nCTS unchanged private attempt blocked before tests: missing sigfillset64 (cts.log, cts-status.json); no pass claimed.\nONE fresh offline/headless/dummy/privatebus Fennec: 10.60s, exit=10; __memchr_chk blocker cleared; new observed blocker ASharedMemory_getSize referenced by libxul.so.\nProvider/APK hashes verified; unchanged after run; bounded run/result.txt; all children reaped; commands/status/cleanup recorded under run/.\nExact SHA256 manifest: hashes.sha256 (patch, fixture source/binary, libc, preserved linker, AOSP reference, APK).\nOpen risks: CTS blocked; Fennec still blocked. Recommended next step: independent review, then separately scope observed libxul blocker; no Root/other-workspace edits or staged files.\n\nOutput saved to: /home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/887092cc-818b-47a4-b953-46357bd7f533/.andux/tasks/fortify-memchr-result.txt (1.4 KB, 10 lines). Read this file if needed."
+}

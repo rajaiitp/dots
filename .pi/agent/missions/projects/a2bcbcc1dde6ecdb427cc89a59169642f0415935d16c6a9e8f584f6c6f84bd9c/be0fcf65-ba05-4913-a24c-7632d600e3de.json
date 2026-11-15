@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "be0fcf65-ba05-4913-a24c-7632d600e3de",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-10T00:23:04.026Z",
+  "updatedAt": "2026-11-10T00:31:13.209Z",
+  "runs": [
+    {
+      "runId": "049d5b8e-1ffc-4c5b-bab4-303d44497f34",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/049d5b8e-1ffc-4c5b-bab4-303d44497f34",
+      "status": "complete",
+      "startedAt": "2026-11-10T00:23:04.049Z",
+      "completedAt": "2026-11-10T00:31:13.209Z",
+      "usage": {
+        "tokens": 83975
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/049d5b8e-1ffc-4c5b-bab4-303d44497f34/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/049d5b8e-1ffc-4c5b-bab4-303d44497f34/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/049d5b8e-1ffc-4c5b-bab4-303d44497f34_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/markor-save-reopen",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nRESULT: BLOCKED / physical edit-save-close-reopen UNTESTED. No product failure established.\n\nTask directory: /home/raja/Projects/andux/.andux/tasks/markor-save-reopen\nAll evidence references below are relative to this directory. No Root edits, product patches, installs, commits, Markdown documents, screenshots, host desktop/audio/bus/input device binds, network access, existing profiles or credentials were used. The original plan.txt is unchanged.\n\nImplementation\nAdded run.py, workflow.py, private_input.c, editor_probe.c, test_workflow.py; retained copied current WrapperWidget.h, private-null alsa-null.conf and locally compiled editor_probe.so/private_input.so. Read the old markor-batch-probe/probe.py and markor-document sources as references; did not execute their opaque command snapshots or copy a prefix. run.py constructs fresh bwrap arguments with current Root .andux/rootfs and .andux/prefix read-only, isolated namespaces/network, private Weston/bus and tmpfs profile/cache. Sandbox command is evidence/sandbox-command.json.\n\nThe input module rejects ambiguous targets, matches client credential PID and net.gsantner.markor desktop identity, pins exact client/surface resource ID, and checks exact keyboard focus before each batch; it never chooses a largest surface. Initial focus establishment is separate from input. The GTK-main-context observer promotes weak wrapper Java references and uses checked JNI getText/toString calls; it exports only synthetic equality/hash and geometry. The only note.txt creation is workflow.py:151; subsequent document operations are reads, apart from removal during disposal. Implemented later stages remain unexercised.\n\nBuild/preflight/unit/lint, before workflow\nFinal evidence/preflight-0.log and preflight-1.log: both C shared libraries built with -Wall -Wextra -Werror -Wl,-z,defs, exit0.\nevidence/preflight-2.log: 8 tests passed (wrong PID, JNI fault veto, corrupt/missing observation, fatal patterns, identity/focus source checks, "
+}

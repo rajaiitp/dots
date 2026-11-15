@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "5559e312-1df1-4e62-881a-0ec4519d9ee7",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:38:47.886Z",
+  "updatedAt": "2026-11-09T23:43:44.201Z",
+  "runs": [
+    {
+      "runId": "aee92e86-d57c-4bd4-8020-5438bc95e435",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aee92e86-d57c-4bd4-8020-5438bc95e435",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:38:47.905Z",
+      "completedAt": "2026-11-09T23:43:44.201Z",
+      "usage": {
+        "tokens": 62006
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aee92e86-d57c-4bd4-8020-5438bc95e435/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/aee92e86-d57c-4bd4-8020-5438bc95e435/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/aee92e86-d57c-4bd4-8020-5438bc95e435_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux/.andux/tasks/antennapod-desktop-layout",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "worker:\nRead-only ATL allocation diagnosis; no production implementation\n\nLocations\nP=/home/raja/Projects/andux\nT=P/.andux/tasks/antennapod-desktop-layout\nS=P/.andux/work/src/atl/src\nAll modified probe sources and sanitized evidence are in T. Findings are in this authoritative output file only. Root prefix/rootfs and original recipes were read-only. No controller changes, source patches, installations, screenshots, commits, agents or host desktop/audio/bus connections were made. Only the existing public NPR feed used online networking, via the proven sandbox's --share-net/resolv.conf arrangement. No application profile/cache was retained.\n\nResult and limits\nOne APK runtime was performed, with 35 seconds observation and a 60-second outer deadline. An earlier bwrap setup failed before starting any guest process because a private APK mountpoint was absent; setup-failure.txt records it. The private mountpoint was created, then the single actual runtime was executed. No second APK runtime was attempted.\nRequested default size was 704x854; actual settled size was 704x640, NOT 704x854. The existing Weston headless recipe was used without a larger output or shell sizing override. The smaller actual allocation is consistent with the default headless output limiting height, but compositor trace was not retained, so the exact constraint is not proven. This is not a successful reproduction of the desktop geometry, and no causal product fix is established.\nThe private run briefly showed zero-size Subscribe ancestors, then recovered by sample 2. Samples 2 through 30 consistently show Subscribe 70x24 at (245,241), inside an actual 704x640 window. Therefore persistent desktop failure was NOT reproduced. Do not extrapolate this result to 704x854 or claim that resizing has been validated there.\n\nEvidence boundary\nDesktop attempt-2 app.log, readiness polls 5,10,15,20,25,30:\nSubscribe depths 0..15: mapped=1, sensitive=1, 0x0.\nDepth 15: WrapperWidget, 0x0.\nDepth 16: JavaWidget, 672x742."
+}

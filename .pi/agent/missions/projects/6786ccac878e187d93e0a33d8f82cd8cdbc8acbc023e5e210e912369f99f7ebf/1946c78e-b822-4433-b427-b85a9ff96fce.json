@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "1946c78e-b822-4433-b427-b85a9ff96fce",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T23:17:05.012Z",
+  "updatedAt": "2026-11-09T23:29:54.806Z",
+  "runs": [
+    {
+      "runId": "ea3af68c-16d1-4d69-a283-41685b447059",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea3af68c-16d1-4d69-a283-41685b447059",
+      "status": "complete",
+      "startedAt": "2026-11-09T23:17:05.026Z",
+      "completedAt": "2026-11-09T23:29:54.806Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "ea3af68c-16d1-4d69-a283-41685b447059",
+      "key": "task-1",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:17:05.113Z",
+      "updatedAt": "2026-11-09T23:29:54.635Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/10c0cc2f-18c0-4560-afa8-0c9fea6e4ad2",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ea3af68c-16d1-4d69-a283-41685b447059/.andux/tasks/overnight-active-blockers.task-1.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/10c0cc2f-18c0-4560-afa8-0c9fea6e4ad2/run-0/session.jsonl"
+      ],
+      "runId": "10c0cc2f-18c0-4560-afa8-0c9fea6e4ad2",
+      "agent": "worker",
+      "completedAt": "2026-11-09T23:29:54.635Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/10c0cc2f-18c0-4560-afa8-0c9fea6e4ad2/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:29:54.635Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "ea3af68c-16d1-4d69-a283-41685b447059",
+      "key": "task-2",
+      "status": "completed",
+      "startedAt": "2026-11-09T23:17:05.141Z",
+      "updatedAt": "2026-11-09T23:18:13.288Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/cb4cf5ac-4a38-4850-916c-b6a4ff04c1f8",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/outputs/ea3af68c-16d1-4d69-a283-41685b447059/.andux/tasks/overnight-active-blockers.task-2.txt",
+        "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cb4cf5ac-4a38-4850-916c-b6a4ff04c1f8/run-0/session.jsonl"
+      ],
+      "runId": "cb4cf5ac-4a38-4850-916c-b6a4ff04c1f8",
+      "agent": "worker",
+      "completedAt": "2026-11-09T23:18:13.288Z",
+      "sessionPath": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192/cb4cf5ac-4a38-4850-916c-b6a4ff04c1f8/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-11-09T23:18:13.288Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea3af68c-16d1-4d69-a283-41685b447059/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/ea3af68c-16d1-4d69-a283-41685b447059/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/10c0cc2f-18c0-4560-afa8-0c9fea6e4ad2_worker_output.md"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/subagent-artifacts/cb4cf5ac-4a38-4850-916c-b6a4ff04c1f8_worker_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/andux",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-andux--/2026-11-08T09-05-00-505Z_01a1ba67-6458-7568-a411-d548c1cec192.jsonl",
+  "summary": "Workflow completed with 2 child run(s). Return: {\n  \"ok\": true,\n  \"children\": [\n    {\n      \"key\": \"task-1\",\n      \"agent\": \"worker\",\n      \"ok\": true,\n      \"output\": \"Implemented private import-safe acquisition supervision and serialized, explicitly non-atomic durable publication; APP/unverified/shared-probe semantics retained.\\nChanged files: /home/raja/Projects/andux/.andux/tasks/acquisition-supervisor/candidate/{fetch_apk.py,test_fetch_apk.py,tls_fixture.py,run_real_180.py}; ../short-tests.log.\\nValidation: 24 tests passed in 4.839s; strict root-config Ruff check and format-check passed; no staged files.\\nSource untouched: /home/raja/Projects/andux/.andux/corpus/fetch_apk.py SHA256 b9e2cf3e93328d1da21f3516c0925e56eb2cdc766ceae72748f52ae4be25d047.\\nShort command: cd /home/raja/Projects/andux/.andux/tasks/acquisition-supervisor/candidate && python -m unittest -v test_fetch_apk\\nLint command: /home/raja/Projects/andux/.andux/rootfs/usr/bin/ruff check --config /home/raja/Projects/andux/pyproject.toml /home/raja/Projects/andux/.andu… (truncated; full return value and emits: /tmp/pi-subagents-uid-1000/async-subagent-runs/ea3af68c-16d1-4d69-a283-41685b447059/status.json (workflow.value, workflow.emits)) Trace: 4 event(s)."
+}

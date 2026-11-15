@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "9031e9cf-4aa3-4aea-912f-509ed8ea1fdd",
+  "title": "[prompt redacted]",
+  "objective": "[prompt redacted]",
+  "status": "completed",
+  "createdAt": "2026-11-09T16:23:14.509Z",
+  "updatedAt": "2026-11-09T16:26:48.371Z",
+  "runs": [
+    {
+      "runId": "84a97f52-c342-4c69-90e8-32b22c1c4d83",
+      "mode": "single",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/84a97f52-c342-4c69-90e8-32b22c1c4d83",
+      "status": "complete",
+      "startedAt": "2026-11-09T16:23:14.556Z",
+      "completedAt": "2026-11-09T16:26:48.371Z",
+      "usage": {
+        "tokens": 42640
+      }
+    }
+  ],
+  "workflowChildren": [],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/84a97f52-c342-4c69-90e8-32b22c1c4d83/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/84a97f52-c342-4c69-90e8-32b22c1c4d83/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/subagent-artifacts/84a97f52-c342-4c69-90e8-32b22c1c4d83_plan-reviewer_output.md"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/raja/Projects/event_learning",
+  "ownerSessionId": "/home/raja/dots/.pi/agent/sessions/--home-raja-Projects-event_learning--/2026-11-05T14-06-02-759Z_01a1ac07-ec06-744c-b715-474e23b8c92e.jsonl",
+  "summary": "plan-reviewer:\n## Verdict\nREVISE — The draft needs deterministic lifecycle, sizing and risk rules before it can be frozen for possible future evaluation.\n\n## Critical gaps\n- **Incomplete state transitions:** Specify the reset statistic and when resets count, including warmup and cooldown. Define destinations after cost rejection, zero shares, failed entry fills and unfilled exits. Partial risk trims must preserve holding age; clarify that cooldown starts only when flat.\n- **Undefined entry quantities:** `setup_close` and `sigma_entry` are undefined. If the filter measures remaining room to the peak, use the recovery-decision close—not the arming close, which could admit recovery above the anchor.\n- **Post-rejection risk safety:** Cost rejection or share rounding can remove a diversifying leg and increase covariance risk. Recheck the final batch at decision-close prices, including fees; reduce without survivor upscaling or reject, repeating the cost check after reductions.\n- **Underspecified allocation/execution:** Define the common scaling factor, frozen entry-share ceiling and deterministic allocation of opening cash shortages across simultaneous entries. Opening prices must not increase approved quantities or trigger signal reconsideration.\n- **Risk lifecycle mismatch:** Mandatory reductions need a deterministic quantity-selection rule. Preserve the existing sticky drawdown lock: `_observe_risk` locks at drawdown **>=20%** and never unlocks. Define its marking checkpoints and treatment of already-pending orders.\n- **Context-only contradiction:** `failure_conditions` makes the eight-asset incumbent CAGR a binding improvement gate. Remove that gate if the incumbent is genuinely context-only; controlled conclusions must use the fourteen-asset comparisons.\n\n## Important improvements\n- Bind controls to exact frozen configurations/artifacts, including cadence, turnover rules, risk, accounting and both costs; comparison names alone are insufficient.\n- Replace “fails same"
+}
