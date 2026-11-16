@@ -139,7 +139,6 @@ confirm_close = false
 [appearance]
 theme = "gruvbox-teal"
 dockbar_position = "top"
-topbar_script = "~/.config/tuios/topbar.lua"
 dock_background = "#1c302d"
 border_focused_color = "surface"
 border_unfocused_color = "surface"
@@ -177,10 +176,10 @@ thumb = "█"
 track = "none"
 
 [appearance.sidebar]
-enabled = false
-position = "hidden"
-sections = "overview,files,git"
-overview_mode = "attention"
+enabled = true
+position = "left"
+sections = "overview,git"
+overview_mode = "tree"
 background = "#1c302d"
 show_separator = false
 session_controls = true
