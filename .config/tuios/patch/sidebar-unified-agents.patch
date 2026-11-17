@@ -1,5 +1,5 @@
 diff --git i/docs/look-keys.json w/docs/look-keys.json
-index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943e5dc5e39 100644
+index acc498ad1bc54ae851bea518e0483d872fe7c95f..159aae2eb96d8b4dd55a7f0f19d85a76cb0741d6 100644
 --- i/docs/look-keys.json
 +++ w/docs/look-keys.json
 @@ -213,6 +213,24 @@
@@ -44,7 +44,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
      {
        "path": "appearance.sidebar.position",
        "type": "string",
-@@ -586,15 +614,23 @@
+@@ -586,15 +614,24 @@
        "description": "Section names in the order the rail stacks them, each with an optional percent share. A name left out is a section the rail does not draw, and \"spacer\" is an empty block you may repeat.",
        "default": "sessions:25,terminals,files:25,agents:34",
        "items": [
@@ -54,6 +54,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
          "files",
          "agents",
          "git",
++        "recent-projects",
 +        "dock",
          "spacer"
        ],
@@ -68,7 +69,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
      {
        "path": "appearance.sidebar.show_counts",
        "type": "bool",
-@@ -613,10 +649,16 @@
+@@ -613,10 +650,16 @@
        "description": "Show the switch number ahead of each session name",
        "default": "false"
      },
@@ -86,7 +87,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
        "default": "24"
      },
      {
-@@ -888,6 +930,13 @@
+@@ -888,6 +931,13 @@
        "default": "",
        "color": true
      },
@@ -100,7 +101,7 @@ index acc498ad1bc54ae851bea518e0483d872fe7c95f..174ede50f23c90ea77afff1fd8ca6943
      {
        "path": "dock.tabs.number_glyphs",
        "type": "list",
-@@ -896,6 +945,13 @@
+@@ -896,6 +946,13 @@
        "max_items": 9,
        "max_bytes": 32
      },
@@ -1112,6 +1113,663 @@ index 0000000000000000000000000000000000000000..4b4111b940d32a20b62be018de69ec70
 +			t.Fatalf("padding %d did not reload: %v\n%s", padding, err, term.Snapshot())
 +		}
 +	}
++}
+diff --git i/e2e/tui/sidebar_recent_projects_agents_test.go w/e2e/tui/sidebar_recent_projects_agents_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..cab93151a58af843d10b1195956cb2be58096bae
+--- /dev/null
++++ w/e2e/tui/sidebar_recent_projects_agents_test.go
+@@ -0,0 +1,144 @@
++package tuie2e
++
++import (
++	"encoding/json"
++	"fmt"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarRecentProjectsAgentConversations(t *testing.T) {
++	for _, scenario := range []struct{ unavailable, olderDaemon bool }{{false, false}, {true, false}, {false, true}, {true, true}} {
++		t.Run(fmt.Sprintf("unavailable=%t/older=%t", scenario.unavailable, scenario.olderDaemon), func(t *testing.T) {
++			old := os.Getenv("TUIOS_E2E_OLD_BIN")
++			if scenario.olderDaemon && old == "" {
++				t.Skip("TUIOS_E2E_OLD_BIN is not set")
++			}
++			unavailable := scenario.unavailable
++			base := t.TempDir()
++			killDaemon(t, base)
++			project := filepath.Join(base, "agent-project")
++			if out, err := exec.Command("git", "init", "--initial-branch=main", project).CombinedOutput(); err != nil {
++				t.Fatalf("git init: %v\n%s", err, out)
++			}
++			script := writeAgentScript(t, base, "continue-agent", "#!/bin/sh\nprintf '%s\\n' \"$PWD\" > \"$1\"\nprintf 'continued %s\\n' \"$1\"\n")
++			writeConfig(t, base, `[appearance]
++dockbar_position = "top"
++[appearance.sidebar]
++enabled = true
++position = "left"
++width = 40
++sections = "overview,recent-projects,git"
++overview_mode = "tree"
++`)
++			writeConfigPart(t, base, "harnesses/continuation.toml", fmt.Sprintf(`schema_version = 1
++id = "continuation"
++display_name = "Continuation"
++[detect]
++comm = ["continuation-agent"]
++[resume]
++argv = [%q, %q]
++`, script, filepath.Join(base, "resumed-{session_id}")))
++			cli := func(args ...string) string {
++				t.Helper()
++				out, err := tuiosCLI(t, base, args...)
++				if err != nil {
++					t.Fatalf("%v: %v\n%s", args, err, out)
++				}
++				return out
++			}
++			if scenario.olderDaemon {
++				func() {
++					current := tuiosBin
++					tuiosBin = old
++					defer func() { tuiosBin = current }()
++					cli("new", "-d", "previous-agents", "--cwd", project)
++				}()
++			} else {
++				cli("new", "-d", "previous-agents", "--cwd", project)
++			}
++			for i, id := range []string{"conversation-one", "conversation-two"} {
++				var window struct {
++					ID string `json:"window_id"`
++				}
++				out := cli("new-window", id, "-s", "previous-agents", "--workspace", fmt.Sprint(i+2), "--cwd", project, "--json")
++				if err := json.Unmarshal([]byte(out), &window); err != nil || window.ID == "" {
++					t.Fatalf("new-window: %v\n%s", err, out)
++				}
++				cli("set-agent-state", "-s", "previous-agents", "-w", window.ID, "working", "--harness", "continuation", "--agent-session-id", id)
++			}
++			cli("new", "-d", "anchor", "--cwd", base)
++			term := startIn(t, base, startOpts{cols: 140, rows: 48, args: []string{"attach", "anchor"}})
++			historyPath := filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json")
++			if err := term.WaitFor(func(_ tuitest.Screen) bool {
++				data, err := os.ReadFile(historyPath)
++				return err == nil && strings.Contains(string(data), "conversation-one") && strings.Contains(string(data), "conversation-two")
++			}, uiTimeout); err != nil {
++				t.Fatalf("agent conversations not saved: %v\n%s", err, term.Snapshot())
++			}
++			cli("kill-session", "previous-agents")
++			if err := term.WaitFor(func(s tuitest.Screen) bool {
++				return attentionSidebarRow(s, "agent-project") > attentionSidebarRow(s, "recent projects")
++			}, uiTimeout); err != nil {
++				t.Fatalf("project not closed: %v\n%s", err, term.Snapshot())
++			}
++			if err := term.Close(); err != nil {
++				t.Fatal(err)
++			}
++			if unavailable {
++				if err := os.Remove(script); err != nil {
++					t.Fatal(err)
++				}
++			}
++			term = startIn(t, base, startOpts{cols: 140, rows: 48, args: []string{"attach", "anchor"}})
++			if err := term.WaitFor(func(s tuitest.Screen) bool {
++				return attentionSidebarRow(s, "agent-project") > attentionSidebarRow(s, "recent projects")
++			}, uiTimeout); err != nil {
++				t.Fatalf("agent history not retained: %v\n%s", err, term.Snapshot())
++			}
++			mouseClick(t, term, 8, attentionSidebarRow(term.Screen(), "agent-project"), tuitest.MouseLeft, 0)
++			if unavailable {
++				if err := term.WaitForText("Agent restore failed", uiTimeout); err != nil {
++					t.Fatalf("resume failure not reported: %v\n%s", err, term.Snapshot())
++				}
++				if !strings.Contains(cli("list-sessions", "--json"), `"name": "agent-project"`) {
++					t.Fatal("project did not open after resume failure")
++				}
++			} else {
++				if err := term.WaitFor(func(_ tuitest.Screen) bool {
++					for _, id := range []string{"conversation-one", "conversation-two"} {
++						cwd, err := os.ReadFile(filepath.Join(base, "resumed-"+id))
++						if err != nil || !strings.Contains(string(cwd), project) {
++							return false
++						}
++					}
++					return true
++				}, uiTimeout); err != nil {
++					t.Fatalf("conversations not resumed in their directories: %v\n%s", err, term.Snapshot())
++				}
++				var listing struct {
++					Windows []struct {
++						Workspace int `json:"workspace"`
++					} `json:"windows"`
++				}
++				if err := json.Unmarshal([]byte(cli("list-windows", "-s", "agent-project", "--json")), &listing); err != nil {
++					t.Fatal(err)
++				}
++				if len(listing.Windows) != 3 {
++					t.Fatalf("fresh shell plus two agents: got %d panes", len(listing.Windows))
++				}
++				for _, window := range listing.Windows {
++					if window.Workspace != 1 {
++						t.Fatalf("old workspace restored: %d", window.Workspace)
++					}
++				}
++			}
++			t.Log(term.Snapshot())
++		})
++	}
++}
+diff --git i/e2e/tui/sidebar_recent_projects_errors_test.go w/e2e/tui/sidebar_recent_projects_errors_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..2fd374aafdebc9c992efb3d7ff992bdf724b514d
+--- /dev/null
++++ w/e2e/tui/sidebar_recent_projects_errors_test.go
+@@ -0,0 +1,70 @@
++package tuie2e
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarRecentProjectsErrors(t *testing.T) {
++	for _, scenario := range []string{"missing-directory", "corrupt-history", "unreadable-history"} {
++		t.Run(scenario, func(t *testing.T) {
++			base := t.TempDir()
++			writeConfig(t, base, `[appearance.sidebar]
++enabled = true
++position = "left"
++width = 32
++sections = "overview,recent-projects"
++`)
++			path := filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json")
++			if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
++				t.Fatal(err)
++			}
++			missing := filepath.Join(base, "missing-project")
++			data, err := json.Marshal([]map[string]any{{"directory": missing, "last_active": 1}})
++			if err != nil {
++				t.Fatal(err)
++			}
++			if scenario == "corrupt-history" {
++				data = []byte("not JSON")
++			}
++			if scenario == "unreadable-history" {
++				if err := os.Mkdir(path, 0o700); err != nil {
++					t.Fatal(err)
++				}
++			} else if err := os.WriteFile(path, data, 0o600); err != nil {
++				t.Fatal(err)
++			}
++			term := startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"new", "anchor", "--cwd", base}})
++			label := "History unavailable"
++			if scenario == "missing-directory" {
++				label = "missing-project"
++			}
++			if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, label) >= 0 }, uiTimeout); err != nil {
++				t.Fatalf("missing error/history row: %v\n%s", err, term.Snapshot())
++			}
++			if scenario == "missing-directory" {
++				row := attentionSidebarRow(term.Screen(), label)
++				mouseClick(t, term, 8, row, tuitest.MouseLeft, 0)
++				if err := term.WaitFor(func(s tuitest.Screen) bool { return screenHas(s, "Create failed") }, uiTimeout); err != nil {
++					t.Fatalf("missing directory was not reported: %v\n%s", err, term.Snapshot())
++				}
++				out, err := tuiosCLI(t, base, "list-sessions", "--json")
++				if err != nil || strings.Contains(out, `"name": "missing-project"`) {
++					t.Fatalf("missing directory created a session: %v\n%s", err, out)
++				}
++			}
++			if scenario == "corrupt-history" {
++				saved, err := os.ReadFile(path)
++				if err != nil || string(saved) != string(data) {
++					t.Fatalf("corrupt history was overwritten: %v %q", err, saved)
++				}
++			}
++			t.Log(term.Snapshot())
++		})
++	}
++}
+diff --git i/e2e/tui/sidebar_recent_projects_forget_test.go w/e2e/tui/sidebar_recent_projects_forget_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..c17dd7f372b205768de0c223867a5cb25ddfe12c
+--- /dev/null
++++ w/e2e/tui/sidebar_recent_projects_forget_test.go
+@@ -0,0 +1,138 @@
++package tuie2e
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarRecentProjectsForget(t *testing.T) {
++	for _, mode := range []string{"success", "corrupt", "write-failure"} {
++		t.Run(mode, func(t *testing.T) {
++			base := t.TempDir()
++			killDaemon(t, base)
++			writeConfig(t, base, `[appearance.sidebar]
++enabled = true
++position = "left"
++width = 32
++sections = "overview,recent-projects,git"
++overview_mode = "tree"
++`)
++			historyPath := filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json")
++			if err := os.MkdirAll(filepath.Dir(historyPath), 0o700); err != nil {
++				t.Fatal(err)
++			}
++			var projects []map[string]any
++			for _, name := range []string{"forgotten", "kept"} {
++				dir := filepath.Join(base, name)
++				if err := os.MkdirAll(dir, 0o700); err != nil {
++					t.Fatal(err)
++				}
++				projects = append(projects, map[string]any{"directory": dir, "last_active": time.Now().Unix(), "agents": []map[string]string{{"harness": "pi", "session_id": "saved-" + name, "directory": dir}}})
++			}
++			data, err := json.Marshal(projects)
++			if err != nil {
++				t.Fatal(err)
++			}
++			if err := os.WriteFile(historyPath, data, 0o600); err != nil {
++				t.Fatal(err)
++			}
++			transcript := filepath.Join(base, "conversation.json")
++			if err := os.WriteFile(transcript, []byte("untouched"), 0o600); err != nil {
++				t.Fatal(err)
++			}
++			cli := func(args ...string) string {
++				t.Helper()
++				out, err := tuiosCLI(t, base, args...)
++				if err != nil {
++					t.Fatalf("%v: %v\n%s", args, err, out)
++				}
++				return out
++			}
++			cli("new", "-d", "anchor", "--cwd", base)
++			term := startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"attach", "anchor"}})
++			if err := term.WaitFor(func(s tuitest.Screen) bool {
++				return attentionSidebarRow(s, "forgotten") >= 0 && attentionSidebarRow(s, "kept") >= 0
++			}, uiTimeout); err != nil {
++				t.Fatalf("history missing: %v\n%s", err, term.Snapshot())
++			}
++			switch mode {
++			case "corrupt":
++				if err := os.WriteFile(historyPath, []byte("{"), 0o600); err != nil {
++					t.Fatal(err)
++				}
++			case "write-failure":
++				dir := filepath.Dir(historyPath)
++				if err := os.Chmod(dir, 0o500); err != nil {
++					t.Fatal(err)
++				}
++				defer func() { _ = os.Chmod(dir, 0o700) }()
++			}
++			y := attentionSidebarRow(term.Screen(), "forgotten")
++			line := []rune(term.Screen().Line(y))
++			x := -1
++			for i := min(len(line), 32) - 1; i >= 0; i-- {
++				if line[i] == 'x' {
++					x = i
++					break
++				}
++			}
++			if x < 0 {
++				t.Fatalf("removal x missing: %s", term.Snapshot())
++			}
++			mouseClick(t, term, x, y, tuitest.MouseLeft, 0)
++			if mode == "success" {
++				if err := term.WaitFor(func(s tuitest.Screen) bool {
++					return attentionSidebarRow(s, "forgotten") < 0 && attentionSidebarRow(s, "kept") >= 0
++				}, uiTimeout); err != nil {
++					t.Fatalf("entry was not removed: %v\n%s", err, term.Snapshot())
++				}
++				live := filepath.Join(base, "live-later")
++				if err := os.MkdirAll(live, 0o700); err != nil {
++					t.Fatal(err)
++				}
++				cli("new", "-d", "later", "--cwd", live)
++				if err := term.WaitFor(func(_ tuitest.Screen) bool {
++					data, err := os.ReadFile(historyPath)
++					return err == nil && strings.Contains(string(data), "live-later") && !strings.Contains(string(data), "saved-forgotten") && !strings.Contains(string(data), "/forgotten")
++				}, uiTimeout); err != nil {
++					t.Fatalf("removal did not survive refresh: %v\n%s", err, term.Snapshot())
++				}
++				if err := term.Close(); err != nil {
++					t.Fatal(err)
++				}
++				term = startIn(t, base, startOpts{cols: 120, rows: 40, args: []string{"attach", "anchor"}})
++				if err := term.WaitFor(func(s tuitest.Screen) bool {
++					return attentionSidebarRow(s, "kept") >= 0 && attentionSidebarRow(s, "forgotten") < 0
++				}, uiTimeout); err != nil {
++					t.Fatalf("removed entry returned: %v\n%s", err, term.Snapshot())
++				}
++			} else {
++				if err := term.WaitForText("Remove failed", uiTimeout); err != nil {
++					t.Fatalf("failure not reported: %v\n%s", err, term.Snapshot())
++				}
++				if attentionSidebarRow(term.Screen(), "forgotten") < 0 {
++					t.Fatal("failed removal hid the entry")
++				}
++				if mode == "corrupt" {
++					data, err := os.ReadFile(historyPath)
++					if err != nil || string(data) != "{" {
++						t.Fatalf("corrupt history was overwritten: %v %s", err, data)
++					}
++				}
++			}
++			if _, err := os.Stat(filepath.Join(base, "forgotten")); err != nil {
++				t.Fatal("project directory was removed", err)
++			}
++			if data, err := os.ReadFile(transcript); err != nil || string(data) != "untouched" {
++				t.Fatal("conversation was changed", err)
++			}
++			t.Log(term.Snapshot())
++		})
++	}
++}
+diff --git i/e2e/tui/sidebar_recent_projects_labels_test.go w/e2e/tui/sidebar_recent_projects_labels_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..5b710b3fb89269afbddc72fbc7b120626b25668f
+--- /dev/null
++++ w/e2e/tui/sidebar_recent_projects_labels_test.go
+@@ -0,0 +1,147 @@
++package tuie2e
++
++import (
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarRecentProjectsLabelsAndSpacing(t *testing.T) {
++	base := t.TempDir()
++	writeConfig(t, base, `[appearance]
++dockbar_position = "top"
++[appearance.sidebar]
++enabled = true
++position = "left"
++width = 48
++sections = "overview,git,recent-projects"
++overview_mode = "tree"
++[appearance.sidebar.ui]
++section_gap = 0
++`)
++	git := func(args ...string) {
++		t.Helper()
++		if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
++			t.Fatalf("git %v: %v\n%s", args, err, out)
++		}
++	}
++	cli := func(args ...string) string {
++		t.Helper()
++		out, err := tuiosCLI(t, base, args...)
++		if err != nil {
++			t.Fatalf("%v: %v\n%s", args, err, out)
++		}
++		return out
++	}
++	commit := func(dir string) {
++		git("-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--allow-empty", "-m", "initial")
++	}
++	git("init", "--initial-branch=main", base)
++	commit(base)
++	repo := filepath.Join(base, "sample")
++	git("init", "--initial-branch=main", repo)
++	commit(repo)
++	for _, name := range []string{"one", "two"} {
++		dir := filepath.Join(base, "tree-"+name)
++		git("-C", repo, "worktree", "add", "-b", "feature-"+name, dir)
++		cli("new", "-d", "old-"+name, "--cwd", dir)
++	}
++	cli("new", "-d", "anchor", "--cwd", base)
++	term := startIn(t, base, startOpts{cols: 140, rows: 48, args: []string{"attach", "anchor"}})
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		data, err := os.ReadFile(filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json"))
++		return err == nil && strings.Contains(string(data), "tree-one") && strings.Contains(string(data), "tree-two") && attentionSidebarRow(s, "feature-one") >= 0 && attentionSidebarRow(s, "feature-two") >= 0
++	}, uiTimeout); err != nil {
++		t.Fatalf("projects not observed: %v\n%s", err, term.Snapshot())
++	}
++	cli("kill-session", "old-one")
++	cli("kill-session", "old-two")
++	row := func(s tuitest.Screen, label string) int {
++		_, height := s.Size()
++		for y := range height {
++			line := []rune(s.Line(y))
++			if strings.Contains(string(line[:min(len(line), 48)]), label) {
++				return y
++			}
++		}
++		return -1
++	}
++	check := func(s tuitest.Screen) bool {
++		recent := row(s, "recent projects")
++		if recent < 4 || row(s, "sample / feature-one [tree-one]") <= recent || row(s, "sample / feature-two [tree-two]") <= recent {
++			return false
++		}
++		for _, name := range []string{"tree-one", "tree-two"} {
++			matches := 0
++			_, height := s.Size()
++			for y := recent + 1; y < height; y++ {
++				line := []rune(s.Line(y))
++				if strings.Contains(string(line[:min(len(line), 48)]), name) {
++					matches++
++				}
++			}
++			if matches != 1 {
++				return false
++			}
++		}
++		if row(s, filepath.Base(base)+" / main") > recent {
++			return false
++		}
++		git := row(s, " git ")
++		if git < 0 {
++			return false
++		}
++		repoLine, branchLine := []rune(s.Line(git+1)), []rune(s.Line(git+2))
++		if !strings.Contains(string(repoLine[:min(len(repoLine), 48)]), filepath.Base(base)) || !strings.Contains(string(branchLine[:min(len(branchLine), 48)]), "main") {
++			return false
++		}
++		for _, label := range []string{"sample / feature-one [tree-one]", "sample / feature-two [tree-two]"} {
++			line := []rune(s.Line(row(s, label)))
++			if len(line) < 2 || line[0] != ' ' || line[1] != 's' {
++				return false
++			}
++		}
++		blanks := 0
++		for y := recent - 1; y >= 0; y-- {
++			line := []rune(s.Line(y))
++			text := strings.Trim(string(line[:min(len(line), 48)]), " ▎│┃")
++			if text != "" {
++				break
++			}
++			blanks++
++		}
++		return blanks == 3
++	}
++	if err := term.WaitFor(check, uiTimeout); err != nil {
++		t.Fatalf("labels or three-line gap missing: %v\n%s", err, term.Snapshot())
++	}
++	if err := term.Close(); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Rename(filepath.Join(base, "tree-two"), filepath.Join(base, "tree-two-moved")); err != nil {
++		t.Fatal(err)
++	}
++	term = startIn(t, base, startOpts{cols: 140, rows: 48, args: []string{"attach", "anchor"}})
++	if err := term.WaitFor(check, uiTimeout); err != nil {
++		t.Fatalf("labels did not survive reattach: %v\n%s", err, term.Snapshot())
++	}
++	mouseClick(t, term, 8, row(term.Screen(), "sample / feature-one [tree-one]"), tuitest.MouseLeft, 0)
++	if err := term.WaitFor(func(_ tuitest.Screen) bool {
++		out, err := tuiosCLI(t, base, "list-windows", "-s", "tree-one", "--json")
++		return err == nil && strings.Contains(out, filepath.Join(base, "tree-one"))
++	}, uiTimeout); err != nil {
++		t.Fatalf("wrong worktree reopened: %v\n%s", err, term.Snapshot())
++	}
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		recent := row(s, "recent projects")
++		return recent >= 0 && row(s, "sample / feature-one [tree-one]") < 0 && row(s, "sample / feature-two [tree-two]") > recent && row(s, filepath.Base(base)+" / main") < 0
++	}, uiTimeout); err != nil {
++		data, _ := os.ReadFile(filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json"))
++		t.Fatalf("open project still appears in Recent: %v\nhistory=%s\nsessions=%s\nanchor=%s\n%s", err, data, cli("list-sessions", "--json"), cli("list-windows", "-s", "anchor", "--json"), term.Snapshot())
++	}
++	t.Log(term.Snapshot())
++}
+diff --git i/e2e/tui/sidebar_recent_projects_test.go w/e2e/tui/sidebar_recent_projects_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..44dffba0bdf7786a406e3753df3a8c481aa13542
+--- /dev/null
++++ w/e2e/tui/sidebar_recent_projects_test.go
+@@ -0,0 +1,128 @@
++package tuie2e
++
++import (
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/Gaurav-Gosain/tuitest"
++)
++
++func TestSidebarRecentProjectsReopen(t *testing.T) {
++	recentProjectsReopen(t, "")
++}
++
++func TestSidebarRecentProjectsOlderDaemon(t *testing.T) {
++	old := os.Getenv("TUIOS_E2E_OLD_BIN")
++	if old == "" {
++		t.Skip("TUIOS_E2E_OLD_BIN is not set")
++	}
++	recentProjectsReopen(t, old)
++}
++
++func recentProjectsReopen(t *testing.T, old string) {
++	t.Helper()
++	base := t.TempDir()
++	writeConfig(t, base, `[appearance]
++dockbar_position = "top"
++[appearance.sidebar]
++enabled = true
++position = "left"
++width = 32
++sections = "overview,git,recent-projects"
++overview_mode = "tree"
++`)
++	cli := func(args ...string) string {
++		t.Helper()
++		out, err := tuiosCLI(t, base, args...)
++		if err != nil {
++			t.Fatalf("%v: %v\n%s", args, err, out)
++		}
++		return out
++	}
++	project := filepath.Join(base, "closed-project")
++	if err := os.MkdirAll(project, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	if out, err := exec.Command("git", "init", "--initial-branch=main", project).CombinedOutput(); err != nil {
++		t.Fatalf("git init: %v\n%s", err, out)
++	}
++	if out, err := exec.Command("git", "init", "--initial-branch=main", base).CombinedOutput(); err != nil {
++		t.Fatalf("anchor git init: %v\n%s", err, out)
++	}
++	if old == "" {
++		cli("new", "-d", "anchor", "--cwd", base)
++	} else {
++		func() {
++			current := tuiosBin
++			tuiosBin = old
++			defer func() { tuiosBin = current }()
++			cli("new", "-d", "anchor", "--cwd", base)
++		}()
++	}
++	cli("new", "-d", "previous-name", "--cwd", project)
++	term := startIn(t, base, startOpts{cols: 120, rows: 48, args: []string{"attach", "anchor"}})
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		data, err := os.ReadFile(filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json"))
++		return err == nil && strings.Contains(string(data), project) && attentionSidebarRow(s, "recent projects") >= 0 && attentionSidebarRow(s, "previous-name") >= 0
++	}, uiTimeout); err != nil {
++		data, readErr := os.ReadFile(filepath.Join(xdgDir(base, "XDG_STATE_HOME"), "tuios", "recent-projects.json"))
++		t.Fatalf("history did not initialize: %v; history=%s read=%v sessions=%s\n%s", err, data, readErr, cli("list-sessions", "--json"), term.Snapshot())
++	}
++	cli("kill-session", "previous-name")
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		recent, git, overview := attentionSidebarRow(s, "recent projects"), attentionSidebarRow(s, " git "), attentionSidebarRow(s, "overview")
++		projectRow := attentionSidebarRow(s, "closed-project")
++		return overview >= 0 && git > overview && recent > git && projectRow > recent
++	}, uiTimeout); err != nil {
++		t.Fatalf("closed project missing or sections out of order: %v\n%s", err, term.Snapshot())
++	}
++	if err := term.Close(); err != nil {
++		t.Fatal(err)
++	}
++	term = startIn(t, base, startOpts{cols: 120, rows: 48, args: []string{"attach", "anchor"}})
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		recent := attentionSidebarRow(s, "recent projects")
++		return recent >= 0 && attentionSidebarRow(s, "closed-project") > recent
++	}, uiTimeout); err != nil {
++		t.Fatalf("history did not survive reattach: %v\n%s", err, term.Snapshot())
++	}
++	configPath := filepath.Join(configDirIn(base), "config.toml")
++	configData, err := os.ReadFile(configPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	writeConfigAtomically(t, configPath, []byte(strings.Replace(string(configData), `sections = "overview,git,recent-projects"`, `sections = "overview,git"`, 1)))
++	if err := term.WaitFor(func(s tuitest.Screen) bool { return attentionSidebarRow(s, "recent projects") < 0 }, uiTimeout); err != nil {
++		t.Fatalf("history did not hot-hide: %v", err)
++	}
++	writeConfigAtomically(t, configPath, configData)
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		recent := attentionSidebarRow(s, "recent projects")
++		return recent >= 0 && attentionSidebarRow(s, "closed-project") > recent
++	}, uiTimeout); err != nil {
++		t.Fatalf("history did not hot-show: %v\n%s", err, term.Snapshot())
++	}
++	row := attentionSidebarRow(term.Screen(), "closed-project")
++	mouseClick(t, term, 8, row, tuitest.MouseLeft, 0)
++	if err := term.WaitFor(func(_ tuitest.Screen) bool {
++		out, err := tuiosCLI(t, base, "list-sessions", "--json")
++		if err != nil || !strings.Contains(out, `"name": "closed-project"`) {
++			return false
++		}
++		out, err = tuiosCLI(t, base, "list-windows", "-s", "closed-project", "--json")
++		return err == nil && strings.Contains(out, project)
++	}, uiTimeout); err != nil {
++		t.Fatalf("click did not reopen project directory: %v\n%s", err, term.Snapshot())
++	}
++	if err := term.WaitFor(func(s tuitest.Screen) bool {
++		recent := attentionSidebarRow(s, "recent projects")
++		projectRow := attentionSidebarRow(s, "closed-project")
++		return projectRow >= 0 && projectRow < recent
++	}, uiTimeout); err != nil {
++		t.Fatalf("open project remained in recent history: %v\n%s", err, term.Snapshot())
++	}
++	t.Log(term.Snapshot())
 +}
 diff --git i/e2e/tui/sidebar_reclaimed_column_test.go w/e2e/tui/sidebar_reclaimed_column_test.go
 new file mode 100644
@@ -3031,7 +3689,7 @@ index 6dff26e856772e05f4a354bd29f8d089fc4e08f0..6ce539c76433e1dcda8fb3731e381e8c
  	if len(panes) < 2 {
  		m.ShowNotification("Multi copy mode needs two or more panes in multifocus. Add panes with Ctrl+Shift+Click.", "warning", 2*m.Settings.NotificationDuration)
 diff --git i/internal/app/os.go w/internal/app/os.go
-index 71629421598eb340f54fe1c571c1de0ed1833f86..c0cda918e32b005e3a3ec0ef844bd03f6e69ecfa 100644
+index 71629421598eb340f54fe1c571c1de0ed1833f86..41e3db3dd22ad614eea2d554353a82fa2c1a4514 100644
 --- i/internal/app/os.go
 +++ w/internal/app/os.go
 @@ -401,18 +401,21 @@ type OS struct {
@@ -3081,16 +3739,17 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..c0cda918e32b005e3a3ec0ef844bd03f
  	// paneKeysDown maps the code of each key press that went to a pane to that
  	// pane's window ID, so its release goes to the same pane and the release
  	// of a key tuios kept for itself goes nowhere. See NotePaneKeyDown.
-@@ -1570,6 +1579,8 @@ type OS struct {
+@@ -1570,6 +1579,9 @@ type OS struct {
  	SidebarScrollF            int
  	SidebarScrollG            int
  	SidebarScrollC            int
 +	SidebarScrollO            int
 +	sidebarAttention          sidebarAttentionView
++	recentProjects            sidebarRecentProjectsState
  	// sidebarAgentAnchor keeps the agents section's viewport on the row it was
  	// left on rather than on the index that row happened to have, since that
  	// section resorts itself on live agent state. See sidebar_anchor.go.
-@@ -1588,6 +1599,8 @@ type OS struct {
+@@ -1588,6 +1600,8 @@ type OS struct {
  	// sidebarSubagentFoldGen counts the toggles of any rail's headings, for
  	// the rails' signatures.
  	sidebarSubagentFoldGen int
@@ -3099,7 +3758,7 @@ index 71629421598eb340f54fe1c571c1de0ed1833f86..c0cda918e32b005e3a3ec0ef844bd03f
  	// subagentHideDue is the earliest moment a finished subagent's row is
  	// due to go under appearance.sidebar.subagent_hide_finished, noted while
  	// the rail is drawn, and subagentHideArmed the moment a frame was last
-@@ -2294,6 +2307,10 @@ func (m *OS) Cleanup() {
+@@ -2294,6 +2308,10 @@ func (m *OS) Cleanup() {
  	}
  
  	m.stopSidebarSessions()
@@ -3779,10 +4438,10 @@ index dc361bae653914c973c80a1be5287e0587564a14..13049e1592b0fe8018ef4a7d7899ef7e
  		},
  	})
 diff --git i/internal/app/render_sidebar.go w/internal/app/render_sidebar.go
-index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c4e955a7a 100644
+index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..867548ad08fc6ffabe82cedc51684802d6d29525 100644
 --- i/internal/app/render_sidebar.go
 +++ w/internal/app/render_sidebar.go
-@@ -134,6 +134,18 @@ const (
+@@ -134,6 +134,20 @@ const (
  	// Activating it opens or shuts the rows. It carries the pane's session
  	// and window. See SidebarToggleSubagents.
  	sidebarRowSubagentToggle
@@ -3798,10 +4457,12 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +	sidebarRowProjectsVacant
 +	sidebarRowProjectPicker
 +	sidebarRowProjectWorkspace
++	sidebarRowRecentProject
++	sidebarRowRecentProjectForget
  )
  
  // sidebarAddGlyph is the mark both add controls wear. One cell, so it costs a
-@@ -156,12 +168,14 @@ type sidebarRowState struct {
+@@ -156,12 +170,14 @@ type sidebarRowState struct {
  	// CursorBg is appearance.sidebar.cursor_background as written, empty
  	// when unset. It is a string so a row state stays cheap to build per row;
  	// sidebarRowBg resolves it against the palette the row is drawn with.
@@ -3818,7 +4479,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  
  // mark applies the row's state to a finished row in attributes (see
  // overlay.RowState). At 16 colours that is the whole cursor treatment. At
-@@ -172,12 +186,16 @@ func (st sidebarRowState) lit() bool { return st.Cursor || st.Hover }
+@@ -172,12 +188,16 @@ func (st sidebarRowState) lit() bool { return st.Cursor || st.Hover }
  // severity mark and the foreign tint in the gutter keep their own meaning.
  func (st sidebarRowState) mark(pal overlay.Palette, row string) string {
  	rs := overlay.RowState{Cursor: st.Cursor, Focused: st.Focused, Hover: st.Hover}
@@ -3837,7 +4498,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // railCursorBg is the ground appearance.sidebar.cursor_background asks for on
-@@ -216,6 +234,8 @@ func sidebarRowBg(st sidebarRowState, pal overlay.Palette) color.Color {
+@@ -216,6 +236,8 @@ func sidebarRowBg(st sidebarRowState, pal overlay.Palette) color.Color {
  			return c
  		}
  		return pal.Surface
@@ -3846,7 +4507,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	case st.Cursor, st.Hover:
  		return pal.RowSel
  	}
-@@ -276,6 +296,11 @@ const (
+@@ -276,6 +298,12 @@ const (
  	// the enum sizes every per-section array in this package, and one more
  	// value fits all of them as they are. See sidebar_custom.go.
  	sidebarSectionCustom
@@ -3855,10 +4516,11 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +	// three flat navigation sections rather than a duplicate of them.
 +	sidebarSectionOverview
 +	sidebarSectionProjects
++	sidebarSectionRecentProjects
  	sidebarSectionCount
  )
  
-@@ -298,8 +323,7 @@ func (r sidebarRowHit) Contains(x, y int) bool {
+@@ -298,8 +326,7 @@ func (r sidebarRowHit) Contains(x, y int) bool {
  	return x >= r.X0 && x < r.X1 && y >= r.Y0 && y < r.Y1
  }
  
@@ -3868,7 +4530,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  const (
  	sidebarVariantGlyph = iota
  	sidebarVariantNarrow
-@@ -514,13 +538,17 @@ func railAgentAge(state string, stateAt int64, now time.Time) string {
+@@ -514,13 +541,17 @@ func railAgentAge(state string, stateAt int64, now time.Time) string {
  // sidebarAgentEntry is one pane running an agent, flattened out of the session
  // tree for the agents section.
  type sidebarAgentEntry struct {
@@ -3893,7 +4555,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// Harness is which agent is running in the pane, as the detecting manifest
  	// or the reporting source named it, empty when nothing named one.
  	Harness string
-@@ -548,6 +576,8 @@ type sidebarAgentEntry struct {
+@@ -548,6 +579,8 @@ type sidebarAgentEntry struct {
  	// SessionLabel is what to print for SessionID: the session's display name
  	// when it has one. Identity keys the row, the label only fronts it.
  	SessionLabel string
@@ -3902,7 +4564,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// Foreign marks a pane of a session other than the attached one, whose row
  	// carries the session name for context.
  	Foreign bool
-@@ -752,9 +782,7 @@ func printableRune(r rune, ascii bool) bool {
+@@ -752,9 +785,7 @@ func printableRune(r rune, ascii bool) bool {
  	return true
  }
  
@@ -3913,7 +4575,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  const sidebarNameCol = 3
  
  // sidebarGlyph returns the styled agent-state glyph for a row, or a single
-@@ -823,11 +851,19 @@ func sidebarQuietDotTinted(tint, bg color.Color, pal overlay.Palette, s *config.
+@@ -823,11 +854,19 @@ func sidebarQuietDotTinted(tint, bg color.Color, pal overlay.Palette, s *config.
  	return sidebarStyle(bg, tint).Render(s.GetRailBullet())
  }
  
@@ -3937,7 +4599,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // sidebarHeaderGap is the fewest blank cells between a header's label and the
-@@ -868,7 +904,7 @@ func sidebarHeaderRightRoom(cw, labelW int) int {
+@@ -868,7 +907,7 @@ func sidebarHeaderRightRoom(cw, labelW int) int {
  // with the section's icon in front of it (icon), and decides the rule: auto
  // draws it with headings on, plain never, rule always. See
  // sidebarHeaderDecorW for the cells the fill or the icon adds.
@@ -3946,7 +4608,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	headings := s.GetRailHeaderCase() == config.RailHeaderUppercase
  	style := s.GetRailHeaderStyle()
  	section := label
-@@ -885,7 +921,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
+@@ -885,7 +924,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
  		ruled = true
  	}
  	decorW := sidebarHeaderDecorW(section, s)
@@ -3955,7 +4617,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	shown := labelStyle.Render(text)
  	switch style {
  	case config.RailHeaderPill:
-@@ -899,7 +935,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
+@@ -899,7 +938,7 @@ func sidebarHeaderRowRuled(label, right string, cw int, pal overlay.Palette, s *
  		}
  	}
  	headings = ruled
@@ -3964,7 +4626,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	lw := lipgloss.Width(row)
  	rw := lipgloss.Width(right)
  	if rw > 0 {
-@@ -1222,15 +1258,7 @@ func sidebarMailToken(unread int) (string, bool) {
+@@ -1222,15 +1261,7 @@ func sidebarMailToken(unread int) (string, bool) {
  	return sidebarMailGlyph() + " " + strconv.Itoa(unread), true
  }
  
@@ -3981,7 +4643,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  // group: the same spine, stepped in by indent cells between the gutter and the
  // glyph.
  //
-@@ -1239,9 +1267,9 @@ func sidebarComposeRow(gutter, glyph, name, right string, cw int, bg color.Color
+@@ -1239,9 +1270,9 @@ func sidebarComposeRow(gutter, glyph, name, right string, cw int, bg color.Color
  // down whichever column the row's level happens to put them in. Everything
  // after it does move together, so a group's glyphs stay in one column and the
  // step is what says the rows are somebody's.
@@ -3993,7 +4655,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	if rw := lipgloss.Width(right); rw > 0 {
  		gap := max(cw-lipgloss.Width(row)-rw-1, 0)
  		row += sidebarStyle(bg, nil).Render(strings.Repeat(" ", gap)) +
-@@ -1260,7 +1288,7 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
+@@ -1260,7 +1291,7 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
  	return pal.Surface
  }
  
@@ -4002,7 +4664,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  // between the name and the trailing figure is filled with a rule instead of
  // with blanks.
  //
-@@ -1271,9 +1299,9 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
+@@ -1271,9 +1302,9 @@ func sidebarRuleInk(bg color.Color, pal overlay.Palette) color.Color {
  // a heading even in monochrome, and the session names below it get to be the
  // brightest thing on the rail, which is correct because they are what you act
  // on.
@@ -4014,7 +4676,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	rw := lipgloss.Width(right)
  	pad := 1
  	if rw > 0 {
-@@ -1326,7 +1354,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
+@@ -1326,7 +1357,7 @@ func (m *OS) renderSidebar() *lipgloss.Layer {
  		return nil
  	}
  	sidebarX := sidebarEdgeX(m.legacySidebarEdge(), w, m.GetRenderWidth())
@@ -4023,7 +4685,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // renderSecondarySidebar draws the opt-in opposite edge with its own layout
-@@ -1377,7 +1405,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
+@@ -1377,7 +1408,7 @@ func (m *OS) renderSecondarySidebar() *lipgloss.Layer {
  	if panel == "" {
  		return nil
  	}
@@ -4032,7 +4694,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // sidebarWindowSection windows one section's rows onto the lines it was given,
-@@ -1406,8 +1434,8 @@ func sidebarWindowSection(scroll, rows, lines int) (start, shown, hidden int) {
+@@ -1406,8 +1437,8 @@ func sidebarWindowSection(scroll, rows, lines int) (start, shown, hidden int) {
  // and the reserved width. It returns nil rows when the sidebar reserves
  // nothing.
  //
@@ -4043,7 +4705,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	m.SidebarHits = m.SidebarHits[:0]
  	m.motion.rail = m.motion.rail[:0]
-@@ -1431,34 +1459,33 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1431,34 +1462,33 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if w <= 0 {
  		return nil, 0
  	}
@@ -4085,7 +4747,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	}
  
  	// The rail as drawn so far. len(lines) is the line compose is building, in
-@@ -1474,6 +1501,15 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1474,6 +1504,15 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		if y := len(lines); y < len(barCell) && barCell[y] != "" {
  			rule = barCell[y]
  		}
@@ -4101,7 +4763,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		if edgeLeft {
  			return content + rule
  		}
-@@ -1496,7 +1532,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1496,7 +1535,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		m.SidebarSessionIDs = append(m.SidebarSessionIDs, s.ID)
  	}
  
@@ -4110,7 +4772,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		// The strip lays its own ground, so it composes its lines itself rather
  		// than borrowing the expanded rail's bare-canvas edge. Host groups stay
  		// out of it: three columns cannot say which machine a row is on, and a
-@@ -1534,7 +1570,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1534,7 +1573,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// and hover has to resolve against the same arithmetic the draw uses.
  	shown, peeking := m.sidebarShownSession(sessions)
  	terminals := m.sidebarTerminals(sessions, shown)
@@ -4120,7 +4782,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	m.sidebarSortAgents(agents)
  	// Rows long at rest fold into one line at the end. The compact rule below
  	// reads every agent pane, folded or not, since a folded pane is still one
-@@ -1553,6 +1590,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1553,6 +1593,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// listing was read by a command, off this goroutine, and this only draws
  	// whatever the last reply left behind. Nothing here stats, opens or spawns.
  	files := m.sidebarFileRows()
@@ -4132,7 +4794,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  
  	// A peeked session with no panes says so, or the section would read as "the
  	// attached session has no panes". Decided before the compact rule below
-@@ -1568,6 +1610,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1568,6 +1613,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	nS := len(sessionRows)
  	nT := len(terminals)
  	nA := len(agents)
@@ -4140,7 +4802,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	if emptyFilter {
  		nA = 1
  	}
-@@ -1617,13 +1660,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1617,13 +1663,34 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  
  	canCreate := m.SidebarCanCreateSession()
  	footerCursor := func(kind sidebarRowKind) bool { return isCursor(kind, "", "") }
@@ -4182,16 +4844,35 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	}
  
  	gitRows := m.gitRows()
-@@ -1651,6 +1715,8 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
- 		sidebarSectionFiles:     filesRows,
- 		sidebarSectionGit:       len(gitRows),
- 		sidebarSectionCustom:    nC,
-+		sidebarSectionOverview:  nO,
-+		sidebarSectionProjects:  len(projects),
+@@ -1644,13 +1711,21 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 	if nC == 0 && m.railCustomEnabled() {
+ 		nC = 1
+ 	}
++	recentProjects := m.closedRecentProjects()
++	recentRows := 0
++	if sidebarLayoutHas(sidebarSectionRecentProjects, &m.Settings) {
++		recentRows = max(len(recentProjects), 1)
++	}
+ 	rowsIn := [sidebarSectionCount]int{
+-		sidebarSectionSessions:  nS,
+-		sidebarSectionTerminals: nT,
+-		sidebarSectionAgents:    nA,
+-		sidebarSectionFiles:     filesRows,
+-		sidebarSectionGit:       len(gitRows),
+-		sidebarSectionCustom:    nC,
++		sidebarSectionSessions:       nS,
++		sidebarSectionTerminals:      nT,
++		sidebarSectionAgents:         nA,
++		sidebarSectionFiles:          filesRows,
++		sidebarSectionGit:            len(gitRows),
++		sidebarSectionCustom:         nC,
++		sidebarSectionOverview:       nO,
++		sidebarSectionProjects:       len(projects),
++		sidebarSectionRecentProjects: recentRows,
  	}
  	// The last section in the configured layout is the one pinned to the rail's
  	// bottom: the slack rides above it, and it wears a blank line of its own so
-@@ -1661,6 +1727,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1661,6 +1736,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if sidebarLayoutPins(plans) {
  		pinned = plans[len(plans)-1].Section
  	}
@@ -4199,20 +4880,21 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// The dragged split, written over the pinned section's share.
  	plans = m.sidebarApplySplit(plans, pinned)
  
-@@ -1673,12 +1740,32 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1673,12 +1749,39 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	agentRowH := 1
  	// Row heights per section, which is what turns a section's line budget into
  	// the rows it can show and a st.lit() line back into the row under it.
 -	rowH := [sidebarSectionCount]int{1, 1, agentRowH, 1, 1, 1}
 +	rowH := [sidebarSectionCount]int{
-+		sidebarSectionSessions:  1,
-+		sidebarSectionTerminals: 1,
-+		sidebarSectionAgents:    agentRowH,
-+		sidebarSectionFiles:     1,
-+		sidebarSectionGit:       1,
-+		sidebarSectionCustom:    1,
-+		sidebarSectionOverview:  1,
-+		sidebarSectionProjects:  1,
++		sidebarSectionSessions:       1,
++		sidebarSectionTerminals:      1,
++		sidebarSectionAgents:         agentRowH,
++		sidebarSectionFiles:          1,
++		sidebarSectionGit:            1,
++		sidebarSectionCustom:         1,
++		sidebarSectionOverview:       1,
++		sidebarSectionProjects:       1,
++		sidebarSectionRecentProjects: 1,
 +	}
  
 +	hideOverviewHeader := !m.sidebarUIVisible(sidebarUIOverviewHeader, !m.sidebarDockEnabled())
@@ -4230,10 +4912,16 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +	if sidebarLayoutHas(sidebarSectionProjects, &m.Settings) {
 +		sectionGap = max(sectionGap, sidebarAttentionProjectsGap)
 +	}
++	gapBefore := func(section sidebarSection) int {
++		if section == sidebarSectionRecentProjects {
++			return max(sectionGap, sidebarRecentProjectsGap)
++		}
++		return sectionGap
++	}
  	chrome := 0
  	drawn := 0
  	for i, p := range plans {
-@@ -1690,19 +1777,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1690,19 +1793,23 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		planRows[i], planRowH[i] = rowsIn[p.Section], rowH[p.Section]
@@ -4252,7 +4940,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 -			chrome++
 +		chrome += sectionHeaderRows(p.Section)
 +		if drawn > 1 {
-+			chrome += sectionGap
++			chrome += gapBefore(p.Section)
  		}
  	}
 -	avail := height - footerH - chrome
@@ -4264,7 +4952,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// The rows under the agent rows, one per subagent, fitted to the lines
  	// the section's budget gives it (see sidebarAgentChildren). They are rows
  	// of the section like any other, so the tall test and the viewport below
-@@ -1758,7 +1849,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1758,7 +1865,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// when something is drawn above it to split from. What the drag needs to
  	// turn a pointer row into a share is written down here, in this frame's
  	// numbers.
@@ -4273,7 +4961,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	pinnedAt := -1
  	for i, p := range plans {
  		if !p.Spacer && p.Section == pinned {
-@@ -1778,7 +1869,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1778,7 +1885,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	for s := range place {
  		place[s] = sectionPlace{header: -1}
  	}
@@ -4282,7 +4970,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	placed := 0
  	// The last section placed above the current entry, so a spacer's lines can
  	// be given to its band. Empty space draws nothing and so has no band of its
-@@ -1802,41 +1893,45 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1802,41 +1909,45 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  		y0 := line
  		placed++
@@ -4347,7 +5035,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// the draw below cuts the lines and the rectangles to fit, and a band left
  	// past the cut would hand the wheel to a section with nothing on screen.
  	for s := range m.sidebarSectionY {
-@@ -1869,9 +1964,16 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1869,9 +1980,16 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	// anchor above and before the cursor's auto-scroll below, so the three
  	// mechanisms agree on what is on screen and the cursor keeps the last word.
  	// See sidebar_reveal.go.
@@ -4366,7 +5054,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			if rows := capRows[sec]; rows > 0 {
  				if idx < *scroll[sec] {
  					*scroll[sec] = idx
-@@ -1884,6 +1986,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1884,6 +2002,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	var start, count, hidden [sidebarSectionCount]int
  	for s := range rowsIn {
  		start[s], count[s], hidden[s] = sidebarWindowSection(*scroll[s], rowsIn[s], capRows[s])
@@ -4377,7 +5065,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		*scroll[s] = start[s]
  	}
  	m.sidebarRecordAgentAnchor(agents, start[sidebarSectionAgents], count[sidebarSectionAgents])
-@@ -1920,7 +2026,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1920,7 +2042,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  		if barCell == nil {
  			barCell = make([]string, height)
@@ -4386,7 +5074,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			thumb = sidebarStyle(nil, pal.ScrollThumb).Render(glyph)
  		}
  		for i := top; i < top+size && place[s].top+i < height; i++ {
-@@ -1935,6 +2041,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1935,6 +2057,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		hoverRow[s] = -1
  	}
  	footerHoverLine, footerHoverX := -1, -1
@@ -4394,7 +5082,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	dividerHover := false
  	// Every header now carries click targets of its own (the add controls, the
  	// agents section's filter and sort, the files section's cd), so the
-@@ -1946,6 +2053,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1946,6 +2069,10 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	if !m.SidebarDrag.Dragging && m.SidebarHoverActive && m.SidebarBandContains(m.SidebarHoverX, m.SidebarHoverY) {
  		delta := m.SidebarHoverY - topMargin
  		footerTop := height - footerH
@@ -4405,7 +5093,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		onHeader := -1
  		for s := range place {
  			if place[s].header >= 0 && delta == place[s].header {
-@@ -1953,7 +2064,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1953,7 +2080,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			}
  		}
  		switch {
@@ -4418,7 +5106,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			footerHoverLine, footerHoverX = delta-footerTop, m.SidebarHoverX-contentX0
  		case onHeader >= 0:
  			headerHoverX[onHeader] = m.SidebarHoverX - contentX0
-@@ -1961,7 +2076,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1961,7 +2092,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			dividerHover = true
  		default:
  			for s := range place {
@@ -4427,7 +5115,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  					continue
  				}
  				if d := delta - place[s].top; d >= 0 && d < count[s]*rowH[s] {
-@@ -1972,11 +2087,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -1972,11 +2103,14 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  	// Re-rendered now the pointer is resolved; the first pass only measured how
  	// many lines the footer takes so the sections could be sized.
@@ -4445,7 +5133,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// recordHit publishes a drawn row's rectangle and its nav row together, in
  	// drawn order, so the mouse and the keyboard address one target set. Hits
  	// only ever come from the renderer as it draws; nothing recomputes them.
-@@ -2013,7 +2131,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2013,7 +2147,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	overflowRow := func(n, indent int) string {
  		// Stands in for the rows it hides, so it starts where their names do.
  		more := overlay.Ellipsis() + " +" + strconv.Itoa(n)
@@ -4454,7 +5142,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			sidebarStyle(nil, pal.FgMute).Render(more), cw, nil))
  	}
  	// recordToken publishes a header control's rectangle and its nav row, the
-@@ -2031,6 +2149,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2031,6 +2165,20 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: tk.Kind, SessionID: sessionID, WindowID: tk.WindowID, WindowIndex: -1})
  	}
@@ -4475,7 +5163,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  
  	drawSessions := func() {
  		add := ""
-@@ -2039,13 +2171,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2039,13 +2187,13 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// its own control and the section header none: two "+" for one
  		// machine would be one more than the rail can explain.
  		if canCreate && len(m.SidebarHostIDs) == 0 {
@@ -4491,7 +5179,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		// lazygit's excludeBlankColumns, on the rail's right spine. A one-window
  		// session is the common case, so a column that prints "1" against every
  		// row is a column of identical digits carrying nothing. It is dropped
-@@ -2067,7 +2199,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2067,7 +2215,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// A space's heading. It names the rows under it and is not a
  				// row to act on, so it records no hit and no nav row: the
  				// pointer and the cursor pass over it.
@@ -4500,7 +5188,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  				continue
  			}
  			if s.Kind == sessiontree.KindRepo {
-@@ -2078,18 +2210,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2078,18 +2226,18 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				// cursor has to tell them apart.
  				st := m.railRowState(idx == hoverRow[sidebarSectionSessions], isCursor(sidebarRowRepo, s.ID, s.Space))
  				recordHit(sidebarRowRepo, s.ID, s.Space, -1, 1)
@@ -4522,7 +5210,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		}
  		if h := hidden[sidebarSectionSessions]; h > 0 {
  			lines = append(lines, overflowRow(h, m.sidebarRowIndent()))
-@@ -2102,7 +2234,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2102,7 +2250,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// coexist with a pointer on this header, so the two never compete for the
  		// same cells in practice; the arithmetic holds either way.
  		termAdd, termSpan, hasTermAdd := sidebarHeaderAdd(sidebarRowNewWindow, cw,
@@ -4531,7 +5219,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			isCursor(sidebarRowNewWindow, shown, ""), &m.Settings, nil)
  		right := termAdd
  		if peeking {
-@@ -2123,7 +2255,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2123,7 +2271,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			// label, the gap after it, the inset, and the control with the
  			// blank in front of it. Half the rail, which this used to take,
  			// ignored the label and on a narrow rail ran the name into it.
@@ -4540,7 +5228,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			if hasTermAdd {
  				room -= lipgloss.Width(sidebarAddGlyph(&m.Settings)) + 1
  			}
-@@ -2140,7 +2272,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2140,7 +2288,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		if hasTermAdd {
  			recordToken(termSpan, shown)
  		}
@@ -4549,7 +5237,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		// A peek shorter than the section it is held in fills the rest with
  		// blank lines, so whatever is below it stays where it was.
  		end := len(lines) + place[sidebarSectionTerminals].lines
-@@ -2157,7 +2289,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2157,7 +2305,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  				lines = append(lines, compose(sidebarFit(
  					sidebarStyle(nil, nil).Render(" ")+sidebarQuietDot(nil, pal, &m.Settings)+
  						sidebarStyle(nil, nil).Render(" ")+
@@ -4558,7 +5246,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			}
  			return
  		}
-@@ -2202,7 +2334,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2202,7 +2350,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  	}
  
  	drawGit := func() {
@@ -4567,16 +5255,62 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		for i := range count[sidebarSectionGit] {
  			idx := start[sidebarSectionGit] + i
  			if idx >= len(gitRows) {
-@@ -2220,7 +2352,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2219,8 +2367,53 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+ 		}
  	}
  
++	drawRecentProjects := func() {
++		section := sidebarSectionRecentProjects
++		lines = append(lines, compose(m.sidebarHeaderRowRuled("recent projects", "", cw, pal, &m.Settings)))
++		if len(recentProjects) == 0 {
++			if count[section] > 0 {
++				label := "No closed projects yet"
++				if m.AttachedHost != "" {
++					label = "Local connections only"
++				}
++				if m.recentProjects.err != nil {
++					label = "History unavailable"
++				}
++				lines = append(lines, compose(sidebarFit(sidebarStyle(nil, pal.FgMute).Render(label), cw, nil)))
++			}
++			return
++		}
++		for i := range count[section] {
++			idx := start[section] + i
++			if idx >= len(recentProjects) {
++				break
++			}
++			project := recentProjects[idx]
++			recordHit(sidebarRowRecentProject, project.Directory, "", idx, 1)
++			st := m.railRowState(idx == hoverRow[section], isCursor(sidebarRowRecentProject, project.Directory, ""))
++			labelRoom := cw
++			showRemove := cw >= len(sidebarRecentProjectRemoveLabel)+sidebarRecentProjectIndent+1
++			if showRemove {
++				labelRoom -= len(sidebarRecentProjectRemoveLabel)
++			}
++			label := strings.Repeat(" ", sidebarRecentProjectIndent) + recentProjectLabel(project, max(labelRoom-sidebarRecentProjectIndent, 0))
++			content := sidebarFit(sidebarStyle(nil, pal.Fg).Render(label), labelRoom, nil)
++			if showRemove {
++				x := contentX0 + labelRoom + 1
++				m.SidebarHits[len(m.SidebarHits)-1].X1 = x
++				y := topMargin + len(lines)
++				m.SidebarHits = append(m.SidebarHits, sidebarRowHit{X0: x, X1: x + 1, Y0: y, Y1: y + 1, Kind: sidebarRowRecentProjectForget, SessionID: project.Directory, WindowIndex: idx})
++				content += sidebarStyle(nil, pal.FgMute).Render(sidebarRecentProjectRemoveLabel)
++			}
++			lines = append(lines, compose(st.mark(pal, content)))
++		}
++		if h := hidden[section]; h > 0 {
++			lines = append(lines, overflowRow(h, 0))
++		}
++	}
++
  	drawCustom := func() {
 -		lines = append(lines, compose(sidebarHeaderRowRuled(m.railCustomTitle(), "", cw, pal, &m.Settings)))
 +		lines = append(lines, compose(m.sidebarHeaderRowRuled(m.railCustomTitle(), "", cw, pal, &m.Settings)))
  		if len(customRows) == 0 {
  			// The title over an empty section: the one notional row draws
  			// as a blank line, so the heading is not the last thing on the
-@@ -2251,12 +2383,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2251,12 +2444,12 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		// The count is the Inbox's while it is connected, narrowed to this
  		// session when the filter is, and over the rows the section lists
  		// otherwise. See sidebarHeaderCounts.
@@ -4591,7 +5325,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		if emptyFilter {
  			// The hint is about the attached session ("here"), so it carries that
  			// identity: it is a second filter control, and without something to tell
-@@ -2311,7 +2443,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2311,7 +2504,7 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			// only for that state, so a rail with no working agent records
  			// nothing and the motion clock never starts. See shimmer.go.
  			if e.State == "working" && bodyW > 0 {
@@ -4600,7 +5334,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  				m.motion.rail = append(m.motion.rail, shimmerSpan{
  					y: topMargin + len(lines), x0: x0, x1: min(x0+bodyW, contentX0+cw),
  				})
-@@ -2326,6 +2458,139 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2326,15 +2519,152 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		}
  	}
  
@@ -4738,28 +5472,35 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +	}
 +
  	draw := [sidebarSectionCount]func(){
- 		sidebarSectionSessions:  drawSessions,
- 		sidebarSectionTerminals: drawTerminals,
-@@ -2333,8 +2598,11 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
- 		sidebarSectionFiles:     drawFiles,
- 		sidebarSectionGit:       drawGit,
- 		sidebarSectionCustom:    drawCustom,
-+		sidebarSectionOverview:  func() { drawOverview(sidebarSectionOverview, overview) },
-+		sidebarSectionProjects:  func() { drawOverview(sidebarSectionProjects, projects) },
+-		sidebarSectionSessions:  drawSessions,
+-		sidebarSectionTerminals: drawTerminals,
+-		sidebarSectionAgents:    drawAgents,
+-		sidebarSectionFiles:     drawFiles,
+-		sidebarSectionGit:       drawGit,
+-		sidebarSectionCustom:    drawCustom,
++		sidebarSectionSessions:       drawSessions,
++		sidebarSectionTerminals:      drawTerminals,
++		sidebarSectionAgents:         drawAgents,
++		sidebarSectionFiles:          drawFiles,
++		sidebarSectionGit:            drawGit,
++		sidebarSectionCustom:         drawCustom,
++		sidebarSectionOverview:       func() { drawOverview(sidebarSectionOverview, overview) },
++		sidebarSectionProjects:       func() { drawOverview(sidebarSectionProjects, projects) },
++		sidebarSectionRecentProjects: drawRecentProjects,
  	}
  	drawnAt := 0
 +	previousSection := sidebarSectionCount
  	for i, p := range plans {
  		if p.Spacer {
  			for range budget[i] {
-@@ -2346,33 +2614,49 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2346,33 +2676,49 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  			continue
  		}
  		drawnAt++
 -		if p.Section != pinned && m.Settings.RailRoomy && drawnAt > 1 {
 -			lines = append(lines, blank)
 +		if p.Section != pinned && drawnAt > 1 {
-+			for range sectionGap {
++			for range gapBefore(p.Section) {
 +				lines = append(lines, blank)
 +			}
  		}
@@ -4815,7 +5556,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		y := footerTop + z.Line
  		m.SidebarHits = append(m.SidebarHits, sidebarRowHit{
  			X0: contentX0 + z.X0, X1: contentX0 + z.X1,
-@@ -2382,12 +2666,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
+@@ -2382,12 +2728,29 @@ func (m *OS) sidebarPanelLinesForTree(tree sessiontree.Tree) ([]string, int) {
  		})
  		nav = append(nav, sidebarNavRow{Kind: z.Kind, WindowIndex: -1})
  	}
@@ -4848,7 +5589,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// that the chrome alone overruns it produced a rail taller than its own band:
  	// the extra rows painted over the dock, and the hit rectangles recorded on
  	// them made a row outside the band clickable.
-@@ -2577,7 +2878,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
+@@ -2577,7 +2940,7 @@ func sidebarTerminalsWithoutAgents(terminals []sidebarTerminalEntry, agents []si
  // others from the cached listing, so agents elsewhere surface here marked
  // Foreign.
  func (m *OS) sidebarAgents(sessions []sessiontree.Node) []sidebarAgentEntry {
@@ -4857,7 +5598,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		return nil
  	}
  	return m.agentEntries(sessions)
-@@ -2590,8 +2891,10 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2590,8 +2953,10 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  	if !m.agentsOn() {
  		return nil
  	}
@@ -4868,7 +5609,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		pr := ""
  		if s.Worktree != nil {
  			pr = s.Worktree.PR
-@@ -2605,26 +2908,32 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2605,26 +2970,32 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  				idx = m.windowIndexByID(win.ID)
  			}
  			agents = append(agents, sidebarAgentEntry{
@@ -4921,7 +5662,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  			})
  		}
  	}
-@@ -2638,7 +2947,13 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
+@@ -2638,8 +3009,20 @@ func (m *OS) agentEntries(sessions []sessiontree.Node) []sidebarAgentEntry {
  // auto-scroll knows which offset to move and by how much.
  func (m *OS) sidebarCursorIndex(target sidebarNavRow, sessions []sessiontree.Node,
  	terminals []sidebarTerminalEntry, agents []sidebarAgentEntry, files []fileRowSpec,
@@ -4933,9 +5674,16 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
 +		}
 +	}
  	switch target.Kind {
++	case sidebarRowRecentProject, sidebarRowRecentProjectForget:
++		for i, project := range m.closedRecentProjects() {
++			if project.Directory == target.SessionID {
++				return sidebarSectionRecentProjects, i, true
++			}
++		}
  	case sidebarRowSession:
  		for i, s := range sessions {
-@@ -2731,7 +3046,7 @@ func (m *OS) sidebarCollapseGlyph(variant int) (glyph string, ok bool) {
+ 			if s.Kind == sessiontree.KindSession && s.ID == target.SessionID {
+@@ -2731,7 +3114,7 @@ func (m *OS) sidebarCollapseGlyph(variant int) (glyph string, ok bool) {
  	if variant == sidebarVariantGlyph {
  		// Only offer to reopen when the screen has room to honour it; a control
  		// that provably cannot move is noise.
@@ -4944,7 +5692,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	}
  	return collapse, true
  }
-@@ -2812,13 +3127,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2812,13 +3195,16 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  	slices.SortFunc(items, func(a, b placed) int { return a.zone.X0 - b.zone.X0 })
  
  	zones := make([]sidebarFooterZone, 0, len(items))
@@ -4965,7 +5713,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		for c := it.zone.X0 + 1; c < it.zone.X1 && c < cw; c++ {
  			row[c] = ""
  		}
-@@ -2827,7 +3145,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
+@@ -2827,7 +3213,7 @@ func (m *OS) sidebarFooter(variant, cw int, pal overlay.Palette,
  
  	lines := make([]string, len(cells))
  	for i, row := range cells {
@@ -4974,7 +5722,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	}
  	return lines, zones
  }
-@@ -2838,6 +3156,14 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2838,6 +3224,14 @@ func (m *OS) windowIndexByID(id string) int {
  	return slices.IndexFunc(m.Windows, func(w *terminal.Window) bool { return w != nil && w.ID == id })
  }
  
@@ -4989,7 +5737,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  // sidebarSessionRow renders one session row.
  //
  //	▎● name              3
-@@ -2850,16 +3176,27 @@ func (m *OS) windowIndexByID(id string) int {
+@@ -2850,16 +3244,27 @@ func (m *OS) windowIndexByID(id string) int {
  // accent gutter mark and a full-strength name; pointer or keyboard cursor a
  // Surface band; a state wanting a human a severity gutter mark, a coloured
  // glyph and the rail's one bold. No standing fill, so the only band on a
@@ -5019,7 +5767,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  
  	// The session's colour takes whichever of the row's two marks the louder
  	// signals have not claimed. The quiet dot first, which costs the rail
-@@ -2871,7 +3208,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2871,7 +3276,9 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	stated := agentStateIndicator(node.AgentState) != ""
  
  	glyph := sidebarQuietDotTinted(dotTint(tint, pal, stated), rowBg, pal, &m.Settings)
@@ -5030,7 +5778,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		glyph = sidebarGlyph(node.AgentState, node.DoneSeen, node.Subagents, rowBg, pal, &m.Settings)
  	}
  
-@@ -2896,28 +3235,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2896,28 +3303,19 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// the thing on the rail you act on, so emphasis drains down from it: the
  	// machine heading over it is a step quieter, and the counts and marks
  	// quieter still.
@@ -5067,7 +5815,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	// The branch rides after the name in muted ink, and only when the two fit
  	// together: a name that has to scroll wants every column, and a branch
  	// with its name cut from under it says nothing. So it is context for the
-@@ -2945,36 +3275,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
+@@ -2945,36 +3343,42 @@ func (m *OS) sidebarSessionRow(node sessiontree.Node, sessionIdx, variant, cw in
  	// name a key that opens something else.
  	mark, markW := "", 0
  	if m.Settings.SidebarShowNumbers && sessionIdx > 0 && sessionIdx <= 9 {
@@ -5119,7 +5867,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // sidebarTerminalRow renders one pane of the session the terminals section is
-@@ -3045,9 +3381,9 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+@@ -3045,9 +3449,9 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
  	// command typed into it does, so when only one of them fits it is this one.
  	// They are shown together when there is room for both.
  	right, rightW := "", 0
@@ -5131,7 +5879,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  		label := host + " " + e.Tag
  		right = sidebarStyle(rowBg, pal.AccentBright).Render(host) +
  			sidebarStyle(rowBg, pal.FgMute).Render(" "+e.Tag)
-@@ -3079,12 +3415,12 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
+@@ -3079,12 +3483,12 @@ func (m *OS) sidebarTerminalRow(e sidebarTerminalEntry, cw int, pal overlay.Pale
  	if !nameMarked {
  		capsW = 0
  	}
@@ -5146,7 +5894,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // sidebarTerminalHostLabel is what a pane row says about its machine: the
-@@ -3140,8 +3476,8 @@ func (m *OS) sidebarAgentsEmptyRow(total, cw int, pal overlay.Palette, st sideba
+@@ -3140,8 +3544,8 @@ func (m *OS) sidebarAgentsEmptyRow(total, cw int, pal overlay.Palette, st sideba
  		sep = " . "
  	}
  	text := "none here" + sep + strconv.Itoa(total) + " all"
@@ -5157,7 +5905,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  }
  
  // sidebarHarnessMax caps a harness label so the agent it names can never crowd
-@@ -3186,8 +3522,8 @@ func sidebarAgentName(e sidebarAgentEntry) string {
+@@ -3186,8 +3590,8 @@ func sidebarAgentName(e sidebarAgentEntry) string {
  // sentence.
  func (m *OS) sidebarAgentNoteRow(e sidebarAgentEntry, variant, cw int, pal overlay.Palette, st sidebarRowState) string {
  	rowBg := sidebarRowBg(st, pal)
@@ -5168,7 +5916,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	plan := m.sidebarAgentTokensFor(e, variant, true, time.Now())
  	quiet := sidebarStyle(rowBg, pal.FgMute)
  	note := plan.Note
-@@ -3430,7 +3766,7 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+@@ -3430,7 +3834,7 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
  	// while nothing else on the row says which agent it is.
  	sep := sidebarAgentSep()
  	nameW := lipgloss.Width(name)
@@ -5177,7 +5925,7 @@ index 9e0623756ecfa0abd5c1e594a63806c97d7cf739..c42d9bac1c493aa67e13223bcff8589c
  	labelAt, mailAt := len(plan.Prefix)+len(plan.After), len(plan.Prefix)+len(plan.After)+1
  	nameRoom = max(nameRoom, 1)
  	shown := m.sidebarAgentPrefixRun(plan.Prefix, keep[:len(plan.Prefix)], quiet, pal)
-@@ -3481,6 +3817,6 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
+@@ -3481,6 +3885,6 @@ func (m *OS) sidebarAgentRow(e sidebarAgentEntry, variant, cw int, pal overlay.P
  	body := shown +
  		m.sidebarTokenStyle(nameStyle, plan.Name, pal).Render(m.sidebarMarquee("a:"+e.SessionID+"/"+e.WindowID, name, nameRoom, st.Cursor)) +
  		after
@@ -9354,7 +10102,7 @@ index 5332bb69e43723b82aaf59fb4118c25b04335827..dbd62529fccffc3ef909019e40fc474a
 +	return m.sidebarComposeGroupRow(indent, gutter, glyph, name, right, cw, rowBg)
  }
 diff --git i/internal/app/sidebar_keyboard.go w/internal/app/sidebar_keyboard.go
-index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0beef7f8d 100644
+index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..394ea75c07971d45cf7583b2c3de93578cef362b 100644
 --- i/internal/app/sidebar_keyboard.go
 +++ w/internal/app/sidebar_keyboard.go
 @@ -5,6 +5,7 @@ import (
@@ -9394,7 +10142,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  				here = i
  				break
  			}
-@@ -176,19 +181,31 @@ func (m *OS) sidebarStepSection(delta int) {
+@@ -176,19 +181,33 @@ func (m *OS) sidebarStepSection(delta int) {
  
  // sidebarSectionOfKind is the section a row kind belongs to, or the count for a
  // control that belongs to none.
@@ -9406,6 +10154,8 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
 -		return sidebarSectionSessions
 -	case sidebarRowWindow:
 -		return sidebarSectionTerminals
++	case sidebarRowRecentProject, sidebarRowRecentProjectForget:
++		return sidebarSectionRecentProjects
 +	case sidebarRowAttentionProjects, sidebarRowProjectsVacant, sidebarRowProjectPicker, sidebarRowProjectWorkspace:
 +		return sidebarSectionProjects
 +	case sidebarRowAttentionVacant:
@@ -9435,7 +10185,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  }
  
  // sidebarFirstRowOfSection is the index of the first nav row belonging to a
-@@ -197,7 +214,7 @@ func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
+@@ -197,7 +216,7 @@ func sidebarSectionOfKind(kind sidebarRowKind) sidebarSection {
  // cursor lands past the row a person is looking at.
  func (m *OS) sidebarFirstRowOfSection(section sidebarSection) int {
  	for i, r := range m.SidebarNav {
@@ -9444,16 +10194,20 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  			return i
  		}
  	}
-@@ -225,6 +242,8 @@ func (m *OS) SidebarActivateCursor() bool {
+@@ -225,6 +244,12 @@ func (m *OS) SidebarActivateCursor() bool {
  		return false
  	}
  	switch row.Kind {
++	case sidebarRowRecentProject:
++		m.openRecentProject(row.SessionID)
++	case sidebarRowRecentProjectForget:
++		m.queueSidebarCmd(m.forgetRecentProject(row.SessionID))
 +	case sidebarRowProjectPicker, sidebarRowProjectWorkspace:
 +		m.activateSidebarProjectRow(sidebarRowHit{Kind: row.Kind, SessionID: row.SessionID, WindowID: row.WindowID, WindowIndex: row.WindowIndex})
  	case sidebarRowWindow, sidebarRowAgent:
  		m.sidebarFocusWindow(sidebarRowHit{
  			Kind:        row.Kind,
-@@ -267,6 +286,8 @@ func (m *OS) SidebarActivateCursor() bool {
+@@ -267,6 +292,8 @@ func (m *OS) SidebarActivateCursor() bool {
  		return true
  	case sidebarRowCollapse:
  		m.SidebarToggleCollapsed()
@@ -9462,7 +10216,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  	case sidebarRowRepo:
  		// Folding a group is a change to the rail, not a place to go, so the
  		// keyboard stays in the rail on the row that was folded.
-@@ -303,12 +324,14 @@ func (m *OS) SidebarReorderCursor(delta int) {
+@@ -303,12 +330,14 @@ func (m *OS) SidebarReorderCursor(delta int) {
  		return
  	}
  	if row.Kind == sidebarRowHost {
@@ -9477,7 +10231,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  	order := append([]string(nil), m.SidebarSessionIDs...)
  	from := -1
  	for i, id := range order {
-@@ -360,21 +383,30 @@ func (m *OS) sidebarSayMachinePinned() {
+@@ -360,21 +389,30 @@ func (m *OS) sidebarSayMachinePinned() {
  		"info", m.Settings.NotificationDuration)
  }
  
@@ -9517,7 +10271,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  			return
  		}
  	}
-@@ -468,7 +500,7 @@ func (m *OS) sidebarCursorAnchor(row sidebarNavRow) (int, int) {
+@@ -468,7 +506,7 @@ func (m *OS) sidebarCursorAnchor(row sidebarNavRow) (int, int) {
  	if m.railEdge() == sidebarRight {
  		x = m.GetRenderWidth() - m.GetSidebarWidth()
  	}
@@ -9526,7 +10280,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  }
  
  // sidebarSetCursorToHit points the keyboard cursor at a clicked row, so a click
-@@ -571,7 +603,7 @@ func (m *OS) SidebarSetCollapsed(collapsed bool) {
+@@ -571,7 +609,7 @@ func (m *OS) SidebarSetCollapsed(collapsed bool) {
  	}
  	// Expanding cannot help on a screen whose breakpoint already pins the rail
  	// to the strip; saying so beats appearing to do nothing.
@@ -9536,7 +10290,7 @@ index 09a44b7227448b488ae24c1adf2bfc75c76f2adb..d1383ac128fda4af708a3f06ab3688d0
  		return
  	}
 diff --git i/internal/app/sidebar_layout.go w/internal/app/sidebar_layout.go
-index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff7864a7fc03 100644
+index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..d194c53a8f0547d2df1e41c43049cdff50123b62 100644
 --- i/internal/app/sidebar_layout.go
 +++ w/internal/app/sidebar_layout.go
 @@ -51,6 +51,22 @@ import (
@@ -9562,7 +10316,7 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff78
  // sidebarSectionPlan is one entry of the rail's layout.
  type sidebarSectionPlan struct {
  	// Section is which list this entry draws, or sidebarSectionCount for a
-@@ -73,29 +89,30 @@ type sidebarSectionPlan struct {
+@@ -73,29 +89,32 @@ type sidebarSectionPlan struct {
  // The spacer is not in it: it is not a section, it may appear more than once,
  // and sidebarLayoutFor turns it into a plan entry of its own.
  var sidebarSectionByName = map[string]sidebarSection{
@@ -9572,13 +10326,14 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff78
 -	"files":                     sidebarSectionFiles,
 -	"git":                       sidebarSectionGit,
 -	config.SidebarSectionCustom: sidebarSectionCustom,
-+	"sessions":                    sidebarSectionSessions,
-+	"terminals":                   sidebarSectionTerminals,
-+	"agents":                      sidebarSectionAgents,
-+	"files":                       sidebarSectionFiles,
-+	"git":                         sidebarSectionGit,
-+	config.SidebarSectionCustom:   sidebarSectionCustom,
-+	config.SidebarSectionOverview: sidebarSectionOverview,
++	"sessions":                          sidebarSectionSessions,
++	"terminals":                         sidebarSectionTerminals,
++	"agents":                            sidebarSectionAgents,
++	"files":                             sidebarSectionFiles,
++	"git":                               sidebarSectionGit,
++	config.SidebarSectionCustom:         sidebarSectionCustom,
++	config.SidebarSectionOverview:       sidebarSectionOverview,
++	config.SidebarSectionRecentProjects: sidebarSectionRecentProjects,
  }
  
  // sidebarSectionFloors is the least each section is shrunk to, in rows, before
@@ -9600,13 +10355,14 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff78
  	// Two, so a section the user put on the rail is never shrunk to only its
  	// title while another section grows.
 -	sidebarSectionCustom: 2,
-+	sidebarSectionCustom:   2,
-+	sidebarSectionOverview: 3,
-+	sidebarSectionProjects: 2,
++	sidebarSectionCustom:         2,
++	sidebarSectionOverview:       3,
++	sidebarSectionProjects:       2,
++	sidebarSectionRecentProjects: 2,
  }
  
  // The parsed layout, cached against the string it came from. The rail parses it
-@@ -113,13 +130,20 @@ var (
+@@ -113,13 +132,20 @@ var (
  // sidebarLayoutPlans is the rail's layout, in the order the sections are
  // stacked from the top.
  func sidebarLayoutPlans(s *config.Settings) []sidebarSectionPlan {
@@ -9628,26 +10384,42 @@ index c6394bbb9ef320c67b7f19c45e213f4cf1af67ea..fc01596cd53c66f42d82d2032577ff78
  	return has[section]
  }
  
-@@ -136,6 +160,9 @@ func sidebarLayoutHas(section sidebarSection, s *config.Settings) bool {
+@@ -136,6 +162,12 @@ func sidebarLayoutHas(section sidebarSection, s *config.Settings) bool {
  // bottom edge because a gap was asked for higher up would be a surprise nobody
  // typed.
  func sidebarLayoutPins(plans []sidebarSectionPlan) bool {
++	if len(plans) > 0 && plans[len(plans)-1].Section == sidebarSectionRecentProjects {
++		return false
++	}
 +	if len(plans) > 0 && plans[0].Section == sidebarSectionProjects && plans[len(plans)-1].Section == sidebarSectionOverview {
 +		return false
 +	}
  	return len(plans) > 1 && !plans[len(plans)-1].Spacer
  }
  
-@@ -413,5 +440,7 @@ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
- 		sidebarSectionFiles:     &m.SidebarScrollF,
- 		sidebarSectionGit:       &m.SidebarScrollG,
- 		sidebarSectionCustom:    &m.SidebarScrollC,
-+		sidebarSectionOverview:  &m.SidebarScrollO,
-+		sidebarSectionProjects:  &m.sidebarAttention.projectsScroll,
+@@ -407,11 +439,14 @@ func sidebarBudgetLines(avail int, plans []sidebarSectionPlan, rows, rowH []int)
+ // two of the three is how a section ends up unable to scroll.
+ func (m *OS) sidebarScrollOffsets() [sidebarSectionCount]*int {
+ 	return [sidebarSectionCount]*int{
+-		sidebarSectionSessions:  &m.SidebarScrollS,
+-		sidebarSectionTerminals: &m.SidebarScrollT,
+-		sidebarSectionAgents:    &m.SidebarScrollA,
+-		sidebarSectionFiles:     &m.SidebarScrollF,
+-		sidebarSectionGit:       &m.SidebarScrollG,
+-		sidebarSectionCustom:    &m.SidebarScrollC,
++		sidebarSectionSessions:       &m.SidebarScrollS,
++		sidebarSectionTerminals:      &m.SidebarScrollT,
++		sidebarSectionAgents:         &m.SidebarScrollA,
++		sidebarSectionFiles:          &m.SidebarScrollF,
++		sidebarSectionGit:            &m.SidebarScrollG,
++		sidebarSectionCustom:         &m.SidebarScrollC,
++		sidebarSectionOverview:       &m.SidebarScrollO,
++		sidebarSectionRecentProjects: &m.recentProjects.scroll,
++		sidebarSectionProjects:       &m.sidebarAttention.projectsScroll,
  	}
  }
 diff --git i/internal/app/sidebar_mouse.go w/internal/app/sidebar_mouse.go
-index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed55de8fba 100644
+index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..40ea495bde4d3b8af95d99fa233517cdb354c034 100644
 --- i/internal/app/sidebar_mouse.go
 +++ w/internal/app/sidebar_mouse.go
 @@ -127,7 +127,8 @@ func (m *OS) applySidebarFlag(on bool) bool {
@@ -9712,7 +10484,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  		return true
  	}
  
-@@ -420,6 +434,9 @@ func (m *OS) sidebarClick(x, y int, right bool) bool {
+@@ -420,8 +434,15 @@ func (m *OS) sidebarClick(x, y int, right bool) bool {
  	if m.SidebarFocused {
  		m.sidebarSetCursorToHit(hit)
  	}
@@ -9721,8 +10493,14 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
 +	}
  
  	switch hit.Kind {
++	case sidebarRowRecentProject:
++		m.openRecentProject(hit.SessionID)
++	case sidebarRowRecentProjectForget:
++		m.queueSidebarCmd(m.forgetRecentProject(hit.SessionID))
  	case sidebarRowWindow, sidebarRowAgent:
-@@ -448,6 +465,8 @@ func (m *OS) sidebarClick(x, y int, right bool) bool {
+ 		m.sidebarFocusWindow(hit)
+ 	case sidebarRowAgentFilter:
+@@ -448,6 +469,8 @@ func (m *OS) sidebarClick(x, y int, right bool) bool {
  		m.SidebarNewGlobalSession()
  	case sidebarRowCollapse:
  		m.SidebarToggleCollapsed()
@@ -9731,7 +10509,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  	case sidebarRowRepo:
  		m.SidebarToggleRepoCollapsed(hit.SessionID)
  	case sidebarRowFiles:
-@@ -489,9 +508,7 @@ func (m *OS) SidebarDragActive() bool {
+@@ -489,9 +512,7 @@ func (m *OS) SidebarDragActive() bool {
  	return m.SidebarDrag.PressActive || m.SidebarDrag.Dragging || m.secondaryRailView.drag.PressActive || m.secondaryRailView.drag.Dragging
  }
  
@@ -9742,7 +10520,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  func (m *OS) sidebarOnEdge(x int) bool {
  	w := m.GetSidebarWidth()
  	if w <= 0 {
-@@ -550,6 +567,7 @@ func (m *OS) sidebarEdgeMotion(x, y int) bool {
+@@ -550,6 +571,7 @@ func (m *OS) sidebarEdgeMotion(x, y int) bool {
  	} else {
  		w = x + 1
  	}
@@ -9750,7 +10528,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  	lo, hi := m.sidebarWidthBounds()
  	w = max(min(w, hi), lo)
  	if m.sidebarDrawing {
-@@ -609,6 +627,9 @@ func (m *OS) sidebarActivateRow(hit sidebarRowHit) {
+@@ -609,6 +631,9 @@ func (m *OS) sidebarActivateRow(hit sidebarRowHit) {
  	if m.SidebarFocused {
  		m.sidebarSetCursorToHit(hit)
  	}
@@ -9760,7 +10538,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  	switch hit.Kind {
  	case sidebarRowWindow, sidebarRowAgent:
  		m.sidebarFocusWindow(hit)
-@@ -634,6 +655,8 @@ func (m *OS) sidebarActivateRow(hit sidebarRowHit) {
+@@ -634,6 +659,8 @@ func (m *OS) sidebarActivateRow(hit sidebarRowHit) {
  		m.queueSidebarCmd(m.openHostSignIn(hit.SessionID))
  	case sidebarRowCollapse:
  		m.SidebarToggleCollapsed()
@@ -9769,7 +10547,7 @@ index 738c0e20fae8165abfdf1afc8ba2d1710196e88d..c40067f95cf15e114b718af62d9bd1ed
  	case sidebarRowRepo:
  		m.SidebarToggleRepoCollapsed(hit.SessionID)
  	case sidebarRowHost:
-@@ -956,6 +979,13 @@ func (m *OS) openSidebarContextMenu(hit sidebarRowHit, x, y int) {
+@@ -956,6 +983,13 @@ func (m *OS) openSidebarContextMenu(hit sidebarRowHit, x, y int) {
  	}
  
  	switch hit.Kind {
@@ -10955,6 +11733,455 @@ index 0000000000000000000000000000000000000000..6f6f4b09223f0bcd81da83889ba5550a
 +	}
 +	return out
 +}
+diff --git i/internal/app/sidebar_recent_project_agents.go w/internal/app/sidebar_recent_project_agents.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..502f953e8965ae199550a36f517c57cc8b7c261d
+--- /dev/null
++++ w/internal/app/sidebar_recent_project_agents.go
+@@ -0,0 +1,134 @@
++package app
++
++import (
++	"encoding/json"
++	"errors"
++	"fmt"
++	"path/filepath"
++	"slices"
++
++	"github.com/Gaurav-Gosain/tuios/internal/harness"
++	"github.com/Gaurav-Gosain/tuios/internal/projecthistory"
++	"github.com/Gaurav-Gosain/tuios/internal/session"
++)
++
++func recentProjectAgents(directories map[string]string, restoring string) (map[string][]projecthistory.Agent, error) {
++	control, err := session.DialVerbClient()
++	if err != nil {
++		return nil, err
++	}
++	defer control.Close()
++	raw, err := control.CallWithTimeout("list-agents", map[string]bool{"all_sessions": true, "all": true}, recentProjectReadTimeout)
++	if err != nil {
++		return nil, err
++	}
++	var listing struct {
++		Agents []struct {
++			Session string `json:"session"`
++			Window  string `json:"window_id"`
++			Name    string `json:"name"`
++			Harness string `json:"harness_id"`
++			ID      string `json:"agent_session_id"`
++		} `json:"agents"`
++	}
++	if err := json.Unmarshal(raw, &listing); err != nil {
++		return nil, err
++	}
++	projects := make(map[string][]projecthistory.Agent)
++	for _, row := range listing.Agents {
++		directory := directories[row.Session]
++		if directory == "" || directory == restoring || row.Harness == "" || !harness.ValidResumeSessionID(row.ID) {
++			continue
++		}
++		raw, err := control.CallWithTimeout("get-window", map[string]string{"session": row.Session, "window": row.Window}, recentProjectReadTimeout)
++		if err != nil {
++			var callErr *session.VerbCallError
++			if errors.As(err, &callErr) && (callErr.Code == session.ErrVerbSessionNotFound || callErr.Code == session.ErrVerbWindowNotFound) {
++				continue
++			}
++			return nil, err
++		}
++		var window struct {
++			Cwd  string `json:"cwd"`
++			Host string `json:"host"`
++		}
++		if err := json.Unmarshal(raw, &window); err != nil {
++			return nil, err
++		}
++		if window.Host != "" {
++			continue
++		}
++		cwd := directory
++		if filepath.IsAbs(window.Cwd) {
++			cwd = projecthistory.CanonicalDirectory(window.Cwd)
++		}
++		agent := projecthistory.Agent{Harness: row.Harness, SessionID: row.ID, Directory: cwd, Name: row.Name}
++		if !slices.ContainsFunc(projects[directory], func(old projecthistory.Agent) bool {
++			return old.Harness == agent.Harness && old.SessionID == agent.SessionID && old.Directory == agent.Directory
++		}) {
++			projects[directory] = append(projects[directory], agent)
++		}
++	}
++	return projects, nil
++}
++
++func restoreRecentProjectAgents(name string, agents []projecthistory.Agent) error {
++	if len(agents) == 0 {
++		return nil
++	}
++	registry, loadErrors := harness.Load(harness.UserDir())
++	if len(loadErrors) > 0 {
++		errs := make([]error, len(loadErrors))
++		for i := range loadErrors {
++			errs[i] = loadErrors[i]
++		}
++		return errors.Join(errs...)
++	}
++	control, err := session.DialVerbClient()
++	if err != nil {
++		return err
++	}
++	defer control.Close()
++	var failures []error
++	for _, agent := range agents {
++		argv, err := registry.ResumeArgv(agent.Harness, agent.SessionID)
++		if err != nil {
++			failures = append(failures, fmt.Errorf("%s: %w", agent.Harness, err))
++			continue
++		}
++		if !filepath.IsAbs(agent.Directory) {
++			failures = append(failures, fmt.Errorf("%s: agent directory is not absolute", agent.Harness))
++			continue
++		}
++		raw, err := control.CallWithTimeout("new-window", map[string]any{"session": name, "name": agent.Name, "workspace": 1, "cwd": agent.Directory, "command": argv, "keep_open": true, "focus": false}, recentProjectReadTimeout)
++		if err != nil {
++			failures = append(failures, fmt.Errorf("%s: %w", agent.Harness, err))
++			continue
++		}
++		var window struct {
++			ID string `json:"window_id"`
++		}
++		if err := json.Unmarshal(raw, &window); err != nil || window.ID == "" {
++			if err == nil {
++				err = errors.New("new agent pane has no window id")
++			}
++			failures = append(failures, err)
++			continue
++		}
++		raw, err = control.CallWithTimeout("set-agent-session", map[string]string{"session": name, "window": window.ID, "harness": agent.Harness, "agent_session_id": agent.SessionID}, recentProjectReadTimeout)
++		if err == nil {
++			var result struct {
++				Applied bool   `json:"applied"`
++				Reason  string `json:"reason"`
++			}
++			err = json.Unmarshal(raw, &result)
++			if err == nil && !result.Applied {
++				err = fmt.Errorf("agent conversation was not recorded: %s", result.Reason)
++			}
++		}
++		if err != nil {
++			failures = append(failures, fmt.Errorf("%s: %w", agent.Harness, err))
++		}
++	}
++	return errors.Join(failures...)
++}
+diff --git i/internal/app/sidebar_recent_project_metadata.go w/internal/app/sidebar_recent_project_metadata.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..f566a63e1a9ae68913912e3b8bf5e8736ec76b49
+--- /dev/null
++++ w/internal/app/sidebar_recent_project_metadata.go
+@@ -0,0 +1,22 @@
++package app
++
++import (
++	"os"
++	"path/filepath"
++
++	"github.com/Gaurav-Gosain/tuios/internal/gitstate"
++	"github.com/Gaurav-Gosain/tuios/internal/projecthistory"
++	"github.com/Gaurav-Gosain/tuios/internal/worktree"
++)
++
++func recentProjectMetadata(project projecthistory.Project) projecthistory.Project {
++	if info, err := os.Stat(project.Directory); err != nil || !info.IsDir() {
++		return project
++	}
++	if info, ok := worktree.Detect(project.Directory); ok {
++		project.Repository, project.Branch, project.Worktree = info.Repo, info.Branch, filepath.Base(info.Path)
++	} else if _, _, root, ok := gitstate.Locate(project.Directory); ok {
++		project.Repository, project.Branch, project.Worktree = filepath.Base(root), gitstate.Branch(root), ""
++	}
++	return project
++}
+diff --git i/internal/app/sidebar_recent_projects.go w/internal/app/sidebar_recent_projects.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..819545de64e4dc6daa82a008a924f71ad6d2ac0f
+--- /dev/null
++++ w/internal/app/sidebar_recent_projects.go
+@@ -0,0 +1,275 @@
++package app
++
++import (
++	"encoding/json"
++	"errors"
++	"fmt"
++	"maps"
++	"os"
++	"path/filepath"
++	"slices"
++	"strings"
++	"time"
++
++	tea "charm.land/bubbletea/v2"
++	"github.com/Gaurav-Gosain/tuios/internal/projecthistory"
++	"github.com/Gaurav-Gosain/tuios/internal/session"
++	"github.com/charmbracelet/x/ansi"
++)
++
++type sidebarRecentProjectsState struct {
++	// Session names remain available in the name-only cache seeded on attach.
++	directories map[string]string
++	projects    []projecthistory.Project
++	busy        bool
++	err         error
++	scroll      int
++	opening     string
++	generation  uint64
++}
++
++type recentProjectsMsg struct {
++	generation  uint64
++	directories map[string]string
++	projects    []projecthistory.Project
++	err         error
++}
++
++func (m *OS) recentProjectVisits() []projecthistory.Project {
++	if m.DaemonClient == nil || m.AttachedHost != "" {
++		return nil
++	}
++	var visits []projecthistory.Project
++	currentIsProject := false
++	for _, info := range m.DaemonClient.CachedSessions() {
++		directory := m.recentProjects.directories[info.Name]
++		if directory == "" && info.Worktree != nil {
++			directory = info.Worktree.Path
++		}
++		if filepath.IsAbs(directory) {
++			visits = append(visits, projecthistory.Project{Directory: directory, LastActive: info.LastActive})
++			currentIsProject = currentIsProject || info.Name == m.sidebarCurrentSessionID()
++		}
++	}
++	if w := m.GetFocusedWindow(); !currentIsProject && w != nil && w.CwdHost == "" && filepath.IsAbs(w.Cwd) {
++		visits = append(visits, projecthistory.Project{Directory: w.Cwd, LastActive: time.Now().Unix()})
++	}
++	return visits
++}
++
++func (m *OS) refreshRecentProjects() tea.Cmd {
++	if m.recentProjects.busy || m.DaemonClient == nil || m.AttachedHost != "" || !sidebarLayoutHas(sidebarSectionRecentProjects, &m.Settings) {
++		return nil
++	}
++	m.recentProjects.busy = true
++	visits := m.recentProjectVisits()
++	infos := m.DaemonClient.CachedSessions()
++	known := maps.Clone(m.recentProjects.directories)
++	restoring := m.recentProjects.opening
++	generation := m.recentProjects.generation
++	path := filepath.Join(sidebarStateDir(), "recent-projects.json")
++	return func() tea.Msg {
++		directories, extra, err := recentProjectDirectories(infos, known)
++		if err != nil {
++			return recentProjectsMsg{generation: generation, err: err}
++		}
++		for name, directory := range known {
++			if _, open := directories[name]; !open {
++				extra = append(extra, projecthistory.Project{Directory: directory, LastActive: time.Now().Unix()})
++			}
++		}
++		agents, err := recentProjectAgents(directories, restoring)
++		if err != nil {
++			return recentProjectsMsg{generation: generation, err: err}
++		}
++		visits = append(visits, extra...)
++		for i := range visits {
++			visits[i].Agents = agents[projecthistory.CanonicalDirectory(visits[i].Directory)]
++		}
++		projects, err := projecthistory.Observe(path, visits)
++		if err == nil {
++			changed := false
++			for i, project := range projects {
++				projects[i] = recentProjectMetadata(project)
++				changed = changed || !projecthistory.Equal(projects[i], project)
++			}
++			if changed {
++				projects, err = projecthistory.UpdateMetadata(path, projects)
++			}
++		}
++		return recentProjectsMsg{generation: generation, directories: directories, projects: projects, err: err}
++	}
++}
++
++const (
++	recentProjectReadTimeout        = 2 * time.Second
++	sidebarRecentProjectsGap        = 3
++	sidebarRecentProjectIndent      = 1
++	sidebarRecentProjectRemoveLabel = " x "
++)
++
++func recentProjectLabel(project projecthistory.Project, width int) string {
++	if project.Repository == "" {
++		return filepath.Base(project.Directory)
++	}
++	label := project.Repository
++	if project.Branch != "" {
++		if ansi.StringWidth(label+" / "+project.Branch) > width {
++			label = ansi.Truncate(label, max(width/3, 1), "…")
++		}
++		label += " / " + project.Branch
++	}
++	if project.Worktree != "" && project.Worktree != project.Branch {
++		label += " [" + project.Worktree + "]"
++	}
++	return label
++}
++
++func recentProjectDirectories(infos []session.SessionInfo, known map[string]string) (map[string]string, []projecthistory.Project, error) {
++	directories := make(map[string]string)
++	var visits []projecthistory.Project
++	var control *session.VerbClient
++	defer func() {
++		if control != nil {
++			_ = control.Close()
++		}
++	}()
++	for _, info := range infos {
++		if info.Global {
++			continue
++		}
++		directory := known[info.Name]
++		if info.Worktree != nil {
++			directory = info.Worktree.Path
++		}
++		if !filepath.IsAbs(directory) || (info.Dir != "" && info.Dir != filepath.Base(directory) && info.Worktree == nil) {
++			if control == nil {
++				var err error
++				control, err = session.DialVerbClient()
++				if err != nil {
++					return nil, nil, err
++				}
++			}
++			raw, err := control.CallWithTimeout("list-windows", map[string]string{"session": info.Name}, recentProjectReadTimeout)
++			if err != nil {
++				var callErr *session.VerbCallError
++				if errors.As(err, &callErr) && callErr.Code == session.ErrVerbSessionNotFound {
++					continue
++				}
++				return nil, nil, err
++			}
++			var listing struct {
++				Windows []struct {
++					Cwd     string `json:"cwd"`
++					Host    string `json:"host"`
++					Focused bool   `json:"focused"`
++				} `json:"windows"`
++			}
++			if err := json.Unmarshal(raw, &listing); err != nil {
++				return nil, nil, err
++			}
++			for _, window := range listing.Windows {
++				if window.Host != "" || !filepath.IsAbs(window.Cwd) {
++					continue
++				}
++				if directory == "" || window.Focused {
++					directory = window.Cwd
++				}
++				if window.Focused {
++					break
++				}
++			}
++		}
++		if filepath.IsAbs(directory) {
++			directory = projecthistory.CanonicalDirectory(directory)
++			directories[info.Name] = directory
++			visits = append(visits, projecthistory.Project{Directory: directory, LastActive: info.LastActive})
++		}
++	}
++	return directories, visits, nil
++}
++
++func (m *OS) closedRecentProjects() []projecthistory.Project {
++	active := m.recentProjectVisits()
++	return slices.DeleteFunc(slices.Clone(m.recentProjects.projects), func(project projecthistory.Project) bool {
++		return slices.ContainsFunc(active, func(visit projecthistory.Project) bool { return filepath.Clean(visit.Directory) == project.Directory })
++	})
++}
++
++type recentProjectForgottenMsg struct {
++	directory string
++	err       error
++}
++
++func (m *OS) forgetRecentProject(directory string) tea.Cmd {
++	if directory == m.recentProjects.opening || !slices.ContainsFunc(m.closedRecentProjects(), func(project projecthistory.Project) bool { return project.Directory == directory }) {
++		return nil
++	}
++	path := filepath.Join(sidebarStateDir(), "recent-projects.json")
++	return func() tea.Msg {
++		_, err := projecthistory.Forget(path, directory)
++		return recentProjectForgottenMsg{directory: directory, err: err}
++	}
++}
++
++func (m *OS) openRecentProject(directory string) {
++	if m.DaemonClient == nil || m.AttachedHost != "" {
++		m.ShowNotification("Recent projects require a local daemon connection", "error", m.Settings.NotificationDuration)
++		return
++	}
++	closed := m.closedRecentProjects()
++	index := slices.IndexFunc(closed, func(project projecthistory.Project) bool { return project.Directory == directory })
++	if index < 0 || m.recentProjects.opening != "" {
++		return
++	}
++	agents := slices.Clone(closed[index].Agents)
++	m.recentProjects.opening = directory
++	client, ch := m.DaemonClient, m.sessionCreateChan()
++	known := maps.Clone(m.recentProjects.directories)
++	width, height := m.GetContentWidth(), m.GetUsableHeight()
++	m.clearSidebarReturn()
++	go func() {
++		info, err := os.Stat(directory)
++		if err == nil && !info.IsDir() {
++			err = fmt.Errorf("project is not a directory: %s", directory)
++		}
++		if err != nil {
++			ch <- SessionCreatedMsg{Err: err, RecentProject: directory}
++			return
++		}
++		// Refresh before choosing a name: another client may have opened it since
++		// the row was drawn. A matching live project is reused, not duplicated.
++		sessions, err := client.RefreshSessionList()
++		if err != nil {
++			ch <- SessionCreatedMsg{Err: err, RecentProject: directory}
++			return
++		}
++		directories, _, err := recentProjectDirectories(sessions, known)
++		if err != nil {
++			ch <- SessionCreatedMsg{Err: err, RecentProject: directory}
++			return
++		}
++		taken := make(map[string]bool)
++		for _, session := range sessions {
++			if directories[session.Name] == directory {
++				ch <- SessionCreatedMsg{Name: session.Name, RecentProject: directory}
++				return
++			}
++			taken[session.Name] = true
++		}
++		base := strings.TrimSpace(filepath.Base(directory))
++		if base == "" || base == string(filepath.Separator) {
++			base = "project"
++		}
++		name := base
++		for suffix := 2; taken[name]; suffix++ {
++			name = fmt.Sprintf("%s-%d", base, suffix)
++		}
++		err = client.CreateProjectSession(name, directory, width, height)
++		var resumeErr error
++		if err == nil {
++			resumeErr = restoreRecentProjectAgents(name, agents)
++		}
++		ch <- SessionCreatedMsg{Name: name, Err: err, RecentProject: directory, AgentResumeErr: resumeErr}
++	}()
++}
 diff --git i/internal/app/sidebar_recent_test.go w/internal/app/sidebar_recent_test.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..f66014e314d6461330732c0300234b02b915545c
@@ -11450,15 +12677,16 @@ index e340eb18bbdc9c89be904fa615e7bf9ef57280c0..3c005d8c3623673a60d01bbe62a004fb
  }
 diff --git i/internal/app/sidebar_separator_visibility_test.go w/internal/app/sidebar_separator_visibility_test.go
 new file mode 100644
-index 0000000000000000000000000000000000000000..cf21aa74d09a49240f0ef51f44b7723763438ac7
+index 0000000000000000000000000000000000000000..896d7e905aee8c34391328a284051ccf412b26c5
 --- /dev/null
 +++ w/internal/app/sidebar_separator_visibility_test.go
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,49 @@
 +package app
 +
 +import (
-+	"github.com/charmbracelet/x/ansi"
 +	"testing"
++
++	"github.com/charmbracelet/x/ansi"
 +)
 +
 +func TestSidebarSeparatorVisibilityLive(t *testing.T) {
@@ -12509,6 +13737,21 @@ index a538e5013b609ae35c4a3ca97b1a9d3206a787e8..6a30f1cfd2864dedce61cd62a98f0ebf
  	name, kind := "", ""
  	if fields.Name {
  		name = subagentName(s)
+diff --git i/internal/app/sysinfo_darwin.go w/internal/app/sysinfo_darwin.go
+index d48ef0815a58b37ebc1cd1eba4f298b46d75432d..eecb49a50a8bcf3d353d42631e2154d358ad79b4 100644
+--- i/internal/app/sysinfo_darwin.go
++++ w/internal/app/sysinfo_darwin.go
+@@ -11,8 +11,9 @@ func readCPUTicks() (cpuTicks, bool) {
+ 		return cpuTicks{}, false
+ 	}
+ 	t := times[0]
++	total := t.User + t.System + t.Idle + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice
+ 	return cpuTicks{
+ 		idle:  uint64(t.Idle * 1e6),
+-		total: uint64(t.Total() * 1e6),
++		total: uint64(total * 1e6),
+ 	}, true
+ }
 diff --git i/internal/app/tick_deadline.go w/internal/app/tick_deadline.go
 index 74e4a7d15263853deefc226966d8e51577834d5e..88d2dfaf8c9ee17579f6ab099d97084adf8220b4 100644
 --- i/internal/app/tick_deadline.go
@@ -13485,10 +14728,46 @@ index 0000000000000000000000000000000000000000..efc67c598bd37805f594859463924762
 +	return true
 +}
 diff --git i/internal/app/update.go w/internal/app/update.go
-index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae9058ab96960 100644
+index 977651030077e7eac33e7c23c7dd44385aa2b9d1..6de4a1d2f6101be4de64da74c6cc4804dcd21524 100644
 --- i/internal/app/update.go
 +++ w/internal/app/update.go
-@@ -592,6 +592,9 @@ func (m *OS) tickAtFrameRate() bool {
+@@ -2,6 +2,7 @@ package app
+ 
+ import (
+ 	"fmt"
++	"maps"
+ 	"math"
+ 	"runtime/debug"
+ 	"slices"
+@@ -14,6 +15,7 @@ import (
+ 	"github.com/Gaurav-Gosain/tuios/internal/federation"
+ 	"github.com/Gaurav-Gosain/tuios/internal/hooks"
+ 	"github.com/Gaurav-Gosain/tuios/internal/plural"
++	"github.com/Gaurav-Gosain/tuios/internal/projecthistory"
+ 	"github.com/Gaurav-Gosain/tuios/internal/session"
+ 	"github.com/Gaurav-Gosain/tuios/internal/tape"
+ 	"github.com/Gaurav-Gosain/tuios/internal/terminal"
+@@ -49,7 +51,9 @@ type ClipboardSetMsg struct {
+ // Update goroutine. Name is the session that was asked for; Err is why it did
+ // not happen.
+ type SessionCreatedMsg struct {
+-	Name string
++	Name           string
++	RecentProject  string
++	AgentResumeErr error
+ 	// Global says the session was created as a global one, which has no
+ 	// windows: its first pane is the one the user picks a machine for, so the
+ 	// picker is opened once the switch has landed.
+@@ -482,7 +486,7 @@ func (m *OS) Init() tea.Cmd {
+ 		if refresh {
+ 			cmds = append(cmds, refreshForeignSessionsCmd(m.DaemonClient))
+ 		}
+-		cmds = append(cmds, m.foreignSessionRefreshTick(after))
++		cmds = append(cmds, m.foreignSessionRefreshTick(after), m.refreshRecentProjects())
+ 
+ 		// One poll for the federated hosts. The answer says whether any are
+ 		// configured, and a daemon with none never gets asked again.
+@@ -592,6 +596,9 @@ func (m *OS) tickAtFrameRate() bool {
  // and per window an exited process, unflushed output, a stranded
  // manipulation, or a title that has drifted from the rail.
  func (m *OS) tickPolledWork() bool {
@@ -13498,7 +14777,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	if len(m.Animations) > 0 || m.Dragging || m.Resizing {
  		return true
  	}
-@@ -807,7 +810,7 @@ func (m *OS) foreignSessionRefreshPlan() (after time.Duration, refresh bool) {
+@@ -807,7 +814,7 @@ func (m *OS) foreignSessionRefreshPlan() (after time.Duration, refresh bool) {
  	if m.DaemonClient == nil {
  		return foreignSessionRefreshIdle, false
  	}
@@ -13507,7 +14786,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  		return foreignSessionRefreshActive, true
  	}
  	if m.DaemonClient.SessionCount() <= 1 {
-@@ -853,6 +856,7 @@ type foreignSessionsChangedMsg struct{}
+@@ -853,6 +860,7 @@ type foreignSessionsChangedMsg struct{}
  // one somebody writes. One comparison, once, is the whole cost, and it answers
  // nil without allocating for a client whose rail has no files section.
  func (m *OS) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -13515,7 +14794,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	// The frame the last View composed is stored now: write it. Nothing
  	// else changes, so the View after this message serves the same frame.
  	if _, ok := msg.(flushMsg); ok {
-@@ -922,6 +926,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -922,6 +930,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	}
  	noteCmd := m.noteHostPixelMouse(msg)
  	model, cmd := m.handleMsg(msg)
@@ -13523,7 +14802,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	if pixelCmd := m.hostPixelMouseCmd(msg); pixelCmd != nil || noteCmd != nil {
  		cmd = tea.Batch(cmd, noteCmd, pixelCmd)
  	}
-@@ -943,6 +948,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -943,6 +952,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	// pane's directory is what both are about, and every handler that can move
  	// it is covered by one comparison here rather than by a hook in each.
  	gitSync := m.GitSyncCmd()
@@ -13531,7 +14810,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	// The opposite edge may be the only rail that names files or git. Its
  	// presentation state is scoped to that edge; the directory and repository
  	// readings themselves are shared because both follow the same pane.
-@@ -950,6 +956,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -950,6 +960,7 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	if m.secondarySidebarWidth() > 0 {
  		m.withSecondaryRail(func() bool {
  			secondFiles, secondGit = m.FilesSyncCmd(), m.GitSyncCmd()
@@ -13539,7 +14818,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  			return true
  		})
  	}
-@@ -1006,10 +1013,10 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
+@@ -1006,10 +1017,10 @@ func (m *OS) update(msg tea.Msg) (tea.Model, tea.Cmd) {
  	// for: it is armed for the earliest job that is due, and not at all when
  	// none is. See nextWake.
  	tick := m.tickWakeCmd()
@@ -13552,7 +14831,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  }
  
  // handleMsg is Update's body: one switch over every message the client can see.
-@@ -1109,6 +1116,10 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1109,6 +1120,10 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		m.renderSkipped = !changed
  		return m, due
  
@@ -13563,7 +14842,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	case GitStateMsg:
  		// The reading the git section asked for. It is applied rather than
  		// acted on: the section draws whatever the last answer was, and a
-@@ -1295,6 +1306,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1295,6 +1310,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		m.tickStats.Ticks++
  		m.idleFrameTicker(time.Time(msg))
  		m.releaseEmulatorScratch(time.Time(msg))
@@ -13571,7 +14850,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  
  		// Idle diet: when nothing periodic needs attention the per-tick scans have
  		// no work, so skip them and hold the frame. Process exits and PTY output
-@@ -1303,7 +1315,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1303,7 +1319,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		// stranded manipulation before deciding to sleep. The tick is not
  		// re-armed here: Update arms the next one for the next job that is due,
  		// and none at all when nothing is (see nextWake).
@@ -13580,7 +14859,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  			m.renderSkipped = true
  			return m, nil
  		}
-@@ -1420,7 +1432,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1420,7 +1436,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		needsRender := hadAnimations || hasAnimations || m.InteractionMode || m.PrefixActive ||
  			hasBackgroundChanges || m.notifBurnMoved() || notifExpired || leftScriptMode ||
  			m.SidebarMarqueeActive() || m.TooltipPending() || railTitleChanged || zenCrossed ||
@@ -13589,7 +14868,27 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  		if !needsRender {
  			m.renderSkipped = true
  			return m, tea.Batch(cmds...)
-@@ -1668,7 +1680,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1473,6 +1489,9 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		return m, ListenForAttachedHosts(m.attachedHostsChan())
+ 
+ 	case SessionCreatedMsg:
++		if msg.RecentProject != "" {
++			m.recentProjects.opening = ""
++		}
+ 		cmd := ListenForSessionCreate(m.sessionCreateChan())
+ 		if msg.OpenGen != 0 {
+ 			return m, tea.Batch(cmd, m.finishHostOpen(msg))
+@@ -1496,6 +1515,9 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		// through the same rule every switch uses: a session nobody arranged
+ 		// takes the config, one somebody laid out keeps its layout.
+ 		m.applyStartupToUnarranged()
++		if msg.AgentResumeErr != nil {
++			m.ShowNotification("Agent restore failed: "+msg.AgentResumeErr.Error(), "error", m.Settings.NotificationDuration*2)
++		}
+ 		// The rail relays out around a session that did not exist last frame;
+ 		// follow it by name so the cursor lands on it rather than on whatever
+ 		// took its index.
+@@ -1668,7 +1690,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		// Ensure we're in window management mode if no windows remain
  		if len(m.Windows) == 0 {
@@ -13598,7 +14897,64 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  		}
  		return m, ListenForWindowExits(m.WindowExitChan)
  
-@@ -2213,6 +2225,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -1705,7 +1727,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		if !refresh {
+ 			return m, m.foreignSessionRefreshTick(after)
+ 		}
+-		return m, tea.Batch(refreshForeignSessionsCmd(m.DaemonClient), m.foreignSessionRefreshTick(after))
++		return m, tea.Batch(refreshForeignSessionsCmd(m.DaemonClient), m.foreignSessionRefreshTick(after), m.refreshRecentProjects())
+ 
+ 	case SessionsChangedMsg:
+ 		// The push stands in for the poll tick: prune against the listing
+@@ -1721,6 +1743,38 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		}
+ 		return m, listen
+ 
++	case recentProjectForgottenMsg:
++		if msg.err != nil {
++			m.ShowNotification("Remove failed: "+msg.err.Error(), "error", m.Settings.NotificationDuration*2)
++			return m, nil
++		}
++		m.recentProjects.generation++
++		m.recentProjects.projects = slices.DeleteFunc(m.recentProjects.projects, func(project projecthistory.Project) bool { return project.Directory == msg.directory })
++		m.recentProjects.err = nil
++		m.sidebarCache.invalidate()
++		return m, m.refreshRecentProjects()
++
++	case recentProjectsMsg:
++		m.recentProjects.busy = false
++		if msg.generation != m.recentProjects.generation {
++			return m, m.refreshRecentProjects()
++		}
++		if msg.err == nil && m.recentProjects.err == nil && slices.EqualFunc(m.recentProjects.projects, msg.projects, projecthistory.Equal) && maps.Equal(m.recentProjects.directories, msg.directories) {
++			m.renderSkipped = true
++			return m, nil
++		}
++		if msg.err != nil {
++			if m.recentProjects.err == nil {
++				m.ShowNotification("Project history: "+msg.err.Error(), "error", m.Settings.NotificationDuration)
++			}
++			m.recentProjects.err = msg.err
++		} else {
++			m.recentProjects.projects, m.recentProjects.err = msg.projects, nil
++			m.recentProjects.directories = msg.directories
++		}
++		m.sidebarCache.invalidate()
++		return m, nil
++
+ 	case foreignSessionsChangedMsg:
+ 		// The rail's render cache keys on the listing's generation, so this
+ 		// frame rebuilds the rows the refresh moved.
+@@ -1728,7 +1782,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+ 		// listing the refresh brought.
+ 		m.pruneWindowKeyedState()
+ 		m.renderSkipped = false
+-		return m, nil
++		return m, m.refreshRecentProjects()
+ 
+ 	case FederationHostsMsg:
+ 		// Storing a snapshot is the whole handler. The network work happened in
+@@ -2213,6 +2267,12 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		}
  		return m, nil
  
@@ -13611,7 +14967,7 @@ index 977651030077e7eac33e7c23c7dd44385aa2b9d1..0be13275f64b37b893b015a9604ae905
  	case tea.KeyboardEnhancementsMsg:
  		// The host answered the Kitty keyboard protocol query, so tuios now knows
  		// which of the things it asked for it actually got.
-@@ -2227,7 +2245,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
+@@ -2227,7 +2287,7 @@ func (m *OS) handleMsg(msg tea.Msg) (model tea.Model, cmd tea.Cmd) {
  		if reason := m.HoldModeUnsupportedReason(); reason != "" && first {
  			m.ShowNotification(reason, "warning", m.Settings.NotificationDuration)
  		}
@@ -13710,15 +15066,17 @@ index eb41e8399cb64ea2084cb249b1596772e9740487..d749525b575ed4d4eee4ad3e7b5abc93
  }
  
 diff --git i/internal/config/constants.go w/internal/config/constants.go
-index 81885684d6d5c9f10a44e6252b459d0af73d16d1..92593dd8e5d15d307e50b57fe913acba0321fd7e 100644
+index 81885684d6d5c9f10a44e6252b459d0af73d16d1..41153ccbcf11624ddec3b3232ca3c2b86cd7949c 100644
 --- i/internal/config/constants.go
 +++ w/internal/config/constants.go
-@@ -493,7 +493,12 @@ const SidebarDefaultSections = "sessions:25,terminals,files:25,agents:34"
+@@ -493,7 +493,14 @@ const SidebarDefaultSections = "sessions:25,terminals,files:25,agents:34"
  // section the rail does not draw, and that is the only way to turn one off:
  // there is no second switch per section, because a switch cannot say where a
  // thing goes and two spacers would have no switch to share.
 -var SidebarSectionNames = []string{"sessions", "terminals", "files", "agents", "git", SidebarSectionCustom}
-+var SidebarSectionNames = []string{"overview", "sessions", "terminals", "files", "agents", "git", SidebarSectionCustom, SidebarSectionDock}
++const SidebarSectionRecentProjects = "recent-projects"
++
++var SidebarSectionNames = []string{"overview", "sessions", "terminals", "files", "agents", "git", SidebarSectionRecentProjects, SidebarSectionCustom, SidebarSectionDock}
 +
 +// SidebarSectionOverview is the unified session and agent tree. When it is in
 +// a layout it replaces the three flat navigation sections, while leaving the
@@ -13727,7 +15085,7 @@ index 81885684d6d5c9f10a44e6252b459d0af73d16d1..92593dd8e5d15d307e50b57fe913acba
  
  // SidebarSectionCustom is the rail section whose rows are the output of a
  // command the user writes, configured in [appearance.sidebar.custom]. It is
-@@ -501,6 +506,11 @@ var SidebarSectionNames = []string{"sessions", "terminals", "files", "agents", "
+@@ -501,6 +508,11 @@ var SidebarSectionNames = []string{"sessions", "terminals", "files", "agents", "
  // a fixed enum that sizes its arrays, and one more value fits that as it is.
  const SidebarSectionCustom = "custom"
  
@@ -13739,7 +15097,7 @@ index 81885684d6d5c9f10a44e6252b459d0af73d16d1..92593dd8e5d15d307e50b57fe913acba
  // SidebarSectionSpacer is the layout's empty block. It draws nothing and takes
  // lines, which is how a person puts a gap between two sections or pushes what
  // follows it to the bottom of the rail.
-@@ -790,6 +800,11 @@ const (
+@@ -790,6 +802,11 @@ const (
  // setting worked and no way to tell a dimmed pane from a crashed one.
  const DimUnfocusedMax = 90
  
@@ -13751,7 +15109,7 @@ index 81885684d6d5c9f10a44e6252b459d0af73d16d1..92593dd8e5d15d307e50b57fe913acba
  // DefaultClockFormat is the layout the clock draws with when none is set. It
  // has no seconds: the dock engine arms the clock's timer for the next change
  // of what it draws, so a clock without seconds wakes the client once a minute
-@@ -1667,7 +1682,7 @@ var OSC52WriteModes = []string{
+@@ -1667,7 +1684,7 @@ var OSC52WriteModes = []string{
  // appearance.dock_compact, two without. It does not look at DockbarPosition,
  // so a caller that has to treat a hidden dock as no rows checks that itself.
  func (s *Settings) DockHeight() int {
@@ -15522,6 +16880,252 @@ index 9ab267c129d849b6ae2e52972d16a133dbb0f81f..e452806ba6902a8a4e5f560be3aabad6
  // underlineCell underlines a cell that carries text, leaving the padding
  // alone so the line runs under the words rather than across the panel.
  func underlineCell(c *uv.Cell) {
+diff --git i/internal/projecthistory/directory.go w/internal/projecthistory/directory.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..388fdb9405362eed5c324ec8a4a1ab1371618853
+--- /dev/null
++++ w/internal/projecthistory/directory.go
+@@ -0,0 +1,24 @@
++package projecthistory
++
++import "path/filepath"
++
++// CanonicalDirectory resolves existing ancestors so missing directories keep
++// the same identity as their previously observed symlink aliases.
++func CanonicalDirectory(directory string) string {
++	directory = filepath.Clean(directory)
++	ancestor := directory
++	for {
++		if resolved, err := filepath.EvalSymlinks(ancestor); err == nil {
++			relative, err := filepath.Rel(ancestor, directory)
++			if err == nil {
++				return filepath.Join(resolved, relative)
++			}
++			return directory
++		}
++		parent := filepath.Dir(ancestor)
++		if parent == ancestor {
++			return directory
++		}
++		ancestor = parent
++	}
++}
+diff --git i/internal/projecthistory/lock_js.go w/internal/projecthistory/lock_js.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..de0ad76d0bd39732d117be75d95a15f904d7c836
+--- /dev/null
++++ w/internal/projecthistory/lock_js.go
+@@ -0,0 +1,9 @@
++package projecthistory
++
++import (
++	"errors"
++	"os"
++)
++
++func lockFile(_ *os.File) error { return errors.New("project history requires a local filesystem") }
++func unlockFile(_ *os.File)     {}
+diff --git i/internal/projecthistory/lock_unix.go w/internal/projecthistory/lock_unix.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4a607e351a3f00892429277b168ddfef4d2dd17
+--- /dev/null
++++ w/internal/projecthistory/lock_unix.go
+@@ -0,0 +1,12 @@
++//go:build !windows && !js
++
++package projecthistory
++
++import (
++	"os"
++
++	"golang.org/x/sys/unix"
++)
++
++func lockFile(file *os.File) error { return unix.Flock(int(file.Fd()), unix.LOCK_EX) }
++func unlockFile(file *os.File)     { _ = unix.Flock(int(file.Fd()), unix.LOCK_UN) }
+diff --git i/internal/projecthistory/lock_windows.go w/internal/projecthistory/lock_windows.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..e285fe10a07fdca36275575b0a4734f304e95fd5
+--- /dev/null
++++ w/internal/projecthistory/lock_windows.go
+@@ -0,0 +1,14 @@
++package projecthistory
++
++import (
++	"os"
++
++	"golang.org/x/sys/windows"
++)
++
++func lockFile(file *os.File) error {
++	return windows.LockFileEx(windows.Handle(file.Fd()), windows.LOCKFILE_EXCLUSIVE_LOCK, 0, 1, 0, &windows.Overlapped{})
++}
++func unlockFile(file *os.File) {
++	_ = windows.UnlockFileEx(windows.Handle(file.Fd()), 0, 1, 0, &windows.Overlapped{})
++}
+diff --git i/internal/projecthistory/store.go w/internal/projecthistory/store.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..84b5a708fa5a8b39e69bb6cbc41c6dbcba23e020
+--- /dev/null
++++ w/internal/projecthistory/store.go
+@@ -0,0 +1,157 @@
++// Package projecthistory persists project directories observed by local clients.
++package projecthistory
++
++import (
++	"bytes"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"slices"
++
++	"github.com/Gaurav-Gosain/tuios/internal/atomicfile"
++)
++
++const maxProjects = 50
++
++// Project is one directory and the last time a session there was active.
++type Project struct {
++	Directory  string  `json:"directory"`
++	LastActive int64   `json:"last_active"`
++	Repository string  `json:"repository,omitempty"`
++	Branch     string  `json:"branch,omitempty"`
++	Worktree   string  `json:"worktree,omitempty"`
++	Agents     []Agent `json:"agents,omitempty"`
++}
++
++// Agent identifies a conversation without persisting executable commands.
++type Agent struct {
++	Harness   string `json:"harness"`
++	SessionID string `json:"session_id"`
++	Directory string `json:"directory"`
++	Name      string `json:"name,omitempty"`
++}
++
++// Equal compares a project's identity, activity and saved conversations.
++func Equal(a, b Project) bool {
++	return a.Directory == b.Directory && a.LastActive == b.LastActive && a.Repository == b.Repository && a.Branch == b.Branch && a.Worktree == b.Worktree && slices.Equal(a.Agents, b.Agents)
++}
++
++// Observe merges visits under an interprocess lock. Corrupt history and failed
++// writes are returned without replacing a previously readable history file.
++func Observe(path string, visits []Project) ([]Project, error) {
++	return modify(path, visits, "", historyObserve)
++}
++
++// UpdateMetadata updates existing records without reviving removed projects.
++func UpdateMetadata(path string, projects []Project) ([]Project, error) {
++	return modify(path, projects, "", historyUpdateMetadata)
++}
++
++// Forget removes a saved entry, leaving its directory and conversations intact.
++func Forget(path, directory string) ([]Project, error) {
++	return modify(path, nil, directory, historyForget)
++}
++
++type historyOperation uint8
++
++const (
++	historyInvalid historyOperation = iota
++	historyObserve
++	historyUpdateMetadata
++	historyForget
++)
++
++func modify(path string, visits []Project, directory string, operation historyOperation) ([]Project, error) {
++	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
++		return nil, err
++	}
++	lock, err := os.OpenFile(path+".lock", os.O_CREATE|os.O_RDWR, 0o600)
++	if err != nil {
++		return nil, err
++	}
++	defer lock.Close()
++	if err := lockFile(lock); err != nil {
++		return nil, err
++	}
++	defer unlockFile(lock)
++	data, err := os.ReadFile(path)
++	if err != nil && !errors.Is(err, os.ErrNotExist) {
++		return nil, err
++	}
++	var saved []Project
++	if len(data) > 0 {
++		if err := json.Unmarshal(data, &saved); err != nil {
++			return nil, fmt.Errorf("read project history: %w", err)
++		}
++	}
++	entries := saved
++	switch operation {
++	case historyObserve:
++		entries = append(entries, visits...)
++	case historyUpdateMetadata, historyForget:
++	case historyInvalid:
++		return nil, errors.New("invalid project history operation")
++	default:
++		return nil, fmt.Errorf("unknown project history operation %d", operation)
++	}
++	byDirectory := make(map[string]Project)
++	for _, entry := range entries {
++		if !filepath.IsAbs(entry.Directory) {
++			continue
++		}
++		entry.Directory = CanonicalDirectory(entry.Directory)
++		old, found := byDirectory[entry.Directory]
++		if !found || entry.LastActive >= old.LastActive {
++			if found && entry.Repository == "" {
++				entry.Repository, entry.Branch, entry.Worktree = old.Repository, old.Branch, old.Worktree
++			}
++			if found && entry.Agents == nil {
++				entry.Agents = old.Agents
++			}
++			byDirectory[entry.Directory] = entry
++		}
++	}
++	switch operation {
++	case historyUpdateMetadata:
++		for _, entry := range visits {
++			key := CanonicalDirectory(entry.Directory)
++			if old, found := byDirectory[key]; found {
++				old.Repository, old.Branch, old.Worktree = entry.Repository, entry.Branch, entry.Worktree
++				byDirectory[key] = old
++			}
++		}
++	case historyForget:
++		delete(byDirectory, CanonicalDirectory(directory))
++	case historyObserve:
++	case historyInvalid:
++		return nil, errors.New("invalid project history operation")
++	default:
++		return nil, fmt.Errorf("unknown project history operation %d", operation)
++	}
++	projects := make([]Project, 0, len(byDirectory))
++	for _, entry := range byDirectory {
++		projects = append(projects, entry)
++	}
++	slices.SortFunc(projects, func(a, b Project) int {
++		if a.LastActive > b.LastActive {
++			return -1
++		}
++		if a.LastActive < b.LastActive {
++			return 1
++		}
++		return bytes.Compare([]byte(a.Directory), []byte(b.Directory))
++	})
++	projects = projects[:min(len(projects), maxProjects)]
++	next, err := json.Marshal(projects)
++	if err != nil {
++		return nil, err
++	}
++	if !bytes.Equal(data, next) {
++		if err := atomicfile.Write(path, next, 0o600, true); err != nil {
++			return nil, err
++		}
++	}
++	return projects, nil
++}
 diff --git i/internal/session/agent_detect.go w/internal/session/agent_detect.go
 index 1556c35d9662c1179227a0de8ed895543dfe205a..d8e5d8aee1b8c6df066a7358af696e4a0c4f8586 100644
 --- i/internal/session/agent_detect.go
@@ -15715,6 +17319,34 @@ index 99427daf7aa26fe357081e9d9be997e9c3218bc3..bc2629bcece0df1201efd4b4dc3e3e9a
  	// Older clients omit focus history.
  	if incoming.FocusHistory == nil {
  		incoming.FocusHistory = canonical.FocusHistory
+diff --git i/internal/session/tuiclient.go w/internal/session/tuiclient.go
+index f9d949623cbffb6bc34684258fc9fb43e7bae7bb..5f9496316ab27b511b3e3e42e374e29f9cb5544d 100644
+--- i/internal/session/tuiclient.go
++++ w/internal/session/tuiclient.go
+@@ -2359,13 +2359,23 @@ func (c *TUIClient) CreateGlobalSession(name string, width, height int) error {
+ 	return c.createSession(name, width, height, true)
+ }
+ 
++// CreateProjectSession opens a fresh session rooted at a remembered directory.
++func (c *TUIClient) CreateProjectSession(name, directory string, width, height int) error {
++	return c.createSessionInDirectory(name, width, height, false, directory)
++}
++
+ func (c *TUIClient) createSession(name string, width, height int, global bool) error {
++	return c.createSessionInDirectory(name, width, height, global, "")
++}
++
++func (c *TUIClient) createSessionInDirectory(name string, width, height int, global bool, directory string) error {
+ 	msg, err := NewMessage(MsgNew, &NewPayload{
+ 		SessionName: name,
+ 		Width:       width,
+ 		Height:      height,
+ 		Detach:      true,
+ 		Global:      global,
++		Cwd:         directory,
+ 	})
+ 	if err != nil {
+ 		return err
 diff --git i/internal/session/workspace_auto_name.go w/internal/session/workspace_auto_name.go
 new file mode 100644
 index 0000000000000000000000000000000000000000..3bc0e454b97aabd71c090753ced52d9a85b40388

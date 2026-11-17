@@ -178,7 +178,7 @@ track = "none"
 [appearance.sidebar]
 enabled = true
 position = "left"
-sections = "overview,git"
+sections = "overview,recent-projects,git"
 overview_mode = "tree"
 background = "#1c302d"
 show_separator = false
